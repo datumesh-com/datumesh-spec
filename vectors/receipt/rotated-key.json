@@ -14,18 +14,12 @@
       "https": {
         "status": 200,
         "body": "{\n  \"host\": \"rates.example.org\",\n  \"keys\": [\n    {\n      \"alg\": \"ed25519\",\n      \"id\": \"d712b32a2cc5cb7c\",\n      \"public\": \"843baeb22bfd0364fb1b7262b367fb3202e7886c69a070fecf8e343fedb1eabf\",\n      \"valid_from\": \"2020-01-01T00:00:00.000000Z\",\n      \"valid_to\": \"2024-06-01T00:00:00.000000Z\"\n    },\n    {\n      \"alg\": \"ed25519\",\n      \"id\": \"d9a2df65559c4444\",\n      \"public\": \"3ecf7b3ff834cb6782f5405dfcb213b5e78c0f30188068c25568adc25a739b52\",\n      \"valid_from\": \"2024-06-01T00:00:00.000000Z\"\n    }\n  ],\n  \"proto\": \"datumesh/1\"\n}"
-      },
-      "dns": {
-        "status": "nxdomain"
       }
     },
     "calc.example.net": {
       "https": {
         "status": 200,
         "body": "{\n  \"host\": \"calc.example.net\",\n  \"keys\": [\n    {\n      \"alg\": \"ed25519\",\n      \"id\": \"f7ec60a92abf4774\",\n      \"public\": \"ccd4faa3a0b8338bc796d3bfc30bda2f6e87d336a576b70dc9d47cbfe0e8830f\",\n      \"valid_from\": \"2020-01-01T00:00:00.000000Z\"\n    }\n  ],\n  \"proto\": \"datumesh/1\"\n}"
-      },
-      "dns": {
-        "status": "nxdomain"
       }
     }
   },

@@ -1,6 +1,6 @@
 # Datumesh protocol, version 1
 
-Status: draft for step 0.1. Identifier in data: `datumesh/1`.
+Status: draft, revision `spec-0.1.1`. Identifier in data: `datumesh/1`. Changes are listed in section 14.
 
 Datumesh is an open protocol for addressable, verifiable data cells: a name, a resolver, a signed answer, and a lineage you can follow. This document defines how a cell is named (the cell URI), how it is written as canonical bytes, what a signed answer (a receipt) contains, how keys are published, and how a verifier checks a receipt. Storage formats, wire protocols, resolvers and the engine are out of scope.
 
@@ -25,6 +25,7 @@ The executable form of this document is `tools/canon.py`; the vectors under `vec
 11. Test vectors
 12. Security considerations
 13. Decisions and rationale
+14. Changes
 - Appendix A: collected ABNF
 
 ## 1. Terms
@@ -412,28 +413,21 @@ A key is an Ed25519 public key: 32 bytes, written as 64 lowercase hex digits. It
 
 A document that breaks any of these rules is rejected whole (`E_KEY_DOC`).
 
-### 9.3 DNS TXT records
+### 9.3 Resolution
 
-At `_datumesh.<host>`, one TXT record per key, with the strings of a record joined without separators:
+The HTTPS document of 9.2 is the only way keys are published. A verifier resolves the keys of a host with one `GET https://<host>/.well-known/datumesh.json`:
 
-```
-v=datumesh1; alg=ed25519; pub=<64 hex>; from=<instant>[; to=<instant>]
-```
+- **200** with a document satisfying 9.2: those are the host's keys.
+- **200** with a document that does not satisfy 9.2: `E_KEY_DOC`.
+- **Anything else** is `E_KEY_UNAVAILABLE`. That includes 404 and every other status, any redirect, and any network, DNS-resolution, TLS or timeout failure. There is no fallback.
 
-The fields appear in exactly this order, separated by `; ` (a semicolon and one space). TXT records not starting with `v=datumesh1` are ignored. A record that starts with `v=datumesh1` but does not match exactly is `E_KEY_DOC`.
+A host that serves no document publishes no keys, and its receipts cannot be verified.
 
-### 9.4 Precedence
+*Rationale.* HTTPS is authenticated by the Web PKI, so one authenticated path is simpler and stronger than two paths with a precedence rule. A 404 is not treated differently from an outage, because a verifier cannot tell a host that never published keys from one whose document is temporarily missing, and either way it has no keys to check against.
 
-1. Fetch the HTTPS document.
-   - **200:** it is authoritative. Use it and do not consult DNS. If it is invalid: `E_KEY_DOC`.
-   - **404 or 410:** go to step 2.
-   - **Anything else** (network or TLS failure, timeout, other status, redirect): `E_KEY_UNAVAILABLE`. Do not fall back to DNS.
-2. Query TXT at `_datumesh.<host>`.
-   - **NXDOMAIN, or no records starting `v=datumesh1`:** `E_KEY_UNKNOWN` (the host publishes no keys).
-   - **Failure (SERVFAIL, timeout):** `E_KEY_UNAVAILABLE`.
-   - **Records:** use them; if any is invalid, `E_KEY_DOC`.
+### 9.4 Retrieval is separate from verification
 
-*Rationale.* HTTPS is authenticated by the Web PKI. DNS without DNSSEC is not. The HTTPS document therefore wins whenever it exists. DNS serves hosts that cannot serve a well-known file. Falling back only on a definite 404 means an attacker who can merely disrupt HTTPS cannot force a verifier onto spoofable DNS. Revoking a key in the HTTPS document takes effect even if a stale TXT record remains.
+Resolution needs the network; verification (section 10) does not. A verifier library SHOULD take keys as an input to verification rather than fetch them itself, and SHOULD offer fetching as a separate, explicit operation that reports `E_KEY_UNAVAILABLE` or `E_KEY_DOC` as above.
 
 ### 9.5 Rotation
 
@@ -453,7 +447,7 @@ A verifier runs these steps in order and stops at the first failure, reporting i
    - `publisher` equals `cell.ns` (`E_PUBLISHER_MISMATCH`).
    - Every member of `valid` equals the same-named member of `cell.args` and is a date, instant or string (`E_VALID_MISMATCH`).
    - `tx <= asof <= issued` (`E_TIME_ORDER`).
-5. **Key.** Resolve the keys of the host in `computed_by` (9.4) and find the key with the given id (`E_KEY_UNKNOWN`). Check that `issued` is in its window (`E_KEY_NOT_VALID`).
+5. **Key.** Resolve the keys of the host in `computed_by` (9.3) and find the key with the given id (`E_KEY_UNKNOWN`). Check that `issued` is in its window (`E_KEY_NOT_VALID`).
 6. **Signature.** Verify `sig` over `payload` (8.3) with that key (`E_SIGNATURE`). Use RFC 8032 verification with the cofactorless equation, rejecting `S >= L`, non-canonical encodings of `R` and `A`, and small-order `A` and `R` (as libsodium does). A receipt that passes steps 1-6 is **signature-valid**.
 7. **Recomputation** (optional; makes the receipt **fully verified**):
    1. Obtain the descriptor for `cell.fn_hash` (`E_FN_UNAVAILABLE`). It must hash to `cell.fn_hash` (`E_FN_HASH_MISMATCH`) and be canonical (sections 6-7).
@@ -501,9 +495,9 @@ The four failure classes a verifier distinguishes are: bad canonical form (parse
 | `E_TIME_ORDER` | 4, 7 | `tx <= asof <= issued` fails, inputs have another `asof`, or computed `tx` is not the latest input `tx`. |
 | `E_ARG_UNKNOWN` | URI, 7 | An argument the function does not declare. |
 | `E_ARG_MISSING` | URI, 7 | A declared argument not bound (slices are written `*`). |
-| `E_KEY_UNAVAILABLE` | 5 | Keys could not be fetched (network, TLS, server or DNS failure). |
-| `E_KEY_DOC` | 5 | The key document or a datumesh TXT record is malformed. |
-| `E_KEY_UNKNOWN` | 5 | The host publishes no key with that id, or no keys at all. |
+| `E_KEY_UNAVAILABLE` | 5 | The key document could not be retrieved: any non-200 status (404 included), redirect, or network, DNS-resolution, TLS or timeout failure. |
+| `E_KEY_DOC` | 5 | The key document is malformed or breaks a rule of 9.2. |
+| `E_KEY_UNKNOWN` | 5 | The host's key document has no key with that id. |
 | `E_KEY_NOT_VALID` | 5 | `issued` is outside the key's validity window. |
 | `E_SIGNATURE` | 6 | The Ed25519 signature does not verify. |
 | `E_FN_UNAVAILABLE` | 7 | No descriptor found for `fn_hash`. |
@@ -527,12 +521,12 @@ The four failure classes a verifier distinguishes are: bad canonical form (parse
 | `scalar`, `cell`, `ref`, `function` | `input`: JSON text (or `input_hex`: raw bytes) | `canonical`, `sha256` |
 | `uri` | `input`: URI, `signature`: function signature | `object` (cell reference), `canonical`, `sha256`, `https` (on mesh `mesh.example`) |
 | `keyid` | `input`: public key hex | `key_id` |
-| `keys` | `host`, `env`: what HTTPS and DNS returned | `key_ids` |
+| `keys` | `host`, `env`: what the HTTPS request returned | `key_ids` |
 | `receipt` | `input`: receipt JSON text; `keypair` (`seed`, `public`, `key_id`); `keys`: an `env` per host; optional `recompute` | `canonical` (the signed payload), `sha256` (receipt hash), `sig`, `level` (`signed` or `recomputed`) |
 
 `canonical` is the canonical byte string as UTF-8 text. Inputs are deliberately not canonical: member order is reversed, and there is whitespace and escaping. A valid receipt vector's expected verification result is success at `level`; an invalid one's is `error`. Keypairs come from fixed seeds and Ed25519 is deterministic, so `tools/gen_vectors.py` reproduces every file byte for byte.
 
-The `env` for a host is `{"https": {"status": 200, "body": "<text>"} | {"status": 404} | {"status": "error"}, "dns": {"status": "ok", "records": [...]} | {"status": "nxdomain"} | {"status": "error"}}`.
+The `env` for a host is `{"https": {"status": 200, "body": "<text>"}}` for a retrieved document, or `{"https": {"status": <other status>}}` or `{"https": {"status": "error"}}` for a failed retrieval. A host absent from `keys` behaves as `{"https": {"status": "error"}}`.
 
 The vectors use reserved example domains (`example.org`, `example.net`, `.example`) for everything signed.
 
@@ -541,7 +535,7 @@ The vectors use reserved example domains (`example.org`, `example.net`, `.exampl
 - **Ambiguity is the attack surface.** Two encodings of one object would give one receipt two hashes, or let a signature cover something other than what is shown. Every rule above exists to make the canonical form unique. Implementations MUST reject, never repair.
 - **Duplicate JSON members** are the classic signature-confusion bug: one parser takes the first, another the last. They are rejected at parse time.
 - **Trust.** A valid signature means only that the key holder said it. A verifier chooses whom to trust (typically the publisher for stored cells, or anyone for recomputed cells, since recomputation does not depend on trust).
-- **DNS keys** are as trustworthy as the resolver path. Verifiers SHOULD use DNSSEC-validating resolvers when relying on DNS keys.
+- **Key retrieval** is as trustworthy as the Web PKI. Verifiers MUST validate the TLS certificate and MUST NOT follow redirects.
 - **Revocation** is by shortening `valid_to`. There is no other revocation list.
 - **Text in summaries and strings** may contain bidi controls and confusable characters. Display it as data.
 
@@ -565,7 +559,7 @@ Every choice this specification makes where its brief left room, with the main a
 | D12 | `computed_by` is `<host>#<key id>` | Bare key id | A bare key id cannot be looked up without a global registry. |
 | D13 | Receipt hash and signature over the same bytes (receipt minus `sig`) | Sign the hash | One canonical payload; re-signing keeps the hash. |
 | D14 | `inputs` are sets: sorted, unique; same for descriptor inputs | Ordered lists | Lineage is a set; order would be a second spelling. |
-| D15 | HTTPS key document authoritative; DNS only on 404/410 | Union of both; DNS first | Web PKI over unsigned DNS; no downgrade by disruption. |
+| D15 | Keys only from the HTTPS key document; every retrieval failure, 404 included, is `E_KEY_UNAVAILABLE` | DNS TXT as a fallback (removed in `spec-0.1.1`) | One Web-PKI-authenticated path; nothing to downgrade to. |
 | D16 | Keys published per DNS host, covering its path namespaces | Per-namespace key files | `/.well-known` exists only at an origin's root (RFC 8615). |
 | D17 | Computed `tx` = latest input `tx`; inputs share `asof` | `tx` = evaluation time | Makes recomputation deterministic and checkable. |
 | D18 | "Declared inputs" in the function hash = names of functions it may read | Declared arguments | Arguments are already in the signature; dependencies are what the brief's third component can add. |
@@ -600,5 +594,15 @@ date          = 4DIGIT "-" 2DIGIT "-" 2DIGIT                               ; a r
 instant       = date "T" 2DIGIT ":" 2DIGIT ":" 2DIGIT "." 6DIGIT "Z"     ; seconds 00-59
 HEXLOW        = DIGIT / %x61-66
 
-dns-txt       = "v=datumesh1; alg=ed25519; pub=" 64HEXLOW "; from=" instant [ "; to=" instant ]
 ```
+
+## 14. Changes
+
+### spec-0.1.1
+
+- **Removed DNS TXT key publication.** Section 9.3 used to define `_datumesh.<host>` TXT records with a precedence rule. The HTTPS document is now the only key source; any retrieval failure, including 404, is `E_KEY_UNAVAILABLE` (9.3). `E_KEY_UNKNOWN` now means only that the document lacks the key id. The vectors for DNS were removed and the `env` format lost its `dns` member.
+- **Added 9.4:** retrieving keys is separate from verifying.
+- **Open question for the engine:** the limit of 4096 `inputs` per receipt (4.5) stands for now. A computed cell over a long slice may need more inputs than that, or an intermediate aggregation cell; the engine step decides.
+
+The receipt format, canonical encoding and all hashes are unchanged: every receipt valid under `spec-0.1` that names a key published over HTTPS is valid under `spec-0.1.1`, with the same hash.
+

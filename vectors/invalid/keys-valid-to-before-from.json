@@ -1,0 +1,14 @@
+{
+  "id": "invalid/keys-valid-to-before-from",
+  "kind": "keys",
+  "description": "valid_to must be later than valid_from.",
+  "valid": false,
+  "host": "rates.example.org",
+  "env": {
+    "https": {
+      "status": 200,
+      "body": "{\n  \"host\": \"rates.example.org\",\n  \"keys\": [\n    {\n      \"alg\": \"ed25519\",\n      \"id\": \"d712b32a2cc5cb7c\",\n      \"public\": \"843baeb22bfd0364fb1b7262b367fb3202e7886c69a070fecf8e343fedb1eabf\",\n      \"valid_from\": \"2024-06-01T00:00:00.000000Z\",\n      \"valid_to\": \"2020-01-01T00:00:00.000000Z\"\n    }\n  ],\n  \"proto\": \"datumesh/1\"\n}"
+    }
+  },
+  "error": "E_KEY_DOC"
+}

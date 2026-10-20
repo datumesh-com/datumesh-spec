@@ -828,7 +828,7 @@ def https_url(uri, mesh):
 
 
 # ---------------------------------------------------------------------------
-# Keys (SPEC.md section 9).
+# Keys (SPEC.md section 9). The HTTPS key document is the only key source.
 
 
 def key_id(public):
@@ -881,23 +881,6 @@ def parse_key_doc(text, host):
     return _no_duplicate_keys(keys)
 
 
-_TXT = re.compile(r"v=datumesh1; alg=ed25519; pub=([^;]*); from=([^;]*)(?:; to=([^;]*))?")
-
-
-@_as_key_doc_error
-def parse_dns_records(records):
-    """TXT records at _datumesh.<host>, each already joined from its strings."""
-    keys = []
-    for i, record in enumerate(records):
-        if record != "v=datumesh1" and not record.startswith("v=datumesh1;"):
-            continue
-        m = _TXT.fullmatch(record)
-        if not m:
-            fail("E_KEY_DOC", f"malformed datumesh TXT record {record!r}", f"txt[{i}]")
-        keys.append(_key(m.group(1), m.group(2), m.group(3), f"txt[{i}]"))
-    return _no_duplicate_keys(keys)
-
-
 def _no_duplicate_keys(keys):
     if len({k["id"] for k in keys}) != len(keys):
         fail("E_KEY_DOC", "the same key is published twice")
@@ -905,27 +888,15 @@ def _no_duplicate_keys(keys):
 
 
 def resolve_keys(host, env):
-    """Key lookup with HTTPS-first precedence (SPEC.md 9.4).
+    """Key resolution (SPEC.md 9.3): the HTTPS document or nothing.
 
-    env describes what the network returned for this host:
-      {"https": {"status": 200, "body": "..."} | {"status": 404} | {"status": "error"},
-       "dns":   {"status": "ok", "records": [...]} | {"status": "nxdomain"} | {"status": "error"}}
+    env describes what the HTTPS request returned for this host:
+      {"https": {"status": 200, "body": "..."} | {"status": <other>} | {"status": "error"}}
     """
-    env = env or {}
-    https = env.get("https", {"status": "error"})
-    if https["status"] == 200:
-        return parse_key_doc(https["body"], host)
-    if https["status"] not in (404, 410):
+    https = (env or {}).get("https", {"status": "error"})
+    if https["status"] != 200:
         fail("E_KEY_UNAVAILABLE", f"https key document: {https['status']}")
-    dns = env.get("dns", {"status": "error"})
-    if dns["status"] == "nxdomain":
-        fail("E_KEY_UNKNOWN", f"{host} publishes no keys")
-    if dns["status"] != "ok":
-        fail("E_KEY_UNAVAILABLE", f"dns: {dns['status']}")
-    keys = parse_dns_records(dns["records"])
-    if not keys:
-        fail("E_KEY_UNKNOWN", f"{host} publishes no keys")
-    return keys
+    return parse_key_doc(https["body"], host)
 
 
 # ---------------------------------------------------------------------------

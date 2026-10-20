@@ -1,0 +1,13 @@
+{
+  "id": "invalid/keys-not-found",
+  "kind": "keys",
+  "description": "A 404 is a retrieval failure like any other: the host publishes no keys.",
+  "valid": false,
+  "host": "rates.example.org",
+  "env": {
+    "https": {
+      "status": 404
+    }
+  },
+  "error": "E_KEY_UNAVAILABLE"
+}

@@ -1,0 +1,13 @@
+{
+  "id": "invalid/keys-server-error",
+  "kind": "keys",
+  "description": "Any status other than 200 is a retrieval failure; there is no fallback.",
+  "valid": false,
+  "host": "rates.example.org",
+  "env": {
+    "https": {
+      "status": 503
+    }
+  },
+  "error": "E_KEY_UNAVAILABLE"
+}

@@ -1,14 +1,11 @@
 {
-  "id": "invalid/keys-dns-error",
+  "id": "invalid/keys-network-error",
   "kind": "keys",
-  "description": "A DNS failure after a 404 is unavailable, not unknown.",
+  "description": "A network, DNS-resolution, TLS or timeout failure.",
   "valid": false,
   "host": "rates.example.org",
   "env": {
     "https": {
-      "status": 404
-    },
-    "dns": {
       "status": "error"
     }
   },

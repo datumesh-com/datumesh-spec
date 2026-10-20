@@ -1,0 +1,13 @@
+{
+  "id": "invalid/keys-redirect",
+  "kind": "keys",
+  "description": "Redirects are not followed.",
+  "valid": false,
+  "host": "rates.example.org",
+  "env": {
+    "https": {
+      "status": 301
+    }
+  },
+  "error": "E_KEY_UNAVAILABLE"
+}

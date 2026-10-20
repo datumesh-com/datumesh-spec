@@ -1,0 +1,14 @@
+{
+  "id": "invalid/keys-not-json",
+  "kind": "keys",
+  "description": "A 200 response whose body is not a key document.",
+  "valid": false,
+  "host": "rates.example.org",
+  "env": {
+    "https": {
+      "status": 200,
+      "body": "<html>Not here</html>"
+    }
+  },
+  "error": "E_KEY_DOC"
+}

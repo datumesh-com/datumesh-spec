@@ -386,16 +386,7 @@ def key_entry(name, valid_from, valid_to=None):
 
 def https_env(host, *entries):
     doc = {"host": host, "keys": list(entries), "proto": canon.PROTO}
-    return {"https": {"status": 200, "body": json.dumps(doc, indent=2)}, "dns": {"status": "nxdomain"}}
-
-
-def txt(name, valid_from, valid_to=None):
-    record = f"v=datumesh1; alg=ed25519; pub={keypair_fields(name)['public']}; from={valid_from}"
-    return record + (f"; to={valid_to}" if valid_to else "")
-
-
-def dns_env(*records, https_status=404):
-    return {"https": {"status": https_status}, "dns": {"status": "ok", "records": list(records)}}
+    return {"https": {"status": 200, "body": json.dumps(doc, indent=2)}}
 
 
 T0 = "2020-01-01T00:00:00.000000Z"
@@ -409,27 +400,26 @@ for name in ("rates-2020", "calc-2020"):
 add("keys/https-document", "keys", "Keys come from https://<host>/.well-known/datumesh.json when it exists.",
     host="rates.example.org",
     env=https_env("rates.example.org", key_entry("rates-2020", T0, ROTATE), key_entry("rates-2024", ROTATE)))
-add("keys/dns-fallback", "keys", "With no HTTPS document (404), TXT records at _datumesh.<host> are used; other TXT records are ignored.",
-    host="rates.example.org", env=dns_env("v=spf1 -all", txt("rates-2020", T0, ROTATE), txt("rates-2024", ROTATE)))
-add("keys/https-wins", "keys", "When the HTTPS document exists, DNS is not consulted.",
-    host="rates.example.org",
-    env=https_env("rates.example.org", key_entry("rates-2024", ROTATE)) | {"dns": {"status": "ok", "records": [txt("rates-2020", T0)]}})
-add("invalid/keys-https-error", "keys", "An HTTPS failure other than 404/410 does not fall back to DNS.",
-    host="rates.example.org", env=dns_env(txt("rates-2020", T0), https_status=503), error="E_KEY_UNAVAILABLE")
-add("invalid/keys-dns-error", "keys", "A DNS failure after a 404 is unavailable, not unknown.",
-    host="rates.example.org", env={"https": {"status": 404}, "dns": {"status": "error"}}, error="E_KEY_UNAVAILABLE")
-add("invalid/keys-none-published", "keys", "No document and no TXT records: the host publishes no keys.",
-    host="rates.example.org", env={"https": {"status": 404}, "dns": {"status": "nxdomain"}}, error="E_KEY_UNKNOWN")
+add("invalid/keys-server-error", "keys", "Any status other than 200 is a retrieval failure; there is no fallback.",
+    host="rates.example.org", env={"https": {"status": 503}}, error="E_KEY_UNAVAILABLE")
+add("invalid/keys-not-found", "keys", "A 404 is a retrieval failure like any other: the host publishes no keys.",
+    host="rates.example.org", env={"https": {"status": 404}}, error="E_KEY_UNAVAILABLE")
+add("invalid/keys-redirect", "keys", "Redirects are not followed.",
+    host="rates.example.org", env={"https": {"status": 301}}, error="E_KEY_UNAVAILABLE")
+add("invalid/keys-network-error", "keys", "A network, DNS-resolution, TLS or timeout failure.",
+    host="rates.example.org", env={"https": {"status": "error"}}, error="E_KEY_UNAVAILABLE")
+add("invalid/keys-not-json", "keys", "A 200 response whose body is not a key document.",
+    host="rates.example.org", env={"https": {"status": 200, "body": "<html>Not here</html>"}}, error="E_KEY_DOC")
+add("invalid/keys-valid-to-before-from", "keys", "valid_to must be later than valid_from.",
+    host="rates.example.org", env=https_env("rates.example.org", key_entry("rates-2020", ROTATE, T0)), error="E_KEY_DOC")
+add("invalid/keys-duplicate-key", "keys", "The same key may not appear twice.",
+    host="rates.example.org", env=https_env("rates.example.org", key_entry("rates-2020", T0), key_entry("rates-2020", ROTATE)), error="E_KEY_DOC")
 bad_doc = json.loads(https_env("rates.example.org", key_entry("rates-2020", T0))["https"]["body"])
 bad_doc["keys"][0]["id"] = "0000000000000000"
 add("invalid/keys-wrong-id", "keys", "A key document whose id is not derived from its public key is rejected whole.",
     host="rates.example.org", env={"https": {"status": 200, "body": json.dumps(bad_doc)}}, error="E_KEY_DOC")
 add("invalid/keys-host-mismatch", "keys", "A key document names the host it was fetched from.",
     host="rates.example.org", env=https_env("other.example.org", key_entry("rates-2020", T0)), error="E_KEY_DOC")
-add("invalid/keys-bad-txt", "keys", "A TXT record starting v=datumesh1 must match the grammar exactly.",
-    host="rates.example.org", env=dns_env(f"v=datumesh1;alg=ed25519;pub={keypair_fields('rates-2020')['public']};from={T0}"),
-    error="E_KEY_DOC")
-
 # ---------------------------------------------------------------------------
 # Receipts
 
@@ -505,9 +495,9 @@ R_HOLIDAY = receipt(holiday_cell, "boolean", True, "25 December 2024 is a TARGET
                     publisher="calendars.example.org/eu", licence="https://calendars.example.org/licence")
 R_HOLIDAY["computed_by"] = "calendars.example.org#" + keypair_fields("calendars-2020")["key_id"]
 add_receipt("receipt/boolean-namespace-path", "A boolean value, a namespace with a path segment, and a licence URL. "
-            "Keys for calendars.example.org/eu are published by the host calendars.example.org, here via DNS.",
+            "Keys for calendars.example.org/eu are published by the host calendars.example.org.",
             signed(R_HOLIDAY, "calendars-2020"), "calendars-2020",
-            keys={"calendars.example.org": dns_env(txt("calendars-2020", T0))})
+            keys={"calendars.example.org": https_env("calendars.example.org", key_entry("calendars-2020", T0))})
 
 trade_cell = {"args": {"symbol": S("XAMS:ASML")}, "fn": "last_trade", "fn_hash": canon.function_hash(LAST_TRADE),
               "ns": RATES}
@@ -528,10 +518,6 @@ add_receipt("receipt/historical-asof", "asof in the past, issued later with the 
             "against issued, not asof.",
             signed(receipt(FX_CELL, "number", "1.0892", "The EUR/USD rate as known on 16 March 2024, served later.",
                            "rates-2024", issued="2024-09-01T00:00:00.000000Z"), "rates-2024"), "rates-2024")
-add_receipt("receipt/dns-published-key", "The publisher has no HTTPS key document; its key is in DNS.",
-            R_FX, "rates-2020", keys={RATES: dns_env(txt("rates-2020", T0, ROTATE))})
-
-
 def tampered(r, **changes):
     return dict(r, **changes)
 
@@ -547,8 +533,6 @@ for name, r, error, key, why, extra in [
     ("key-not-yet-valid", signed(receipt(FX_CELL, "number", "1.0892", "Issued before the key was valid.", "rates-2024"), "rates-2024"),
      "E_KEY_NOT_VALID", "rates-2024", "issued is before the key's valid_from.", {}),
     ("key-unavailable", R_FX, "E_KEY_UNAVAILABLE", "rates-2020", "The key document could not be fetched.", {"keys": {RATES: {"https": {"status": "error"}}}}),
-    ("key-https-authoritative", R_FX, "E_KEY_UNKNOWN", "rates-2020", "DNS lists the key but the HTTPS document, which wins, does not.",
-     {"keys": {RATES: https_env(RATES, key_entry("rates-2024", ROTATE)) | {"dns": {"status": "ok", "records": [txt("rates-2020", T0)]}}}}),
     ("slice", signed(receipt(FX_CELL | {"args": FX_ARGS | {"date": "*"}}, "number", "1.0892", "A slice cannot be a receipt.", "rates-2020", valid={}), "rates-2020"),
      "E_SLICE", "rates-2020", "Only individual cells have receipts.", {}),
     ("publisher-mismatch", signed(receipt(FX_CELL, "number", "1.0892", "Wrong publisher.", "rates-2020", publisher="other.example.org"), "rates-2020"),
