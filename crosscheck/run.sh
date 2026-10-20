@@ -39,5 +39,5 @@ for f in vectors cases cases-02; do
 done
 run_py "python fields_compare.py uri-cases.jsonl python=uri-cases.py.jsonl javascript=uri-cases.js.jsonl javascript-cjs=uri-cases.cjs.jsonl" | tee "$WORK/uri.txt"
 grep -q '; 0 mismatching' "$WORK/uri.txt"
-echo "Reference tool on URIs (known spec defects 5.1/5.4; informational):"
-run_py "python fields_compare.py uri-cases.jsonl python=uri-cases.py.jsonl reference=uri-cases.ref.jsonl" || true
+run_py "python fields_compare.py uri-cases.jsonl python=uri-cases.py.jsonl reference=uri-cases.ref.jsonl" | tee "$WORK/uri-ref.txt"
+grep -q '; 0 mismatching' "$WORK/uri-ref.txt"
