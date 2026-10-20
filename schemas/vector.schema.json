@@ -4,40 +4,181 @@
   "title": "Datumesh test vector",
   "description": "The format of every file under vectors/ (SPEC.md section 11).",
   "type": "object",
-  "required": ["id", "kind", "description", "valid"],
+  "required": [
+    "id",
+    "kind",
+    "description",
+    "valid"
+  ],
   "properties": {
-    "id": { "type": "string", "pattern": "^[a-z0-9]+/[a-z0-9-]+$" },
-    "kind": { "enum": ["jcs", "scalar", "cell", "ref", "function", "uri", "keyid", "keys", "receipt"] },
-    "description": { "type": "string", "minLength": 1 },
-    "valid": { "type": "boolean" },
-    "input": { "type": "string" },
-    "input_hex": { "type": "string", "pattern": "^([0-9a-f]{2})*$" },
-    "error": { "type": "string", "pattern": "^E_[A-Z_]+$" },
-    "canonical": { "type": "string" },
-    "sha256": { "$ref": "defs.schema.json#/$defs/hex64" },
-    "object": { "$ref": "cell-ref.schema.json" },
-    "https": { "type": "string", "pattern": "^https://" },
-    "signature": { "type": "object" },
-    "key_id": { "type": "string", "pattern": "^[0-9a-f]{16}$" },
-    "key_ids": { "type": "array", "items": { "type": "string", "pattern": "^[0-9a-f]{16}$" } },
-    "host": { "$ref": "defs.schema.json#/$defs/dnsName" },
-    "env": { "type": "object" },
-    "keypair": {
-      "type": "object",
-      "required": ["seed", "public", "key_id"],
-      "properties": {
-        "seed": { "$ref": "defs.schema.json#/$defs/hex64" },
-        "public": { "$ref": "defs.schema.json#/$defs/hex64" },
-        "key_id": { "type": "string", "pattern": "^[0-9a-f]{16}$" }
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z0-9]+/[a-z0-9-]+$"
+    },
+    "kind": {
+      "enum": [
+        "jcs",
+        "scalar",
+        "cell",
+        "ref",
+        "function",
+        "uri",
+        "keyid",
+        "keys",
+        "receipt",
+        "unit",
+        "envelope"
+      ]
+    },
+    "description": {
+      "type": "string",
+      "minLength": 1
+    },
+    "valid": {
+      "type": "boolean"
+    },
+    "input": {
+      "type": "string"
+    },
+    "input_hex": {
+      "type": "string",
+      "pattern": "^([0-9a-f]{2})*$"
+    },
+    "error": {
+      "type": "string",
+      "pattern": "^E_[A-Z_]+$"
+    },
+    "canonical": {
+      "type": "string"
+    },
+    "sha256": {
+      "$ref": "defs.schema.json#/$defs/hex64"
+    },
+    "object": {
+      "$ref": "cell-ref.schema.json"
+    },
+    "https": {
+      "type": "string",
+      "pattern": "^https://"
+    },
+    "signature": {
+      "type": "object"
+    },
+    "key_id": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{16}$"
+    },
+    "key_ids": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^[0-9a-f]{16}$"
       }
     },
-    "keys": { "type": "object" },
-    "sig": { "$ref": "defs.schema.json#/$defs/hex128" },
-    "level": { "enum": ["signed", "recomputed"] },
-    "recompute": { "type": "object" }
+    "host": {
+      "$ref": "defs.schema.json#/$defs/dnsName"
+    },
+    "env": {
+      "type": "object"
+    },
+    "keypair": {
+      "type": "object",
+      "required": [
+        "seed",
+        "public",
+        "key_id"
+      ],
+      "properties": {
+        "seed": {
+          "$ref": "defs.schema.json#/$defs/hex64"
+        },
+        "public": {
+          "$ref": "defs.schema.json#/$defs/hex64"
+        },
+        "key_id": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{16}$"
+        }
+      }
+    },
+    "keys": {
+      "type": "object"
+    },
+    "sig": {
+      "$ref": "defs.schema.json#/$defs/hex128"
+    },
+    "level": {
+      "enum": [
+        "signed",
+        "recomputed"
+      ]
+    },
+    "recompute": {
+      "type": "object"
+    },
+    "blob_hex": {
+      "type": "string",
+      "pattern": "^([0-9a-f]{2})*$"
+    },
+    "status": {
+      "type": "integer"
+    },
+    "unit": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "outcome": {
+      "type": "string"
+    },
+    "trust": {
+      "enum": [
+        "primary",
+        "verified",
+        "unverified"
+      ]
+    },
+    "receipt_hash": {
+      "$ref": "defs.schema.json#/$defs/hex64"
+    }
   },
-  "oneOf": [{ "required": ["input"] }, { "required": ["input_hex"] }, { "properties": { "kind": { "const": "keys" } } }],
-  "if": { "properties": { "valid": { "const": false } } },
-  "then": { "required": ["error"] },
-  "else": { "not": { "required": ["error"] } }
+  "oneOf": [
+    {
+      "required": [
+        "input"
+      ]
+    },
+    {
+      "required": [
+        "input_hex"
+      ]
+    },
+    {
+      "properties": {
+        "kind": {
+          "const": "keys"
+        }
+      }
+    }
+  ],
+  "if": {
+    "properties": {
+      "valid": {
+        "const": false
+      }
+    }
+  },
+  "then": {
+    "required": [
+      "error"
+    ]
+  },
+  "else": {
+    "not": {
+      "required": [
+        "error"
+      ]
+    }
+  }
 }

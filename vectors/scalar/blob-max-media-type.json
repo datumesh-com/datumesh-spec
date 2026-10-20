@@ -1,0 +1,9 @@
+{
+  "id": "scalar/blob-max-media-type",
+  "kind": "scalar",
+  "description": "A 128-character media type, the maximum.",
+  "valid": true,
+  "input": "{\n  \"value\": \"9dc30a40021f1f79d8dd9437ec9014ce134138326b72fcb9696485ab3d69330a:17:application/xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\",\n  \"type\": \"blob\"\n}",
+  "canonical": "{\"type\":\"blob\",\"value\":\"9dc30a40021f1f79d8dd9437ec9014ce134138326b72fcb9696485ab3d69330a:17:application/xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\"}",
+  "sha256": "8bc48f31bfd59b0ec8a2a3ed3992cf27db820d7219bd16e8b32b5d472f9bea97"
+}

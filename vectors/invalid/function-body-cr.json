@@ -1,8 +1,8 @@
 {
   "id": "invalid/function-body-cr",
   "kind": "function",
-  "description": "Function bodies use LF line endings; CR is a control character.",
+  "description": "Function bodies use LF line endings; CR is a control character. Changed in spec-0.2.0: the descriptor now declares units (SPEC 7.1), so its bytes and function hash changed.",
   "valid": false,
-  "input": "{\n  \"signature\": {\n    \"returns\": \"number\",\n    \"args\": {\n      \"quote\": {\n        \"valid\": false,\n        \"type\": \"string\"\n      },\n      \"date\": {\n        \"valid\": true,\n        \"type\": \"date\"\n      },\n      \"base\": {\n        \"valid\": false,\n        \"type\": \"string\"\n      },\n      \"amount\": {\n        \"valid\": false,\n        \"type\": \"number\"\n      }\n    }\n  },\n  \"inputs\": [\n    \"rates.example.org/fx_rate\"\n  ],\n  \"code\": {\n    \"lang\": \"expr\",\n    \"body\": \"a\\r\\nb\"\n  }\n}",
+  "input": "{\n  \"signature\": {\n    \"returns\": {\n      \"unit\": {\n        \"arg\": \"quote\"\n      },\n      \"type\": \"number\"\n    },\n    \"args\": {\n      \"quote\": {\n        \"valid\": false,\n        \"type\": \"string\"\n      },\n      \"date\": {\n        \"valid\": true,\n        \"type\": \"date\"\n      },\n      \"base\": {\n        \"valid\": false,\n        \"type\": \"string\"\n      },\n      \"amount\": {\n        \"valid\": false,\n        \"unit\": {\n          \"arg\": \"base\"\n        },\n        \"type\": \"number\"\n      }\n    }\n  },\n  \"inputs\": [\n    \"rates.example.org/fx_rate\"\n  ],\n  \"code\": {\n    \"lang\": \"expr\",\n    \"body\": \"a\\r\\nb\"\n  }\n}",
   "error": "E_CANON_STRING"
 }

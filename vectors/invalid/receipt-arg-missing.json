@@ -1,9 +1,9 @@
 {
   "id": "invalid/receipt-arg-missing",
   "kind": "receipt",
-  "description": "A cell binds every declared argument.",
+  "description": "A cell binds every declared argument. Changed in spec-0.2.0: the cell's fn_hash changed because its descriptor now declares units, so the receipt bytes, hash and signature changed.",
   "valid": false,
-  "input": "{\n  \"sig\": \"f9d417077ec8f0c0e2f9f0940401711322a8a1edcc4b2426a93fe555d7f8dd7956e722f0483203feb7a631f500d6a08f5579358ee43ca9c5863d20b3c84a7804\",\n  \"value\": \"108.92\",\n  \"valid\": {\n    \"date\": {\n      \"value\": \"2024-03-15\",\n      \"type\": \"date\"\n    }\n  },\n  \"type\": \"number\",\n  \"tx\": \"2024-03-15T16:00:00.000000Z\",\n  \"summary\": \"The function declares an argument the cell lacks.\",\n  \"publisher\": \"calc.example.net\",\n  \"proto\": \"datumesh/1\",\n  \"licence\": \"CC-BY-4.0\",\n  \"issued\": \"2024-03-16T09:00:00.000000Z\",\n  \"inputs\": [\n    \"501f744d910c585859a5be4f3b62385ed0d6803db53dbbf95dff5097a68bee0d\"\n  ],\n  \"computed_by\": \"calc.example.net#f7ec60a92abf4774\",\n  \"cell\": {\n    \"ns\": \"calc.example.net\",\n    \"fn_hash\": \"4ca8b1b6fe90475da23cd794c8ea6e210d60e05aaf97540658c8d64d21e31d3b\",\n    \"fn\": \"convert\",\n    \"args\": {\n      \"quote\": {\n        \"value\": \"USD\",\n        \"type\": \"string\"\n      },\n      \"date\": {\n        \"value\": \"2024-03-15\",\n        \"type\": \"date\"\n      },\n      \"base\": {\n        \"value\": \"EUR\",\n        \"type\": \"string\"\n      },\n      \"amount\": {\n        \"value\": \"100\",\n        \"type\": \"number\"\n      }\n    }\n  },\n  \"asof\": \"2024-03-16T09:00:00.000000Z\"\n}",
+  "input": "{\n  \"sig\": \"5dd3af90b8c33ef56c56fb71f04e707284aa5e30b752ab41fac97f9a894aa43ae3d0ea793020f6c33600fe78a6aa941132d3cd30ed6c9666664d122f4f11f803\",\n  \"value\": \"108.92\",\n  \"valid\": {\n    \"date\": {\n      \"value\": \"2024-03-15\",\n      \"type\": \"date\"\n    }\n  },\n  \"type\": \"number\",\n  \"tx\": \"2024-03-15T16:00:00.000000Z\",\n  \"summary\": \"The function declares an argument the cell lacks.\",\n  \"publisher\": \"calc.example.net\",\n  \"proto\": \"datumesh/1\",\n  \"licence\": \"CC-BY-4.0\",\n  \"issued\": \"2024-03-16T09:00:00.000000Z\",\n  \"inputs\": [\n    \"19a5fe3a744c5792f747fb4c286ce396ab44b95922de4f07937502fe595b6f81\"\n  ],\n  \"computed_by\": \"calc.example.net#f7ec60a92abf4774\",\n  \"cell\": {\n    \"ns\": \"calc.example.net\",\n    \"fn_hash\": \"3eccd80dc37de543829015d4b83b9110742331e6ef56369cf21e8ae0aedc769e\",\n    \"fn\": \"convert\",\n    \"args\": {\n      \"quote\": {\n        \"value\": \"USD\",\n        \"type\": \"string\"\n      },\n      \"date\": {\n        \"value\": \"2024-03-15\",\n        \"type\": \"date\"\n      },\n      \"base\": {\n        \"value\": \"EUR\",\n        \"type\": \"string\"\n      },\n      \"amount\": {\n        \"value\": \"100\",\n        \"type\": \"number\"\n      }\n    }\n  },\n  \"asof\": \"2024-03-16T09:00:00.000000Z\"\n}",
   "keypair": {
     "seed": "81589e69e00a82e983f0274d169ffa6c2ea7bc26833833826e57ce690125d5b5",
     "public": "ccd4faa3a0b8338bc796d3bfc30bda2f6e87d336a576b70dc9d47cbfe0e8830f",
@@ -36,6 +36,9 @@
         "args": {
           "amount": {
             "type": "number",
+            "unit": {
+              "arg": "base"
+            },
             "valid": false
           },
           "base": {
@@ -55,11 +58,16 @@
             "valid": false
           }
         },
-        "returns": "number"
+        "returns": {
+          "type": "number",
+          "unit": {
+            "arg": "quote"
+          }
+        }
       }
     },
     "inputs": {
-      "501f744d910c585859a5be4f3b62385ed0d6803db53dbbf95dff5097a68bee0d": "{\n  \"sig\": \"e2d778dfb2ff9650521da446b4626f4fa76f547bf27ab2cca8bd56e9270f9a9e3dc24970d98705f3c371502cf4dbcaec99f9361851a436854c984c03a10e5603\",\n  \"value\": \"1.0892\",\n  \"valid\": {\n    \"date\": {\n      \"value\": \"2024-03-15\",\n      \"type\": \"date\"\n    }\n  },\n  \"type\": \"number\",\n  \"tx\": \"2024-03-15T16:00:00.000000Z\",\n  \"summary\": \"1 EUR was worth 1.0892 USD at the 15 March 2024 reference rate.\",\n  \"publisher\": \"rates.example.org\",\n  \"proto\": \"datumesh/1\",\n  \"licence\": \"CC-BY-4.0\",\n  \"issued\": \"2024-03-16T09:00:00.000000Z\",\n  \"inputs\": [],\n  \"computed_by\": \"rates.example.org#d712b32a2cc5cb7c\",\n  \"cell\": {\n    \"ns\": \"rates.example.org\",\n    \"fn_hash\": \"88445cddbf86a358e1318934bfc8160728a9a0ff2b05b50be6c0fee2eb3e5af4\",\n    \"fn\": \"fx_rate\",\n    \"args\": {\n      \"quote\": {\n        \"value\": \"USD\",\n        \"type\": \"string\"\n      },\n      \"date\": {\n        \"value\": \"2024-03-15\",\n        \"type\": \"date\"\n      },\n      \"base\": {\n        \"value\": \"EUR\",\n        \"type\": \"string\"\n      }\n    }\n  },\n  \"asof\": \"2024-03-16T09:00:00.000000Z\"\n}"
+      "19a5fe3a744c5792f747fb4c286ce396ab44b95922de4f07937502fe595b6f81": "{\n  \"sig\": \"ddf61d49ff6593f7b0d94c76f19fefdd27f47778740b3666fc1c3315ec00c5d216f887c4078deb05c83d4d743453c6fecc568473663b3282ac4eda8c3eadcf01\",\n  \"value\": \"1.0892\",\n  \"valid\": {\n    \"date\": {\n      \"value\": \"2024-03-15\",\n      \"type\": \"date\"\n    }\n  },\n  \"type\": \"number\",\n  \"tx\": \"2024-03-15T16:00:00.000000Z\",\n  \"summary\": \"1 EUR was worth 1.0892 USD at the 15 March 2024 reference rate.\",\n  \"publisher\": \"rates.example.org\",\n  \"proto\": \"datumesh/1\",\n  \"licence\": \"CC-BY-4.0\",\n  \"issued\": \"2024-03-16T09:00:00.000000Z\",\n  \"inputs\": [],\n  \"computed_by\": \"rates.example.org#d712b32a2cc5cb7c\",\n  \"cell\": {\n    \"ns\": \"rates.example.org\",\n    \"fn_hash\": \"7b58ecb8fd23b644c87951d0bd609790ff547cbb23fed27186c669ce2ce0aa80\",\n    \"fn\": \"fx_rate\",\n    \"args\": {\n      \"quote\": {\n        \"value\": \"USD\",\n        \"type\": \"string\"\n      },\n      \"date\": {\n        \"value\": \"2024-03-15\",\n        \"type\": \"date\"\n      },\n      \"base\": {\n        \"value\": \"EUR\",\n        \"type\": \"string\"\n      }\n    }\n  },\n  \"asof\": \"2024-03-16T09:00:00.000000Z\"\n}"
     },
     "value": {
       "type": "number",

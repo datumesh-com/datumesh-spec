@@ -1,7 +1,7 @@
 {
   "id": "uri/all-types",
   "kind": "uri",
-  "description": "Booleans, instants (colons are literal), strings and numbers; a namespace path segment.",
+  "description": "Booleans, instants (colons are literal), strings and numbers; a namespace path segment. Changed in spec-0.2.0: the signature input now declares units; the outputs are unchanged.",
   "valid": true,
   "input": "cell://example.org/sensors/reading?active=true&at=2024-03-15T16:00:00.000000Z&label=north-gate_2&ratio=-0.25",
   "signature": {
@@ -20,6 +20,7 @@
       },
       "ratio": {
         "type": "number",
+        "unit": "1",
         "valid": false
       }
     },

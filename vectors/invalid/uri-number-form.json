@@ -1,7 +1,7 @@
 {
   "id": "invalid/uri-number-form",
   "kind": "uri",
-  "description": "Numbers in URIs follow the number rules.",
+  "description": "Numbers in URIs follow the number rules. Changed in spec-0.2.0: the signature input now declares units; the outputs are unchanged.",
   "valid": false,
   "input": "cell://example.org/sensors/reading?active=true&at=2024-03-15T16:00:00.000000Z&label=x&ratio=-0.250",
   "signature": {
@@ -20,6 +20,7 @@
       },
       "ratio": {
         "type": "number",
+        "unit": "1",
         "valid": false
       }
     },

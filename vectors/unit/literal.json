@@ -1,0 +1,8 @@
+{
+  "id": "unit/literal",
+  "kind": "unit",
+  "description": "A literal unit resolves to itself.",
+  "valid": true,
+  "input": "{\n  \"descriptor\": {\n    \"signature\": {\n      \"returns\": {\n        \"unit\": \"degC\",\n        \"type\": \"number\"\n      },\n      \"args\": {\n        \"station\": {\n          \"valid\": false,\n          \"type\": \"string\"\n        },\n        \"date\": {\n          \"valid\": true,\n          \"type\": \"date\"\n        }\n      }\n    },\n    \"inputs\": [],\n    \"code\": {\n      \"lang\": \"stored\",\n      \"body\": \"\"\n    }\n  },\n  \"cell\": {\n    \"ns\": \"weather.example.org\",\n    \"fn_hash\": \"9d2a751d06edb92f6d92b8f7913ffc1b32dc825aa8decf82b0703f621cf5d60a\",\n    \"fn\": \"temperature\",\n    \"args\": {\n      \"station\": {\n        \"value\": \"EHAM\",\n        \"type\": \"string\"\n      },\n      \"date\": {\n        \"value\": \"2024-03-15\",\n        \"type\": \"date\"\n      }\n    }\n  }\n}",
+  "unit": "degC"
+}

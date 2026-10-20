@@ -1,0 +1,9 @@
+{
+  "id": "function/unit-rate-literal",
+  "kind": "function",
+  "description": "A rate between two fixed currencies: US dollars per one euro.",
+  "valid": true,
+  "input": "{\n  \"signature\": {\n    \"returns\": {\n      \"unit\": {\n        \"per\": \"EUR\",\n        \"of\": \"USD\"\n      },\n      \"type\": \"number\"\n    },\n    \"args\": {\n      \"date\": {\n        \"valid\": true,\n        \"type\": \"date\"\n      }\n    }\n  },\n  \"inputs\": [],\n  \"code\": {\n    \"lang\": \"stored\",\n    \"body\": \"\"\n  }\n}",
+  "canonical": "{\"code\":{\"body\":\"\",\"lang\":\"stored\"},\"inputs\":[],\"signature\":{\"args\":{\"date\":{\"type\":\"date\",\"valid\":true}},\"returns\":{\"type\":\"number\",\"unit\":{\"of\":\"USD\",\"per\":\"EUR\"}}}}",
+  "sha256": "a18e2a722e7bd2eb1d8f996f100bb7c0885ce3ec425bdd2bb527c565ce9cb46e"
+}

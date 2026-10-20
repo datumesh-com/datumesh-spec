@@ -1,0 +1,8 @@
+{
+  "id": "invalid/function-unit-arg-not-string",
+  "kind": "function",
+  "description": "A unit reference names a string argument.",
+  "valid": false,
+  "input": "{\n  \"signature\": {\n    \"returns\": {\n      \"unit\": {\n        \"arg\": \"currency\"\n      },\n      \"type\": \"number\"\n    },\n    \"args\": {\n      \"currency\": {\n        \"valid\": false,\n        \"type\": \"date\"\n      }\n    }\n  },\n  \"inputs\": [],\n  \"code\": {\n    \"lang\": \"stored\",\n    \"body\": \"\"\n  }\n}",
+  "error": "E_CANON_UNIT"
+}

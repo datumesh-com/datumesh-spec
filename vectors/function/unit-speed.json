@@ -1,0 +1,9 @@
+{
+  "id": "function/unit-speed",
+  "kind": "function",
+  "description": "m/s is one fixed symbol, not a quotient.",
+  "valid": true,
+  "input": "{\n  \"signature\": {\n    \"returns\": {\n      \"unit\": \"m/s\",\n      \"type\": \"number\"\n    },\n    \"args\": {\n      \"station\": {\n        \"valid\": false,\n        \"type\": \"string\"\n      },\n      \"date\": {\n        \"valid\": true,\n        \"type\": \"date\"\n      }\n    }\n  },\n  \"inputs\": [],\n  \"code\": {\n    \"lang\": \"stored\",\n    \"body\": \"\"\n  }\n}",
+  "canonical": "{\"code\":{\"body\":\"\",\"lang\":\"stored\"},\"inputs\":[],\"signature\":{\"args\":{\"date\":{\"type\":\"date\",\"valid\":true},\"station\":{\"type\":\"string\",\"valid\":false}},\"returns\":{\"type\":\"number\",\"unit\":\"m/s\"}}}",
+  "sha256": "76b70c12aedcb83d81b28586009d191626fe678cbed8703331a5dabfddcdc340"
+}

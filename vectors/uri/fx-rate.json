@@ -1,7 +1,7 @@
 {
   "id": "uri/fx-rate",
   "kind": "uri",
-  "description": "Arguments sorted by name; asof omitted means now.",
+  "description": "Arguments sorted by name; asof omitted means now. Changed in spec-0.2.0: the signature input now declares units; the outputs are unchanged.",
   "valid": true,
   "input": "cell://rates.example.org/fx_rate?base=EUR&date=2024-03-15&quote=USD",
   "signature": {
@@ -19,7 +19,17 @@
         "valid": false
       }
     },
-    "returns": "number"
+    "returns": {
+      "type": "number",
+      "unit": {
+        "of": {
+          "arg": "quote"
+        },
+        "per": {
+          "arg": "base"
+        }
+      }
+    }
   },
   "object": {
     "args": {

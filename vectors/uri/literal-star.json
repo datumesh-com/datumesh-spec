@@ -1,7 +1,7 @@
 {
   "id": "uri/literal-star",
   "kind": "uri",
-  "description": "The string \"*\" is percent-encoded, so it cannot be mistaken for a slice.",
+  "description": "The string \"*\" is percent-encoded, so it cannot be mistaken for a slice. Changed in spec-0.2.0: the signature input now declares units; the outputs are unchanged.",
   "valid": true,
   "input": "cell://rates.example.org/fx_rate?base=%2A&date=2024-03-15&quote=USD",
   "signature": {
@@ -19,7 +19,17 @@
         "valid": false
       }
     },
-    "returns": "number"
+    "returns": {
+      "type": "number",
+      "unit": {
+        "of": {
+          "arg": "quote"
+        },
+        "per": {
+          "arg": "base"
+        }
+      }
+    }
   },
   "object": {
     "args": {

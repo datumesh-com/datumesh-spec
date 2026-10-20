@@ -1,0 +1,9 @@
+{
+  "id": "function/unit-withdrawn-currency",
+  "kind": "function",
+  "description": "Withdrawn currency codes used by historical rates remain units.",
+  "valid": true,
+  "input": "{\n  \"signature\": {\n    \"returns\": {\n      \"unit\": {\n        \"per\": \"EUR\",\n        \"of\": \"GRD\"\n      },\n      \"type\": \"number\"\n    },\n    \"args\": {\n      \"date\": {\n        \"valid\": true,\n        \"type\": \"date\"\n      }\n    }\n  },\n  \"inputs\": [],\n  \"code\": {\n    \"lang\": \"stored\",\n    \"body\": \"\"\n  }\n}",
+  "canonical": "{\"code\":{\"body\":\"\",\"lang\":\"stored\"},\"inputs\":[],\"signature\":{\"args\":{\"date\":{\"type\":\"date\",\"valid\":true}},\"returns\":{\"type\":\"number\",\"unit\":{\"of\":\"GRD\",\"per\":\"EUR\"}}}}",
+  "sha256": "c76ee3ae16fcb17bc98135237560aad1cdd6ba3f2aa4413041fe17b4d152d3e8"
+}

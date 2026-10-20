@@ -1,6 +1,6 @@
 # Datumesh in spreadsheets: Excel add-in and Google Sheets add-on
 
-Status: **design, non-normative, not built.** This document specifies two future integrations so that their tests can be written before their code. It does not change the protocol (`../../SPEC.md`, `spec-0.1.1`). Where it uses protocol terms (cell, receipt, slice, `asof`) they mean what the protocol says.
+Status: **design, non-normative, not built.** This document specifies two future integrations so that their tests can be written before their code. It does not change the protocol (`../../SPEC.md`, `spec-0.2.0`). Where it uses protocol terms (cell, receipt, slice, `asof`) they mean what the protocol says.
 
 Dependencies that do not exist yet: a mesh that resolves function names and serves receipts (SPEC 5.3), and a function-resolution endpoint returning descriptors. Verification reuses the JavaScript verifier `@datumesh/verify`.
 
@@ -14,6 +14,7 @@ Every requirement has an ID (`SS-…`). The conversion cases in `cases.json` ref
 | `DATUMESH.TEXT(function, args…)` | `DATUMESH_TEXT(function, args…)` | the value's exact lexical form, as text |
 | `DATUMESH.RECEIPT(function, args…)` | `DATUMESH_RECEIPT(function, args…)` | the receipt hash (64 hex) |
 | `DATUMESH.SLICE(function, args…)` | `DATUMESH_SLICE(function, args…)` | a two-column spilled array: open argument values, cell values |
+| `DATUMESH.UNIT(function, args…)` | `DATUMESH_UNIT(function, args…)` | the value's resolved unit as text (`USD/EUR`, `degC`), or empty text when the function does not return a number (SPEC 7.1) |
 
 - **SS-F1** `function` is a fully qualified function name (SPEC 2.3), given as text or a reference to a cell containing it. Aliases are not accepted (`E_CANON_NAME`).
 - **SS-F2** Arguments are given as name/value pairs, either inline (`"base", B2, "quote", C2`) or as one two-column range (names in the first column). An odd number of inline arguments, a non-text name, or a range that is not two columns wide is `E_SHEET_ARGS`.
@@ -52,6 +53,7 @@ Per type:
 - **SS-C9 instant [Sheets].** A `Date` is an absolute time: convert it to UTC and write it with six fractional digits. Sheets carries milliseconds, so the last three digits are `000`.
 - **SS-C10 string.** Only text is accepted. It must satisfy SPEC 3.5 exactly; text that is not NFC or contains line breaks is `E_CANON_STRING`, not normalised.
 - **SS-C11 boolean.** Only TRUE or FALSE. The text `"TRUE"` is `E_SHEET_TYPE`.
+- **SS-C12 blob.** Only text, in the exact blob form (SPEC 3.7, SS-C4). A blob that is not canonical is `E_CANON_BLOB`. The add-in never fetches or hashes blob content to build an argument.
 
 ## 4. Converting values back to the sheet
 
@@ -59,6 +61,8 @@ Per type:
 - **SS-V2 date.** **[Excel]** returns the serial number in the workbook's date system; the user applies a date format, because custom functions cannot set one. For a date before 1900-03-01, or when the date system is unknown, it returns text. **[Sheets]** returns a `Date` at midnight in the spreadsheet's time zone.
 - **SS-V3 instant.** Returns the canonical text (`…Z`) in both hosts. A zone-less serial would invite misreading.
 - **SS-V4 string, boolean.** Returned as text and TRUE/FALSE.
+- **SS-V4a blob.** Returned as the blob text. The add-in does not download content into the sheet.
+- **SS-V4b units.** `CELL` returns a bare number; its unit is not shown in the value. `UNIT` gives the unit, resolved from the descriptor and the cell's arguments with `@datumesh/verify`'s `resolvedUnit`.
 - **SS-V5** `SLICE` returns one row per cell, sorted by the open arguments' canonical values, with each value converted as above.
 
 ## 5. Transaction time and recalculation

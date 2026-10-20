@@ -74,6 +74,21 @@ class Coverage(unittest.TestCase):
         self.assertGreaterEqual(len(VECTORS), 60)
         self.assertGreaterEqual(sum(not v["valid"] for v in VECTORS), 5)
 
+    def count(self, valid, *needles):
+        return sum(v["valid"] == valid and any(n in v["id"] for n in needles) for v in VECTORS)
+
+    def test_spec_0_2_0_counts(self):
+        """Step 0.2b brief: at least 10+10 unit, 8+8 blob and 12 envelope vectors."""
+        self.assertGreaterEqual(self.count(True, "/unit-", "unit/"), 10)
+        self.assertGreaterEqual(self.count(False, "-unit-", "invalid/unit-"), 10)
+        self.assertGreaterEqual(self.count(True, "blob"), 8)
+        self.assertGreaterEqual(self.count(False, "blob"), 8)
+        envelopes = [v for v in VECTORS if v["kind"] == "envelope"]
+        self.assertGreaterEqual(len(envelopes), 12)
+        valid = [v for v in envelopes if v["valid"]]
+        self.assertEqual({v["outcome"] for v in valid}, set(canon.ENVELOPE_MEMBERS))
+        self.assertEqual({v["trust"] for v in valid if "trust" in v}, set(canon.TRUST))
+
     def test_unique_ids_match_files(self):
         ids = [v["id"] for v in VECTORS]
         self.assertEqual(len(ids), len(set(ids)))
@@ -111,6 +126,11 @@ class Coverage(unittest.TestCase):
 class SpecConsistency(unittest.TestCase):
     SPEC = (ROOT / "SPEC.md").read_text(encoding="utf-8")
 
+    def test_unit_schema_lists_units_md(self):
+        defs = json.loads((ROOT / "schemas" / "defs.schema.json").read_text())["$defs"]
+        self.assertEqual(set(defs["unitLiteral"]["anyOf"][0]["enum"]), set().union(*canon.UNITS.values()))
+        self.assertEqual(set(defs["currency"]["enum"]), canon.CURRENCIES)
+
     def test_error_table_matches_tool(self):
         table = re.findall(r"^\| `(E_[A-Z_]+)` \|", self.SPEC, re.M)
         self.assertEqual(tuple(table), canon.ERROR_CODES)
@@ -127,7 +147,8 @@ SCHEMA_EXPRESSIBLE = {
     "E_SCHEMA", "E_CANON_NAME", "E_CANON_ARG_NAME", "E_CANON_TYPE", "E_CANON_NUMBER",
     "E_CANON_HEX", "E_CANON_LICENCE", "E_CANON_INSTANT", "E_KEY_DOC",
 }
-SCHEMA_FOR_KIND = {"scalar": "scalar", "cell": "cell", "ref": "cell-ref", "function": "function", "receipt": "receipt"}
+SCHEMA_FOR_KIND = {"scalar": "scalar", "cell": "cell", "ref": "cell-ref", "function": "function", "receipt": "receipt",
+                   "envelope": "envelope"}
 
 
 class Schemas(unittest.TestCase):

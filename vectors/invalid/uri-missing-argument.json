@@ -1,7 +1,7 @@
 {
   "id": "invalid/uri-missing-argument",
   "kind": "uri",
-  "description": "A slice is written date=*; omission is an error.",
+  "description": "A slice is written date=*; omission is an error. Changed in spec-0.2.0: the signature input now declares units; the outputs are unchanged.",
   "valid": false,
   "input": "cell://rates.example.org/fx_rate?base=EUR&quote=USD",
   "signature": {
@@ -19,7 +19,17 @@
         "valid": false
       }
     },
-    "returns": "number"
+    "returns": {
+      "type": "number",
+      "unit": {
+        "of": {
+          "arg": "quote"
+        },
+        "per": {
+          "arg": "base"
+        }
+      }
+    }
   },
   "error": "E_ARG_MISSING"
 }

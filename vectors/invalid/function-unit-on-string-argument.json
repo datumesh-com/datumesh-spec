@@ -1,0 +1,8 @@
+{
+  "id": "invalid/function-unit-on-string-argument",
+  "kind": "function",
+  "description": "Only number arguments have a unit.",
+  "valid": false,
+  "input": "{\n  \"signature\": {\n    \"returns\": \"boolean\",\n    \"args\": {\n      \"name\": {\n        \"valid\": false,\n        \"unit\": \"1\",\n        \"type\": \"string\"\n      }\n    }\n  },\n  \"inputs\": [],\n  \"code\": {\n    \"lang\": \"stored\",\n    \"body\": \"\"\n  }\n}",
+  "error": "E_CANON_UNIT"
+}

@@ -1,8 +1,8 @@
 {
   "id": "invalid/cell-fn-hash-uppercase",
   "kind": "cell",
-  "description": "Hashes are lowercase hex.",
+  "description": "Hashes are lowercase hex. Changed in spec-0.2.0: fn_hash is the hash of a descriptor that now declares units.",
   "valid": false,
-  "input": "{\n  \"ns\": \"rates.example.org\",\n  \"fn_hash\": \"88445CDDBF86A358E1318934BFC8160728A9A0FF2B05B50BE6C0FEE2EB3E5AF4\",\n  \"fn\": \"fx_rate\",\n  \"args\": {\n    \"quote\": {\n      \"value\": \"USD\",\n      \"type\": \"string\"\n    },\n    \"date\": {\n      \"value\": \"2024-03-15\",\n      \"type\": \"date\"\n    },\n    \"base\": {\n      \"value\": \"EUR\",\n      \"type\": \"string\"\n    }\n  }\n}",
+  "input": "{\n  \"ns\": \"rates.example.org\",\n  \"fn_hash\": \"7B58ECB8FD23B644C87951D0BD609790FF547CBB23FED27186C669CE2CE0AA80\",\n  \"fn\": \"fx_rate\",\n  \"args\": {\n    \"quote\": {\n      \"value\": \"USD\",\n      \"type\": \"string\"\n    },\n    \"date\": {\n      \"value\": \"2024-03-15\",\n      \"type\": \"date\"\n    },\n    \"base\": {\n      \"value\": \"EUR\",\n      \"type\": \"string\"\n    }\n  }\n}",
   "error": "E_CANON_HEX"
 }

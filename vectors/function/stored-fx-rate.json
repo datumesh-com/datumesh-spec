@@ -1,9 +1,9 @@
 {
   "id": "function/stored-fx-rate",
   "kind": "function",
-  "description": "A stored function: no code, no inputs. Its hash is the fn_hash in fx_rate cells.",
+  "description": "A stored function: no code, no inputs. Its hash is the fn_hash in fx_rate cells. Changed in spec-0.2.0: the descriptor now declares units (SPEC 7.1), so its bytes and function hash changed.",
   "valid": true,
-  "input": "{\n  \"signature\": {\n    \"returns\": \"number\",\n    \"args\": {\n      \"quote\": {\n        \"valid\": false,\n        \"type\": \"string\"\n      },\n      \"date\": {\n        \"valid\": true,\n        \"type\": \"date\"\n      },\n      \"base\": {\n        \"valid\": false,\n        \"type\": \"string\"\n      }\n    }\n  },\n  \"inputs\": [],\n  \"code\": {\n    \"lang\": \"stored\",\n    \"body\": \"\"\n  }\n}",
-  "canonical": "{\"code\":{\"body\":\"\",\"lang\":\"stored\"},\"inputs\":[],\"signature\":{\"args\":{\"base\":{\"type\":\"string\",\"valid\":false},\"date\":{\"type\":\"date\",\"valid\":true},\"quote\":{\"type\":\"string\",\"valid\":false}},\"returns\":\"number\"}}",
-  "sha256": "88445cddbf86a358e1318934bfc8160728a9a0ff2b05b50be6c0fee2eb3e5af4"
+  "input": "{\n  \"signature\": {\n    \"returns\": {\n      \"unit\": {\n        \"per\": {\n          \"arg\": \"base\"\n        },\n        \"of\": {\n          \"arg\": \"quote\"\n        }\n      },\n      \"type\": \"number\"\n    },\n    \"args\": {\n      \"quote\": {\n        \"valid\": false,\n        \"type\": \"string\"\n      },\n      \"date\": {\n        \"valid\": true,\n        \"type\": \"date\"\n      },\n      \"base\": {\n        \"valid\": false,\n        \"type\": \"string\"\n      }\n    }\n  },\n  \"inputs\": [],\n  \"code\": {\n    \"lang\": \"stored\",\n    \"body\": \"\"\n  }\n}",
+  "canonical": "{\"code\":{\"body\":\"\",\"lang\":\"stored\"},\"inputs\":[],\"signature\":{\"args\":{\"base\":{\"type\":\"string\",\"valid\":false},\"date\":{\"type\":\"date\",\"valid\":true},\"quote\":{\"type\":\"string\",\"valid\":false}},\"returns\":{\"type\":\"number\",\"unit\":{\"of\":{\"arg\":\"quote\"},\"per\":{\"arg\":\"base\"}}}}}",
+  "sha256": "7b58ecb8fd23b644c87951d0bd609790ff547cbb23fed27186c669ce2ce0aa80"
 }

@@ -1,0 +1,8 @@
+{
+  "id": "invalid/scalar-blob-length-too-large",
+  "kind": "scalar",
+  "description": "The length is at most 2^53 - 1.",
+  "valid": false,
+  "input": "{\n  \"value\": \"9dc30a40021f1f79d8dd9437ec9014ce134138326b72fcb9696485ab3d69330a:9007199254740992:text/plain\",\n  \"type\": \"blob\"\n}",
+  "error": "E_CANON_BLOB"
+}

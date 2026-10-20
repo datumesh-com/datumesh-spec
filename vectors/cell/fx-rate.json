@@ -1,9 +1,9 @@
 {
   "id": "cell/fx-rate",
   "kind": "cell",
-  "description": "A cell: namespace, function, function hash and typed arguments.",
+  "description": "A cell: namespace, function, function hash and typed arguments. Changed in spec-0.2.0: fn_hash is the hash of a descriptor that now declares units.",
   "valid": true,
-  "input": "{\n  \"ns\": \"rates.example.org\",\n  \"fn_hash\": \"88445cddbf86a358e1318934bfc8160728a9a0ff2b05b50be6c0fee2eb3e5af4\",\n  \"fn\": \"fx_rate\",\n  \"args\": {\n    \"quote\": {\n      \"value\": \"USD\",\n      \"type\": \"string\"\n    },\n    \"date\": {\n      \"value\": \"2024-03-15\",\n      \"type\": \"date\"\n    },\n    \"base\": {\n      \"value\": \"EUR\",\n      \"type\": \"string\"\n    }\n  }\n}",
-  "canonical": "{\"args\":{\"base\":{\"type\":\"string\",\"value\":\"EUR\"},\"date\":{\"type\":\"date\",\"value\":\"2024-03-15\"},\"quote\":{\"type\":\"string\",\"value\":\"USD\"}},\"fn\":\"fx_rate\",\"fn_hash\":\"88445cddbf86a358e1318934bfc8160728a9a0ff2b05b50be6c0fee2eb3e5af4\",\"ns\":\"rates.example.org\"}",
-  "sha256": "9ebea149cfe52c62a8cd23287c2c25f8a704bc0c2fa59ab0c5c9dcd55313c6b3"
+  "input": "{\n  \"ns\": \"rates.example.org\",\n  \"fn_hash\": \"7b58ecb8fd23b644c87951d0bd609790ff547cbb23fed27186c669ce2ce0aa80\",\n  \"fn\": \"fx_rate\",\n  \"args\": {\n    \"quote\": {\n      \"value\": \"USD\",\n      \"type\": \"string\"\n    },\n    \"date\": {\n      \"value\": \"2024-03-15\",\n      \"type\": \"date\"\n    },\n    \"base\": {\n      \"value\": \"EUR\",\n      \"type\": \"string\"\n    }\n  }\n}",
+  "canonical": "{\"args\":{\"base\":{\"type\":\"string\",\"value\":\"EUR\"},\"date\":{\"type\":\"date\",\"value\":\"2024-03-15\"},\"quote\":{\"type\":\"string\",\"value\":\"USD\"}},\"fn\":\"fx_rate\",\"fn_hash\":\"7b58ecb8fd23b644c87951d0bd609790ff547cbb23fed27186c669ce2ce0aa80\",\"ns\":\"rates.example.org\"}",
+  "sha256": "f566f2838815a8649fe467b7a41876c5d2b4deca9afb974b8c50caafd4633ca5"
 }

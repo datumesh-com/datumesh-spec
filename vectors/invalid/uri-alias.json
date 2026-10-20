@@ -1,7 +1,7 @@
 {
   "id": "invalid/uri-alias",
   "kind": "uri",
-  "description": "Aliases are resolved before a URI is formed.",
+  "description": "Aliases are resolved before a URI is formed. Changed in spec-0.2.0: the signature input now declares units; the outputs are unchanged.",
   "valid": false,
   "input": "cell://ecb/fx_rate?base=EUR&date=2024-03-15&quote=USD",
   "signature": {
@@ -19,7 +19,17 @@
         "valid": false
       }
     },
-    "returns": "number"
+    "returns": {
+      "type": "number",
+      "unit": {
+        "of": {
+          "arg": "quote"
+        },
+        "per": {
+          "arg": "base"
+        }
+      }
+    }
   },
   "error": "E_CANON_NAME"
 }

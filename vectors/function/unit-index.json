@@ -1,0 +1,9 @@
+{
+  "id": "function/unit-index",
+  "kind": "function",
+  "description": "A price index equal to 100 in 2015.",
+  "valid": true,
+  "input": "{\n  \"signature\": {\n    \"returns\": {\n      \"unit\": \"index:2015=100\",\n      \"type\": \"number\"\n    },\n    \"args\": {\n      \"date\": {\n        \"valid\": true,\n        \"type\": \"date\"\n      }\n    }\n  },\n  \"inputs\": [],\n  \"code\": {\n    \"lang\": \"stored\",\n    \"body\": \"\"\n  }\n}",
+  "canonical": "{\"code\":{\"body\":\"\",\"lang\":\"stored\"},\"inputs\":[],\"signature\":{\"args\":{\"date\":{\"type\":\"date\",\"valid\":true}},\"returns\":{\"type\":\"number\",\"unit\":\"index:2015=100\"}}}",
+  "sha256": "0a863a9af445dbcf7f2fc29c28d6297b43d4c216304bc177472e1374364fd544"
+}

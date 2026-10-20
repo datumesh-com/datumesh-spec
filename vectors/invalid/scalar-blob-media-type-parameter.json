@@ -1,0 +1,8 @@
+{
+  "id": "invalid/scalar-blob-media-type-parameter",
+  "kind": "scalar",
+  "description": "Media type parameters are not allowed.",
+  "valid": false,
+  "input": "{\n  \"value\": \"9dc30a40021f1f79d8dd9437ec9014ce134138326b72fcb9696485ab3d69330a:17:text/plain;charset=utf-8\",\n  \"type\": \"blob\"\n}",
+  "error": "E_CANON_BLOB"
+}

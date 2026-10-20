@@ -1,0 +1,8 @@
+{
+  "id": "invalid/unit-not-a-unit",
+  "kind": "unit",
+  "description": "A referenced argument's value must itself be a listed unit.",
+  "valid": false,
+  "input": "{\n  \"descriptor\": {\n    \"signature\": {\n      \"returns\": {\n        \"unit\": {\n          \"arg\": \"currency\"\n        },\n        \"type\": \"number\"\n      },\n      \"args\": {\n        \"currency\": {\n          \"valid\": false,\n          \"type\": \"string\"\n        },\n        \"amount\": {\n          \"valid\": false,\n          \"unit\": {\n            \"arg\": \"currency\"\n          },\n          \"type\": \"number\"\n        }\n      }\n    },\n    \"inputs\": [],\n    \"code\": {\n      \"lang\": \"stored\",\n      \"body\": \"\"\n    }\n  },\n  \"cell\": {\n    \"ns\": \"calc.example.net\",\n    \"fn_hash\": \"111b80d1175689da3786d712f6c214df28048e53a6a41912ce0bdfae1fc671db\",\n    \"fn\": \"amount_in\",\n    \"args\": {\n      \"currency\": {\n        \"value\": \"dollars\",\n        \"type\": \"string\"\n      },\n      \"amount\": {\n        \"value\": \"5\",\n        \"type\": \"number\"\n      }\n    }\n  }\n}",
+  "error": "E_CANON_UNIT"
+}

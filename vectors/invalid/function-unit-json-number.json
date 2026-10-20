@@ -1,0 +1,8 @@
+{
+  "id": "invalid/function-unit-json-number",
+  "kind": "function",
+  "description": "A unit is a string or an object, never a JSON number.",
+  "valid": false,
+  "input": "{\n  \"signature\": {\n    \"returns\": {\n      \"unit\": 1,\n      \"type\": \"number\"\n    },\n    \"args\": {}\n  },\n  \"inputs\": [],\n  \"code\": {\n    \"lang\": \"stored\",\n    \"body\": \"\"\n  }\n}",
+  "error": "E_SCHEMA"
+}

@@ -1,0 +1,8 @@
+{
+  "id": "invalid/unit-fn-hash-mismatch",
+  "kind": "unit",
+  "description": "The descriptor must be the cell's function.",
+  "valid": false,
+  "input": "{\n  \"descriptor\": {\n    \"signature\": {\n      \"returns\": {\n        \"unit\": {\n          \"arg\": \"quote\"\n        },\n        \"type\": \"number\"\n      },\n      \"args\": {\n        \"quote\": {\n          \"valid\": false,\n          \"type\": \"string\"\n        },\n        \"date\": {\n          \"valid\": true,\n          \"type\": \"date\"\n        },\n        \"base\": {\n          \"valid\": false,\n          \"type\": \"string\"\n        },\n        \"amount\": {\n          \"valid\": false,\n          \"unit\": {\n            \"arg\": \"base\"\n          },\n          \"type\": \"number\"\n        }\n      }\n    },\n    \"inputs\": [\n      \"rates.example.org/fx_rate\"\n    ],\n    \"code\": {\n      \"lang\": \"expr\",\n      \"body\": \"amount * rates.example.org/fx_rate(base: base, date: date, quote: quote)\\n\"\n    }\n  },\n  \"cell\": {\n    \"ns\": \"rates.example.org\",\n    \"fn_hash\": \"7b58ecb8fd23b644c87951d0bd609790ff547cbb23fed27186c669ce2ce0aa80\",\n    \"fn\": \"fx_rate\",\n    \"args\": {\n      \"quote\": {\n        \"value\": \"USD\",\n        \"type\": \"string\"\n      },\n      \"date\": {\n        \"value\": \"2024-03-15\",\n        \"type\": \"date\"\n      },\n      \"base\": {\n        \"value\": \"EUR\",\n        \"type\": \"string\"\n      }\n    }\n  }\n}",
+  "error": "E_FN_HASH_MISMATCH"
+}

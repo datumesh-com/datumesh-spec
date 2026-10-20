@@ -1,0 +1,9 @@
+{
+  "id": "function/unit-energy",
+  "kind": "function",
+  "description": "Energy in kilowatt-hours.",
+  "valid": true,
+  "input": "{\n  \"signature\": {\n    \"returns\": {\n      \"unit\": \"kWh\",\n      \"type\": \"number\"\n    },\n    \"args\": {\n      \"date\": {\n        \"valid\": true,\n        \"type\": \"date\"\n      }\n    }\n  },\n  \"inputs\": [],\n  \"code\": {\n    \"lang\": \"stored\",\n    \"body\": \"\"\n  }\n}",
+  "canonical": "{\"code\":{\"body\":\"\",\"lang\":\"stored\"},\"inputs\":[],\"signature\":{\"args\":{\"date\":{\"type\":\"date\",\"valid\":true}},\"returns\":{\"type\":\"number\",\"unit\":\"kWh\"}}}",
+  "sha256": "c01e5ad11b97e55cee3faba984ebc6fdf35d99ab88eb86f248360e06d31f4eaf"
+}

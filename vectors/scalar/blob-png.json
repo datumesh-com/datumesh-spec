@@ -1,0 +1,9 @@
+{
+  "id": "scalar/blob-png",
+  "kind": "scalar",
+  "description": "A 1x1 PNG image.",
+  "valid": true,
+  "input": "{\n  \"value\": \"fbef92edfa2ebc8b9ed040f126f7ab1952516d5e843d159160d6c8d6c78a0fa5:70:image/png\",\n  \"type\": \"blob\"\n}",
+  "canonical": "{\"type\":\"blob\",\"value\":\"fbef92edfa2ebc8b9ed040f126f7ab1952516d5e843d159160d6c8d6c78a0fa5:70:image/png\"}",
+  "sha256": "acfb6a8e9438815b0b89f35fd4544c74e7e94caa8a9fc398dc84fe1dbb2ad379"
+}

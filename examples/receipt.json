@@ -16,7 +16,7 @@
       }
     },
     "fn": "fx_rate",
-    "fn_hash": "88445cddbf86a358e1318934bfc8160728a9a0ff2b05b50be6c0fee2eb3e5af4",
+    "fn_hash": "7b58ecb8fd23b644c87951d0bd609790ff547cbb23fed27186c669ce2ce0aa80",
     "ns": "rates.example.org"
   },
   "computed_by": "rates.example.org#d712b32a2cc5cb7c",
@@ -35,5 +35,5 @@
     }
   },
   "value": "1.0892",
-  "sig": "e2d778dfb2ff9650521da446b4626f4fa76f547bf27ab2cca8bd56e9270f9a9e3dc24970d98705f3c371502cf4dbcaec99f9361851a436854c984c03a10e5603"
+  "sig": "ddf61d49ff6593f7b0d94c76f19fefdd27f47778740b3666fc1c3315ec00c5d216f887c4078deb05c83d4d743453c6fecc568473663b3282ac4eda8c3eadcf01"
 }

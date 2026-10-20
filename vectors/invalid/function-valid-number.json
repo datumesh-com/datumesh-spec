@@ -1,8 +1,8 @@
 {
   "id": "invalid/function-valid-number",
   "kind": "function",
-  "description": "A valid-time argument must be a date, instant or string.",
+  "description": "A valid-time argument must be a date, instant or string. Changed in spec-0.2.0: the descriptor now declares units (SPEC 7.1), so its bytes and function hash changed.",
   "valid": false,
-  "input": "{\n  \"signature\": {\n    \"returns\": \"number\",\n    \"args\": {\n      \"n\": {\n        \"valid\": true,\n        \"type\": \"number\"\n      }\n    }\n  },\n  \"inputs\": [],\n  \"code\": {\n    \"lang\": \"stored\",\n    \"body\": \"\"\n  }\n}",
+  "input": "{\n  \"signature\": {\n    \"returns\": {\n      \"unit\": \"1\",\n      \"type\": \"number\"\n    },\n    \"args\": {\n      \"n\": {\n        \"valid\": true,\n        \"unit\": \"1\",\n        \"type\": \"number\"\n      }\n    }\n  },\n  \"inputs\": [],\n  \"code\": {\n    \"lang\": \"stored\",\n    \"body\": \"\"\n  }\n}",
   "error": "E_CANON_TYPE"
 }

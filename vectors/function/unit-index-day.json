@@ -1,0 +1,9 @@
+{
+  "id": "function/unit-index-day",
+  "kind": "function",
+  "description": "An index based on one day.",
+  "valid": true,
+  "input": "{\n  \"signature\": {\n    \"returns\": {\n      \"unit\": \"index:1984-01-03=1000\",\n      \"type\": \"number\"\n    },\n    \"args\": {\n      \"date\": {\n        \"valid\": true,\n        \"type\": \"date\"\n      }\n    }\n  },\n  \"inputs\": [],\n  \"code\": {\n    \"lang\": \"stored\",\n    \"body\": \"\"\n  }\n}",
+  "canonical": "{\"code\":{\"body\":\"\",\"lang\":\"stored\"},\"inputs\":[],\"signature\":{\"args\":{\"date\":{\"type\":\"date\",\"valid\":true}},\"returns\":{\"type\":\"number\",\"unit\":\"index:1984-01-03=1000\"}}}",
+  "sha256": "85909766602afea59c53122f447d889cce67b3de64cf52908d2ef015d83add0c"
+}

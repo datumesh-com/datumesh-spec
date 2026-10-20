@@ -4,46 +4,142 @@
   "title": "Datumesh function descriptor",
   "description": "The object whose JCS SHA-256 is the function hash (SPEC.md section 7).",
   "type": "object",
-  "required": ["code", "inputs", "signature"],
+  "required": [
+    "code",
+    "inputs",
+    "signature"
+  ],
   "additionalProperties": false,
   "properties": {
     "code": {
       "type": "object",
-      "required": ["body", "lang"],
+      "required": [
+        "body",
+        "lang"
+      ],
       "additionalProperties": false,
       "properties": {
-        "body": { "type": "string", "pattern": "^[^\u0000-\u0008\u000b-\u001f\u007f-\u009f]*$" },
-        "lang": { "$ref": "defs.schema.json#/$defs/name" }
+        "body": {
+          "type": "string",
+          "pattern": "^[^\u0000-\b\u000b-\u001f-]*$"
+        },
+        "lang": {
+          "$ref": "defs.schema.json#/$defs/name"
+        }
       }
     },
     "inputs": {
       "type": "array",
       "uniqueItems": true,
       "maxItems": 4096,
-      "items": { "$ref": "defs.schema.json#/$defs/functionName" }
+      "items": {
+        "$ref": "defs.schema.json#/$defs/functionName"
+      }
     },
     "signature": {
       "type": "object",
-      "required": ["args", "returns"],
+      "required": [
+        "args",
+        "returns"
+      ],
       "additionalProperties": false,
       "properties": {
         "args": {
           "type": "object",
           "maxProperties": 32,
-          "propertyNames": { "$ref": "defs.schema.json#/$defs/argName" },
+          "propertyNames": {
+            "$ref": "defs.schema.json#/$defs/argName"
+          },
           "additionalProperties": {
             "type": "object",
-            "required": ["type", "valid"],
+            "required": [
+              "type",
+              "valid"
+            ],
             "additionalProperties": false,
             "properties": {
-              "type": { "$ref": "defs.schema.json#/$defs/type" },
-              "valid": { "type": "boolean" }
+              "type": {
+                "$ref": "defs.schema.json#/$defs/type"
+              },
+              "unit": {
+                "$ref": "defs.schema.json#/$defs/unit"
+              },
+              "valid": {
+                "type": "boolean"
+              }
             },
-            "if": { "properties": { "valid": { "const": true } } },
-            "then": { "properties": { "type": { "enum": ["date", "instant", "string"] } } }
+            "allOf": [
+              {
+                "if": {
+                  "properties": {
+                    "valid": {
+                      "const": true
+                    }
+                  }
+                },
+                "then": {
+                  "properties": {
+                    "type": {
+                      "enum": [
+                        "date",
+                        "instant",
+                        "string"
+                      ]
+                    }
+                  }
+                }
+              },
+              {
+                "if": {
+                  "properties": {
+                    "type": {
+                      "const": "number"
+                    }
+                  }
+                },
+                "then": {
+                  "required": [
+                    "unit"
+                  ]
+                },
+                "else": {
+                  "not": {
+                    "required": [
+                      "unit"
+                    ]
+                  }
+                }
+              }
+            ]
           }
         },
-        "returns": { "$ref": "defs.schema.json#/$defs/type" }
+        "returns": {
+          "description": "A type name, except number, which is {\"type\": \"number\", \"unit\": ...} (SPEC.md 7, D23).",
+          "anyOf": [
+            {
+              "$ref": "defs.schema.json#/$defs/type",
+              "not": {
+                "const": "number"
+              }
+            },
+            {
+              "type": "object",
+              "required": [
+                "type",
+                "unit"
+              ],
+              "additionalProperties": false,
+              "properties": {
+                "type": {
+                  "const": "number"
+                },
+                "unit": {
+                  "$ref": "defs.schema.json#/$defs/unit"
+                }
+              }
+            }
+          ]
+        }
       }
     }
   }

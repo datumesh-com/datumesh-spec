@@ -1,0 +1,9 @@
+{
+  "id": "function/unit-basis-points",
+  "kind": "function",
+  "description": "A spread in basis points.",
+  "valid": true,
+  "input": "{\n  \"signature\": {\n    \"returns\": {\n      \"unit\": \"bp\",\n      \"type\": \"number\"\n    },\n    \"args\": {\n      \"date\": {\n        \"valid\": true,\n        \"type\": \"date\"\n      }\n    }\n  },\n  \"inputs\": [],\n  \"code\": {\n    \"lang\": \"stored\",\n    \"body\": \"\"\n  }\n}",
+  "canonical": "{\"code\":{\"body\":\"\",\"lang\":\"stored\"},\"inputs\":[],\"signature\":{\"args\":{\"date\":{\"type\":\"date\",\"valid\":true}},\"returns\":{\"type\":\"number\",\"unit\":\"bp\"}}}",
+  "sha256": "791e4cb084a10204bcccd76117b20831fb5cbe9553e6571eac13d4de758e2cc1"
+}

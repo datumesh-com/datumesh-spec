@@ -1,0 +1,8 @@
+{
+  "id": "invalid/scalar-blob-uppercase-hex",
+  "kind": "scalar",
+  "description": "The hash is lowercase hex.",
+  "valid": false,
+  "input": "{\n  \"value\": \"9DC30A40021F1F79D8DD9437EC9014CE134138326B72FCB9696485AB3D69330A:17:text/plain\",\n  \"type\": \"blob\"\n}",
+  "error": "E_CANON_BLOB"
+}

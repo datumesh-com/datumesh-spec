@@ -1,0 +1,8 @@
+{
+  "id": "unit/argument-reference",
+  "kind": "unit",
+  "description": "convert returns an amount in the quote currency: USD.",
+  "valid": true,
+  "input": "{\n  \"descriptor\": {\n    \"signature\": {\n      \"returns\": {\n        \"unit\": {\n          \"arg\": \"quote\"\n        },\n        \"type\": \"number\"\n      },\n      \"args\": {\n        \"quote\": {\n          \"valid\": false,\n          \"type\": \"string\"\n        },\n        \"date\": {\n          \"valid\": true,\n          \"type\": \"date\"\n        },\n        \"base\": {\n          \"valid\": false,\n          \"type\": \"string\"\n        },\n        \"amount\": {\n          \"valid\": false,\n          \"unit\": {\n            \"arg\": \"base\"\n          },\n          \"type\": \"number\"\n        }\n      }\n    },\n    \"inputs\": [\n      \"rates.example.org/fx_rate\"\n    ],\n    \"code\": {\n      \"lang\": \"expr\",\n      \"body\": \"amount * rates.example.org/fx_rate(base: base, date: date, quote: quote)\\n\"\n    }\n  },\n  \"cell\": {\n    \"ns\": \"calc.example.net\",\n    \"fn_hash\": \"014fc97eb3a442ab28a96d89131ccfd11c9eec8187595578c212b392d0702c71\",\n    \"fn\": \"convert\",\n    \"args\": {\n      \"quote\": {\n        \"value\": \"USD\",\n        \"type\": \"string\"\n      },\n      \"date\": {\n        \"value\": \"2024-03-15\",\n        \"type\": \"date\"\n      },\n      \"base\": {\n        \"value\": \"EUR\",\n        \"type\": \"string\"\n      },\n      \"amount\": {\n        \"value\": \"100\",\n        \"type\": \"number\"\n      }\n    }\n  }\n}",
+  "unit": "USD"
+}

@@ -1,9 +1,9 @@
 {
   "id": "invalid/receipt-arg-unknown",
   "kind": "receipt",
-  "description": "A cell binds only declared arguments.",
+  "description": "A cell binds only declared arguments. Changed in spec-0.2.0: the cell's fn_hash changed because its descriptor now declares units, so the receipt bytes, hash and signature changed.",
   "valid": false,
-  "input": "{\n  \"sig\": \"478a3657ad9ec7c1941b6e80eea500b14f8ca832e228edc37b55b84538830387bee6c6cee13e32cb73cfdfa1ec31fd8ccd1528f30ef1fa8f4da6bc7adb17b901\",\n  \"value\": \"1.0892\",\n  \"valid\": {\n    \"date\": {\n      \"value\": \"2024-03-15\",\n      \"type\": \"date\"\n    }\n  },\n  \"type\": \"number\",\n  \"tx\": \"2024-03-15T16:00:00.000000Z\",\n  \"summary\": \"The cell binds an argument the function does not declare.\",\n  \"publisher\": \"rates.example.org\",\n  \"proto\": \"datumesh/1\",\n  \"licence\": \"CC-BY-4.0\",\n  \"issued\": \"2024-03-16T09:00:00.000000Z\",\n  \"inputs\": [],\n  \"computed_by\": \"rates.example.org#d712b32a2cc5cb7c\",\n  \"cell\": {\n    \"ns\": \"rates.example.org\",\n    \"fn_hash\": \"bc4c28e8e61d4554b97226cc657ee0076f1c15829cbc6fb49448f4adc7f87ec7\",\n    \"fn\": \"fx_rate\",\n    \"args\": {\n      \"quote\": {\n        \"value\": \"USD\",\n        \"type\": \"string\"\n      },\n      \"date\": {\n        \"value\": \"2024-03-15\",\n        \"type\": \"date\"\n      },\n      \"base\": {\n        \"value\": \"EUR\",\n        \"type\": \"string\"\n      }\n    }\n  },\n  \"asof\": \"2024-03-16T09:00:00.000000Z\"\n}",
+  "input": "{\n  \"sig\": \"37b171319a02d440f95146bc08586e859f6a94bb06c0bbb6f9543906d443dd710491598ada2668238722d3dfdaf45f143a933407915129ed367eac050446b402\",\n  \"value\": \"1.0892\",\n  \"valid\": {\n    \"date\": {\n      \"value\": \"2024-03-15\",\n      \"type\": \"date\"\n    }\n  },\n  \"type\": \"number\",\n  \"tx\": \"2024-03-15T16:00:00.000000Z\",\n  \"summary\": \"The cell binds an argument the function does not declare.\",\n  \"publisher\": \"rates.example.org\",\n  \"proto\": \"datumesh/1\",\n  \"licence\": \"CC-BY-4.0\",\n  \"issued\": \"2024-03-16T09:00:00.000000Z\",\n  \"inputs\": [],\n  \"computed_by\": \"rates.example.org#d712b32a2cc5cb7c\",\n  \"cell\": {\n    \"ns\": \"rates.example.org\",\n    \"fn_hash\": \"57242186a1d558c568fe92a2ba0ec00beb64fbecb10568a8dead5b2da0422fc9\",\n    \"fn\": \"fx_rate\",\n    \"args\": {\n      \"quote\": {\n        \"value\": \"USD\",\n        \"type\": \"string\"\n      },\n      \"date\": {\n        \"value\": \"2024-03-15\",\n        \"type\": \"date\"\n      },\n      \"base\": {\n        \"value\": \"EUR\",\n        \"type\": \"string\"\n      }\n    }\n  },\n  \"asof\": \"2024-03-16T09:00:00.000000Z\"\n}",
   "keypair": {
     "seed": "d939265c141c467e77fb079486a3bb8b932c1d471c8c25e5a2eed06c42db8ad0",
     "public": "843baeb22bfd0364fb1b7262b367fb3202e7886c69a070fecf8e343fedb1eabf",
@@ -41,7 +41,15 @@
             "valid": true
           }
         },
-        "returns": "number"
+        "returns": {
+          "type": "number",
+          "unit": {
+            "of": "USD",
+            "per": {
+              "arg": "base"
+            }
+          }
+        }
       }
     },
     "inputs": {},

@@ -1,0 +1,9 @@
+{
+  "id": "function/unit-count",
+  "kind": "function",
+  "description": "A number of companies incorporated.",
+  "valid": true,
+  "input": "{\n  \"signature\": {\n    \"returns\": {\n      \"unit\": \"count\",\n      \"type\": \"number\"\n    },\n    \"args\": {\n      \"date\": {\n        \"valid\": true,\n        \"type\": \"date\"\n      }\n    }\n  },\n  \"inputs\": [],\n  \"code\": {\n    \"lang\": \"stored\",\n    \"body\": \"\"\n  }\n}",
+  "canonical": "{\"code\":{\"body\":\"\",\"lang\":\"stored\"},\"inputs\":[],\"signature\":{\"args\":{\"date\":{\"type\":\"date\",\"valid\":true}},\"returns\":{\"type\":\"number\",\"unit\":\"count\"}}}",
+  "sha256": "5fe0a4cbd14d956f48fb5e4fe6b28fd1d58bf5716a5551a28d2ab37b2bdfaf58"
+}

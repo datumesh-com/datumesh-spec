@@ -525,6 +525,42 @@
       "expect": {
         "error": "E_SHEET_VALUE"
       }
+    },
+    {
+      "id": "blob-text",
+      "req": "SS-C12",
+      "host": "both",
+      "type": "blob",
+      "value": {
+        "text": "9dc30a40021f1f79d8dd9437ec9014ce134138326b72fcb9696485ab3d69330a:17:text/plain"
+      },
+      "expect": {
+        "arg": "9dc30a40021f1f79d8dd9437ec9014ce134138326b72fcb9696485ab3d69330a:17:text/plain"
+      }
+    },
+    {
+      "id": "blob-media-type-parameter",
+      "req": "SS-C12",
+      "host": "both",
+      "type": "blob",
+      "value": {
+        "text": "9dc30a40021f1f79d8dd9437ec9014ce134138326b72fcb9696485ab3d69330a:17:text/plain; charset=utf-8"
+      },
+      "expect": {
+        "error": "E_CANON_BLOB"
+      }
+    },
+    {
+      "id": "blob-number",
+      "req": "SS-C1",
+      "host": "both",
+      "type": "blob",
+      "value": {
+        "number": 17
+      },
+      "expect": {
+        "error": "E_SHEET_TYPE"
+      }
     }
   ]
 }

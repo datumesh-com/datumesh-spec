@@ -1,0 +1,8 @@
+{
+  "id": "unit/no-unit",
+  "kind": "unit",
+  "description": "A boolean return has no unit: null.",
+  "valid": true,
+  "input": "{\n  \"descriptor\": {\n    \"signature\": {\n      \"returns\": \"boolean\",\n      \"args\": {\n        \"date\": {\n          \"valid\": true,\n          \"type\": \"date\"\n        },\n        \"calendar\": {\n          \"valid\": false,\n          \"type\": \"string\"\n        }\n      }\n    },\n    \"inputs\": [],\n    \"code\": {\n      \"lang\": \"stored\",\n      \"body\": \"\"\n    }\n  },\n  \"cell\": {\n    \"ns\": \"calendars.example.org/eu\",\n    \"fn_hash\": \"ed1f0ecb7166dd6d70ae263456e3af94147d4781f43035e534b9368e9561f84a\",\n    \"fn\": \"is_holiday\",\n    \"args\": {\n      \"date\": {\n        \"value\": \"2024-12-25\",\n        \"type\": \"date\"\n      },\n      \"calendar\": {\n        \"value\": \"TARGET2\",\n        \"type\": \"string\"\n      }\n    }\n  }\n}",
+  "unit": null
+}

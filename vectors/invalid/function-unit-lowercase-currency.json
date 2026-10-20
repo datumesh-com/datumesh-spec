@@ -1,0 +1,8 @@
+{
+  "id": "invalid/function-unit-lowercase-currency",
+  "kind": "function",
+  "description": "Units are compared byte for byte: usd is not USD.",
+  "valid": false,
+  "input": "{\n  \"signature\": {\n    \"returns\": {\n      \"unit\": \"usd\",\n      \"type\": \"number\"\n    },\n    \"args\": {}\n  },\n  \"inputs\": [],\n  \"code\": {\n    \"lang\": \"stored\",\n    \"body\": \"\"\n  }\n}",
+  "error": "E_CANON_UNIT"
+}

@@ -1,12 +1,15 @@
 {
   "id": "invalid/uri-asof-milliseconds",
   "kind": "uri",
-  "description": "asof has microsecond precision.",
+  "description": "asof has microsecond precision. Changed in spec-0.2.0: the signature input now declares units; the outputs are unchanged.",
   "valid": false,
   "input": "cell://math.example/pi?asof=2024-01-01T00:00:00.000Z",
   "signature": {
     "args": {},
-    "returns": "number"
+    "returns": {
+      "type": "number",
+      "unit": "1"
+    }
   },
   "error": "E_CANON_INSTANT"
 }

@@ -23,10 +23,52 @@ import canon  # noqa: E402
 ROOT = canon.ROOT
 OUT = ROOT / "vectors"
 VECTORS = []
-OUTPUT_FIELDS = ("object", "canonical", "sha256", "https", "key_id", "key_ids", "sig", "level")
+OUTPUT_FIELDS = ("object", "canonical", "sha256", "https", "key_id", "key_ids", "sig", "level",
+                 "unit", "outcome", "trust", "receipt_hash")
+
+
+# Vectors from spec-0.1.1 whose bytes changed in spec-0.2.0, and why. tests/test_migration.py
+# checks this list against the spec-0.1.1 vectors in both directions.
+CHANGED_0_2_0 = {
+    "function": "the descriptor now declares units (SPEC 7.1), so its bytes and function hash changed",
+    "cell": "fn_hash is the hash of a descriptor that now declares units",
+    "uri": "the signature input now declares units; the outputs are unchanged",
+    "receipt": "the cell's fn_hash changed because its descriptor now declares units, so the receipt bytes, "
+               "hash and signature changed",
+}
+CHANGED_IDS = """
+cell/fx-rate cell/idn-a-label cell/max-arguments cell/namespace-path cell/no-arguments cell/slice
+function/computed-convert function/no-arguments function/stored-fx-rate
+invalid/cell-arg-camel-case invalid/cell-arg-double-underscore invalid/cell-arg-name-too-long
+invalid/cell-arg-reserved-asof invalid/cell-arg-reserved-prefix invalid/cell-duplicate-argument
+invalid/cell-fn-hash-uppercase invalid/cell-function-camel-case invalid/cell-numeric-tld
+invalid/cell-single-label-namespace invalid/cell-too-many-arguments invalid/cell-trailing-dot
+invalid/cell-unicode-namespace invalid/cell-untyped-argument invalid/cell-uppercase-namespace
+invalid/function-body-cr invalid/function-inputs-alias invalid/function-inputs-unsorted invalid/function-valid-number
+invalid/receipt-arg-missing invalid/receipt-arg-type invalid/receipt-arg-unknown invalid/receipt-computed-by-bare-key-id
+invalid/receipt-computed-tx invalid/receipt-duplicate-member invalid/receipt-empty-summary invalid/receipt-extra-member
+invalid/receipt-fn-hash-mismatch invalid/receipt-fn-unavailable invalid/receipt-input-invalid
+invalid/receipt-input-unavailable invalid/receipt-input-undeclared invalid/receipt-inputs-unsorted
+invalid/receipt-key-expired invalid/receipt-key-not-yet-valid invalid/receipt-key-unavailable invalid/receipt-licence
+invalid/receipt-missing-member invalid/receipt-publisher-mismatch invalid/receipt-return-type
+invalid/receipt-sig-uppercase invalid/receipt-slice invalid/receipt-tampered-value invalid/receipt-tx-after-asof
+invalid/receipt-unknown-key invalid/receipt-valid-mismatch invalid/receipt-value-form invalid/receipt-value-mismatch
+invalid/receipt-value-type-mismatch invalid/receipt-wrong-proto invalid/receipt-wrong-signer
+invalid/uri-alias invalid/uri-asof-milliseconds invalid/uri-asof-not-last invalid/uri-asof-twice invalid/uri-bad-utf8
+invalid/uri-boolean-form invalid/uri-duplicate invalid/uri-empty-query invalid/uri-fragment invalid/uri-lowercase-hex
+invalid/uri-missing-argument invalid/uri-needless-encoding invalid/uri-nfd-string invalid/uri-number-form
+invalid/uri-parameter-without-value invalid/uri-plus-for-space invalid/uri-raw-unicode invalid/uri-unknown-argument
+invalid/uri-unsorted invalid/uri-uppercase-host invalid/uri-wrong-scheme
+receipt/computed-two-inputs receipt/computed-with-lineage receipt/date-value receipt/historical-asof
+receipt/rotated-key receipt/stored-number receipt/stored-number-second receipt/string-value
+uri/all-types uri/empty-string uri/fx-rate uri/fx-rate-asof uri/literal-star uri/no-arguments
+uri/no-arguments-asof uri/reserved-characters uri/slice uri/unicode-string
+""".split()
 
 
 def add(id_, kind, description, input=None, error=None, input_hex=None, **extra):
+    if id_ in CHANGED_IDS:
+        description += f" Changed in spec-0.2.0: {CHANGED_0_2_0[kind]}."
     vec = {"id": id_, "kind": kind, "description": description, "valid": error is None}
     if input_hex is not None:
         vec["input_hex"] = input_hex
@@ -196,7 +238,7 @@ FX = {
             "date": {"type": "date", "valid": True},
             "quote": {"type": "string", "valid": False},
         },
-        "returns": "number",
+        "returns": {"type": "number", "unit": {"of": {"arg": "quote"}, "per": {"arg": "base"}}},
     },
 }
 CONVERT = {
@@ -207,12 +249,12 @@ CONVERT = {
     "inputs": ["rates.example.org/fx_rate"],
     "signature": {
         "args": {
-            "amount": {"type": "number", "valid": False},
+            "amount": {"type": "number", "unit": {"arg": "base"}, "valid": False},
             "base": {"type": "string", "valid": False},
             "date": {"type": "date", "valid": True},
             "quote": {"type": "string", "valid": False},
         },
-        "returns": "number",
+        "returns": {"type": "number", "unit": {"arg": "quote"}},
     },
 }
 HOLIDAY = {
@@ -234,7 +276,7 @@ LAST_TRADE = {
         "returns": "instant",
     },
 }
-PI = {"code": {"body": "", "lang": "stored"}, "inputs": [], "signature": {"args": {}, "returns": "number"}}
+PI = {"code": {"body": "", "lang": "stored"}, "inputs": [], "signature": {"args": {}, "returns": {"type": "number", "unit": "1"}}}
 FX_HASH, CONVERT_HASH = canon.function_hash(FX), canon.function_hash(CONVERT)
 
 add("function/stored-fx-rate", "function",
@@ -249,7 +291,8 @@ add("invalid/function-inputs-alias", "function", "Declared inputs are fully qual
 add("invalid/function-body-cr", "function", "Function bodies use LF line endings; CR is a control character.",
     text(CONVERT | {"code": {"body": "a\r\nb", "lang": "expr"}}), "E_CANON_STRING")
 add("invalid/function-valid-number", "function", "A valid-time argument must be a date, instant or string.",
-    text({**FX, "signature": {"args": {"n": {"type": "number", "valid": True}}, "returns": "number"}}), "E_CANON_TYPE")
+    text({**FX, "signature": {"args": {"n": {"type": "number", "unit": "1", "valid": True}},
+                               "returns": {"type": "number", "unit": "1"}}}), "E_CANON_TYPE")
 
 # ---------------------------------------------------------------------------
 # Cells (resolved: with fn_hash)
@@ -301,7 +344,7 @@ ALL_TYPES = {
         "active": {"type": "boolean", "valid": False},
         "at": {"type": "instant", "valid": True},
         "label": {"type": "string", "valid": False},
-        "ratio": {"type": "number", "valid": False},
+        "ratio": {"type": "number", "unit": "1", "valid": False},
     },
     "returns": "string",
 }
@@ -457,10 +500,12 @@ def signed(unsigned, key):
     return canon.sign_receipt(unsigned, seed(key))
 
 
-def add_receipt(id_, description, r, key, error=None, keys=KEYENV, recompute=None, raw=None):
+def add_receipt(id_, description, r, key, error=None, keys=KEYENV, recompute=None, raw=None, blob_hex=None):
     extra = {"keypair": keypair_fields(key), "keys": keys}
     if recompute is not None:
         extra["recompute"] = recompute
+    if blob_hex is not None:
+        extra["blob_hex"] = blob_hex
     add(id_, "receipt", description, raw if raw is not None else text(r), error, **extra)
 
 
@@ -590,7 +635,8 @@ r_missing = signed(receipt(convert_cell | {"fn_hash": canon.function_hash(extra_
                            "The function declares an argument the cell lacks.", "calc-2020", inputs=[H_FX]), "calc-2020")
 add_receipt("invalid/receipt-arg-missing", "A cell binds every declared argument.", r_missing, "calc-2020",
             "E_ARG_MISSING", recompute={"descriptor": extra_arg, "inputs": {H_FX: text(R_FX)}, "value": N("108.92")})
-fewer_args = {**FX, "signature": {**FX["signature"], "args": {k: v for k, v in FX["signature"]["args"].items() if k != "quote"}}}
+fewer_args = {**FX, "signature": {"args": {k: v for k, v in FX["signature"]["args"].items() if k != "quote"},
+                                  "returns": {"type": "number", "unit": {"of": "USD", "per": {"arg": "base"}}}}}
 r_unknown = signed(receipt(FX_CELL | {"fn_hash": canon.function_hash(fewer_args)}, "number", "1.0892",
                            "The cell binds an argument the function does not declare.", "rates-2020"), "rates-2020")
 add_receipt("invalid/receipt-arg-unknown", "A cell binds only declared arguments.", r_unknown, "rates-2020",
@@ -601,6 +647,269 @@ add_receipt("invalid/receipt-return-type", "The value's type is the function's d
 add_receipt("invalid/receipt-duplicate-member", "Duplicate members make the signed content ambiguous.",
             None, "rates-2020", "E_PARSE_DUPLICATE_KEY",
             raw=json.dumps(R_FX, ensure_ascii=False)[:-1] + ', "value": "9.9"}')
+
+
+# ---------------------------------------------------------------------------
+# Units (spec-0.2.0: SPEC 7.1, units.md)
+
+
+def stored(args, returns):
+    return {"code": {"body": "", "lang": "stored"}, "inputs": [], "signature": {"args": args, "returns": returns}}
+
+
+def NUM(unit):
+    return {"type": "number", "unit": unit}
+
+
+SARG = {"type": "string", "valid": False}
+DARG = {"type": "date", "valid": True}
+ECB = stored({"date": DARG, "quote": SARG}, NUM({"of": {"arg": "quote"}, "per": "EUR"}))
+TEMPERATURE = stored({"date": DARG, "station": SARG}, NUM("degC"))
+AMOUNT_IN = stored({"amount": {"type": "number", "unit": {"arg": "currency"}, "valid": False}, "currency": SARG},
+                   NUM({"arg": "currency"}))
+
+for name, desc, why in [
+    ("unit-currency", stored({"company": SARG, "date": DARG}, NUM("GBP")), "An amount of money: its unit is a currency code."),
+    ("unit-rate-literal", stored({"date": DARG}, NUM({"of": "USD", "per": "EUR"})),
+     "A rate between two fixed currencies: US dollars per one euro."),
+    ("unit-rate-ecb", ECB, "A reference rate against the euro: units of the quote currency per one euro."),
+    ("unit-argument-reference", AMOUNT_IN,
+     "A number argument and the return take their unit from a string argument."),
+    ("unit-temperature", TEMPERATURE, "An air temperature in degrees Celsius."),
+    ("unit-percent", stored({"date": DARG}, NUM("percent")), "An inflation rate in percent."),
+    ("unit-basis-points", stored({"date": DARG}, NUM("bp")), "A spread in basis points."),
+    ("unit-dimensionless", stored({"date": DARG}, NUM("1")), "A ratio of like quantities is dimensionless: unit 1."),
+    ("unit-count", stored({"date": DARG}, NUM("count")), "A number of companies incorporated."),
+    ("unit-index", stored({"date": DARG}, NUM("index:2015=100")), "A price index equal to 100 in 2015."),
+    ("unit-index-day", stored({"date": DARG}, NUM("index:1984-01-03=1000")), "An index based on one day."),
+    ("unit-speed", stored({"date": DARG, "station": SARG}, NUM("m/s")), "m/s is one fixed symbol, not a quotient."),
+    ("unit-energy", stored({"date": DARG}, NUM("kWh")), "Energy in kilowatt-hours."),
+    ("unit-number-argument", stored({"date": DARG, "station": SARG,
+                                     "threshold": {"type": "number", "unit": "degC", "valid": False}}, "boolean"),
+     "A number argument declares its unit; the boolean return stays a bare type name."),
+    ("unit-withdrawn-currency", stored({"date": DARG}, NUM({"of": "GRD", "per": "EUR"})),
+     "Withdrawn currency codes used by historical rates remain units."),
+]:
+    add(f"function/{name}", "function", why, text(desc))
+
+for name, desc, error, why in [
+    ("unit-number-return-bare", stored({}, "number"), "E_CANON_UNIT", "A number return is an object with a unit, never the bare name."),
+    ("unit-missing-on-return", stored({}, {"type": "number"}), "E_CANON_UNIT", "A number return declares its unit."),
+    ("unit-missing-on-argument", stored({"amount": {"type": "number", "valid": False}}, "boolean"), "E_CANON_UNIT",
+     "A number argument declares its unit."),
+    ("unit-on-string-argument", stored({"name": {"type": "string", "unit": "1", "valid": False}}, "boolean"), "E_CANON_UNIT",
+     "Only number arguments have a unit."),
+    ("unit-object-for-boolean", stored({}, {"type": "boolean"}), "E_CANON_UNIT",
+     "Only a number return is written as an object; a boolean return is the bare name."),
+    ("unit-on-boolean-return", stored({}, {"type": "boolean", "unit": "1"}), "E_CANON_UNIT", "Booleans have no unit."),
+    ("unit-unknown", stored({}, NUM("dollars")), "E_CANON_UNIT", "Only units listed in units.md are accepted."),
+    ("unit-lowercase-currency", stored({}, NUM("usd")), "E_CANON_UNIT", "Units are compared byte for byte: usd is not USD."),
+    ("unit-unassigned-currency", stored({}, NUM("ABC")), "E_CANON_UNIT", "ABC is not an ISO 4217 code."),
+    ("unit-rate-as-string", stored({}, NUM("USD/EUR")), "E_CANON_UNIT", "A rate is written {\"of\", \"per\"}; the string USD/EUR is not a unit."),
+    ("unit-symbol-variant", stored({}, NUM("°C")), "E_CANON_UNIT", "Units are not parsed: °C is not degC."),
+    ("unit-index-zero-base", stored({}, NUM("index:2015=0")), "E_CANON_UNIT", "An index base value is greater than zero."),
+    ("unit-index-bad-period", stored({}, NUM("index:2015-13=100")), "E_CANON_UNIT", "The base period is a real month."),
+    ("unit-index-non-canonical", stored({}, NUM("index:2015=100.0")), "E_CANON_UNIT", "The base value is a canonical number."),
+    ("unit-arg-missing", stored({"date": DARG}, NUM({"arg": "currency"})), "E_CANON_UNIT",
+     "A unit reference names an argument of the signature."),
+    ("unit-arg-not-string", stored({"currency": {"type": "date", "valid": False}}, NUM({"arg": "currency"})), "E_CANON_UNIT",
+     "A unit reference names a string argument."),
+    ("unit-rate-side-not-currency", stored({}, NUM({"of": "kg", "per": "EUR"})), "E_CANON_UNIT",
+     "Each side of a rate is a currency code or an argument reference."),
+    ("unit-json-number", stored({}, NUM(1)), "E_SCHEMA", "A unit is a string or an object, never a JSON number."),
+    ("unit-rate-extra-member", stored({}, NUM({"of": "USD", "per": "EUR", "scale": "1"})), "E_SCHEMA",
+     "A rate has exactly the members of and per."),
+]:
+    add(f"invalid/function-{name}", "function", why, text(desc), error)
+
+
+def unit_input(desc, cell):
+    return text({"cell": cell, "descriptor": desc})
+
+
+def cell_of(desc, ns, fn, args):
+    return {"args": args, "fn": fn, "fn_hash": canon.function_hash(desc), "ns": ns}
+
+
+ECB_CELL = cell_of(ECB, "rates.example.org", "eur_rate", {"date": D("2024-03-15"), "quote": S("JPY")})
+for name, desc, cell, why in [
+    ("fx-rate", FX, FX_CELL, "fx_rate's unit is quote per base: USD/EUR for base EUR, quote USD."),
+    ("fx-rate-gbp", FX, FX_CELL | {"args": FX_ARGS | {"quote": S("GBP")}}, "The same function in another cell: GBP/EUR."),
+    ("rate-literal-per", ECB, ECB_CELL, "A literal side and an argument side: JPY/EUR."),
+    ("argument-reference", CONVERT, convert_cell, "convert returns an amount in the quote currency: USD."),
+    ("literal", TEMPERATURE, cell_of(TEMPERATURE, "weather.example.org", "temperature",
+                                     {"date": D("2024-03-15"), "station": S("EHAM")}), "A literal unit resolves to itself."),
+    ("no-unit", HOLIDAY, holiday_cell, "A boolean return has no unit: null."),
+]:
+    add(f"unit/{name}", "unit", why, unit_input(desc, cell))
+
+for name, desc, cell, error, why in [
+    ("not-currency", FX, FX_CELL | {"args": FX_ARGS | {"quote": S("usd")}}, "E_CANON_UNIT",
+     "A rate side resolved from an argument must be a currency code."),
+    ("not-a-unit", AMOUNT_IN, cell_of(AMOUNT_IN, "calc.example.net", "amount_in",
+                                      {"amount": N("5"), "currency": S("dollars")}), "E_CANON_UNIT",
+     "A referenced argument's value must itself be a listed unit."),
+    ("slice", FX, FX_CELL | {"args": FX_ARGS | {"quote": "*"}}, "E_SLICE", "A slice over the unit's argument has no single unit."),
+    ("fn-hash-mismatch", CONVERT, FX_CELL, "E_FN_HASH_MISMATCH", "The descriptor must be the cell's function."),
+]:
+    add(f"invalid/unit-{name}", "unit", why, unit_input(desc, cell), error)
+
+# ---------------------------------------------------------------------------
+# Blobs (spec-0.2.0: SPEC 3.7, 10.1 step 7.7)
+
+
+def blob(content, media_type):
+    return f"{hashlib.sha256(content).hexdigest()}:{len(content)}:{media_type}"
+
+
+def BL(v):
+    return {"type": "blob", "value": v}
+
+
+CSV = b"date,rate\n2024-03-15,1.0892\n2024-03-14,1.0885\n"
+HELLO = b"Hello, Datumesh!\n"
+PNG = bytes.fromhex("89504e470d0a1a0a0000000d4948445200000001000000010806000000"
+                    "1f15c4890000000d49444154789c63f8cfc0f01f0005000201a5f1d5e90000000049454e44ae426082")
+LONG_TYPE = "application/" + "x" * 116  # 128 characters
+for name, value, why in [
+    ("blob-text", blob(HELLO, "text/plain"), "A blob: content hash, byte length and media type."),
+    ("blob-empty", blob(b"", "application/octet-stream"), "Empty content: length 0 and the hash of no bytes."),
+    ("blob-csv", blob(CSV, "text/csv"), "A CSV file."),
+    ("blob-png", blob(PNG, "image/png"), "A 1x1 PNG image."),
+    ("blob-vendor-tree", blob(HELLO, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"),
+     "Vendor-tree media types with dots are allowed."),
+    ("blob-suffix", blob(HELLO, "application/ld+json"), "Structured-syntax suffixes with + are allowed."),
+    ("blob-max-length", "0" * 64 + ":9007199254740991:application/octet-stream", "The largest length, 2^53 - 1."),
+    ("blob-max-media-type", blob(HELLO, LONG_TYPE), "A 128-character media type, the maximum."),
+]:
+    add(f"scalar/{name}", "scalar", why, text(BL(value)))
+
+H = hashlib.sha256(HELLO).hexdigest()
+for name, raw, error, why in [
+    ("blob-uppercase-hex", text(BL(H.upper() + ":17:text/plain")), "E_CANON_BLOB", "The hash is lowercase hex."),
+    ("blob-short-hash", text(BL(H[:63] + ":17:text/plain")), "E_CANON_BLOB", "The hash has 64 hex digits."),
+    ("blob-length-leading-zero", text(BL(H + ":017:text/plain")), "E_CANON_BLOB", "The length is a canonical integer: no leading zeros."),
+    ("blob-length-fraction", text(BL(H + ":17.0:text/plain")), "E_CANON_BLOB", "The length is a whole number of bytes."),
+    ("blob-length-negative", text(BL(H + ":-17:text/plain")), "E_CANON_BLOB", "The length is not negative."),
+    ("blob-length-too-large", text(BL(H + ":9007199254740992:text/plain")), "E_CANON_BLOB", "The length is at most 2^53 - 1."),
+    ("blob-media-type-uppercase", text(BL(H + ":17:text/Plain")), "E_CANON_BLOB", "Media types are lowercase; rejected, not folded."),
+    ("blob-media-type-parameter", text(BL(H + ":17:text/plain;charset=utf-8")), "E_CANON_BLOB", "Media type parameters are not allowed."),
+    ("blob-media-type-no-subtype", text(BL(H + ":17:text")), "E_CANON_BLOB", "A media type is type/subtype."),
+    ("blob-media-type-too-long", text(BL(H + ":17:" + LONG_TYPE + "x")), "E_CANON_BLOB", "129 characters exceeds the media type limit."),
+    ("blob-missing-length", text(BL(H + ":text/plain")), "E_CANON_BLOB", "All three parts are required."),
+    ("blob-json-object", '{"type":"blob","value":{"sha256":"' + H + '"}}', "E_SCHEMA", "A blob value is one string."),
+]:
+    add(f"invalid/scalar-{name}", "scalar", why, raw, error)
+
+FILING = stored({"company": SARG, "date": DARG}, "blob")
+add("function/blob-return", "function", "A function returning a blob; blobs have no unit, so the return is the bare name.", text(FILING))
+add("invalid/function-blob-valid-time", "function", "A blob cannot be a valid-time argument.",
+    text(stored({"file": {"type": "blob", "valid": True}}, "boolean")), "E_CANON_TYPE")
+add("invalid/function-blob-unit", "function", "Only numbers have units.",
+    text(stored({"file": {"type": "blob", "unit": "1", "valid": False}}, "boolean")), "E_CANON_UNIT")
+
+DESCRIBE_SIG = {"args": {"file": {"type": "blob", "valid": False}}, "returns": "string"}
+add("uri/blob-argument", "uri", "A blob argument: : is literal, / and + are percent-encoded.",
+    f"cell://files.example.org/describe?file={H}:17:application%2Fld%2Bjson", signature=DESCRIBE_SIG)
+add("invalid/uri-blob-form", "uri", "Blob arguments follow the blob rules.",
+    f"cell://files.example.org/describe?file={H}:17:text%2FPlain", "E_CANON_BLOB", signature=DESCRIBE_SIG)
+
+filing_cell = cell_of(FILING, RATES, "filing", {"company": S("01234567"), "date": D("2024-03-15")})
+R_BLOB = signed(receipt(filing_cell, "blob", blob(CSV, "text/csv"), "The filing of company 01234567 on 15 March 2024.",
+                        "rates-2020"), "rates-2020")
+add_receipt("receipt/blob-value", "A blob value with its content: step 7.7 checks the content's length and hash.",
+            R_BLOB, "rates-2020", blob_hex=CSV.hex())
+add_receipt("invalid/receipt-blob-mismatch", "Content whose hash differs from the blob's.", R_BLOB, "rates-2020",
+            "E_BLOB_MISMATCH", blob_hex=CSV.replace(b"1.0892", b"1.0893").hex())
+add_receipt("invalid/receipt-blob-length-mismatch", "Content with one byte more than the blob's length.", R_BLOB,
+            "rates-2020", "E_BLOB_MISMATCH", blob_hex=(CSV + b"\n").hex())
+
+# ---------------------------------------------------------------------------
+# Response envelopes (spec-0.2.0: SPEC 5.5)
+
+CALENDARS = "calendars.example.org"
+ALL_KEYS = KEYENV | {CALENDARS: https_env(CALENDARS, key_entry("calendars-2020", T0))}
+R_HOLIDAY_SIGNED = signed(R_HOLIDAY, "calendars-2020")
+R_MIRROR = signed(receipt(FX_CELL, "number", "1.0892", "The EUR/USD rate, re-signed by a mirror.", "calc-2020"), "calc-2020")
+R_FX_CORRECTED = signed(receipt(FX_CELL, "number", "1.0893", "The corrected EUR/USD rate for 15 March 2024.", "rates-2020",
+                                asof="2024-03-18T09:00:00.000000Z", tx="2024-03-18T08:00:00.000000Z"), "rates-2020")
+H_CORRECTED = canon.receipt_hash(R_FX_CORRECTED)
+
+
+def add_envelope(id_, description, env, status, error=None, raw=None):
+    add(id_, "envelope", description, raw if raw is not None else text(env), error, status=status, keys=ALL_KEYS)
+
+
+for name, env, status, why in [
+    ("ok-primary", {"outcome": "ok", "receipt": R_FX, "trust": "primary"}, 200,
+     "A stored cell signed by its publisher's host: trust is primary."),
+    ("ok-primary-namespace-path", {"outcome": "ok", "receipt": R_HOLIDAY_SIGNED, "trust": "primary"}, 200,
+     "The host of calendars.example.org/eu is calendars.example.org, which signed: primary."),
+    ("ok-verified", {"outcome": "ok", "receipt": R_CONVERT, "trust": "verified"}, 200,
+     "A computed cell the mesh recomputed: verified, a claim the client cannot check."),
+    ("ok-unverified", {"outcome": "ok", "receipt": R_CONVERT, "trust": "unverified"}, 200,
+     "A computed cell the mesh did not recompute."),
+    ("ok-mirror", {"outcome": "ok", "receipt": R_MIRROR, "trust": "unverified"}, 200,
+     "A stored cell signed by another host is not primary."),
+    ("ok-correction", {"outcome": "ok", "reason": "The 15 March 2024 rate was republished with a correction.",
+                       "receipt": R_FX, "superseded_by": H_CORRECTED, "trust": "primary"}, 200,
+     "A receipt superseded by a correction at a later tx, with the reason."),
+    ("ok-superseded", {"outcome": "ok", "receipt": R_FX, "superseded_by": H_CORRECTED, "trust": "primary"}, 200,
+     "superseded_by without a reason."),
+    ("stale", {"age_seconds": 86400, "outcome": "stale", "receipt": R_FX, "trust": "primary"}, 200,
+     "The mesh could not get a current answer and serves its last known receipt, a day old."),
+    ("stale-verified", {"age_seconds": 0, "outcome": "stale", "receipt": R_CONVERT, "trust": "verified"}, 200,
+     "A stale computed receipt the mesh had recomputed."),
+    ("not-covered", {"outcome": "not_covered"}, 404, "The mesh has no receipt for this cell."),
+    ("unlicensed", {"outcome": "unlicensed"}, 403, "The requester is not licensed for this cell."),
+    ("payment-required", {"outcome": "payment_required", "quote": {
+        "amount": "0.05", "authorise": "https://mesh.example/pay?q=7f3a", "currency": "EUR"}}, 402,
+     "A quote: the amount is a decimal string, the currency a code from units.md."),
+    ("rate-limited", {"outcome": "rate_limited", "retry_after_seconds": 30}, 429, "Too many requests: retry after 30 seconds."),
+    ("error", {"error": "E_INPUT_UNAVAILABLE", "outcome": "error"}, 503, "The mesh could not compute the cell: an input was unavailable."),
+    ("error-500", {"error": "E_FN_UNAVAILABLE", "outcome": "error"}, 500, "Any 5xx status carries outcome error."),
+]:
+    add_envelope(f"envelope/{name}", why, env, status)
+
+for name, env, status, error, why in [
+    ("unknown-outcome", {"outcome": "maybe"}, 200, "E_ENVELOPE", "outcome is one of seven values."),
+    ("ok-without-receipt", {"outcome": "ok", "trust": "primary"}, 200, "E_ENVELOPE", "ok carries a receipt."),
+    ("ok-without-trust", {"outcome": "ok", "receipt": R_FX}, 200, "E_ENVELOPE", "ok carries trust."),
+    ("not-covered-with-receipt", {"outcome": "not_covered", "receipt": R_FX}, 404, "E_ENVELOPE",
+     "Only ok and stale carry a receipt."),
+    ("status-mismatch", {"outcome": "ok", "receipt": R_FX, "trust": "primary"}, 404, "E_ENVELOPE",
+     "The HTTP status matches the outcome."),
+    ("error-client-status", {"error": "E_PARSE_URI", "outcome": "error"}, 400, "E_ENVELOPE", "error is a 5xx status."),
+    ("trust-primary-computed", {"outcome": "ok", "receipt": R_CONVERT, "trust": "primary"}, 200, "E_ENVELOPE",
+     "A receipt with inputs is not primary."),
+    ("trust-primary-mirror", {"outcome": "ok", "receipt": R_MIRROR, "trust": "primary"}, 200, "E_ENVELOPE",
+     "A receipt signed by another host than the namespace's is not primary."),
+    ("trust-verified-for-primary", {"outcome": "ok", "receipt": R_FX, "trust": "verified"}, 200, "E_ENVELOPE",
+     "A primary receipt is always labelled primary."),
+    ("trust-unknown", {"outcome": "ok", "receipt": R_FX, "trust": "trusted"}, 200, "E_ENVELOPE", "trust is one of three values."),
+    ("stale-without-age", {"outcome": "stale", "receipt": R_FX, "trust": "primary"}, 200, "E_ENVELOPE", "stale carries age_seconds."),
+    ("age-negative", {"age_seconds": -1, "outcome": "stale", "receipt": R_FX, "trust": "primary"}, 200, "E_ENVELOPE",
+     "age_seconds is a non-negative integer."),
+    ("reason-without-superseded", {"outcome": "ok", "reason": "Corrected.", "receipt": R_FX, "trust": "primary"}, 200,
+     "E_ENVELOPE", "reason accompanies superseded_by."),
+    ("superseded-by-self", {"outcome": "ok", "receipt": R_FX, "superseded_by": H_FX, "trust": "primary"}, 200, "E_ENVELOPE",
+     "A receipt cannot supersede itself."),
+    ("quote-currency", {"outcome": "payment_required", "quote": {
+        "amount": "0.05", "authorise": "https://mesh.example/pay", "currency": "EURO"}}, 402, "E_ENVELOPE",
+     "The quote currency is a currency code."),
+    ("quote-amount", {"outcome": "payment_required", "quote": {
+        "amount": "0.50", "authorise": "https://mesh.example/pay", "currency": "EUR"}}, 402, "E_ENVELOPE",
+     "The quote amount is a canonical decimal."),
+    ("error-unknown-code", {"error": "E_TEAPOT", "outcome": "error"}, 500, "E_ENVELOPE", "error is a code from SPEC 10.2."),
+    ("rate-limited-fraction", {"outcome": "rate_limited", "retry_after_seconds": 1.5}, 429, "E_ENVELOPE",
+     "retry_after_seconds is a whole number of seconds."),
+    ("tampered-receipt", {"outcome": "ok", "receipt": tampered(R_FX, value="1.0893"), "trust": "primary"}, 200,
+     "E_SIGNATURE", "The receipt inside an envelope is verified on its own terms."),
+]:
+    add_envelope(f"invalid/envelope-{name}", why, env, status, error)
+
+add_envelope("invalid/envelope-duplicate-member", "Envelopes are parsed strictly: no duplicate members.", None, 404,
+             "E_PARSE_DUPLICATE_KEY", raw='{"outcome": "not_covered", "outcome": "ok"}')
 
 
 def main():

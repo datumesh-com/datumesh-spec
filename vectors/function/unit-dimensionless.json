@@ -1,0 +1,9 @@
+{
+  "id": "function/unit-dimensionless",
+  "kind": "function",
+  "description": "A ratio of like quantities is dimensionless: unit 1.",
+  "valid": true,
+  "input": "{\n  \"signature\": {\n    \"returns\": {\n      \"unit\": \"1\",\n      \"type\": \"number\"\n    },\n    \"args\": {\n      \"date\": {\n        \"valid\": true,\n        \"type\": \"date\"\n      }\n    }\n  },\n  \"inputs\": [],\n  \"code\": {\n    \"lang\": \"stored\",\n    \"body\": \"\"\n  }\n}",
+  "canonical": "{\"code\":{\"body\":\"\",\"lang\":\"stored\"},\"inputs\":[],\"signature\":{\"args\":{\"date\":{\"type\":\"date\",\"valid\":true}},\"returns\":{\"type\":\"number\",\"unit\":\"1\"}}}",
+  "sha256": "bd0325e6417f74a47e567776d4b378e73f2d397842825a72cbdffe89b4f3f78e"
+}

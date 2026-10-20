@@ -1,8 +1,8 @@
 # Datumesh protocol, version 1
 
-Status: draft, revision `spec-0.1.1`. Identifier in data: `datumesh/1`. Changes are listed in section 14.
+Status: draft, revision `spec-0.2.0`. Identifier in data: `datumesh/1`. Changes are listed in section 14.
 
-Datumesh is an open protocol for addressable, verifiable data cells: a name, a resolver, a signed answer, and a lineage you can follow. This document defines how a cell is named (the cell URI), how it is written as canonical bytes, what a signed answer (a receipt) contains, how keys are published, and how a verifier checks a receipt. Storage formats, wire protocols, resolvers and the engine are out of scope.
+Datumesh is an open protocol for addressable, verifiable data cells: a name, a resolver, a signed answer, and a lineage you can follow. This document defines how a cell is named (the cell URI), how it is written as canonical bytes, what a signed answer (a receipt) contains, what a mesh returns around it (the response envelope), how keys are published, and how a verifier checks a receipt. The units a function may declare are listed in `units.md`, which is part of this specification. Storage formats, wire protocols, resolvers and the engine are out of scope.
 
 The key words MUST, MUST NOT, SHOULD and MAY are to be read as in RFC 2119 and RFC 8174.
 
@@ -16,9 +16,9 @@ The executable form of this document is `tools/canon.py`; the vectors under `vec
 2. Names
 3. Scalar types and lexical forms
 4. JSON forms: typed scalars, arguments, references, cells, limits
-5. Cell URIs
+5. Cell URIs and response envelopes
 6. Canonical encoding and hashing
-7. Function descriptors and function identity
+7. Function descriptors, function identity and units
 8. Receipts
 9. Keys
 10. Verification
@@ -39,6 +39,9 @@ The executable form of this document is `tools/canon.py`; the vectors under `vec
 - **Transaction time**: the time the system knew a value. Every call has an `asof` transaction time (default: now). Every receipt carries `asof` (as of when it answers), `tx` (when the value it gives was recorded) and `issued` (when it was signed).
 - **Receipt**: a signed statement of one cell's value as of one transaction time, with its lineage.
 - **Mesh**: any HTTPS host that resolves cells and serves receipts.
+- **Unit**: what a number means, such as `EUR` or `degC`. A function declares the unit of every number argument and number return (7.1). Values and receipts never carry units.
+- **Blob**: a scalar whose value names content by its hash, byte length and media type (3.7). The content itself travels out of band.
+- **Envelope**: the JSON body a mesh returns around a receipt (5.5). It is the mesh's statement, unsigned; the receipt inside is the signer's.
 - **Alias**: a short local name such as `ecb/fx_rate`. Aliases are a resolver convenience. They never appear in anything hashed, signed, or written as a cell URI.
 
 ## 2. Names
@@ -79,7 +82,7 @@ Argument names are names (2.2). `asof`, and every name starting with `dm_`, are 
 
 ## 3. Scalar types and lexical forms
 
-There are exactly five types. A value has one lexical form per type. Any other spelling is rejected with the code shown.
+There are exactly six types. A value has one lexical form per type. Any other spelling is rejected with the code shown.
 
 | Type | JSON | Lexical form | Example | Error |
 |---|---|---|---|---|
@@ -88,8 +91,9 @@ There are exactly five types. A value has one lexical form per type. Any other s
 | `boolean` | `true` / `false` | — | `true` | `E_CANON_TYPE` |
 | `date` | string | `YYYY-MM-DD` | `"2024-03-15"` | `E_CANON_DATE` |
 | `instant` | string | `YYYY-MM-DDTHH:MM:SS.ffffffZ` | `"2024-03-15T16:00:00.000000Z"` | `E_CANON_INSTANT` |
+| `blob` | string | `<sha256>:<length>:<media type>` | `"9dc3…330a:17:text/plain"` | `E_CANON_BLOB` |
 
-A value whose JSON type does not match its declared type fails with `E_CANON_TYPE`, e.g. the string `"true"` for a boolean. A type name outside the five also fails with `E_CANON_TYPE`.
+A value whose JSON type does not match its declared type fails with `E_CANON_TYPE`, e.g. the string `"true"` for a boolean. A type name outside the six also fails with `E_CANON_TYPE`.
 
 ### 3.1 Numbers
 
@@ -105,7 +109,7 @@ nonzero = %x31-39
 - At most 128 characters, sign and point included (`E_CANON_LIMIT`).
 - NaN and infinities have no form.
 
-Two numbers are equal exactly when their lexical forms are equal. A number carries no precision or unit: `1.5` and `1.50` are the same value, and only `1.5` is accepted. A publisher who means "1.50 with two significant decimals" says so in the function's documentation or returns a string.
+Two numbers are equal exactly when their lexical forms are equal. A number value carries no precision and no unit: `1.5` and `1.50` are the same value, and only `1.5` is accepted. A publisher who means "1.50 with two significant decimals" says so in the function's documentation or returns a string. The unit of a number is declared once, by the function (7.1).
 
 *Rationale.* JSON numbers are IEEE 754 doubles in every JCS implementation. They cannot hold `0.1` exactly, they lose integers above 2^53, and their canonical text form (ECMAScript `Number.toString`) is a subtle algorithm that implementations get wrong. Decimal strings with one spelling avoid all three problems. Rejecting `1.50`, rather than stripping it to `1.5`, keeps a verifier from having to decide whether the trailing zero meant something. The 128-character limit covers every physical constant and financial quantity written out in full, which also covers the cases an exponent would otherwise be needed for.
 
@@ -142,6 +146,26 @@ The empty string is a valid value. Format characters (ZWJ, bidi controls) and pr
 ### 3.6 Null
 
 There is no null value. `null` is rejected wherever a value is expected (`E_SCHEMA`). An absent value is expressed by a cell having no receipt, never by a receipt for "nothing".
+
+### 3.7 Blobs
+
+A blob names a sequence of bytes, its **content**, without containing it:
+
+```
+blob            = sha256 ":" length ":" media-type
+sha256          = 64HEXLOW                         ; SHA-256 of the content
+length          = "0" / %x31-39 *DIGIT             ; bytes of content, at most 9007199254740991
+media-type      = restricted-name "/" restricted-name   ; at most 128 characters
+restricted-name = ( lower / DIGIT ) *( lower / DIGIT / "!" / "#" / "$" / "&" / "-" / "^" / "_" / "." / "+" )
+```
+
+- The hash is lowercase hex. The length is a canonical non-negative integer, at most 2^53 - 1.
+- The media type is an RFC 6838 `type/subtype`, lowercase, with no parameters and no whitespace. `text/csv;charset=utf-8` and `text/CSV` are rejected. Content of a `text/*` blob SHOULD be UTF-8.
+- Every failure is `E_CANON_BLOB`, including a media type longer than 128 characters.
+
+Only the blob string is hashed and signed. The content is retrieved out of band, by its hash; how is outside this revision. Content that does not hash to `sha256`, or does not have exactly `length` bytes, is not the blob's content (`E_BLOB_MISMATCH`, 10.1 step 7.7). A blob has no unit and cannot be a valid-time argument (section 7). The string type and its 1024-byte limit are unchanged: text longer than that is published as a blob.
+
+*Rationale.* A blob is a scalar whose value is a content hash, so the type system stays "scalars only" and a receipt stays small whatever the content's size. The length lets a client refuse or bound a download before hashing it. The media type tells a client how to read the content. It is not checked against the content, because no verifier can do that reliably.
 
 ## 4. JSON forms
 
@@ -206,7 +230,7 @@ A cell binds every argument its function declares, and no others. Arguments are 
 
 Exceeding a limit fails with `E_CANON_LIMIT`. DNS's own limits (63-character labels, 253-character names) are part of the DNS grammar and fail with `E_CANON_NAME`.
 
-## 5. Cell URIs
+## 5. Cell URIs and response envelopes
 
 ### 5.1 Grammar
 
@@ -237,7 +261,7 @@ The URI is canonical: every cell reference has exactly one URI, and every accept
 - **Ordering.** Arguments appear in ascending order of name (byte order; names are ASCII), each exactly once. `asof`, if present, is last and is not part of that ordering. Out of order: `E_CANON_ARG_ORDER`. Repeated: `E_CANON_ARG_DUPLICATE`.
 - **Completeness.** Every argument the function declares appears. A missing argument is `E_ARG_MISSING`; an undeclared one is `E_ARG_UNKNOWN`.
 - **Percent-encoding.** A value is the UTF-8 encoding of its lexical form. Bytes that are `literal` characters appear as themselves; every other byte appears as `%` plus two uppercase hex digits. Lowercase hex, encoding a literal character (`%41`), an unencoded non-literal character (raw `ü`, `+`, space), or bytes that are not UTF-8 all fail with `E_CANON_PERCENT`. `+` is never a space. Space is `%20`.
-- **Values.** Numbers, dates and instants appear in their lexical forms (instants keep their literal `:`). Strings are encoded as above, and the empty string is `name=`. Booleans are `true` or `false`; anything else is `E_CANON_TYPE`. Decoded values follow section 3, so `Zu%CC%88rich` (NFD) fails with `E_CANON_STRING`.
+- **Values.** Numbers, dates and instants appear in their lexical forms (instants keep their literal `:`). Strings and blobs are encoded as above, so a blob's `:` stays literal and its `/` and `+` become `%2F` and `%2B`. The empty string is `name=`. Booleans are `true` or `false`; anything else is `E_CANON_TYPE`. Decoded values follow section 3, so `Zu%CC%88rich` (NFD) fails with `E_CANON_STRING`.
 - **Slices.** A bare `*` is the slice marker. The string `"*"` is encoded `%2A`, so the two cannot be confused.
 
 The URI does not carry types. To turn a URI into a cell reference, a resolver looks up the function by name. The descriptor's signature then gives each argument's type, which the resolver needs anyway. Because a slice is always written explicitly, the URI of a full cell and the URI of a slice never differ only by an omission. This keeps omission free to mean an error.
@@ -266,6 +290,52 @@ https://<mesh>/cell/<rest>
 
 The first failure is reported. The result is a cell reference (4.3) whose typed scalars carry the declared types. `format(reference)` writes the unique URI. For every accepted URI, `format(parse(uri)) = uri`.
 
+### 5.5 Response envelope
+
+A mesh answers `GET https://<mesh>/cell/<rest>` (5.3) with an HTTP status and a JSON body, the **envelope**, served as `application/json`.
+
+**An envelope is the mesh's statement and a receipt is the signer's. Only the receipt is verifiable.** The envelope is not hashed and not signed, and nothing in it changes what a receipt means. Everything a mesh says about a receipt (that it is stale, superseded or recomputed) is therefore said here, outside it, and receipts never change to carry such news. A client parses the envelope with the strict rules of 6.1.
+
+The envelope is an object whose `outcome` decides which other members it has. A member not listed for the outcome is not allowed.
+
+| `outcome` | HTTP status | Required members | Optional members | Meaning |
+|---|---|---|---|---|
+| `ok` | 200 | `receipt`, `trust` | `superseded_by`, `reason` | The receipt answers the cell as of the requested `asof`. |
+| `stale` | 200 | `receipt`, `trust`, `age_seconds` | `superseded_by`, `reason` | The mesh could not get a current answer and serves the last receipt it knows. |
+| `not_covered` | 404 | none | none | The mesh has no receipt for this cell: it does not serve the function, or the cell has no value. |
+| `unlicensed` | 403 | none | none | The requester may not receive this cell. |
+| `payment_required` | 402 | `quote` | none | The cell is available for the quoted price. |
+| `rate_limited` | 429 | `retry_after_seconds` | none | Too many requests. The mesh SHOULD also send the `Retry-After` header with the same value. |
+| `error` | 500-599 | `error` | none | The mesh failed to produce an answer. |
+
+Members:
+
+- `outcome`: one of the seven strings above.
+- `receipt`: a receipt object (section 8), embedded as JSON. For `stale`, it is the last receipt the mesh knows for the cell.
+- `trust`: what the mesh asserts about how the receipt was produced:
+  - `primary`: the host of `computed_by` equals the host of `cell.ns` (2.3), and `inputs` is empty. The publisher answered from its own records.
+  - `verified`: not primary, and the mesh recomputed the receipt (10.1 step 7) and it matched.
+  - `unverified`: neither.
+
+  A mesh MUST say `primary` exactly when the first condition holds. A client checks this against the receipt. It cannot check `verified`, which remains the mesh's claim.
+- `age_seconds`: a non-negative integer. The number of seconds since the mesh last confirmed that the receipt was the current answer.
+- `superseded_by`: the receipt hash (8.3) of a newer receipt for the same cell at a later `tx`. It is not the receipt's own hash. A client fetches that receipt like any other.
+- `reason`: a non-empty string saying why the receipt was superseded, typically a correction. It follows the string rules (3.5) with the `summary` limit, and is only present with `superseded_by`.
+- `quote`: an object with exactly `amount`, a number in the form of 3.1 greater than zero; `currency`, a currency code from `units.md`; and `authorise`, an `https://` URL in the form of a licence URL (8.1) where the requester can pay.
+- `retry_after_seconds`: a non-negative integer.
+- `error`: a code from 10.2 saying what failed, e.g. `E_INPUT_UNAVAILABLE`.
+
+`age_seconds` and `retry_after_seconds` are JSON numbers with integral values, at most 2^53 - 1. They are the only JSON numbers in this specification, which is possible because envelopes are never hashed.
+
+A client checks an envelope in this order and reports the first failure:
+
+1. Parse the body as strict JSON (6.1).
+2. Check the members against the table and the rules above (`E_ENVELOPE`).
+3. Check that the HTTP status matches `outcome` (`E_ENVELOPE`).
+4. If there is a receipt, verify it through step 6 of 10.1 with that procedure's codes. Then check `trust` against the receipt, as above, and that `superseded_by` differs from the receipt's hash (`E_ENVELOPE`).
+
+An envelope that passes says only that this mesh made a well-formed statement about a receipt that its signer signed.
+
 ## 6. Canonical encoding and hashing
 
 ### 6.1 Parsing JSON
@@ -293,7 +363,7 @@ A hash is SHA-256 over canonical bytes, written as 64 lowercase hex digits (`E_C
 | cell id | the cell object (4.4) |
 | receipt hash | the receipt without its `sig` member (8.3) |
 
-## 7. Function descriptors and function identity
+## 7. Function descriptors, function identity and units
 
 A function descriptor has exactly three members: the function's signature, its code and its declared inputs.
 
@@ -303,23 +373,43 @@ A function descriptor has exactly three members: the function's signature, its c
   "inputs": ["rates.example.org/fx_rate"],
   "signature": {
     "args": {
-      "amount": {"type": "number", "valid": false},
+      "amount": {"type": "number", "unit": {"arg": "base"}, "valid": false},
       "base":   {"type": "string", "valid": false},
       "date":   {"type": "date",   "valid": true},
       "quote":  {"type": "string", "valid": false}
     },
-    "returns": "number"
+    "returns": {"type": "number", "unit": {"arg": "quote"}}
   }
 }
 ```
 
-- `signature.args` maps each argument name to its type. `valid: true` marks a valid-time argument, which must be a `date`, `instant` or `string` (`E_CANON_TYPE`). A period such as `2024-Q1` is a `string` valid-time argument whose format the function documents. At most 32 arguments.
-- `signature.returns` is the value type.
+- `signature.args` maps each argument name to its declaration: `{"type", "valid"}`, or `{"type", "unit", "valid"}` when the type is `number`. `valid: true` marks a valid-time argument, which must be a `date`, `instant` or `string` (`E_CANON_TYPE`). A period such as `2024-Q1` is a `string` valid-time argument whose format the function documents. At most 32 arguments.
+- `signature.returns` is the value type: a type name, or `{"type": "number", "unit": …}` when the type is `number`.
+- Units are required on numbers and allowed nowhere else. Each of these fails with `E_CANON_UNIT`: a `number` argument without `unit`; `unit` on any other argument; `returns` written as the bare name `"number"`; a `returns` object whose type is not `number`, or that has no `unit`; and a unit that is not valid by 7.1. A declaration or `returns` object with a missing `type` or any other member is `E_SCHEMA`. Within a declaration, `type` is checked first (`E_CANON_TYPE`), then `unit`, then `valid`.
 - `code.lang` is a name identifying the language of `code.body`. `stored` means the function is a table of recorded values; by convention its body is empty and it declares no inputs. Other languages are defined by later steps. Until then, a body is an opaque text that the evaluator for `lang` interprets.
 - `code.body` follows the string rules (3.5), except that TAB and LF are allowed, and its limit is 1 MiB. Line endings are LF.
 - `inputs` is the set of fully qualified function names whose cells this function may read. It is an array in ascending order with no duplicates (`E_CANON_SET`). Aliases are not names (`E_CANON_NAME`).
 
-The **function hash** is SHA-256 of the descriptor's canonical bytes. The name is deliberately not part of it: the same code published under two names has one hash. A function name resolves, through the publisher, to its current function hash. Cells and receipts pin the hash, so a receipt always identifies the exact code that produced it.
+The **function hash** is SHA-256 of the descriptor's canonical bytes. The name is deliberately not part of it: the same code published under two names has one hash. A function name resolves, through the publisher, to its current function hash. Cells and receipts pin the hash, so a receipt always identifies the exact code that produced it, and the units of its numbers.
+
+### 7.1 Units
+
+A unit says what a number means. It is declared in the signature, never in a receipt: the function hash commits to it, and every receipt inherits it through `cell.fn_hash`. `units.md` lists the units and is normative. In a signature, a unit is one of:
+
+- **a literal**: a string listed in `units.md`, such as `"EUR"`, `"degC"`, `"percent"`, `"1"` or `"index:2015=100"`;
+- **an argument reference** `{"arg": "<name>"}`: the value of the named argument, which must be an argument of the same signature of type `string`;
+- **a rate** `{"of": X, "per": Y}`: units of X per one unit of Y, where X and Y are each a currency code from `units.md` or an argument reference.
+
+`fx_rate(base, date, quote)` therefore returns `{"type": "number", "unit": {"of": {"arg": "quote"}, "per": {"arg": "base"}}}`. Its cell for base `EUR` and quote `USD` has the unit `USD/EUR`, US dollars per euro.
+
+- A unit string is compared byte for byte and never parsed. `degC` and `°C` differ, and `USD/EUR` written as a string is not a unit, because a rate has only the object form. A literal not in `units.md` is `E_CANON_UNIT`.
+- For an argument reference, the descriptor check is only that the argument exists and is a `string` (`E_CANON_UNIT`). Its value comes from the cell.
+- Any other JSON shape for a unit is `E_SCHEMA`.
+- The list grows only through revisions of this specification. A code removed from ISO 4217 stays listed, because receipts that use it stay valid.
+
+**Resolution.** The unit of one cell's value is found by substituting the cell's argument values into the return unit. A rate is written `<of>/<per>`. A substituted value must itself be a listed unit, and on a side of a rate a currency code (`E_CANON_UNIT`). A slice marker cannot be substituted (`E_SLICE`). A function that does not return a number has no unit. The resolved string is for display and comparison; it is not hashed and cannot be written in a signature. `units.md` section 3 gives the full rules.
+
+A verifier never checks a value against its unit, and never converts between units.
 
 ## 8. Receipts
 
@@ -343,6 +433,8 @@ A receipt is a JSON object with exactly these members (`E_SCHEMA` for any missin
 | `licence` | string | An SPDX licence identifier (`CC-BY-4.0`) or an `https://` URL. |
 | `summary` | string | One human sentence saying what the value is. Non-empty. String rules apply. |
 | `sig` | 128 lowercase hex digits | Ed25519 signature (8.3). |
+
+A receipt carries no unit. The unit of a `number` value is its function's declared return unit, resolved against `cell.args` (7.1); a client gets the descriptor through `cell.fn_hash`. A `blob` value names its content (3.7), which travels separately. Facts that may change after signing, such as staleness, supersession and the mesh's trust label, are never added to a receipt: they belong to the response envelope (5.5).
 
 Example (`vectors/receipt/stored-number.json`):
 
@@ -441,7 +533,7 @@ A verifier runs these steps in order and stops at the first failure, reporting i
 
 1. **Parse** the bytes as strict JSON (6.1).
 2. **Structure.** Check the receipt has exactly the members of 8.1 with the right JSON types, `proto` is `datumesh/1`, `cell` has exactly `args`, `fn`, `fn_hash`, `ns`, and every argument is a typed scalar or the slice marker. Failure: `E_SCHEMA`.
-3. **Canonical form.** Check every member against its lexical rules: names, hex, instants, typed scalars, licence, the summary, `inputs` ascending and unique, and limits. `value` is checked against `type`.
+3. **Canonical form.** Check every member against its lexical rules: names, hex, instants, typed scalars (blobs included), licence, the summary, `inputs` ascending and unique, and limits. `value` is checked against `type`.
 4. **Consistency.**
    - No slice markers in `cell.args` or `valid` (`E_SLICE`).
    - `publisher` equals `cell.ns` (`E_PUBLISHER_MISMATCH`).
@@ -450,10 +542,10 @@ A verifier runs these steps in order and stops at the first failure, reporting i
 5. **Key.** Resolve the keys of the host in `computed_by` (9.3) and find the key with the given id (`E_KEY_UNKNOWN`). Check that `issued` is in its window (`E_KEY_NOT_VALID`).
 6. **Signature.** Verify `sig` over `payload` (8.3) with that key (`E_SIGNATURE`). Use RFC 8032 verification with the cofactorless equation, rejecting `S >= L`, non-canonical encodings of `R` and `A`, and small-order `A` and `R` (as libsodium does). A receipt that passes steps 1-6 is **signature-valid**.
 7. **Recomputation** (optional; makes the receipt **fully verified**):
-   1. Obtain the descriptor for `cell.fn_hash` (`E_FN_UNAVAILABLE`). It must hash to `cell.fn_hash` (`E_FN_HASH_MISMATCH`) and be canonical (sections 6-7).
+   1. Obtain the descriptor for `cell.fn_hash` (`E_FN_UNAVAILABLE`). It must hash to `cell.fn_hash` (`E_FN_HASH_MISMATCH`) and be canonical (sections 6-7, units included).
    2. `cell.args` names exactly the declared arguments (`E_ARG_UNKNOWN`, then `E_ARG_MISSING`), each with its declared type (`E_ARG_TYPE`).
    3. `valid` holds exactly the declared valid-time arguments (`E_VALID_MISMATCH`).
-   4. `type` equals `signature.returns` (`E_RETURN_TYPE`).
+   4. `type` equals the declared return type: `signature.returns`, or its `type` member when it is an object (`E_RETURN_TYPE`).
    5. For each hash in `inputs`, in order:
       - obtain the input receipt (`E_INPUT_UNAVAILABLE`), which must hash to the listed hash;
       - verify it through step 6 (`E_INPUT_INVALID`);
@@ -462,6 +554,7 @@ A verifier runs these steps in order and stops at the first failure, reporting i
 
       If there are inputs, `tx` must equal the latest input `tx` (`E_TIME_ORDER`).
    6. Evaluate the function (for `stored`: look the value up as of `asof`). The result's `type` and `value` must equal the receipt's lexically (`E_VALUE_MISMATCH`).
+   7. **Blob content.** If `type` is `blob` and the content is available, it must have exactly `length` bytes and its SHA-256 must equal the blob's hash (`E_BLOB_MISMATCH`). This sub-step needs no descriptor and no inputs. It MAY run directly after step 6, without 7.1-7.6, and a verifier given content without being asked to recompute runs only this sub-step. Content of blob arguments is checked the same way by whoever retrieves it.
 
 Signature-valid means the holder of key `computed_by` stated this value. Whether to trust that party is policy, outside this specification.
 
@@ -482,9 +575,11 @@ The four failure classes a verifier distinguishes are: bad canonical form (parse
 | `E_CANON_PERCENT` | URI | Non-canonical percent-encoding or non-UTF-8 bytes. |
 | `E_CANON_TYPE` | 3 | Unknown type name, value of the wrong JSON type, or a non-date/instant/string valid-time declaration. |
 | `E_CANON_NUMBER` | 3 | Number not in canonical decimal form. |
+| `E_CANON_UNIT` | 3 | A number declaration without a unit, a unit on anything else, `returns` in the wrong form, a unit not in `units.md`, or a unit reference to no string argument; when resolving a unit, a value that is not a unit. |
 | `E_CANON_DATE` | 3 | Date not `YYYY-MM-DD` or not a calendar day. |
 | `E_CANON_INSTANT` | 3 | Instant not `YYYY-MM-DDTHH:MM:SS.ffffffZ`, not a real time, or a leap second. |
 | `E_CANON_STRING` | 3 | Control, unassigned or surrogate code point, not NFC, or empty summary. |
+| `E_CANON_BLOB` | 3 | Blob not `<sha256>:<length>:<media type>` as in 3.7. |
 | `E_CANON_HEX` | 3 | Hash, key id or signature not lowercase hex of the right length. |
 | `E_CANON_LICENCE` | 3 | Licence neither an SPDX identifier nor an `https://` URL. |
 | `E_CANON_SET` | 3 | `inputs` not strictly ascending. |
@@ -508,8 +603,10 @@ The four failure classes a verifier distinguishes are: bad canonical form (parse
 | `E_INPUT_INVALID` | 7 | An input receipt is not signature-valid. |
 | `E_INPUT_UNDECLARED` | 7 | An input receipt is a cell of a function not in the descriptor's `inputs`. |
 | `E_VALUE_MISMATCH` | 7 | Recomputation gives a different type or value. |
+| `E_BLOB_MISMATCH` | 7 | Blob content has another length or hash than the blob states. |
+| `E_ENVELOPE` | envelope | A response envelope breaks a rule of 5.5, or its HTTP status does not match its outcome. |
 
-"URI" marks codes raised while parsing a cell URI (5.4). Canonicalising a scalar, cell, reference or descriptor on its own uses the same codes as steps 1-3.
+"URI" marks codes raised while parsing a cell URI (5.4), and "envelope" codes raised while checking a response envelope (5.5). Canonicalising a scalar, cell, reference or descriptor on its own uses the same codes as steps 1-3.
 
 ## 11. Test vectors
 
@@ -522,7 +619,9 @@ The four failure classes a verifier distinguishes are: bad canonical form (parse
 | `uri` | `input`: URI, `signature`: function signature | `object` (cell reference), `canonical`, `sha256`, `https` (on mesh `mesh.example`) |
 | `keyid` | `input`: public key hex | `key_id` |
 | `keys` | `host`, `env`: what the HTTPS request returned | `key_ids` |
-| `receipt` | `input`: receipt JSON text; `keypair` (`seed`, `public`, `key_id`); `keys`: an `env` per host; optional `recompute` | `canonical` (the signed payload), `sha256` (receipt hash), `sig`, `level` (`signed` or `recomputed`) |
+| `receipt` | `input`: receipt JSON text; `keypair` (`seed`, `public`, `key_id`); `keys`: an `env` per host; optional `recompute`; optional `blob_hex`: the content of a blob value, for step 7.7 | `canonical` (the signed payload), `sha256` (receipt hash), `sig`, `level` (`signed` or `recomputed`) |
+| `unit` | `input`: JSON text of `{"cell", "descriptor"}` | `unit`: the resolved unit of the cell's value (7.1), or null |
+| `envelope` | `input`: the response body; `status`: the HTTP status; `keys`: an `env` per host | `outcome`, and when there is a receipt, `trust` and `receipt_hash` |
 
 `canonical` is the canonical byte string as UTF-8 text. Inputs are deliberately not canonical: member order is reversed, and there is whitespace and escaping. A valid receipt vector's expected verification result is success at `level`; an invalid one's is `error`. Keypairs come from fixed seeds and Ed25519 is deterministic, so `tools/gen_vectors.py` reproduces every file byte for byte.
 
@@ -538,6 +637,8 @@ The vectors use reserved example domains (`example.org`, `example.net`, `.exampl
 - **Key retrieval** is as trustworthy as the Web PKI. Verifiers MUST validate the TLS certificate and MUST NOT follow redirects.
 - **Revocation** is by shortening `valid_to`. There is no other revocation list.
 - **Text in summaries and strings** may contain bidi controls and confusable characters. Display it as data.
+- **Blob content** is untrusted until step 7.7 passes. Check the length before downloading or hashing more than that many bytes. Do not let the media type override what a client would otherwise do with the bytes: it is the publisher's claim.
+- **Envelopes are unsigned.** TLS authenticates the mesh, not what it says. `stale`, `superseded_by`, `verified` and every non-`ok` outcome are the mesh's claims, and a mesh can lie about them or omit them. A client that needs a newer value asks with a later `asof`, or asks another mesh.
 
 ## 13. Decisions and rationale
 
@@ -567,6 +668,14 @@ Every choice this specification makes where its brief left room, with the main a
 | D20 | Licence: one SPDX identifier or `https://` URL, not an SPDX expression | Full SPDX expressions | Brief says identifier; expressions add a grammar to canonicalise. |
 | D21 | Signed test data uses example domains, not real publishers | Use `ecb.europa.eu` | Vectors must not look like statements by real organisations. |
 | D22 | Verification uses libsodium-strict Ed25519 | ZIP-215 permissive rules | Honest signatures verify either way; strict rules reject malleable edge cases. |
+| D23 | `returns` stays a bare type name except for `number`, which is `{"type": "number", "unit": …}`; argument declarations gain `unit` only for numbers | `returns` always an object | Always an object would change the hash of every descriptor, including those with no number, and of every receipt pinning them, for no gain. As it is, a descriptor with no number member is byte-identical to `spec-0.1.1`, and each meaning still has one spelling. |
+| D24 | The unit is part of the signature, inherited by receipts through `fn_hash` | A `unit` member in each receipt | A unit is a property of the function, not of one answer. Putting it in the hash of the function makes it impossible for two receipts of one function to disagree, and leaves the receipt format unchanged. |
+| D25 | A closed list of unit strings (`units.md`), compared byte for byte | UCUM, a grammar of unit expressions with its own canonical form | UCUM can express everything, but needs a parser and canonicaliser of its own, and gives `kWh` several spellings. A short list cannot disagree with itself; additions come with spec revisions. |
+| D26 | Units may reference a string argument (`{"arg"}`), and rates are `{"of", "per"}` objects | Fixed units only, which means one function per currency pair; or rate strings like `USD/EUR` | A generic `fx_rate(base, quote)` or `convert(amount, base, quote)` has units that depend on its arguments. A reference keeps them one function each. A single object form for rates avoids a second spelling and any parsing. |
+| D27 | Blob is a scalar `<sha256>:<length>:<media type>` | A blob object type; a URL; a multihash | It keeps "scalars only" and fits wherever a string fits: URIs, arguments, values. The content is addressed by hash, so any host can serve it. |
+| D28 | Staleness, supersession and trust live in an unsigned response envelope | New receipt members | Receipts already signed stay byte-identical and verifiable. These facts change after signing and are the mesh's claims, not the signer's. |
+| D29 | `trust: primary` is defined from the receipt (signer's host = namespace's host, no inputs), and a mesh must use it exactly then | Let the mesh choose its label freely | A client can check the one label that is checkable. |
+| D30 | One code, `E_ENVELOPE`, for every envelope rule | A code per envelope rule | An envelope is not hashed or signed, so a client needs to know only that the mesh's statement is malformed. Receipt failures inside it keep their own codes. |
 
 ## Appendix A: collected ABNF
 
@@ -594,9 +703,56 @@ date          = 4DIGIT "-" 2DIGIT "-" 2DIGIT                               ; a r
 instant       = date "T" 2DIGIT ":" 2DIGIT ":" 2DIGIT "." 6DIGIT "Z"     ; seconds 00-59
 HEXLOW        = DIGIT / %x61-66
 
+blob          = 64HEXLOW ":" ( "0" / %x31-39 *DIGIT ) ":" media-type     ; length <= 2^53 - 1
+media-type    = restricted-name "/" restricted-name                       ; <= 128 chars
+restricted-name = ( lower / DIGIT ) *( lower / DIGIT / "!" / "#" / "$" / "&" / "-" / "^" / "_" / "." / "+" )
+
+index-unit    = "index:" 4DIGIT [ "-" 2DIGIT [ "-" 2DIGIT ] ] "=" number   ; units.md 2.4, value > 0, <= 64 chars
+
 ```
 
 ## 14. Changes
+
+### spec-0.2.0
+
+Three additions, released together so that there is one migration.
+
+- **Units (7.1, `units.md`).** Number arguments and number returns declare a unit: a listed literal, a reference to a string argument, or a rate `{"of", "per"}`. `returns` stays a bare type name for every other type (D23). New code `E_CANON_UNIT`.
+- **Blobs (3.7).** A sixth type, `blob`: `<sha256>:<length>:<media type>`. Verification step 7.7 checks content when it is available. New codes `E_CANON_BLOB` and `E_BLOB_MISMATCH`.
+- **Response envelope (5.5).** The JSON body a mesh returns: outcome, trust label, staleness, supersession, quotes, rate limits and errors, with HTTP status mappings. It is unsigned and outside the receipt. New code `E_ENVELOPE`, schema `schemas/envelope.schema.json`.
+- **Vectors.** New kinds `unit` and `envelope`, and the receipt field `blob_hex`. 107 new vectors.
+
+JCS, hashing, signing, keys and verification steps 1-6 are unchanged. The receipt format is unchanged: `proto` is still `datumesh/1`, and no member was added.
+
+**What changed.** A descriptor with a number member now has a unit, so its bytes and function hash changed. Everything that embeds such a function hash changed with it: cell ids, receipt bytes, receipt hashes and signatures. A `spec-0.1.1` descriptor with a number member fails `E_CANON_UNIT` under this revision; no publisher had one. Changed hashes in the vectors (old, then new):
+
+| Vector | Hash | spec-0.1.1 | spec-0.2.0 |
+|---|---|---|---|
+| `cell/fx-rate` | cell id | `9ebea149cfe52c62a8cd23287c2c25f8a704bc0c2fa59ab0c5c9dcd55313c6b3` | `f566f2838815a8649fe467b7a41876c5d2b4deca9afb974b8c50caafd4633ca5` |
+| `cell/idn-a-label` | cell id | `618ae3e71a97a3ba5ccfe0d8aacc65545398f6d2086d15435df6eca912a31fd6` | `22ed67f6963758206ee4eef5f9765ecb0b2eb79164ff3eee537193fb781832ef` |
+| `cell/max-arguments` | cell id | `d7b340cd7559a69839accef9bf8c0ce8e99e0f2606e4821ecdc6cb5fa2ee8f11` | `b0b646900957fc0d410446543ed76838bbb0eb8666a2a0d5aa54b94f17996533` |
+| `cell/namespace-path` | cell id | `9b86987b0cddde785e0c563e0b35422de8049467c0780ae00e683efc1ee26e97` | `bd5c8fa308731672e7b946c825ebea3de33d762053c2466551478bb88ea5b7bf` |
+| `cell/no-arguments` | cell id | `dcc38effea66f3e4f87d07280f7ded1bde1051f9dd416b013234d9a90f66a567` | `55f39026b5d68516244758d43a1ff8bee208dd23615ec9b5a1fe43c0c800493d` |
+| `cell/slice` | cell id | `f22dfb6463b44a3d109178081f71c926a9e7e1d6b92613f395a9585d24d3fac8` | `6046e961e3573d42422565754037c2b4d1c4bfe744f3a3a323d69b62c71c10f8` |
+| `function/computed-convert` | function hash | `794a960b7fa32ae7763a2308766864b52fa27920f48fb328b5c3413300eaf876` | `014fc97eb3a442ab28a96d89131ccfd11c9eec8187595578c212b392d0702c71` |
+| `function/no-arguments` | function hash | `4184dc316637adb1837b3224ef0043f8766786321e2048b7f0a653a684483159` | `6548c6e298e8f66b98295303aaac8fcf45bed6fff3bdedcbda2ce8d49d6dedbb` |
+| `function/stored-fx-rate` | function hash | `88445cddbf86a358e1318934bfc8160728a9a0ff2b05b50be6c0fee2eb3e5af4` | `7b58ecb8fd23b644c87951d0bd609790ff547cbb23fed27186c669ce2ce0aa80` |
+| `receipt/computed-two-inputs` | receipt hash | `0dc78d69228376bcf5d33400af6830e60c1ab14d3b032c90e4ac5e3f5b19ac7e` | `8c2ae5c04d287b9571d2c05a8f51c5bb79a59d19c2dfcbd552f6e0528d6fb5b8` |
+| `receipt/computed-with-lineage` | receipt hash | `46cce62c62419ba5486cc592d47affa453901e003e61327bedeec8dfd69bc859` | `9f4d8814808d783e83b0424f90439fbbedc5f73457828d0ed346b0f424a85527` |
+| `receipt/date-value` | receipt hash | `9d195c19f362edcd1950e61711823df881ece975230da905b60825283d3ae3d4` | `d2566102ab6fec1b2acc11cb524e1d3de71f8ded3135837d00f503418c51b00f` |
+| `receipt/historical-asof` | receipt hash | `b5540615da5ae5a1ffecb166526ebe4f6814199991658a3e78ef50bf16c9e44a` | `b3364bca98cb936f81f12d84b9134216abb3270538390f662c3b7d35ad2f23d1` |
+| `receipt/rotated-key` | receipt hash | `d2d01a26527bb85b9c6587037ba26b56751e30fb5edab48f74771f3190dba013` | `e7347ac3732d56286d45aa99af3f6d7346a6bb18540fbe2396bf6c865e3ddd74` |
+| `receipt/stored-number-second` | receipt hash | `8dd337dbddb7194551dc094b89f81e1c82ffd853273a4a4ce19cc86ee08bedd1` | `9b34fa55582d96c85949bc64673dd89aa9c19b5c104362bbb3cd37e61ec699ac` |
+| `receipt/stored-number` | receipt hash | `501f744d910c585859a5be4f3b62385ed0d6803db53dbbf95dff5097a68bee0d` | `19a5fe3a744c5792f747fb4c286ce396ab44b95922de4f07937502fe595b6f81` |
+| `receipt/string-value` | receipt hash | `5fa7375ae6db221588824f66fda176e28dbfaf5fa1230401c8d51b88e639be56` | `50cd62b0b12aab79f6ab14648f661bfa03231d61f50d1f0a178092306a55cd85` |
+
+Every invalid vector built from these descriptors, cells and receipts changed its bytes, with the same expected error. URI vectors changed only their `signature` input, which gained units; their outputs are unchanged. Each changed vector says so in its description.
+
+**What did not change.**
+
+- Descriptors with no number member: `is_holiday` (`ed1f0ecb7166dd6d70ae263456e3af94147d4781f43035e534b9368e9561f84a`) and `last_trade` (`c9e0d9f0d0cb8b5be729b6e30a4e89fbfa2ff2e6b55f18632751b2f0f7acb923`).
+- Their receipts: `receipt/boolean-namespace-path` (`0c3feb4c797f580d279287dbe11a41eed45cfd00c72c3e983dbd5e7ab69cacbf`) and `receipt/instant-no-valid-time` (`935b74a360c9b37f35094192834b86dc1b2bf74f33b43f30bd84c581545dd57e`), byte for byte, signatures included.
+- All 26 scalar, 5 JCS, 10 URI and 1 reference hashes, every key id and every key document.
 
 ### spec-0.1.1
 

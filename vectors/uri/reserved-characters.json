@@ -1,7 +1,7 @@
 {
   "id": "uri/reserved-characters",
   "kind": "uri",
-  "description": "& = + / ? and % are always percent-encoded.",
+  "description": "& = + / ? and % are always percent-encoded. Changed in spec-0.2.0: the signature input now declares units; the outputs are unchanged.",
   "valid": true,
   "input": "cell://rates.example.org/fx_rate?base=a%26b%3Dc%2Bd%2Fe%3Ff%25&date=2024-03-15&quote=USD",
   "signature": {
@@ -19,7 +19,17 @@
         "valid": false
       }
     },
-    "returns": "number"
+    "returns": {
+      "type": "number",
+      "unit": {
+        "of": {
+          "arg": "quote"
+        },
+        "per": {
+          "arg": "base"
+        }
+      }
+    }
   },
   "object": {
     "args": {

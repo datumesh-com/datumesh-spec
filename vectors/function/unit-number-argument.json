@@ -1,0 +1,9 @@
+{
+  "id": "function/unit-number-argument",
+  "kind": "function",
+  "description": "A number argument declares its unit; the boolean return stays a bare type name.",
+  "valid": true,
+  "input": "{\n  \"signature\": {\n    \"returns\": \"boolean\",\n    \"args\": {\n      \"threshold\": {\n        \"valid\": false,\n        \"unit\": \"degC\",\n        \"type\": \"number\"\n      },\n      \"station\": {\n        \"valid\": false,\n        \"type\": \"string\"\n      },\n      \"date\": {\n        \"valid\": true,\n        \"type\": \"date\"\n      }\n    }\n  },\n  \"inputs\": [],\n  \"code\": {\n    \"lang\": \"stored\",\n    \"body\": \"\"\n  }\n}",
+  "canonical": "{\"code\":{\"body\":\"\",\"lang\":\"stored\"},\"inputs\":[],\"signature\":{\"args\":{\"date\":{\"type\":\"date\",\"valid\":true},\"station\":{\"type\":\"string\",\"valid\":false},\"threshold\":{\"type\":\"number\",\"unit\":\"degC\",\"valid\":false}},\"returns\":\"boolean\"}}",
+  "sha256": "9dad8f51e3482aa9ed495028a0948da353710040e363a481f3d3cd9a2c5ddb3f"
+}

@@ -1,7 +1,7 @@
 {
   "id": "invalid/uri-unknown-argument",
   "kind": "uri",
-  "description": "Undeclared arguments are rejected.",
+  "description": "Undeclared arguments are rejected. Changed in spec-0.2.0: the signature input now declares units; the outputs are unchanged.",
   "valid": false,
   "input": "cell://rates.example.org/fx_rate?base=EUR&date=2024-03-15&quote=USD&zone=UTC",
   "signature": {
@@ -19,7 +19,17 @@
         "valid": false
       }
     },
-    "returns": "number"
+    "returns": {
+      "type": "number",
+      "unit": {
+        "of": {
+          "arg": "quote"
+        },
+        "per": {
+          "arg": "base"
+        }
+      }
+    }
   },
   "error": "E_ARG_UNKNOWN"
 }

@@ -1,0 +1,9 @@
+{
+  "id": "function/blob-return",
+  "kind": "function",
+  "description": "A function returning a blob; blobs have no unit, so the return is the bare name.",
+  "valid": true,
+  "input": "{\n  \"signature\": {\n    \"returns\": \"blob\",\n    \"args\": {\n      \"date\": {\n        \"valid\": true,\n        \"type\": \"date\"\n      },\n      \"company\": {\n        \"valid\": false,\n        \"type\": \"string\"\n      }\n    }\n  },\n  \"inputs\": [],\n  \"code\": {\n    \"lang\": \"stored\",\n    \"body\": \"\"\n  }\n}",
+  "canonical": "{\"code\":{\"body\":\"\",\"lang\":\"stored\"},\"inputs\":[],\"signature\":{\"args\":{\"company\":{\"type\":\"string\",\"valid\":false},\"date\":{\"type\":\"date\",\"valid\":true}},\"returns\":\"blob\"}}",
+  "sha256": "4c1603b8f930dadc724afe3a023a53596b2f2ac6b0c963e8de99e3ba216b811e"
+}

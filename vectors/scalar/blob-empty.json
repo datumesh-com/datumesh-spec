@@ -1,0 +1,9 @@
+{
+  "id": "scalar/blob-empty",
+  "kind": "scalar",
+  "description": "Empty content: length 0 and the hash of no bytes.",
+  "valid": true,
+  "input": "{\n  \"value\": \"e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855:0:application/octet-stream\",\n  \"type\": \"blob\"\n}",
+  "canonical": "{\"type\":\"blob\",\"value\":\"e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855:0:application/octet-stream\"}",
+  "sha256": "c1fc3ff075053e30995157f2939f85e532e5b108a1680ca7d388116f666fd9d1"
+}

@@ -1,9 +1,9 @@
 {
   "id": "cell/idn-a-label",
   "kind": "cell",
-  "description": "Internationalised domain names appear as A-labels.",
+  "description": "Internationalised domain names appear as A-labels. Changed in spec-0.2.0: fn_hash is the hash of a descriptor that now declares units.",
   "valid": true,
-  "input": "{\n  \"ns\": \"xn--bcher-kva.example\",\n  \"fn_hash\": \"88445cddbf86a358e1318934bfc8160728a9a0ff2b05b50be6c0fee2eb3e5af4\",\n  \"fn\": \"fx_rate\",\n  \"args\": {\n    \"quote\": {\n      \"value\": \"USD\",\n      \"type\": \"string\"\n    },\n    \"date\": {\n      \"value\": \"2024-03-15\",\n      \"type\": \"date\"\n    },\n    \"base\": {\n      \"value\": \"EUR\",\n      \"type\": \"string\"\n    }\n  }\n}",
-  "canonical": "{\"args\":{\"base\":{\"type\":\"string\",\"value\":\"EUR\"},\"date\":{\"type\":\"date\",\"value\":\"2024-03-15\"},\"quote\":{\"type\":\"string\",\"value\":\"USD\"}},\"fn\":\"fx_rate\",\"fn_hash\":\"88445cddbf86a358e1318934bfc8160728a9a0ff2b05b50be6c0fee2eb3e5af4\",\"ns\":\"xn--bcher-kva.example\"}",
-  "sha256": "618ae3e71a97a3ba5ccfe0d8aacc65545398f6d2086d15435df6eca912a31fd6"
+  "input": "{\n  \"ns\": \"xn--bcher-kva.example\",\n  \"fn_hash\": \"7b58ecb8fd23b644c87951d0bd609790ff547cbb23fed27186c669ce2ce0aa80\",\n  \"fn\": \"fx_rate\",\n  \"args\": {\n    \"quote\": {\n      \"value\": \"USD\",\n      \"type\": \"string\"\n    },\n    \"date\": {\n      \"value\": \"2024-03-15\",\n      \"type\": \"date\"\n    },\n    \"base\": {\n      \"value\": \"EUR\",\n      \"type\": \"string\"\n    }\n  }\n}",
+  "canonical": "{\"args\":{\"base\":{\"type\":\"string\",\"value\":\"EUR\"},\"date\":{\"type\":\"date\",\"value\":\"2024-03-15\"},\"quote\":{\"type\":\"string\",\"value\":\"USD\"}},\"fn\":\"fx_rate\",\"fn_hash\":\"7b58ecb8fd23b644c87951d0bd609790ff547cbb23fed27186c669ce2ce0aa80\",\"ns\":\"xn--bcher-kva.example\"}",
+  "sha256": "22ed67f6963758206ee4eef5f9765ecb0b2eb79164ff3eee537193fb781832ef"
 }

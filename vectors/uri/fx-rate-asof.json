@@ -1,7 +1,7 @@
 {
   "id": "uri/fx-rate-asof",
   "kind": "uri",
-  "description": "asof is the last parameter and is not sorted with the arguments.",
+  "description": "asof is the last parameter and is not sorted with the arguments. Changed in spec-0.2.0: the signature input now declares units; the outputs are unchanged.",
   "valid": true,
   "input": "cell://rates.example.org/fx_rate?base=EUR&date=2024-03-15&quote=USD&asof=2024-03-16T09:00:00.000000Z",
   "signature": {
@@ -19,7 +19,17 @@
         "valid": false
       }
     },
-    "returns": "number"
+    "returns": {
+      "type": "number",
+      "unit": {
+        "of": {
+          "arg": "quote"
+        },
+        "per": {
+          "arg": "base"
+        }
+      }
+    }
   },
   "object": {
     "args": {

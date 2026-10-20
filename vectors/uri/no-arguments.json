@@ -1,12 +1,15 @@
 {
   "id": "uri/no-arguments",
   "kind": "uri",
-  "description": "A function of no arguments has no query.",
+  "description": "A function of no arguments has no query. Changed in spec-0.2.0: the signature input now declares units; the outputs are unchanged.",
   "valid": true,
   "input": "cell://math.example/pi",
   "signature": {
     "args": {},
-    "returns": "number"
+    "returns": {
+      "type": "number",
+      "unit": "1"
+    }
   },
   "object": {
     "args": {},

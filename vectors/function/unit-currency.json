@@ -1,0 +1,9 @@
+{
+  "id": "function/unit-currency",
+  "kind": "function",
+  "description": "An amount of money: its unit is a currency code.",
+  "valid": true,
+  "input": "{\n  \"signature\": {\n    \"returns\": {\n      \"unit\": \"GBP\",\n      \"type\": \"number\"\n    },\n    \"args\": {\n      \"date\": {\n        \"valid\": true,\n        \"type\": \"date\"\n      },\n      \"company\": {\n        \"valid\": false,\n        \"type\": \"string\"\n      }\n    }\n  },\n  \"inputs\": [],\n  \"code\": {\n    \"lang\": \"stored\",\n    \"body\": \"\"\n  }\n}",
+  "canonical": "{\"code\":{\"body\":\"\",\"lang\":\"stored\"},\"inputs\":[],\"signature\":{\"args\":{\"company\":{\"type\":\"string\",\"valid\":false},\"date\":{\"type\":\"date\",\"valid\":true}},\"returns\":{\"type\":\"number\",\"unit\":\"GBP\"}}}",
+  "sha256": "18fd8d6da7147dbebd763a0b5c37290c510460fa1b2c2b4a57dbdd5da45c11c2"
+}

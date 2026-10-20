@@ -1,0 +1,9 @@
+{
+  "id": "function/unit-argument-reference",
+  "kind": "function",
+  "description": "A number argument and the return take their unit from a string argument.",
+  "valid": true,
+  "input": "{\n  \"signature\": {\n    \"returns\": {\n      \"unit\": {\n        \"arg\": \"currency\"\n      },\n      \"type\": \"number\"\n    },\n    \"args\": {\n      \"currency\": {\n        \"valid\": false,\n        \"type\": \"string\"\n      },\n      \"amount\": {\n        \"valid\": false,\n        \"unit\": {\n          \"arg\": \"currency\"\n        },\n        \"type\": \"number\"\n      }\n    }\n  },\n  \"inputs\": [],\n  \"code\": {\n    \"lang\": \"stored\",\n    \"body\": \"\"\n  }\n}",
+  "canonical": "{\"code\":{\"body\":\"\",\"lang\":\"stored\"},\"inputs\":[],\"signature\":{\"args\":{\"amount\":{\"type\":\"number\",\"unit\":{\"arg\":\"currency\"},\"valid\":false},\"currency\":{\"type\":\"string\",\"valid\":false}},\"returns\":{\"type\":\"number\",\"unit\":{\"arg\":\"currency\"}}}}",
+  "sha256": "111b80d1175689da3786d712f6c214df28048e53a6a41912ce0bdfae1fc671db"
+}

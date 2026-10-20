@@ -1,0 +1,8 @@
+{
+  "id": "invalid/function-unit-rate-side-not-currency",
+  "kind": "function",
+  "description": "Each side of a rate is a currency code or an argument reference.",
+  "valid": false,
+  "input": "{\n  \"signature\": {\n    \"returns\": {\n      \"unit\": {\n        \"per\": \"EUR\",\n        \"of\": \"kg\"\n      },\n      \"type\": \"number\"\n    },\n    \"args\": {}\n  },\n  \"inputs\": [],\n  \"code\": {\n    \"lang\": \"stored\",\n    \"body\": \"\"\n  }\n}",
+  "error": "E_CANON_UNIT"
+}

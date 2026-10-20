@@ -1,0 +1,9 @@
+{
+  "id": "scalar/blob-max-length",
+  "kind": "scalar",
+  "description": "The largest length, 2^53 - 1.",
+  "valid": true,
+  "input": "{\n  \"value\": \"0000000000000000000000000000000000000000000000000000000000000000:9007199254740991:application/octet-stream\",\n  \"type\": \"blob\"\n}",
+  "canonical": "{\"type\":\"blob\",\"value\":\"0000000000000000000000000000000000000000000000000000000000000000:9007199254740991:application/octet-stream\"}",
+  "sha256": "3c2954acda396d55dfff68ba986da1d975d0baf8616bb860d5d4ccf894f4316c"
+}

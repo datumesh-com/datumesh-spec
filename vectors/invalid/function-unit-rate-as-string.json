@@ -1,0 +1,8 @@
+{
+  "id": "invalid/function-unit-rate-as-string",
+  "kind": "function",
+  "description": "A rate is written {\"of\", \"per\"}; the string USD/EUR is not a unit.",
+  "valid": false,
+  "input": "{\n  \"signature\": {\n    \"returns\": {\n      \"unit\": \"USD/EUR\",\n      \"type\": \"number\"\n    },\n    \"args\": {}\n  },\n  \"inputs\": [],\n  \"code\": {\n    \"lang\": \"stored\",\n    \"body\": \"\"\n  }\n}",
+  "error": "E_CANON_UNIT"
+}

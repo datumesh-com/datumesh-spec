@@ -1,9 +1,9 @@
 {
   "id": "invalid/receipt-input-unavailable",
   "kind": "receipt",
-  "description": "An input receipt cannot be found.",
+  "description": "An input receipt cannot be found. Changed in spec-0.2.0: the cell's fn_hash changed because its descriptor now declares units, so the receipt bytes, hash and signature changed.",
   "valid": false,
-  "input": "{\n  \"sig\": \"6739534c70657d37c896c1c60bc017ac3a8867a6bbdf7aa561fd806b24eb829a464ea90c00ffcaa795bb34eb195c1c2174ff4f895d3b9c2d6e429409279b3806\",\n  \"value\": \"108.92\",\n  \"valid\": {\n    \"date\": {\n      \"value\": \"2024-03-15\",\n      \"type\": \"date\"\n    }\n  },\n  \"type\": \"number\",\n  \"tx\": \"2024-03-15T16:00:00.000000Z\",\n  \"summary\": \"100 EUR converted to USD at the 15 March 2024 rate is 108.92.\",\n  \"publisher\": \"calc.example.net\",\n  \"proto\": \"datumesh/1\",\n  \"licence\": \"CC-BY-4.0\",\n  \"issued\": \"2024-03-16T09:00:01.250000Z\",\n  \"inputs\": [\n    \"501f744d910c585859a5be4f3b62385ed0d6803db53dbbf95dff5097a68bee0d\"\n  ],\n  \"computed_by\": \"calc.example.net#f7ec60a92abf4774\",\n  \"cell\": {\n    \"ns\": \"calc.example.net\",\n    \"fn_hash\": \"794a960b7fa32ae7763a2308766864b52fa27920f48fb328b5c3413300eaf876\",\n    \"fn\": \"convert\",\n    \"args\": {\n      \"quote\": {\n        \"value\": \"USD\",\n        \"type\": \"string\"\n      },\n      \"date\": {\n        \"value\": \"2024-03-15\",\n        \"type\": \"date\"\n      },\n      \"base\": {\n        \"value\": \"EUR\",\n        \"type\": \"string\"\n      },\n      \"amount\": {\n        \"value\": \"100\",\n        \"type\": \"number\"\n      }\n    }\n  },\n  \"asof\": \"2024-03-16T09:00:00.000000Z\"\n}",
+  "input": "{\n  \"sig\": \"3d1409f50334c98518bb2957688407708c2a53adaf43e2742fd9933ea1ab15a0f69fcc10b9e29c3e5c0bb7339ddc734e8cc35cec345a8a9c7b032555f02bf201\",\n  \"value\": \"108.92\",\n  \"valid\": {\n    \"date\": {\n      \"value\": \"2024-03-15\",\n      \"type\": \"date\"\n    }\n  },\n  \"type\": \"number\",\n  \"tx\": \"2024-03-15T16:00:00.000000Z\",\n  \"summary\": \"100 EUR converted to USD at the 15 March 2024 rate is 108.92.\",\n  \"publisher\": \"calc.example.net\",\n  \"proto\": \"datumesh/1\",\n  \"licence\": \"CC-BY-4.0\",\n  \"issued\": \"2024-03-16T09:00:01.250000Z\",\n  \"inputs\": [\n    \"19a5fe3a744c5792f747fb4c286ce396ab44b95922de4f07937502fe595b6f81\"\n  ],\n  \"computed_by\": \"calc.example.net#f7ec60a92abf4774\",\n  \"cell\": {\n    \"ns\": \"calc.example.net\",\n    \"fn_hash\": \"014fc97eb3a442ab28a96d89131ccfd11c9eec8187595578c212b392d0702c71\",\n    \"fn\": \"convert\",\n    \"args\": {\n      \"quote\": {\n        \"value\": \"USD\",\n        \"type\": \"string\"\n      },\n      \"date\": {\n        \"value\": \"2024-03-15\",\n        \"type\": \"date\"\n      },\n      \"base\": {\n        \"value\": \"EUR\",\n        \"type\": \"string\"\n      },\n      \"amount\": {\n        \"value\": \"100\",\n        \"type\": \"number\"\n      }\n    }\n  },\n  \"asof\": \"2024-03-16T09:00:00.000000Z\"\n}",
   "keypair": {
     "seed": "81589e69e00a82e983f0274d169ffa6c2ea7bc26833833826e57ce690125d5b5",
     "public": "ccd4faa3a0b8338bc796d3bfc30bda2f6e87d336a576b70dc9d47cbfe0e8830f",
@@ -36,6 +36,9 @@
         "args": {
           "amount": {
             "type": "number",
+            "unit": {
+              "arg": "base"
+            },
             "valid": false
           },
           "base": {
@@ -51,7 +54,12 @@
             "valid": false
           }
         },
-        "returns": "number"
+        "returns": {
+          "type": "number",
+          "unit": {
+            "arg": "quote"
+          }
+        }
       }
     },
     "inputs": {},

@@ -1,7 +1,7 @@
 {
   "id": "invalid/uri-bad-utf8",
   "kind": "uri",
-  "description": "Percent-encoded bytes must be UTF-8.",
+  "description": "Percent-encoded bytes must be UTF-8. Changed in spec-0.2.0: the signature input now declares units; the outputs are unchanged.",
   "valid": false,
   "input": "cell://rates.example.org/fx_rate?base=%FF&date=2024-03-15&quote=USD",
   "signature": {
@@ -19,7 +19,17 @@
         "valid": false
       }
     },
-    "returns": "number"
+    "returns": {
+      "type": "number",
+      "unit": {
+        "of": {
+          "arg": "quote"
+        },
+        "per": {
+          "arg": "base"
+        }
+      }
+    }
   },
   "error": "E_CANON_PERCENT"
 }

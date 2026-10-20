@@ -1,0 +1,31 @@
+{
+  "id": "receipt/blob-value",
+  "kind": "receipt",
+  "description": "A blob value with its content: step 7.7 checks the content's length and hash.",
+  "valid": true,
+  "input": "{\n  \"sig\": \"07c79ba6d8272ffdd4d1e4c837a2844bbf2dbd0bc9ddc23381a0605f886cdadad3a4d3d85279f9c1dd47aee6293795a1bbf00f165601710be020015b4ee0fa0f\",\n  \"value\": \"62817c3c4fda158438aab46250f31d77514c50b31db7c6e9e1fa763e91f90c8f:46:text/csv\",\n  \"valid\": {\n    \"date\": {\n      \"value\": \"2024-03-15\",\n      \"type\": \"date\"\n    }\n  },\n  \"type\": \"blob\",\n  \"tx\": \"2024-03-15T16:00:00.000000Z\",\n  \"summary\": \"The filing of company 01234567 on 15 March 2024.\",\n  \"publisher\": \"rates.example.org\",\n  \"proto\": \"datumesh/1\",\n  \"licence\": \"CC-BY-4.0\",\n  \"issued\": \"2024-03-16T09:00:00.000000Z\",\n  \"inputs\": [],\n  \"computed_by\": \"rates.example.org#d712b32a2cc5cb7c\",\n  \"cell\": {\n    \"ns\": \"rates.example.org\",\n    \"fn_hash\": \"4c1603b8f930dadc724afe3a023a53596b2f2ac6b0c963e8de99e3ba216b811e\",\n    \"fn\": \"filing\",\n    \"args\": {\n      \"date\": {\n        \"value\": \"2024-03-15\",\n        \"type\": \"date\"\n      },\n      \"company\": {\n        \"value\": \"01234567\",\n        \"type\": \"string\"\n      }\n    }\n  },\n  \"asof\": \"2024-03-16T09:00:00.000000Z\"\n}",
+  "keypair": {
+    "seed": "d939265c141c467e77fb079486a3bb8b932c1d471c8c25e5a2eed06c42db8ad0",
+    "public": "843baeb22bfd0364fb1b7262b367fb3202e7886c69a070fecf8e343fedb1eabf",
+    "key_id": "d712b32a2cc5cb7c"
+  },
+  "keys": {
+    "rates.example.org": {
+      "https": {
+        "status": 200,
+        "body": "{\n  \"host\": \"rates.example.org\",\n  \"keys\": [\n    {\n      \"alg\": \"ed25519\",\n      \"id\": \"d712b32a2cc5cb7c\",\n      \"public\": \"843baeb22bfd0364fb1b7262b367fb3202e7886c69a070fecf8e343fedb1eabf\",\n      \"valid_from\": \"2020-01-01T00:00:00.000000Z\",\n      \"valid_to\": \"2024-06-01T00:00:00.000000Z\"\n    },\n    {\n      \"alg\": \"ed25519\",\n      \"id\": \"d9a2df65559c4444\",\n      \"public\": \"3ecf7b3ff834cb6782f5405dfcb213b5e78c0f30188068c25568adc25a739b52\",\n      \"valid_from\": \"2024-06-01T00:00:00.000000Z\"\n    }\n  ],\n  \"proto\": \"datumesh/1\"\n}"
+      }
+    },
+    "calc.example.net": {
+      "https": {
+        "status": 200,
+        "body": "{\n  \"host\": \"calc.example.net\",\n  \"keys\": [\n    {\n      \"alg\": \"ed25519\",\n      \"id\": \"f7ec60a92abf4774\",\n      \"public\": \"ccd4faa3a0b8338bc796d3bfc30bda2f6e87d336a576b70dc9d47cbfe0e8830f\",\n      \"valid_from\": \"2020-01-01T00:00:00.000000Z\"\n    }\n  ],\n  \"proto\": \"datumesh/1\"\n}"
+      }
+    }
+  },
+  "blob_hex": "646174652c726174650a323032342d30332d31352c312e303839320a323032342d30332d31342c312e303838350a",
+  "canonical": "{\"asof\":\"2024-03-16T09:00:00.000000Z\",\"cell\":{\"args\":{\"company\":{\"type\":\"string\",\"value\":\"01234567\"},\"date\":{\"type\":\"date\",\"value\":\"2024-03-15\"}},\"fn\":\"filing\",\"fn_hash\":\"4c1603b8f930dadc724afe3a023a53596b2f2ac6b0c963e8de99e3ba216b811e\",\"ns\":\"rates.example.org\"},\"computed_by\":\"rates.example.org#d712b32a2cc5cb7c\",\"inputs\":[],\"issued\":\"2024-03-16T09:00:00.000000Z\",\"licence\":\"CC-BY-4.0\",\"proto\":\"datumesh/1\",\"publisher\":\"rates.example.org\",\"summary\":\"The filing of company 01234567 on 15 March 2024.\",\"tx\":\"2024-03-15T16:00:00.000000Z\",\"type\":\"blob\",\"valid\":{\"date\":{\"type\":\"date\",\"value\":\"2024-03-15\"}},\"value\":\"62817c3c4fda158438aab46250f31d77514c50b31db7c6e9e1fa763e91f90c8f:46:text/csv\"}",
+  "sha256": "dee1d70dd4d516422e33d1f0aa54756e9e9468795dc44dd3bd9c27ff9f86596a",
+  "sig": "07c79ba6d8272ffdd4d1e4c837a2844bbf2dbd0bc9ddc23381a0605f886cdadad3a4d3d85279f9c1dd47aee6293795a1bbf00f165601710be020015b4ee0fa0f",
+  "level": "signed"
+}

@@ -10,6 +10,7 @@ readability next to the spec, not for speed or for distribution.
     python3 tools/canon.py jcs FILE              print the JCS form of a JSON file
     python3 tools/canon.py uri URI DESCRIPTOR    print the canonical object of a cell URI
     python3 tools/canon.py verify RECEIPT KEYENV verify a receipt against a key environment
+    python3 tools/canon.py unit DESCRIPTOR CELL  print the unit of a cell's value (CELL may be a receipt)
 
 Requires Python >= 3.13 (Unicode >= 15.1) and PyNaCl.
 """
@@ -48,9 +49,11 @@ ERROR_CODES = (
     "E_CANON_PERCENT",
     "E_CANON_TYPE",
     "E_CANON_NUMBER",
+    "E_CANON_UNIT",
     "E_CANON_DATE",
     "E_CANON_INSTANT",
     "E_CANON_STRING",
+    "E_CANON_BLOB",
     "E_CANON_HEX",
     "E_CANON_LICENCE",
     "E_CANON_SET",
@@ -74,9 +77,11 @@ ERROR_CODES = (
     "E_INPUT_INVALID",
     "E_INPUT_UNDECLARED",
     "E_VALUE_MISMATCH",
+    "E_BLOB_MISMATCH",
+    "E_ENVELOPE",
 )
 
-# Section 4.4 of SPEC.md.
+# Section 4.5 of SPEC.md.
 LIMITS = {
     "name": 64,  # function name, path segment, argument name, code language (characters)
     "function_name": 512,  # namespace + "/" + function (characters)
@@ -91,7 +96,7 @@ LIMITS = {
     "keys": 64,  # keys in one key publication
 }
 
-TYPES = ("boolean", "date", "instant", "number", "string")
+TYPES = ("blob", "boolean", "date", "instant", "number", "string")
 VALID_TIME_TYPES = ("date", "instant", "string")
 SLICE = "*"
 RESERVED_ARG_NAMES = ("asof",)
@@ -364,6 +369,33 @@ def check_instant(text, path):
         fail("E_CANON_INSTANT", f"not YYYY-MM-DDTHH:MM:SS.ffffffZ: {text!r}", path)
 
 
+MAX_SAFE_INTEGER = 2**53 - 1
+_BLOB = re.compile(
+    r"([0-9a-f]{64}):(0|[1-9][0-9]*):"
+    r"([a-z0-9][a-z0-9!#$&^_.+-]*/[a-z0-9][a-z0-9!#$&^_.+-]*)"
+)
+
+
+def check_blob(text, path):
+    """A blob (SPEC.md 3.7): <sha256 hex>:<length>:<media type>."""
+    m = _BLOB.fullmatch(text)
+    if not m:
+        fail("E_CANON_BLOB", f"not <sha256>:<length>:<type/subtype>: {text!r}", path)
+    if len(m.group(2)) > 16 or int(m.group(2)) > MAX_SAFE_INTEGER:
+        fail("E_CANON_BLOB", f"length above {MAX_SAFE_INTEGER}", path)
+    if len(m.group(3)) > 128:
+        fail("E_CANON_BLOB", "media type longer than 128 characters", path)
+
+
+def check_blob_content(text, content, path="$.value"):
+    """Step 7.7: content bytes match the blob's length and hash."""
+    digest, length, _ = text.split(":", 2)
+    if len(content) != int(length):
+        fail("E_BLOB_MISMATCH", f"content is {len(content)} bytes, blob says {length}", path)
+    if sha256_hex(content) != digest:
+        fail("E_BLOB_MISMATCH", "content does not hash to the blob's sha256", path)
+
+
 def check_lexical(type_, value, path):
     """Check value against type_, which must already be one of TYPES."""
     if type_ == "boolean":
@@ -378,8 +410,39 @@ def check_lexical(type_, value, path):
         check_date(value, path)
     elif type_ == "instant":
         check_instant(value, path)
+    elif type_ == "blob":
+        check_blob(value, path)
     else:
         check_text(value, path, "string")
+
+
+# ---------------------------------------------------------------------------
+# Units (SPEC.md 7.1 and units.md). The list is read from units.md.
+
+
+def _load_units():
+    lists = {}
+    text = (ROOT / "units.md").read_text(encoding="utf-8")
+    for kind, body in re.findall(r"```units-([a-z]+)\n(.*?)```", text, re.S):
+        lists.setdefault(kind, []).extend(body.split())
+    return {kind: frozenset(items) for kind, items in lists.items()}
+
+
+UNITS = _load_units()
+CURRENCIES = UNITS["currency"]
+_INDEX_UNIT = re.compile(
+    r"index:([0-9]{4})(?:-([0-9]{2})(?:-([0-9]{2}))?)?=((?:0|[1-9][0-9]*)(?:\.[0-9]*[1-9])?)"
+)
+
+
+def is_unit_literal(text):
+    if any(text in items for items in UNITS.values()):
+        return True
+    m = _INDEX_UNIT.fullmatch(text)
+    if not m or len(text) > 64 or m.group(4) == "0":
+        return False
+    year, month, day, _ = m.groups()
+    return _calendar_date(year, month or "01", day or "01")
 
 
 def check_type_name(type_, path):
@@ -538,17 +601,45 @@ def shape_function(desc, path="$"):
     _shape_str(desc["code"], "lang", f"{path}.code")
     if not isinstance(desc["inputs"], list) or not all(isinstance(i, str) for i in desc["inputs"]):
         fail("E_SCHEMA", "inputs must be an array of strings", f"{path}.inputs")
-    sig = desc["signature"]
-    _shape_object(sig, ("args", "returns"), (), f"{path}.signature")
-    _shape_str(sig, "returns", f"{path}.signature")
+    shape_signature(desc["signature"], f"{path}.signature")
+
+
+def shape_signature(sig, path):
+    _shape_object(sig, ("args", "returns"), (), path)
     if not isinstance(sig["args"], dict):
-        fail("E_SCHEMA", "expected an object", f"{path}.signature.args")
+        fail("E_SCHEMA", "expected an object", f"{path}.args")
     for name, decl in sig["args"].items():
-        p = f"{path}.signature.args.{name}"
-        _shape_object(decl, ("type", "valid"), (), p)
+        p = f"{path}.args.{name}"
+        _shape_object(decl, ("type", "valid"), ("unit",), p)
         _shape_str(decl, "type", p)
+        if "unit" in decl:
+            shape_unit(decl["unit"], f"{p}.unit")
         if not isinstance(decl["valid"], bool):
             fail("E_SCHEMA", "valid must be a boolean", f"{p}.valid")
+    returns = sig["returns"]
+    if isinstance(returns, dict):
+        _shape_object(returns, ("type",), ("unit",), f"{path}.returns")
+        _shape_str(returns, "type", f"{path}.returns")
+        if "unit" in returns:
+            shape_unit(returns["unit"], f"{path}.returns.unit")
+    elif not isinstance(returns, str):
+        fail("E_SCHEMA", "returns must be a type name or an object", f"{path}.returns")
+
+
+def _is_arg_ref(unit):
+    return isinstance(unit, dict) and set(unit) == {"arg"} and isinstance(unit["arg"], str)
+
+
+def shape_unit(unit, path):
+    """A literal, {"arg": name}, or {"of": side, "per": side} (units.md section 1)."""
+    if isinstance(unit, str) or _is_arg_ref(unit):
+        return
+    if isinstance(unit, dict) and set(unit) == {"of", "per"}:
+        for side in ("of", "per"):
+            if not (isinstance(unit[side], str) or _is_arg_ref(unit[side])):
+                fail("E_SCHEMA", "a rate side is a currency code or {\"arg\": name}", f"{path}.{side}")
+        return
+    fail("E_SCHEMA", "a unit is a string, {\"arg\": name} or {\"of\", \"per\"}", path)
 
 
 RECEIPT_MEMBERS = (
@@ -630,12 +721,94 @@ def check_function(desc, path="$"):
         fail("E_CANON_LIMIT", f"more than {LIMITS['args']} arguments", f"{path}.signature.args")
     for name in keys_in_order(args):
         p = f"{path}.signature.args.{name}"
+        decl = args[name]
         check_arg_name(name, p)
-        check_type_name(args[name]["type"], f"{p}.type")
-        if args[name]["valid"] and args[name]["type"] not in VALID_TIME_TYPES:
+        check_type_name(decl["type"], f"{p}.type")
+        if decl["type"] == "number":
+            if "unit" not in decl:
+                fail("E_CANON_UNIT", "a number argument declares its unit", p)
+            check_unit(decl["unit"], args, f"{p}.unit")
+        elif "unit" in decl:
+            fail("E_CANON_UNIT", "only number arguments have a unit", f"{p}.unit")
+        if decl["valid"] and decl["type"] not in VALID_TIME_TYPES:
             fail("E_CANON_TYPE", "a valid-time argument must be a date, instant or string", p)
-    check_type_name(desc["signature"]["returns"], f"{path}.signature.returns")
+    p = f"{path}.signature.returns"
+    returns = desc["signature"]["returns"]
+    if isinstance(returns, str):
+        check_type_name(returns, p)
+        if returns == "number":
+            fail("E_CANON_UNIT", 'a number return is written {"type": "number", "unit": ...}', p)
+    else:
+        check_type_name(returns["type"], f"{p}.type")
+        if returns["type"] != "number":
+            fail("E_CANON_UNIT", "only a number return is written as an object", p)
+        if "unit" not in returns:
+            fail("E_CANON_UNIT", "a number return declares its unit", p)
+        check_unit(returns["unit"], args, f"{p}.unit")
     return desc
+
+
+def returns_type(desc):
+    returns = desc["signature"]["returns"]
+    return returns if isinstance(returns, str) else returns["type"]
+
+
+def check_unit(unit, args, path):
+    """A unit in a signature (units.md section 1); args is the signature's args."""
+    if isinstance(unit, str):
+        if not is_unit_literal(unit):
+            fail("E_CANON_UNIT", f"not a unit listed in units.md: {unit!r}", path)
+    elif "arg" in unit:
+        _check_unit_arg(unit["arg"], args, path)
+    else:
+        for side in ("of", "per"):
+            if isinstance(unit[side], str):
+                if unit[side] not in CURRENCIES:
+                    fail("E_CANON_UNIT", f"a rate side is a currency code: {unit[side]!r}", f"{path}.{side}")
+            else:
+                _check_unit_arg(unit[side]["arg"], args, f"{path}.{side}")
+
+
+def _check_unit_arg(name, args, path):
+    if name not in args or args[name]["type"] != "string":
+        fail("E_CANON_UNIT", f"a unit names a string argument of the signature: {name!r}", path)
+
+
+def resolved_unit(desc, cell):
+    """The unit of a cell's value as a string (units.md section 3), or None."""
+    check_cell(cell, "$.cell")
+    if function_hash(desc) != cell["fn_hash"]:
+        fail("E_FN_HASH_MISMATCH", "descriptor does not hash to cell.fn_hash", "$.descriptor")
+    check_function(desc, "$.descriptor")
+    returns = desc["signature"]["returns"]
+    if isinstance(returns, str):
+        return None
+    unit, path = returns["unit"], "$.descriptor.signature.returns.unit"
+    if isinstance(unit, str):
+        return unit
+    if "arg" in unit:
+        value = _unit_arg_value(unit["arg"], cell, path)
+        if not is_unit_literal(value):
+            fail("E_CANON_UNIT", f"argument {unit['arg']} is not a unit: {value!r}", path)
+        return value
+    sides = []
+    for side in ("of", "per"):
+        value = unit[side] if isinstance(unit[side], str) else _unit_arg_value(unit[side]["arg"], cell, path)
+        if value not in CURRENCIES:
+            fail("E_CANON_UNIT", f"rate {side} is not a currency code: {value!r}", f"{path}.{side}")
+        sides.append(value)
+    return "/".join(sides)
+
+
+def _unit_arg_value(name, cell, path):
+    if name not in cell["args"]:
+        fail("E_ARG_MISSING", f"the cell does not bind {name!r}", "$.cell.args")
+    value = cell["args"][name]
+    if value == SLICE:
+        fail("E_SLICE", f"{name} is a slice; its unit is not one string", f"$.cell.args.{name}")
+    if value["type"] != "string":
+        fail("E_ARG_TYPE", f"{name} is declared string", f"$.cell.args.{name}")
+    return value["value"]
 
 
 def function_hash(desc):
@@ -846,18 +1019,21 @@ def _key(public_hex, valid_from, valid_to, path):
     return {"id": key_id(public), "public": public, "valid_from": valid_from, "valid_to": valid_to}
 
 
-def _as_key_doc_error(fn):
-    def wrapped(*args):
-        try:
-            return fn(*args)
-        except DatumeshError as e:
-            if e.code == "E_KEY_DOC":
-                raise
-            fail("E_KEY_DOC", f"{e.code}: {e.detail}", e.path)
-    return wrapped
+def _as_error(code):
+    """Report every failure inside fn as code."""
+    def decorate(fn):
+        def wrapped(*args):
+            try:
+                return fn(*args)
+            except DatumeshError as e:
+                if e.code == code:
+                    raise
+                fail(code, f"{e.code}: {e.detail}", e.path)
+        return wrapped
+    return decorate
 
 
-@_as_key_doc_error
+@_as_error("E_KEY_DOC")
 def parse_key_doc(text, host):
     """The document at https://<host>/.well-known/datumesh.json."""
     doc = parse_json(text)
@@ -917,13 +1093,14 @@ def sign_receipt(unsigned, seed):
     return dict(unsigned, sig=sig)
 
 
-def verify_receipt(data, keyenv, recompute=None):
+def verify_receipt(data, keyenv, recompute=None, blob=None):
     """Run the verification procedure. Returns a summary or raises DatumeshError.
 
     keyenv maps host -> resolve_keys env. recompute, if given, enables step 7:
       {"descriptor": {...} (absent: unavailable),
        "inputs": {hash: receipt JSON text},
        "value": {"type": ..., "value": ...}}
+    blob, if given, is the content bytes of a blob value, checked in step 7.7.
     """
     r = parse_json(data)  # step 1
     check_receipt_form(r)  # steps 2-4
@@ -942,6 +1119,8 @@ def verify_receipt(data, keyenv, recompute=None):
     if recompute is not None:  # step 7
         _recompute(r, recompute, keyenv)
         result["level"] = "recomputed"
+    if blob is not None and r["type"] == "blob":  # step 7.7
+        check_blob_content(r["value"], blob)
     return result
 
 
@@ -966,8 +1145,8 @@ def _recompute(r, recompute, keyenv):
             fail("E_ARG_TYPE", f"{name} is declared {declared[name]['type']}", f"$.cell.args.{name}")
     if set(r["valid"]) != {n for n, d in declared.items() if d["valid"]}:
         fail("E_VALID_MISMATCH", "valid must echo exactly the declared valid-time arguments", "$.valid")
-    if r["type"] != desc["signature"]["returns"]:
-        fail("E_RETURN_TYPE", f"function returns {desc['signature']['returns']}", "$.type")
+    if r["type"] != returns_type(desc):
+        fail("E_RETURN_TYPE", f"function returns {returns_type(desc)}", "$.type")
     supplied = recompute.get("inputs", {})
     input_tx = []
     for h in r["inputs"]:
@@ -989,6 +1168,92 @@ def _recompute(r, recompute, keyenv):
         fail("E_TIME_ORDER", "a computed cell's tx is the latest tx of its inputs", "$.tx")
     if recompute["value"] != {"type": r["type"], "value": r["value"]}:
         fail("E_VALUE_MISMATCH", "recomputed value differs from the receipt", "$.value")
+
+
+# ---------------------------------------------------------------------------
+# Response envelopes (SPEC.md 5.5). An envelope is the mesh's statement and is
+# not signed; only the receipt inside it is verified.
+
+ENVELOPE_MEMBERS = {  # outcome -> (required, optional)
+    "ok": (("outcome", "receipt", "trust"), ("reason", "superseded_by")),
+    "stale": (("age_seconds", "outcome", "receipt", "trust"), ("reason", "superseded_by")),
+    "not_covered": (("outcome",), ()),
+    "unlicensed": (("outcome",), ()),
+    "payment_required": (("outcome", "quote"), ()),
+    "rate_limited": (("outcome", "retry_after_seconds"), ()),
+    "error": (("error", "outcome"), ()),
+}
+ENVELOPE_STATUS = {
+    "ok": range(200, 201), "stale": range(200, 201), "not_covered": range(404, 405),
+    "unlicensed": range(403, 404), "payment_required": range(402, 403),
+    "rate_limited": range(429, 430), "error": range(500, 600),
+}
+TRUST = ("primary", "verified", "unverified")
+
+
+def _seconds(value):
+    return (isinstance(value, float) and value.is_integer() and 0 <= value <= MAX_SAFE_INTEGER)
+
+
+@_as_error("E_ENVELOPE")
+def _check_envelope_members(env):
+    if not isinstance(env, dict) or not isinstance(env.get("outcome"), str):
+        fail("E_ENVELOPE", "an envelope is an object with a string outcome")
+    if env["outcome"] not in ENVELOPE_MEMBERS:
+        fail("E_ENVELOPE", f"unknown outcome {env['outcome']!r}", "$.outcome")
+    required, optional = ENVELOPE_MEMBERS[env["outcome"]]
+    _shape_object(env, required, optional, "$")
+    if "age_seconds" in env and not _seconds(env["age_seconds"]):
+        fail("E_ENVELOPE", "age_seconds is a non-negative integer", "$.age_seconds")
+    if "error" in env and env["error"] not in ERROR_CODES:
+        fail("E_ENVELOPE", "error is a code from SPEC.md 10.2", "$.error")
+    if "quote" in env:
+        quote = env["quote"]
+        _shape_object(quote, ("amount", "authorise", "currency"), (), "$.quote")
+        for key in ("amount", "authorise", "currency"):
+            _shape_str(quote, key, "$.quote")
+        check_number(quote["amount"], "$.quote.amount")
+        if quote["amount"] == "0" or quote["amount"].startswith("-"):
+            fail("E_ENVELOPE", "amount is greater than zero", "$.quote.amount")
+        if not _URL.fullmatch(quote["authorise"]) or len(quote["authorise"]) > LIMITS["licence_url"]:
+            fail("E_ENVELOPE", "authorise is an https URL", "$.quote.authorise")
+        if quote["currency"] not in CURRENCIES:
+            fail("E_ENVELOPE", "currency is a currency code from units.md", "$.quote.currency")
+    if "reason" in env:
+        _shape_str(env, "reason", "$")
+        if env["reason"] == "":
+            fail("E_ENVELOPE", "reason must not be empty", "$.reason")
+        check_text(env["reason"], "$.reason", "summary")
+        if "superseded_by" not in env:
+            fail("E_ENVELOPE", "reason is given only with superseded_by", "$.reason")
+    if "receipt" in env and not isinstance(env["receipt"], dict):
+        fail("E_ENVELOPE", "receipt is a receipt object", "$.receipt")
+    if "retry_after_seconds" in env and not _seconds(env["retry_after_seconds"]):
+        fail("E_ENVELOPE", "retry_after_seconds is a non-negative integer", "$.retry_after_seconds")
+    if "superseded_by" in env:
+        _shape_str(env, "superseded_by", "$")
+        check_hex(env["superseded_by"], 64, "$.superseded_by")
+    if "trust" in env and env["trust"] not in TRUST:
+        fail("E_ENVELOPE", f"trust is one of {', '.join(TRUST)}", "$.trust")
+
+
+def check_envelope(status, body, keyenv):
+    """Check a mesh response (SPEC.md 5.5): HTTP status and JSON body."""
+    env = parse_json(body)
+    _check_envelope_members(env)
+    if status not in ENVELOPE_STATUS[env["outcome"]]:
+        fail("E_ENVELOPE", f"status {status} does not match outcome {env['outcome']}", "$.outcome")
+    result = {"outcome": env["outcome"]}
+    if "receipt" in env:
+        r = env["receipt"]
+        result["receipt_hash"] = verify_receipt(jcs(r), keyenv)["hash"]
+        primary = r["computed_by"].split("#")[0] == r["cell"]["ns"].split("/")[0] and not r["inputs"]
+        if primary != (env["trust"] == "primary"):
+            fail("E_ENVELOPE", "trust is primary exactly when the publisher's host signed a stored answer", "$.trust")
+        if env.get("superseded_by") == result["receipt_hash"]:
+            fail("E_ENVELOPE", "a receipt cannot supersede itself", "$.superseded_by")
+        result["trust"] = env["trust"]
+    return result
 
 
 # ---------------------------------------------------------------------------
@@ -1034,8 +1299,16 @@ def run_vector(vec):
         if kind == "keys":
             keys = resolve_keys(vec["host"], vec["env"])
             return {"key_ids": [k["id"] for k in keys]}
+        if kind == "unit":
+            obj = parse_json(vector_input(vec))
+            _shape_object(obj, ("cell", "descriptor"), (), "$")
+            shape_function(obj["descriptor"], "$.descriptor")
+            return {"unit": resolved_unit(obj["descriptor"], obj["cell"])}
+        if kind == "envelope":
+            return check_envelope(vec["status"], vector_input(vec), vec["keys"])
         if kind == "receipt":
-            result = verify_receipt(vector_input(vec), vec["keys"], vec.get("recompute"))
+            blob = bytes.fromhex(vec["blob_hex"]) if "blob_hex" in vec else None
+            result = verify_receipt(vector_input(vec), vec["keys"], vec.get("recompute"), blob)
             r = parse_json(vector_input(vec))
             payload = receipt_payload(r)
             return {
@@ -1049,6 +1322,10 @@ def run_vector(vec):
         return {"error": e.code, "detail": str(e)}
 
 
+OUTPUT_FIELDS = ("canonical", "sha256", "object", "uri", "https", "key_id", "key_ids", "sig", "level",
+                 "unit", "outcome", "trust", "receipt_hash")
+
+
 def check_vector(vec):
     """Return a list of mismatches between a vector and the reference behaviour."""
     got = run_vector(vec)
@@ -1056,7 +1333,7 @@ def check_vector(vec):
     if vec["valid"]:
         if "error" in got:
             return [f"expected valid, got {got['detail']}"]
-        for field in ("canonical", "sha256", "object", "uri", "https", "key_id", "key_ids", "sig", "level"):
+        for field in OUTPUT_FIELDS:
             if field in vec and vec[field] != got.get(field):
                 problems.append(f"{field}: expected {vec[field]!r}, got {got.get(field)!r}")
         if vec["kind"] == "uri" and got["uri"] != vec["input"]:
@@ -1110,6 +1387,16 @@ def main(argv):
             print(e)
             return 1
         print(f"OK {result['hash']} signed by {result['key']}")
+        return 0
+    if len(argv) == 4 and argv[1] == "unit":
+        desc = parse_json(pathlib.Path(argv[2]).read_bytes())
+        cell = parse_json(pathlib.Path(argv[3]).read_bytes())
+        try:
+            shape_function(desc)
+            print(resolved_unit(desc, cell.get("cell", cell)))
+        except DatumeshError as e:
+            print(e)
+            return 1
         return 0
     print(__doc__)
     return 2

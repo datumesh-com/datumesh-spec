@@ -69,9 +69,19 @@ def random_instant(rng):
     )
 
 
+MEDIA_TYPES = ("text/plain", "text/csv", "application/json", "application/ld+json", "image/png",
+               "application/vnd.ms-excel", "application/octet-stream")
+
+
+def random_blob(rng):
+    digest = "".join(rng.choice("0123456789abcdef") for _ in range(64))
+    return f"{digest}:{rng.choice([0, rng.randint(1, 10**6), rng.randint(1, 2**53 - 1)])}:{rng.choice(MEDIA_TYPES)}"
+
+
 def random_scalar(rng, type_=None):
     type_ = type_ or rng.choice(canon.TYPES)
     value = {
+        "blob": lambda: random_blob(rng),
         "boolean": lambda: rng.random() < 0.5,
         "date": lambda: random_date(rng),
         "instant": lambda: random_instant(rng),
@@ -177,6 +187,8 @@ class Fuzz(unittest.TestCase):
             "date": [lambda t: t.replace("-", "/"), lambda t: t + "T00:00:00Z", lambda t: t[2:]],
             "instant": [lambda t: t[:-4] + "Z", lambda t: t[:-1] + "+00:00", lambda t: t.lower(),
                         lambda t: t[:-1] + "0Z", lambda t: t.replace("T", " ")],
+            "blob": [lambda t: t.upper(), lambda t: t.replace(":", ":0", 1), lambda t: t + ";q=1",
+                     lambda t: t.replace(":", " :", 1)],
         }
         for _ in range(N // 10):
             type_ = rng.choice(list(variants))

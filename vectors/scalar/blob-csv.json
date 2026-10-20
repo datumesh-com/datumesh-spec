@@ -1,0 +1,9 @@
+{
+  "id": "scalar/blob-csv",
+  "kind": "scalar",
+  "description": "A CSV file.",
+  "valid": true,
+  "input": "{\n  \"value\": \"62817c3c4fda158438aab46250f31d77514c50b31db7c6e9e1fa763e91f90c8f:46:text/csv\",\n  \"type\": \"blob\"\n}",
+  "canonical": "{\"type\":\"blob\",\"value\":\"62817c3c4fda158438aab46250f31d77514c50b31db7c6e9e1fa763e91f90c8f:46:text/csv\"}",
+  "sha256": "512525517eca0eb9b09f2744e7a05cb889572c043d720b40c4cc8de2afcd397b"
+}

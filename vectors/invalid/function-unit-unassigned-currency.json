@@ -1,0 +1,8 @@
+{
+  "id": "invalid/function-unit-unassigned-currency",
+  "kind": "function",
+  "description": "ABC is not an ISO 4217 code.",
+  "valid": false,
+  "input": "{\n  \"signature\": {\n    \"returns\": {\n      \"unit\": \"ABC\",\n      \"type\": \"number\"\n    },\n    \"args\": {}\n  },\n  \"inputs\": [],\n  \"code\": {\n    \"lang\": \"stored\",\n    \"body\": \"\"\n  }\n}",
+  "error": "E_CANON_UNIT"
+}

@@ -1,0 +1,192 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://datumesh.com/schemas/1/envelope.schema.json",
+  "title": "Datumesh response envelope",
+  "description": "The JSON body a mesh returns at https://<mesh>/cell/<rest> (SPEC.md 5.5). Not hashed, not signed: the mesh's statement. Only the embedded receipt is verifiable. The HTTP status must match outcome; that, and trust: primary against the receipt, are checked by the procedure in 5.5.",
+  "type": "object",
+  "required": [
+    "outcome"
+  ],
+  "properties": {
+    "outcome": {
+      "enum": [
+        "ok",
+        "stale",
+        "not_covered",
+        "unlicensed",
+        "payment_required",
+        "rate_limited",
+        "error"
+      ]
+    },
+    "receipt": {
+      "$ref": "receipt.schema.json"
+    },
+    "trust": {
+      "enum": [
+        "primary",
+        "verified",
+        "unverified"
+      ]
+    },
+    "age_seconds": {
+      "$ref": "#/$defs/seconds"
+    },
+    "superseded_by": {
+      "$ref": "defs.schema.json#/$defs/hex64"
+    },
+    "reason": {
+      "$ref": "defs.schema.json#/$defs/string",
+      "minLength": 1
+    },
+    "quote": {
+      "type": "object",
+      "required": [
+        "amount",
+        "authorise",
+        "currency"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "amount": {
+          "$ref": "defs.schema.json#/$defs/number",
+          "not": {
+            "pattern": "^(-|0$)"
+          }
+        },
+        "authorise": {
+          "type": "string",
+          "pattern": "^https://[!-~]+$",
+          "maxLength": 512
+        },
+        "currency": {
+          "$ref": "defs.schema.json#/$defs/currency"
+        }
+      }
+    },
+    "retry_after_seconds": {
+      "$ref": "#/$defs/seconds"
+    },
+    "error": {
+      "type": "string",
+      "pattern": "^E_[A-Z_]+$"
+    }
+  },
+  "dependentRequired": {
+    "reason": [
+      "superseded_by"
+    ]
+  },
+  "oneOf": [
+    {
+      "properties": {
+        "outcome": {
+          "const": "ok"
+        }
+      },
+      "required": [
+        "receipt",
+        "trust"
+      ],
+      "propertyNames": {
+        "enum": [
+          "outcome",
+          "receipt",
+          "trust",
+          "superseded_by",
+          "reason"
+        ]
+      }
+    },
+    {
+      "properties": {
+        "outcome": {
+          "const": "stale"
+        }
+      },
+      "required": [
+        "receipt",
+        "trust",
+        "age_seconds"
+      ],
+      "propertyNames": {
+        "enum": [
+          "outcome",
+          "receipt",
+          "trust",
+          "age_seconds",
+          "superseded_by",
+          "reason"
+        ]
+      }
+    },
+    {
+      "properties": {
+        "outcome": {
+          "enum": [
+            "not_covered",
+            "unlicensed"
+          ]
+        }
+      },
+      "propertyNames": {
+        "const": "outcome"
+      }
+    },
+    {
+      "properties": {
+        "outcome": {
+          "const": "payment_required"
+        }
+      },
+      "required": [
+        "quote"
+      ],
+      "propertyNames": {
+        "enum": [
+          "outcome",
+          "quote"
+        ]
+      }
+    },
+    {
+      "properties": {
+        "outcome": {
+          "const": "rate_limited"
+        }
+      },
+      "required": [
+        "retry_after_seconds"
+      ],
+      "propertyNames": {
+        "enum": [
+          "outcome",
+          "retry_after_seconds"
+        ]
+      }
+    },
+    {
+      "properties": {
+        "outcome": {
+          "const": "error"
+        }
+      },
+      "required": [
+        "error"
+      ],
+      "propertyNames": {
+        "enum": [
+          "outcome",
+          "error"
+        ]
+      }
+    }
+  ],
+  "$defs": {
+    "seconds": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 9007199254740991
+    }
+  }
+}
