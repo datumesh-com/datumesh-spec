@@ -1,0 +1,9 @@
+{
+  "id": "scalar/string-emoji-zwj",
+  "kind": "scalar",
+  "description": "An emoji ZWJ sequence; U+200D is allowed.",
+  "valid": true,
+  "input": "{\n  \"value\": \"👩‍💻\",\n  \"type\": \"string\"\n}",
+  "canonical": "{\"type\":\"string\",\"value\":\"👩‍💻\"}",
+  "sha256": "f48bb42bea4b5a5d0e7cdb0b6b232d0f9cd052f73b33a6657a7b88a2e46aa0a3"
+}

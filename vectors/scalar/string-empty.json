@@ -1,0 +1,9 @@
+{
+  "id": "scalar/string-empty",
+  "kind": "scalar",
+  "description": "The empty string is a value.",
+  "valid": true,
+  "input": "{\n  \"value\": \"\",\n  \"type\": \"string\"\n}",
+  "canonical": "{\"type\":\"string\",\"value\":\"\"}",
+  "sha256": "ec5e46b269e8f1ddb94ad2daddb60b92a04048d71be013e649a92ceb831b3002"
+}

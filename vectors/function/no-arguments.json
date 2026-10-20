@@ -1,0 +1,9 @@
+{
+  "id": "function/no-arguments",
+  "kind": "function",
+  "description": "A function of no arguments.",
+  "valid": true,
+  "input": "{\n  \"signature\": {\n    \"returns\": \"number\",\n    \"args\": {}\n  },\n  \"inputs\": [],\n  \"code\": {\n    \"lang\": \"stored\",\n    \"body\": \"\"\n  }\n}",
+  "canonical": "{\"code\":{\"body\":\"\",\"lang\":\"stored\"},\"inputs\":[],\"signature\":{\"args\":{},\"returns\":\"number\"}}",
+  "sha256": "4184dc316637adb1837b3224ef0043f8766786321e2048b7f0a653a684483159"
+}

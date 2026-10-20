@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://datumesh.com/schemas/1/cell.schema.json",
+  "title": "Datumesh cell",
+  "description": "A resolved cell (SPEC.md 4.4). Slices are allowed here; receipts reject them.",
+  "type": "object",
+  "required": ["args", "fn", "fn_hash", "ns"],
+  "additionalProperties": false,
+  "properties": {
+    "args": { "$ref": "defs.schema.json#/$defs/sliceArgs" },
+    "fn": { "$ref": "defs.schema.json#/$defs/name" },
+    "fn_hash": { "$ref": "defs.schema.json#/$defs/hex64" },
+    "ns": { "$ref": "defs.schema.json#/$defs/namespace" }
+  }
+}

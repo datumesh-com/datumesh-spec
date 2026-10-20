@@ -1,0 +1,8 @@
+{
+  "id": "invalid/scalar-instant-milliseconds",
+  "kind": "scalar",
+  "description": "Exactly six fractional digits.",
+  "valid": false,
+  "input": "{\n  \"value\": \"2024-03-15T16:00:00.123Z\",\n  \"type\": \"instant\"\n}",
+  "error": "E_CANON_INSTANT"
+}

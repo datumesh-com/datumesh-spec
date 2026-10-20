@@ -1,0 +1,8 @@
+{
+  "id": "invalid/scalar-string-lone-surrogate",
+  "kind": "scalar",
+  "description": "A lone surrogate is not a Unicode string.",
+  "valid": false,
+  "input": "{\"type\":\"string\",\"value\":\"\\ud800\"}",
+  "error": "E_PARSE_JSON"
+}

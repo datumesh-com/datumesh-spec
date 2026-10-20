@@ -1,0 +1,45 @@
+{
+  "id": "uri/empty-string",
+  "kind": "uri",
+  "description": "An empty value is the empty string.",
+  "valid": true,
+  "input": "cell://rates.example.org/fx_rate?base=&date=2024-03-15&quote=USD",
+  "signature": {
+    "args": {
+      "base": {
+        "type": "string",
+        "valid": false
+      },
+      "date": {
+        "type": "date",
+        "valid": true
+      },
+      "quote": {
+        "type": "string",
+        "valid": false
+      }
+    },
+    "returns": "number"
+  },
+  "object": {
+    "args": {
+      "base": {
+        "type": "string",
+        "value": ""
+      },
+      "date": {
+        "type": "date",
+        "value": "2024-03-15"
+      },
+      "quote": {
+        "type": "string",
+        "value": "USD"
+      }
+    },
+    "fn": "fx_rate",
+    "ns": "rates.example.org"
+  },
+  "canonical": "{\"args\":{\"base\":{\"type\":\"string\",\"value\":\"\"},\"date\":{\"type\":\"date\",\"value\":\"2024-03-15\"},\"quote\":{\"type\":\"string\",\"value\":\"USD\"}},\"fn\":\"fx_rate\",\"ns\":\"rates.example.org\"}",
+  "sha256": "bd27dde46ade8ce1ef6101033fe768d174cc73d2017b7498033c69e295bb0da7",
+  "https": "https://mesh.example/cell/rates.example.org/fx_rate?base=&date=2024-03-15&quote=USD"
+}

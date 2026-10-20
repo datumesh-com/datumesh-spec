@@ -1,0 +1,19 @@
+{
+  "id": "invalid/keys-https-error",
+  "kind": "keys",
+  "description": "An HTTPS failure other than 404/410 does not fall back to DNS.",
+  "valid": false,
+  "host": "rates.example.org",
+  "env": {
+    "https": {
+      "status": 503
+    },
+    "dns": {
+      "status": "ok",
+      "records": [
+        "v=datumesh1; alg=ed25519; pub=843baeb22bfd0364fb1b7262b367fb3202e7886c69a070fecf8e343fedb1eabf; from=2020-01-01T00:00:00.000000Z"
+      ]
+    }
+  },
+  "error": "E_KEY_UNAVAILABLE"
+}

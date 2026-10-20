@@ -1,0 +1,42 @@
+{
+  "id": "uri/slice",
+  "kind": "uri",
+  "description": "A bare * is a slice over that argument.",
+  "valid": true,
+  "input": "cell://rates.example.org/fx_rate?base=EUR&date=*&quote=USD",
+  "signature": {
+    "args": {
+      "base": {
+        "type": "string",
+        "valid": false
+      },
+      "date": {
+        "type": "date",
+        "valid": true
+      },
+      "quote": {
+        "type": "string",
+        "valid": false
+      }
+    },
+    "returns": "number"
+  },
+  "object": {
+    "args": {
+      "base": {
+        "type": "string",
+        "value": "EUR"
+      },
+      "date": "*",
+      "quote": {
+        "type": "string",
+        "value": "USD"
+      }
+    },
+    "fn": "fx_rate",
+    "ns": "rates.example.org"
+  },
+  "canonical": "{\"args\":{\"base\":{\"type\":\"string\",\"value\":\"EUR\"},\"date\":\"*\",\"quote\":{\"type\":\"string\",\"value\":\"USD\"}},\"fn\":\"fx_rate\",\"ns\":\"rates.example.org\"}",
+  "sha256": "614c130351002aeaddef0e57cb29b0086c7372c95a63f58b891d5f34c1793f6e",
+  "https": "https://mesh.example/cell/rates.example.org/fx_rate?base=EUR&date=*&quote=USD"
+}

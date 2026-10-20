@@ -1,0 +1,30 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://datumesh.com/schemas/1/keydoc.schema.json",
+  "title": "Datumesh key document",
+  "description": "Served at https://<host>/.well-known/datumesh.json (SPEC.md 9.2).",
+  "type": "object",
+  "required": ["host", "keys", "proto"],
+  "additionalProperties": false,
+  "properties": {
+    "host": { "$ref": "defs.schema.json#/$defs/dnsName" },
+    "proto": { "const": "datumesh/1" },
+    "keys": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 64,
+      "items": {
+        "type": "object",
+        "required": ["alg", "id", "public", "valid_from"],
+        "additionalProperties": false,
+        "properties": {
+          "alg": { "const": "ed25519" },
+          "id": { "type": "string", "pattern": "^[0-9a-f]{16}$" },
+          "public": { "$ref": "defs.schema.json#/$defs/hex64" },
+          "valid_from": { "$ref": "defs.schema.json#/$defs/instant" },
+          "valid_to": { "$ref": "defs.schema.json#/$defs/instant" }
+        }
+      }
+    }
+  }
+}

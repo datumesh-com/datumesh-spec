@@ -1,0 +1,9 @@
+{
+  "id": "cell/namespace-path",
+  "kind": "cell",
+  "description": "A namespace may carry path segments after the DNS name.",
+  "valid": true,
+  "input": "{\n  \"ns\": \"example.org/central_bank/stats\",\n  \"fn_hash\": \"88445cddbf86a358e1318934bfc8160728a9a0ff2b05b50be6c0fee2eb3e5af4\",\n  \"fn\": \"fx_rate\",\n  \"args\": {\n    \"quote\": {\n      \"value\": \"USD\",\n      \"type\": \"string\"\n    },\n    \"date\": {\n      \"value\": \"2024-03-15\",\n      \"type\": \"date\"\n    },\n    \"base\": {\n      \"value\": \"EUR\",\n      \"type\": \"string\"\n    }\n  }\n}",
+  "canonical": "{\"args\":{\"base\":{\"type\":\"string\",\"value\":\"EUR\"},\"date\":{\"type\":\"date\",\"value\":\"2024-03-15\"},\"quote\":{\"type\":\"string\",\"value\":\"USD\"}},\"fn\":\"fx_rate\",\"fn_hash\":\"88445cddbf86a358e1318934bfc8160728a9a0ff2b05b50be6c0fee2eb3e5af4\",\"ns\":\"example.org/central_bank/stats\"}",
+  "sha256": "9b86987b0cddde785e0c563e0b35422de8049467c0780ae00e683efc1ee26e97"
+}

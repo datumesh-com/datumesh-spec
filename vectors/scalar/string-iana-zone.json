@@ -1,0 +1,9 @@
+{
+  "id": "scalar/string-iana-zone",
+  "kind": "scalar",
+  "description": "A time zone is an IANA name in a string argument.",
+  "valid": true,
+  "input": "{\n  \"value\": \"America/Argentina/Buenos_Aires\",\n  \"type\": \"string\"\n}",
+  "canonical": "{\"type\":\"string\",\"value\":\"America/Argentina/Buenos_Aires\"}",
+  "sha256": "c830937e64a78b085f95595c7a8e91ff136ec2085faba4d25f226ff40d65365e"
+}

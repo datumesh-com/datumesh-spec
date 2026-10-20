@@ -1,0 +1,9 @@
+{
+  "id": "scalar/instant-microseconds",
+  "kind": "scalar",
+  "description": "Microsecond precision.",
+  "valid": true,
+  "input": "{\n  \"value\": \"2024-03-15T16:00:00.123456Z\",\n  \"type\": \"instant\"\n}",
+  "canonical": "{\"type\":\"instant\",\"value\":\"2024-03-15T16:00:00.123456Z\"}",
+  "sha256": "8d8901a2688286c3c8fccf60ba5712b28dd8c6619d4edebebf04d85fced523d3"
+}

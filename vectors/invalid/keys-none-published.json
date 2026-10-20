@@ -1,0 +1,16 @@
+{
+  "id": "invalid/keys-none-published",
+  "kind": "keys",
+  "description": "No document and no TXT records: the host publishes no keys.",
+  "valid": false,
+  "host": "rates.example.org",
+  "env": {
+    "https": {
+      "status": 404
+    },
+    "dns": {
+      "status": "nxdomain"
+    }
+  },
+  "error": "E_KEY_UNKNOWN"
+}

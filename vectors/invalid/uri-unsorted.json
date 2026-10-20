@@ -1,0 +1,25 @@
+{
+  "id": "invalid/uri-unsorted",
+  "kind": "uri",
+  "description": "Arguments must be sorted; the URI is canonical.",
+  "valid": false,
+  "input": "cell://rates.example.org/fx_rate?quote=USD&base=EUR&date=2024-03-15",
+  "signature": {
+    "args": {
+      "base": {
+        "type": "string",
+        "valid": false
+      },
+      "date": {
+        "type": "date",
+        "valid": true
+      },
+      "quote": {
+        "type": "string",
+        "valid": false
+      }
+    },
+    "returns": "number"
+  },
+  "error": "E_CANON_ARG_ORDER"
+}

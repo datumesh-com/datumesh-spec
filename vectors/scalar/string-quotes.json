@@ -1,0 +1,9 @@
+{
+  "id": "scalar/string-quotes",
+  "kind": "scalar",
+  "description": "Quotes and backslashes are escaped by JCS.",
+  "valid": true,
+  "input": "{\n  \"value\": \"He said \\\"hi\\\" \\\\ ok\",\n  \"type\": \"string\"\n}",
+  "canonical": "{\"type\":\"string\",\"value\":\"He said \\\"hi\\\" \\\\ ok\"}",
+  "sha256": "30f4e5385495f4710699efc7263d6bd53f3019691b89d6f5a4482ffa1ce577f9"
+}

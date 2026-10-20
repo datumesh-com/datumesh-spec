@@ -1,0 +1,29 @@
+{
+  "id": "invalid/uri-number-form",
+  "kind": "uri",
+  "description": "Numbers in URIs follow the number rules.",
+  "valid": false,
+  "input": "cell://example.org/sensors/reading?active=true&at=2024-03-15T16:00:00.000000Z&label=x&ratio=-0.250",
+  "signature": {
+    "args": {
+      "active": {
+        "type": "boolean",
+        "valid": false
+      },
+      "at": {
+        "type": "instant",
+        "valid": true
+      },
+      "label": {
+        "type": "string",
+        "valid": false
+      },
+      "ratio": {
+        "type": "number",
+        "valid": false
+      }
+    },
+    "returns": "string"
+  },
+  "error": "E_CANON_NUMBER"
+}

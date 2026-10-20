@@ -1,0 +1,9 @@
+{
+  "id": "jcs/rfc8785-main-example",
+  "kind": "jcs",
+  "description": "RFC 8785 section 3.2.2: number formatting, string escaping and member order.",
+  "valid": true,
+  "input": "{\n  \"numbers\": [333333333.33333329, 1E30, 4.50,\n              2e-3, 0.000000000000000000000000001],\n  \"string\": \"\\u20ac$\\u000F\\u000aA'\\u0042\\u0022\\u005c\\\\\\\"\\/\",\n  \"literals\": [null, true, false]\n}",
+  "canonical": "{\"literals\":[null,true,false],\"numbers\":[333333333.3333333,1e+30,4.5,0.002,1e-27],\"string\":\"€$\\u000f\\nA'B\\\"\\\\\\\\\\\"/\"}",
+  "sha256": "2d5e01a318d0f0879ab568c4be289c8b1f64ef8921a53c6277d5e069978baacb"
+}

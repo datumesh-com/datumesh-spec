@@ -1,0 +1,6 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://datumesh.com/schemas/1/scalar.schema.json",
+  "title": "Datumesh typed scalar",
+  "$ref": "defs.schema.json#/$defs/scalar"
+}

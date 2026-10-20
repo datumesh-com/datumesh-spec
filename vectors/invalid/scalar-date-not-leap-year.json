@@ -1,0 +1,8 @@
+{
+  "id": "invalid/scalar-date-not-leap-year",
+  "kind": "scalar",
+  "description": "2023 is not a leap year.",
+  "valid": false,
+  "input": "{\n  \"value\": \"2023-02-29\",\n  \"type\": \"date\"\n}",
+  "error": "E_CANON_DATE"
+}

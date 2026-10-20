@@ -1,0 +1,48 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://datumesh.com/schemas/1/receipt.schema.json",
+  "title": "Datumesh receipt",
+  "description": "A signed answer for one cell (SPEC.md section 8). The receipt hash is SHA-256 over the JCS of the receipt without sig; sig is Ed25519 over the same bytes.",
+  "type": "object",
+  "required": ["asof", "cell", "computed_by", "inputs", "issued", "licence", "proto", "publisher", "sig", "summary", "tx", "type", "valid", "value"],
+  "additionalProperties": false,
+  "properties": {
+    "asof": { "$ref": "defs.schema.json#/$defs/instant", "description": "Transaction time the value was served as of." },
+    "cell": {
+      "type": "object",
+      "required": ["args", "fn", "fn_hash", "ns"],
+      "additionalProperties": false,
+      "properties": {
+        "args": { "$ref": "defs.schema.json#/$defs/args" },
+        "fn": { "$ref": "defs.schema.json#/$defs/name" },
+        "fn_hash": { "$ref": "defs.schema.json#/$defs/hex64" },
+        "ns": { "$ref": "defs.schema.json#/$defs/namespace" }
+      }
+    },
+    "computed_by": { "$ref": "defs.schema.json#/$defs/keyRef", "description": "<host>#<key id> of the key that signed this receipt." },
+    "inputs": {
+      "type": "array",
+      "uniqueItems": true,
+      "maxItems": 4096,
+      "items": { "$ref": "defs.schema.json#/$defs/hex64" },
+      "description": "Receipt hashes of the inputs, ascending. Empty for stored cells."
+    },
+    "issued": { "$ref": "defs.schema.json#/$defs/instant", "description": "When the receipt was signed; key validity is checked against it." },
+    "licence": {
+      "type": "string",
+      "anyOf": [
+        { "pattern": "^[A-Za-z0-9][A-Za-z0-9.+-]*$", "maxLength": 64 },
+        { "pattern": "^https://[!-~]+$", "maxLength": 512 }
+      ]
+    },
+    "proto": { "const": "datumesh/1" },
+    "publisher": { "$ref": "defs.schema.json#/$defs/namespace" },
+    "sig": { "$ref": "defs.schema.json#/$defs/hex128" },
+    "summary": { "$ref": "defs.schema.json#/$defs/string", "minLength": 1 },
+    "tx": { "$ref": "defs.schema.json#/$defs/instant", "description": "Transaction time the value was recorded." },
+    "type": { "$ref": "defs.schema.json#/$defs/type" },
+    "valid": { "$ref": "defs.schema.json#/$defs/args", "description": "The valid-time arguments of cell.args, echoed." },
+    "value": { "type": ["string", "boolean"] }
+  },
+  "$ref": "defs.schema.json#/$defs/typedValue"
+}

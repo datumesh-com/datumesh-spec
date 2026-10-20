@@ -1,0 +1,39 @@
+{
+  "asof": "2024-03-16T09:00:00.000000Z",
+  "cell": {
+    "args": {
+      "base": {
+        "type": "string",
+        "value": "EUR"
+      },
+      "date": {
+        "type": "date",
+        "value": "2024-03-15"
+      },
+      "quote": {
+        "type": "string",
+        "value": "USD"
+      }
+    },
+    "fn": "fx_rate",
+    "fn_hash": "88445cddbf86a358e1318934bfc8160728a9a0ff2b05b50be6c0fee2eb3e5af4",
+    "ns": "rates.example.org"
+  },
+  "computed_by": "rates.example.org#d712b32a2cc5cb7c",
+  "inputs": [],
+  "issued": "2024-03-16T09:00:00.000000Z",
+  "licence": "CC-BY-4.0",
+  "proto": "datumesh/1",
+  "publisher": "rates.example.org",
+  "summary": "1 EUR was worth 1.0892 USD at the 15 March 2024 reference rate.",
+  "tx": "2024-03-15T16:00:00.000000Z",
+  "type": "number",
+  "valid": {
+    "date": {
+      "type": "date",
+      "value": "2024-03-15"
+    }
+  },
+  "value": "1.0892",
+  "sig": "e2d778dfb2ff9650521da446b4626f4fa76f547bf27ab2cca8bd56e9270f9a9e3dc24970d98705f3c371502cf4dbcaec99f9361851a436854c984c03a10e5603"
+}

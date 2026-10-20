@@ -1,0 +1,9 @@
+{
+  "id": "scalar/date-max",
+  "kind": "scalar",
+  "description": "The latest date.",
+  "valid": true,
+  "input": "{\n  \"value\": \"9999-12-31\",\n  \"type\": \"date\"\n}",
+  "canonical": "{\"type\":\"date\",\"value\":\"9999-12-31\"}",
+  "sha256": "ce447fa73f229a0524eb52d891d618dd3d7e56e18570490ae68b87e752ebf1e2"
+}

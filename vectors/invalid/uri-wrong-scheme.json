@@ -1,0 +1,25 @@
+{
+  "id": "invalid/uri-wrong-scheme",
+  "kind": "uri",
+  "description": "The scheme is cell.",
+  "valid": false,
+  "input": "https://rates.example.org/fx_rate?base=EUR&date=2024-03-15&quote=USD",
+  "signature": {
+    "args": {
+      "base": {
+        "type": "string",
+        "valid": false
+      },
+      "date": {
+        "type": "date",
+        "valid": true
+      },
+      "quote": {
+        "type": "string",
+        "valid": false
+      }
+    },
+    "returns": "number"
+  },
+  "error": "E_PARSE_URI"
+}

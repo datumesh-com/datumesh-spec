@@ -1,0 +1,9 @@
+{
+  "id": "scalar/instant-max",
+  "kind": "scalar",
+  "description": "The latest instant.",
+  "valid": true,
+  "input": "{\n  \"value\": \"9999-12-31T23:59:59.999999Z\",\n  \"type\": \"instant\"\n}",
+  "canonical": "{\"type\":\"instant\",\"value\":\"9999-12-31T23:59:59.999999Z\"}",
+  "sha256": "70af50204ebf059721915a9eaabc9b94723da67df2a3212d4e7a0ad1fc6e3465"
+}

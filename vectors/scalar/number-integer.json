@@ -1,0 +1,9 @@
+{
+  "id": "scalar/number-integer",
+  "kind": "scalar",
+  "description": "An integer.",
+  "valid": true,
+  "input": "{\n  \"value\": \"42\",\n  \"type\": \"number\"\n}",
+  "canonical": "{\"type\":\"number\",\"value\":\"42\"}",
+  "sha256": "ba0900ffc9726cdc824e5daa2bccae8ff81e5d55e0ee2d43320416be928c1896"
+}

@@ -1,0 +1,53 @@
+{
+  "id": "uri/all-types",
+  "kind": "uri",
+  "description": "Booleans, instants (colons are literal), strings and numbers; a namespace path segment.",
+  "valid": true,
+  "input": "cell://example.org/sensors/reading?active=true&at=2024-03-15T16:00:00.000000Z&label=north-gate_2&ratio=-0.25",
+  "signature": {
+    "args": {
+      "active": {
+        "type": "boolean",
+        "valid": false
+      },
+      "at": {
+        "type": "instant",
+        "valid": true
+      },
+      "label": {
+        "type": "string",
+        "valid": false
+      },
+      "ratio": {
+        "type": "number",
+        "valid": false
+      }
+    },
+    "returns": "string"
+  },
+  "object": {
+    "args": {
+      "active": {
+        "type": "boolean",
+        "value": true
+      },
+      "at": {
+        "type": "instant",
+        "value": "2024-03-15T16:00:00.000000Z"
+      },
+      "label": {
+        "type": "string",
+        "value": "north-gate_2"
+      },
+      "ratio": {
+        "type": "number",
+        "value": "-0.25"
+      }
+    },
+    "fn": "reading",
+    "ns": "example.org/sensors"
+  },
+  "canonical": "{\"args\":{\"active\":{\"type\":\"boolean\",\"value\":true},\"at\":{\"type\":\"instant\",\"value\":\"2024-03-15T16:00:00.000000Z\"},\"label\":{\"type\":\"string\",\"value\":\"north-gate_2\"},\"ratio\":{\"type\":\"number\",\"value\":\"-0.25\"}},\"fn\":\"reading\",\"ns\":\"example.org/sensors\"}",
+  "sha256": "a0caac429aab8ada7248ceb7a9dd5b65ebe36bed5cd6a1c50af1d02bc99a57b4",
+  "https": "https://mesh.example/cell/example.org/sensors/reading?active=true&at=2024-03-15T16:00:00.000000Z&label=north-gate_2&ratio=-0.25"
+}

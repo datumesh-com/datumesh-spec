@@ -1,0 +1,19 @@
+{
+  "id": "invalid/keys-bad-txt",
+  "kind": "keys",
+  "description": "A TXT record starting v=datumesh1 must match the grammar exactly.",
+  "valid": false,
+  "host": "rates.example.org",
+  "env": {
+    "https": {
+      "status": 404
+    },
+    "dns": {
+      "status": "ok",
+      "records": [
+        "v=datumesh1;alg=ed25519;pub=843baeb22bfd0364fb1b7262b367fb3202e7886c69a070fecf8e343fedb1eabf;from=2020-01-01T00:00:00.000000Z"
+      ]
+    }
+  },
+  "error": "E_KEY_DOC"
+}

@@ -1,0 +1,8 @@
+{
+  "id": "invalid/ref-asof-offset",
+  "kind": "ref",
+  "description": "asof is a UTC instant.",
+  "valid": false,
+  "input": "{\n  \"ns\": \"rates.example.org\",\n  \"fn\": \"fx_rate\",\n  \"asof\": \"2024-03-16T10:00:00.000000+01:00\",\n  \"args\": {\n    \"quote\": {\n      \"value\": \"USD\",\n      \"type\": \"string\"\n    },\n    \"date\": {\n      \"value\": \"2024-03-15\",\n      \"type\": \"date\"\n    },\n    \"base\": {\n      \"value\": \"EUR\",\n      \"type\": \"string\"\n    }\n  }\n}",
+  "error": "E_CANON_INSTANT"
+}

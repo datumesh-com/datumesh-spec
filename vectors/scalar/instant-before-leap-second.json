@@ -1,0 +1,9 @@
+{
+  "id": "scalar/instant-before-leap-second",
+  "kind": "scalar",
+  "description": "The last microsecond before a leap second.",
+  "valid": true,
+  "input": "{\n  \"value\": \"2016-12-31T23:59:59.999999Z\",\n  \"type\": \"instant\"\n}",
+  "canonical": "{\"type\":\"instant\",\"value\":\"2016-12-31T23:59:59.999999Z\"}",
+  "sha256": "9bea76d993fd4bc81928eb0f2a17ee5bd8140076921c461aaf7329b417b57200"
+}

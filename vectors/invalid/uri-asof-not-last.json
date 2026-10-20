@@ -1,0 +1,25 @@
+{
+  "id": "invalid/uri-asof-not-last",
+  "kind": "uri",
+  "description": "asof comes last.",
+  "valid": false,
+  "input": "cell://rates.example.org/fx_rate?asof=2024-03-16T09:00:00.000000Z&base=EUR&date=2024-03-15&quote=USD",
+  "signature": {
+    "args": {
+      "base": {
+        "type": "string",
+        "valid": false
+      },
+      "date": {
+        "type": "date",
+        "valid": true
+      },
+      "quote": {
+        "type": "string",
+        "valid": false
+      }
+    },
+    "returns": "number"
+  },
+  "error": "E_CANON_ARG_ORDER"
+}

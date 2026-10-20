@@ -1,0 +1,8 @@
+{
+  "id": "invalid/cell-numeric-tld",
+  "kind": "cell",
+  "description": "IP addresses are not namespaces.",
+  "valid": false,
+  "input": "{\n  \"ns\": \"192.168.0.1\",\n  \"fn_hash\": \"88445cddbf86a358e1318934bfc8160728a9a0ff2b05b50be6c0fee2eb3e5af4\",\n  \"fn\": \"fx_rate\",\n  \"args\": {\n    \"quote\": {\n      \"value\": \"USD\",\n      \"type\": \"string\"\n    },\n    \"date\": {\n      \"value\": \"2024-03-15\",\n      \"type\": \"date\"\n    },\n    \"base\": {\n      \"value\": \"EUR\",\n      \"type\": \"string\"\n    }\n  }\n}",
+  "error": "E_CANON_NAME"
+}

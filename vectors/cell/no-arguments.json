@@ -1,0 +1,9 @@
+{
+  "id": "cell/no-arguments",
+  "kind": "cell",
+  "description": "A cell of a function with no arguments.",
+  "valid": true,
+  "input": "{\n  \"ns\": \"math.example\",\n  \"fn_hash\": \"4184dc316637adb1837b3224ef0043f8766786321e2048b7f0a653a684483159\",\n  \"fn\": \"pi\",\n  \"args\": {}\n}",
+  "canonical": "{\"args\":{},\"fn\":\"pi\",\"fn_hash\":\"4184dc316637adb1837b3224ef0043f8766786321e2048b7f0a653a684483159\",\"ns\":\"math.example\"}",
+  "sha256": "dcc38effea66f3e4f87d07280f7ded1bde1051f9dd416b013234d9a90f66a567"
+}

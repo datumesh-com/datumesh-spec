@@ -1,0 +1,9 @@
+{
+  "id": "scalar/date-ordinary",
+  "kind": "scalar",
+  "description": "A calendar date.",
+  "valid": true,
+  "input": "{\n  \"value\": \"2024-03-15\",\n  \"type\": \"date\"\n}",
+  "canonical": "{\"type\":\"date\",\"value\":\"2024-03-15\"}",
+  "sha256": "1f0462f09a940f05da110f8e862b020cca19762475146ddc896a5fc370f51f5a"
+}

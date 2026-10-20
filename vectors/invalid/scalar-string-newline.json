@@ -1,0 +1,8 @@
+{
+  "id": "invalid/scalar-string-newline",
+  "kind": "scalar",
+  "description": "Newline is a control character.",
+  "valid": false,
+  "input": "{\n  \"value\": \"a\\nb\",\n  \"type\": \"string\"\n}",
+  "error": "E_CANON_STRING"
+}

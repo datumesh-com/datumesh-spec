@@ -1,0 +1,9 @@
+{
+  "id": "scalar/instant-epoch",
+  "kind": "scalar",
+  "description": "The Unix epoch.",
+  "valid": true,
+  "input": "{\n  \"value\": \"1970-01-01T00:00:00.000000Z\",\n  \"type\": \"instant\"\n}",
+  "canonical": "{\"type\":\"instant\",\"value\":\"1970-01-01T00:00:00.000000Z\"}",
+  "sha256": "91b70fae99bab833e5fb4e3b018959998b74888b50908cb148e04c33406ed54c"
+}

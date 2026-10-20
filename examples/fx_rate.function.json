@@ -1,0 +1,24 @@
+{
+  "code": {
+    "body": "",
+    "lang": "stored"
+  },
+  "inputs": [],
+  "signature": {
+    "args": {
+      "base": {
+        "type": "string",
+        "valid": false
+      },
+      "date": {
+        "type": "date",
+        "valid": true
+      },
+      "quote": {
+        "type": "string",
+        "valid": false
+      }
+    },
+    "returns": "number"
+  }
+}

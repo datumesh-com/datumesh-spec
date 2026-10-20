@@ -1,0 +1,8 @@
+{
+  "id": "invalid/scalar-instant-no-fraction",
+  "kind": "scalar",
+  "description": "The fraction is mandatory.",
+  "valid": false,
+  "input": "{\n  \"value\": \"2024-03-15T16:00:00Z\",\n  \"type\": \"instant\"\n}",
+  "error": "E_CANON_INSTANT"
+}

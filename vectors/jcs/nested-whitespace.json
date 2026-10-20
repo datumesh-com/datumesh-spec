@@ -1,0 +1,9 @@
+{
+  "id": "jcs/nested-whitespace",
+  "kind": "jcs",
+  "description": "Insignificant whitespace is removed and nested members are sorted.",
+  "valid": true,
+  "input": " {\n\t\"z\" : [ {\"b\":1, \"a\":2} ],\r\n \"a\" : { } } ",
+  "canonical": "{\"a\":{},\"z\":[{\"a\":2,\"b\":1}]}",
+  "sha256": "e352cb8fe54de6aa4b6c818e434dd5e75c9bea904190dde219f7766c6c9f857b"
+}

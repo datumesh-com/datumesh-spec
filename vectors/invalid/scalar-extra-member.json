@@ -1,0 +1,8 @@
+{
+  "id": "invalid/scalar-extra-member",
+  "kind": "scalar",
+  "description": "A typed scalar has exactly type and value.",
+  "valid": false,
+  "input": "{\n  \"unit\": \"x\",\n  \"value\": \"EUR\",\n  \"type\": \"string\"\n}",
+  "error": "E_SCHEMA"
+}

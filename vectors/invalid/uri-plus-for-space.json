@@ -1,0 +1,25 @@
+{
+  "id": "invalid/uri-plus-for-space",
+  "kind": "uri",
+  "description": "+ is not a space; a space is %20.",
+  "valid": false,
+  "input": "cell://rates.example.org/fx_rate?base=New+York&date=2024-03-15&quote=USD",
+  "signature": {
+    "args": {
+      "base": {
+        "type": "string",
+        "valid": false
+      },
+      "date": {
+        "type": "date",
+        "valid": true
+      },
+      "quote": {
+        "type": "string",
+        "valid": false
+      }
+    },
+    "returns": "number"
+  },
+  "error": "E_CANON_PERCENT"
+}

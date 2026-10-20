@@ -1,0 +1,16 @@
+{
+  "id": "invalid/keys-dns-error",
+  "kind": "keys",
+  "description": "A DNS failure after a 404 is unavailable, not unknown.",
+  "valid": false,
+  "host": "rates.example.org",
+  "env": {
+    "https": {
+      "status": 404
+    },
+    "dns": {
+      "status": "error"
+    }
+  },
+  "error": "E_KEY_UNAVAILABLE"
+}

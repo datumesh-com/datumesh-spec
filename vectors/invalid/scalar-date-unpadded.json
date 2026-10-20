@@ -1,0 +1,8 @@
+{
+  "id": "invalid/scalar-date-unpadded",
+  "kind": "scalar",
+  "description": "Months and days have two digits.",
+  "valid": false,
+  "input": "{\n  \"value\": \"2024-3-15\",\n  \"type\": \"date\"\n}",
+  "error": "E_CANON_DATE"
+}

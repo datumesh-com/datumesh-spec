@@ -1,0 +1,9 @@
+{
+  "id": "jcs/escapes",
+  "kind": "jcs",
+  "description": "Only quote, backslash and C0 controls are escaped; DEL, U+2028 and non-ASCII stay literal.",
+  "valid": true,
+  "input": "[\"\\u0000\\u001f\\b\\f\\n\\r\\t\", \"\\u007f\\u2028\\u00e9\", \"\\\"\\\\\\/\"]",
+  "canonical": "[\"\\u0000\\u001f\\b\\f\\n\\r\\t\",\" é\",\"\\\"\\\\/\"]",
+  "sha256": "69f3fe5e96d7eed554a0fba6b1e8b9a8386d379eecf743385a52f42a1afac42e"
+}

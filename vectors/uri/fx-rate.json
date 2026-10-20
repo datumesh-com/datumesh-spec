@@ -1,0 +1,45 @@
+{
+  "id": "uri/fx-rate",
+  "kind": "uri",
+  "description": "Arguments sorted by name; asof omitted means now.",
+  "valid": true,
+  "input": "cell://rates.example.org/fx_rate?base=EUR&date=2024-03-15&quote=USD",
+  "signature": {
+    "args": {
+      "base": {
+        "type": "string",
+        "valid": false
+      },
+      "date": {
+        "type": "date",
+        "valid": true
+      },
+      "quote": {
+        "type": "string",
+        "valid": false
+      }
+    },
+    "returns": "number"
+  },
+  "object": {
+    "args": {
+      "base": {
+        "type": "string",
+        "value": "EUR"
+      },
+      "date": {
+        "type": "date",
+        "value": "2024-03-15"
+      },
+      "quote": {
+        "type": "string",
+        "value": "USD"
+      }
+    },
+    "fn": "fx_rate",
+    "ns": "rates.example.org"
+  },
+  "canonical": "{\"args\":{\"base\":{\"type\":\"string\",\"value\":\"EUR\"},\"date\":{\"type\":\"date\",\"value\":\"2024-03-15\"},\"quote\":{\"type\":\"string\",\"value\":\"USD\"}},\"fn\":\"fx_rate\",\"ns\":\"rates.example.org\"}",
+  "sha256": "37423c32146e22bf5a7fba73b03657b3d4bdae302d4718a5a111e4b98ef14e72",
+  "https": "https://mesh.example/cell/rates.example.org/fx_rate?base=EUR&date=2024-03-15&quote=USD"
+}

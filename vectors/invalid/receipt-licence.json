@@ -1,0 +1,33 @@
+{
+  "id": "invalid/receipt-licence",
+  "kind": "receipt",
+  "description": "A licence is an SPDX identifier or an https URL.",
+  "valid": false,
+  "input": "{\n  \"sig\": \"808c1623f177a44917ae6990430a74f32461bedf51a778bdd1025bfdcb5f10901b39d2c7c1352ef67cbb63101746bf4773fb8da28d22f1a244d8016b5adbb303\",\n  \"value\": \"1.0892\",\n  \"valid\": {\n    \"date\": {\n      \"value\": \"2024-03-15\",\n      \"type\": \"date\"\n    }\n  },\n  \"type\": \"number\",\n  \"tx\": \"2024-03-15T16:00:00.000000Z\",\n  \"summary\": \"A licence with a space.\",\n  \"publisher\": \"rates.example.org\",\n  \"proto\": \"datumesh/1\",\n  \"licence\": \"CC BY 4.0\",\n  \"issued\": \"2024-03-16T09:00:00.000000Z\",\n  \"inputs\": [],\n  \"computed_by\": \"rates.example.org#d712b32a2cc5cb7c\",\n  \"cell\": {\n    \"ns\": \"rates.example.org\",\n    \"fn_hash\": \"88445cddbf86a358e1318934bfc8160728a9a0ff2b05b50be6c0fee2eb3e5af4\",\n    \"fn\": \"fx_rate\",\n    \"args\": {\n      \"quote\": {\n        \"value\": \"USD\",\n        \"type\": \"string\"\n      },\n      \"date\": {\n        \"value\": \"2024-03-15\",\n        \"type\": \"date\"\n      },\n      \"base\": {\n        \"value\": \"EUR\",\n        \"type\": \"string\"\n      }\n    }\n  },\n  \"asof\": \"2024-03-16T09:00:00.000000Z\"\n}",
+  "keypair": {
+    "seed": "d939265c141c467e77fb079486a3bb8b932c1d471c8c25e5a2eed06c42db8ad0",
+    "public": "843baeb22bfd0364fb1b7262b367fb3202e7886c69a070fecf8e343fedb1eabf",
+    "key_id": "d712b32a2cc5cb7c"
+  },
+  "keys": {
+    "rates.example.org": {
+      "https": {
+        "status": 200,
+        "body": "{\n  \"host\": \"rates.example.org\",\n  \"keys\": [\n    {\n      \"alg\": \"ed25519\",\n      \"id\": \"d712b32a2cc5cb7c\",\n      \"public\": \"843baeb22bfd0364fb1b7262b367fb3202e7886c69a070fecf8e343fedb1eabf\",\n      \"valid_from\": \"2020-01-01T00:00:00.000000Z\",\n      \"valid_to\": \"2024-06-01T00:00:00.000000Z\"\n    },\n    {\n      \"alg\": \"ed25519\",\n      \"id\": \"d9a2df65559c4444\",\n      \"public\": \"3ecf7b3ff834cb6782f5405dfcb213b5e78c0f30188068c25568adc25a739b52\",\n      \"valid_from\": \"2024-06-01T00:00:00.000000Z\"\n    }\n  ],\n  \"proto\": \"datumesh/1\"\n}"
+      },
+      "dns": {
+        "status": "nxdomain"
+      }
+    },
+    "calc.example.net": {
+      "https": {
+        "status": 200,
+        "body": "{\n  \"host\": \"calc.example.net\",\n  \"keys\": [\n    {\n      \"alg\": \"ed25519\",\n      \"id\": \"f7ec60a92abf4774\",\n      \"public\": \"ccd4faa3a0b8338bc796d3bfc30bda2f6e87d336a576b70dc9d47cbfe0e8830f\",\n      \"valid_from\": \"2020-01-01T00:00:00.000000Z\"\n    }\n  ],\n  \"proto\": \"datumesh/1\"\n}"
+      },
+      "dns": {
+        "status": "nxdomain"
+      }
+    }
+  },
+  "error": "E_CANON_LICENCE"
+}

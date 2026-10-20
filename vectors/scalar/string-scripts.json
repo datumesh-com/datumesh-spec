@@ -1,0 +1,9 @@
+{
+  "id": "scalar/string-scripts",
+  "kind": "scalar",
+  "description": "CJK, Arabic and Greek in one NFC string.",
+  "valid": true,
+  "input": "{\n  \"value\": \"東京 · مرحبا · Ελλάδα\",\n  \"type\": \"string\"\n}",
+  "canonical": "{\"type\":\"string\",\"value\":\"東京 · مرحبا · Ελλάδα\"}",
+  "sha256": "e3efb5bca18d182526c5c8e0a6d8ce727a6e3595e087a5cba728441dab5d8b76"
+}

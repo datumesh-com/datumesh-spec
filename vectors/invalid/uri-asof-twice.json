@@ -1,0 +1,12 @@
+{
+  "id": "invalid/uri-asof-twice",
+  "kind": "uri",
+  "description": "asof appears at most once.",
+  "valid": false,
+  "input": "cell://math.example/pi?asof=2024-01-01T00:00:00.000000Z&asof=2024-01-01T00:00:00.000000Z",
+  "signature": {
+    "args": {},
+    "returns": "number"
+  },
+  "error": "E_CANON_ARG_DUPLICATE"
+}

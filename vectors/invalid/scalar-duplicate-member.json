@@ -1,0 +1,8 @@
+{
+  "id": "invalid/scalar-duplicate-member",
+  "kind": "scalar",
+  "description": "Duplicate JSON members are rejected, not resolved.",
+  "valid": false,
+  "input": "{\"type\":\"string\",\"type\":\"number\",\"value\":\"1\"}",
+  "error": "E_PARSE_DUPLICATE_KEY"
+}

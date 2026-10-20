@@ -1,0 +1,14 @@
+{
+  "id": "invalid/keys-wrong-id",
+  "kind": "keys",
+  "description": "A key document whose id is not derived from its public key is rejected whole.",
+  "valid": false,
+  "host": "rates.example.org",
+  "env": {
+    "https": {
+      "status": 200,
+      "body": "{\"host\": \"rates.example.org\", \"keys\": [{\"alg\": \"ed25519\", \"id\": \"0000000000000000\", \"public\": \"843baeb22bfd0364fb1b7262b367fb3202e7886c69a070fecf8e343fedb1eabf\", \"valid_from\": \"2020-01-01T00:00:00.000000Z\"}], \"proto\": \"datumesh/1\"}"
+    }
+  },
+  "error": "E_KEY_DOC"
+}

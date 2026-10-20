@@ -1,0 +1,45 @@
+{
+  "id": "uri/unicode-string",
+  "kind": "uri",
+  "description": "Non-literal characters are UTF-8, percent-encoded with uppercase hex.",
+  "valid": true,
+  "input": "cell://rates.example.org/fx_rate?base=Z%C3%BCrich%20Hbf&date=2024-03-15&quote=%E2%82%AC",
+  "signature": {
+    "args": {
+      "base": {
+        "type": "string",
+        "valid": false
+      },
+      "date": {
+        "type": "date",
+        "valid": true
+      },
+      "quote": {
+        "type": "string",
+        "valid": false
+      }
+    },
+    "returns": "number"
+  },
+  "object": {
+    "args": {
+      "base": {
+        "type": "string",
+        "value": "Zürich Hbf"
+      },
+      "date": {
+        "type": "date",
+        "value": "2024-03-15"
+      },
+      "quote": {
+        "type": "string",
+        "value": "€"
+      }
+    },
+    "fn": "fx_rate",
+    "ns": "rates.example.org"
+  },
+  "canonical": "{\"args\":{\"base\":{\"type\":\"string\",\"value\":\"Zürich Hbf\"},\"date\":{\"type\":\"date\",\"value\":\"2024-03-15\"},\"quote\":{\"type\":\"string\",\"value\":\"€\"}},\"fn\":\"fx_rate\",\"ns\":\"rates.example.org\"}",
+  "sha256": "207d544c87ecf44e376dc6404008c0a94862994d8f33363dd6b21a0f47939da9",
+  "https": "https://mesh.example/cell/rates.example.org/fx_rate?base=Z%C3%BCrich%20Hbf&date=2024-03-15&quote=%E2%82%AC"
+}

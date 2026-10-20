@@ -1,0 +1,17 @@
+{
+  "id": "invalid/keys-host-mismatch",
+  "kind": "keys",
+  "description": "A key document names the host it was fetched from.",
+  "valid": false,
+  "host": "rates.example.org",
+  "env": {
+    "https": {
+      "status": 200,
+      "body": "{\n  \"host\": \"other.example.org\",\n  \"keys\": [\n    {\n      \"alg\": \"ed25519\",\n      \"id\": \"d712b32a2cc5cb7c\",\n      \"public\": \"843baeb22bfd0364fb1b7262b367fb3202e7886c69a070fecf8e343fedb1eabf\",\n      \"valid_from\": \"2020-01-01T00:00:00.000000Z\"\n    }\n  ],\n  \"proto\": \"datumesh/1\"\n}"
+    },
+    "dns": {
+      "status": "nxdomain"
+    }
+  },
+  "error": "E_KEY_DOC"
+}

@@ -1,0 +1,8 @@
+{
+  "id": "invalid/scalar-bad-utf8",
+  "kind": "scalar",
+  "description": "The input bytes are not UTF-8.",
+  "valid": false,
+  "input_hex": "7b2274797065223a22737472696e67222c2276616c7565223a22c328227d",
+  "error": "E_PARSE_JSON"
+}

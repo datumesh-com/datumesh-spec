@@ -1,0 +1,9 @@
+{
+  "id": "scalar/string-nfc",
+  "kind": "scalar",
+  "description": "Precomposed ü (U+00FC) is NFC.",
+  "valid": true,
+  "input": "{\n  \"value\": \"Zürich\",\n  \"type\": \"string\"\n}",
+  "canonical": "{\"type\":\"string\",\"value\":\"Zürich\"}",
+  "sha256": "b2dcfe7120ba564a3a01274bb26cae8f1e040ee35f07fb301d678a4279093683"
+}

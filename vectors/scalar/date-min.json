@@ -1,0 +1,9 @@
+{
+  "id": "scalar/date-min",
+  "kind": "scalar",
+  "description": "The earliest date.",
+  "valid": true,
+  "input": "{\n  \"value\": \"0001-01-01\",\n  \"type\": \"date\"\n}",
+  "canonical": "{\"type\":\"date\",\"value\":\"0001-01-01\"}",
+  "sha256": "12d36cdb91c2d138857e81936a7d355625c03c278d64c80e08a45c8178fa1292"
+}

@@ -1,0 +1,8 @@
+{
+  "id": "keyid/calc-2020",
+  "kind": "keyid",
+  "description": "Key id: the first 16 hex digits of SHA-256 over the raw 32-byte Ed25519 public key.",
+  "valid": true,
+  "input": "ccd4faa3a0b8338bc796d3bfc30bda2f6e87d336a576b70dc9d47cbfe0e8830f",
+  "key_id": "f7ec60a92abf4774"
+}

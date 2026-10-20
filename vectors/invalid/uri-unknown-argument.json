@@ -1,0 +1,25 @@
+{
+  "id": "invalid/uri-unknown-argument",
+  "kind": "uri",
+  "description": "Undeclared arguments are rejected.",
+  "valid": false,
+  "input": "cell://rates.example.org/fx_rate?base=EUR&date=2024-03-15&quote=USD&zone=UTC",
+  "signature": {
+    "args": {
+      "base": {
+        "type": "string",
+        "valid": false
+      },
+      "date": {
+        "type": "date",
+        "valid": true
+      },
+      "quote": {
+        "type": "string",
+        "valid": false
+      }
+    },
+    "returns": "number"
+  },
+  "error": "E_ARG_UNKNOWN"
+}

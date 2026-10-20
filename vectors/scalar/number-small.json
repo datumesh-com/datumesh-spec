@@ -1,0 +1,9 @@
+{
+  "id": "scalar/number-small",
+  "kind": "scalar",
+  "description": "Small magnitudes are written out; there is no exponent form.",
+  "valid": true,
+  "input": "{\n  \"value\": \"0.000001\",\n  \"type\": \"number\"\n}",
+  "canonical": "{\"type\":\"number\",\"value\":\"0.000001\"}",
+  "sha256": "658b67b26ea86f4faf68fa14fdd932bdfa74090c3ddc190aa495f3c3e47ecb60"
+}

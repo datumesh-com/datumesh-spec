@@ -1,0 +1,8 @@
+{
+  "id": "invalid/scalar-string-unassigned",
+  "kind": "scalar",
+  "description": "U+0378 is unassigned.",
+  "valid": false,
+  "input": "{\n  \"value\": \"a͸\",\n  \"type\": \"string\"\n}",
+  "error": "E_CANON_STRING"
+}

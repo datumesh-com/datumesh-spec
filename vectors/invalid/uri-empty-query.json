@@ -1,0 +1,12 @@
+{
+  "id": "invalid/uri-empty-query",
+  "kind": "uri",
+  "description": "A ? needs at least one parameter.",
+  "valid": false,
+  "input": "cell://math.example/pi?",
+  "signature": {
+    "args": {},
+    "returns": "number"
+  },
+  "error": "E_PARSE_URI"
+}

@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://datumesh.com/schemas/1/cell-ref.schema.json",
+  "title": "Datumesh cell reference",
+  "description": "What a cell URI denotes (SPEC.md 4.3): no function hash, optional asof, slices allowed.",
+  "type": "object",
+  "required": ["args", "fn", "ns"],
+  "additionalProperties": false,
+  "properties": {
+    "args": { "$ref": "defs.schema.json#/$defs/sliceArgs" },
+    "asof": { "$ref": "defs.schema.json#/$defs/instant" },
+    "fn": { "$ref": "defs.schema.json#/$defs/name" },
+    "ns": { "$ref": "defs.schema.json#/$defs/namespace" }
+  }
+}

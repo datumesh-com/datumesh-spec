@@ -1,0 +1,9 @@
+{
+  "id": "scalar/string-ascii",
+  "kind": "scalar",
+  "description": "A plain ASCII string.",
+  "valid": true,
+  "input": "{\n  \"value\": \"EUR\",\n  \"type\": \"string\"\n}",
+  "canonical": "{\"type\":\"string\",\"value\":\"EUR\"}",
+  "sha256": "2630108c6267d5df2ec47a54d502c53c78288beaf00a89c078dc0d21df967b48"
+}

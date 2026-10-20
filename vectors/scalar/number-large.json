@@ -1,0 +1,9 @@
+{
+  "id": "scalar/number-large",
+  "kind": "scalar",
+  "description": "Integers beyond 2^53 are exact because numbers are decimal strings, not JSON numbers.",
+  "valid": true,
+  "input": "{\n  \"value\": \"123456789012345678901234567890123456789012\",\n  \"type\": \"number\"\n}",
+  "canonical": "{\"type\":\"number\",\"value\":\"123456789012345678901234567890123456789012\"}",
+  "sha256": "c365fd2c1ad04819ef6abcfd6d81f0677e4ea74cd5a1f8685c5d39bd653d0642"
+}

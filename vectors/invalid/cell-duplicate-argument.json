@@ -1,0 +1,8 @@
+{
+  "id": "invalid/cell-duplicate-argument",
+  "kind": "cell",
+  "description": "A duplicated argument is a duplicate JSON member.",
+  "valid": false,
+  "input": "{\"args\":{\"base\":{\"type\":\"string\",\"value\":\"EUR\"},\"base\":{\"type\":\"string\",\"value\":\"GBP\"}},\"fn\":\"fx_rate\",\"fn_hash\":\"88445cddbf86a358e1318934bfc8160728a9a0ff2b05b50be6c0fee2eb3e5af4\",\"ns\":\"rates.example.org\"}",
+  "error": "E_PARSE_DUPLICATE_KEY"
+}

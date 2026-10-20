@@ -1,0 +1,9 @@
+{
+  "id": "scalar/number-zero",
+  "kind": "scalar",
+  "description": "Zero has exactly one form.",
+  "valid": true,
+  "input": "{\n  \"value\": \"0\",\n  \"type\": \"number\"\n}",
+  "canonical": "{\"type\":\"number\",\"value\":\"0\"}",
+  "sha256": "b2aff9714d14e0b5f141a2c614afb2578f5c77bf32eff2475f2cbd25139a2f22"
+}

@@ -1,0 +1,8 @@
+{
+  "id": "invalid/cell-arg-name-too-long",
+  "kind": "cell",
+  "description": "Argument names are at most 64 characters.",
+  "valid": false,
+  "input": "{\n  \"ns\": \"rates.example.org\",\n  \"fn_hash\": \"88445cddbf86a358e1318934bfc8160728a9a0ff2b05b50be6c0fee2eb3e5af4\",\n  \"fn\": \"fx_rate\",\n  \"args\": {\n    \"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\": {\n      \"value\": \"x\",\n      \"type\": \"string\"\n    }\n  }\n}",
+  "error": "E_CANON_LIMIT"
+}

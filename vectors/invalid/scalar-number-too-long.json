@@ -1,0 +1,8 @@
+{
+  "id": "invalid/scalar-number-too-long",
+  "kind": "scalar",
+  "description": "129 characters exceeds the limit.",
+  "valid": false,
+  "input": "{\n  \"value\": \"111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111\",\n  \"type\": \"number\"\n}",
+  "error": "E_CANON_LIMIT"
+}

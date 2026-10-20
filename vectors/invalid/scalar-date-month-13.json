@@ -1,0 +1,8 @@
+{
+  "id": "invalid/scalar-date-month-13",
+  "kind": "scalar",
+  "description": "There is no month 13.",
+  "valid": false,
+  "input": "{\n  \"value\": \"2024-13-01\",\n  \"type\": \"date\"\n}",
+  "error": "E_CANON_DATE"
+}

@@ -1,0 +1,8 @@
+{
+  "id": "invalid/scalar-boolean-as-string",
+  "kind": "scalar",
+  "description": "A boolean is JSON true, not the string \"true\".",
+  "valid": false,
+  "input": "{\n  \"value\": \"true\",\n  \"type\": \"boolean\"\n}",
+  "error": "E_CANON_TYPE"
+}

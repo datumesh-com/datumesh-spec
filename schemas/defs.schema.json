@@ -1,0 +1,95 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://datumesh.com/schemas/1/defs.schema.json",
+  "title": "Datumesh shared definitions",
+  "description": "Lexical forms and building blocks (SPEC.md sections 2-4). These schemas are necessary, not sufficient: calendar validity, NFC, Unicode 15.1 assignment and UTF-8 byte limits are checked by the verification procedure, not here.",
+  "$defs": {
+    "number": {
+      "type": "string",
+      "pattern": "^-?(0|[1-9][0-9]*)(\\.[0-9]*[1-9])?$",
+      "not": { "const": "-0" },
+      "maxLength": 128
+    },
+    "date": {
+      "type": "string",
+      "pattern": "^[0-9]{4}-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])$",
+      "not": { "pattern": "^0000" }
+    },
+    "instant": {
+      "type": "string",
+      "pattern": "^[0-9]{4}-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])T([01][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9]\\.[0-9]{6}Z$",
+      "not": { "pattern": "^0000" }
+    },
+    "string": {
+      "type": "string",
+      "pattern": "^[^\u0000-\u001f\u007f-\u009f]*$",
+      "maxLength": 1024
+    },
+    "type": { "enum": ["boolean", "date", "instant", "number", "string"] },
+    "name": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9]*(_[a-z0-9]+)*$",
+      "maxLength": 64
+    },
+    "argName": {
+      "$ref": "#/$defs/name",
+      "not": { "pattern": "^(asof$|dm_)" }
+    },
+    "dnsName": {
+      "type": "string",
+      "pattern": "^([a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?\\.)+[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?$",
+      "not": { "pattern": "\\.[0-9]+$" },
+      "maxLength": 253
+    },
+    "namespace": {
+      "type": "string",
+      "pattern": "^([a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?\\.)+[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?(/[a-z][a-z0-9]*(_[a-z0-9]+)*)*$",
+      "not": { "pattern": "\\.[0-9]+(/|$)" }
+    },
+    "functionName": {
+      "type": "string",
+      "pattern": "^([a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?\\.)+[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?(/[a-z][a-z0-9]*(_[a-z0-9]+)*)+$",
+      "maxLength": 512
+    },
+    "hex64": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+    "hex128": { "type": "string", "pattern": "^[0-9a-f]{128}$" },
+    "keyRef": {
+      "type": "string",
+      "pattern": "^([a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?\\.)+[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?#[0-9a-f]{16}$"
+    },
+    "typedValue": {
+      "description": "The value member of a typed scalar or receipt, constrained by the sibling type member.",
+      "allOf": [
+        { "if": { "properties": { "type": { "const": "boolean" } } }, "then": { "properties": { "value": { "type": "boolean" } } } },
+        { "if": { "properties": { "type": { "const": "number" } } }, "then": { "properties": { "value": { "$ref": "#/$defs/number" } } } },
+        { "if": { "properties": { "type": { "const": "date" } } }, "then": { "properties": { "value": { "$ref": "#/$defs/date" } } } },
+        { "if": { "properties": { "type": { "const": "instant" } } }, "then": { "properties": { "value": { "$ref": "#/$defs/instant" } } } },
+        { "if": { "properties": { "type": { "const": "string" } } }, "then": { "properties": { "value": { "$ref": "#/$defs/string" } } } }
+      ]
+    },
+    "scalar": {
+      "type": "object",
+      "required": ["type", "value"],
+      "additionalProperties": false,
+      "properties": {
+        "type": { "$ref": "#/$defs/type" },
+        "value": { "type": ["string", "boolean"] }
+      },
+      "$ref": "#/$defs/typedValue"
+    },
+    "args": {
+      "description": "Bound arguments: every value is a typed scalar.",
+      "type": "object",
+      "maxProperties": 32,
+      "propertyNames": { "$ref": "#/$defs/argName" },
+      "additionalProperties": { "$ref": "#/$defs/scalar" }
+    },
+    "sliceArgs": {
+      "description": "Arguments where \"*\" marks a slice over that argument.",
+      "type": "object",
+      "maxProperties": 32,
+      "propertyNames": { "$ref": "#/$defs/argName" },
+      "additionalProperties": { "anyOf": [{ "const": "*" }, { "$ref": "#/$defs/scalar" }] }
+    }
+  }
+}

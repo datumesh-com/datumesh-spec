@@ -1,0 +1,45 @@
+{
+  "id": "uri/reserved-characters",
+  "kind": "uri",
+  "description": "& = + / ? and % are always percent-encoded.",
+  "valid": true,
+  "input": "cell://rates.example.org/fx_rate?base=a%26b%3Dc%2Bd%2Fe%3Ff%25&date=2024-03-15&quote=USD",
+  "signature": {
+    "args": {
+      "base": {
+        "type": "string",
+        "valid": false
+      },
+      "date": {
+        "type": "date",
+        "valid": true
+      },
+      "quote": {
+        "type": "string",
+        "valid": false
+      }
+    },
+    "returns": "number"
+  },
+  "object": {
+    "args": {
+      "base": {
+        "type": "string",
+        "value": "a&b=c+d/e?f%"
+      },
+      "date": {
+        "type": "date",
+        "value": "2024-03-15"
+      },
+      "quote": {
+        "type": "string",
+        "value": "USD"
+      }
+    },
+    "fn": "fx_rate",
+    "ns": "rates.example.org"
+  },
+  "canonical": "{\"args\":{\"base\":{\"type\":\"string\",\"value\":\"a&b=c+d/e?f%\"},\"date\":{\"type\":\"date\",\"value\":\"2024-03-15\"},\"quote\":{\"type\":\"string\",\"value\":\"USD\"}},\"fn\":\"fx_rate\",\"ns\":\"rates.example.org\"}",
+  "sha256": "b95114c8abad5a9bdbd0595815bda1ce0a1ad310d71ac4e7c499029a9e27b307",
+  "https": "https://mesh.example/cell/rates.example.org/fx_rate?base=a%26b%3Dc%2Bd%2Fe%3Ff%25&date=2024-03-15&quote=USD"
+}

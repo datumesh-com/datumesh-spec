@@ -1,0 +1,8 @@
+{
+  "id": "invalid/scalar-not-json",
+  "kind": "scalar",
+  "description": "Truncated JSON.",
+  "valid": false,
+  "input": "{\"type\":\"string\",\"value\":\"EUR\"",
+  "error": "E_PARSE_JSON"
+}

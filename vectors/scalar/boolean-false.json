@@ -1,0 +1,9 @@
+{
+  "id": "scalar/boolean-false",
+  "kind": "scalar",
+  "description": "A boolean is a JSON false.",
+  "valid": true,
+  "input": "{\n  \"value\": false,\n  \"type\": \"boolean\"\n}",
+  "canonical": "{\"type\":\"boolean\",\"value\":false}",
+  "sha256": "2f4a086d1a347063b02c63aa13852c5eae4523f5c97953f1bc9573998a642e63"
+}

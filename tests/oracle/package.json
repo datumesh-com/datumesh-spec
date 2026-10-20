@@ -1,0 +1,7 @@
+{
+  "name": "datumesh-jcs-oracle",
+  "private": true,
+  "description": "Independent cross-check of the vectors with the canonicalize package (RFC 8785 reference JS) and Node crypto.",
+  "type": "module",
+  "dependencies": { "canonicalize": "2.0.0" }
+}

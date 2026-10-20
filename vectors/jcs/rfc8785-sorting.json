@@ -1,0 +1,9 @@
+{
+  "id": "jcs/rfc8785-sorting",
+  "kind": "jcs",
+  "description": "RFC 8785 section 3.2.3: members sorted by UTF-16 code units, so U+1F600 sorts before U+FB33.",
+  "valid": true,
+  "input": "{\"\\u20ac\": \"Euro Sign\", \"\\r\": \"Carriage Return\", \"\\ufb33\": \"Hebrew Letter Dalet With Dagesh\", \"1\": \"One\", \"\\ud83d\\ude00\": \"Emoji: Grinning Face\", \"\\u0080\": \"Control\", \"\\u00f6\": \"Latin Small Letter O With Diaeresis\"}",
+  "canonical": "{\"\\r\":\"Carriage Return\",\"1\":\"One\",\"\":\"Control\",\"ö\":\"Latin Small Letter O With Diaeresis\",\"€\":\"Euro Sign\",\"😀\":\"Emoji: Grinning Face\",\"דּ\":\"Hebrew Letter Dalet With Dagesh\"}",
+  "sha256": "5e321556d22018a9656991a9e94f77ec175fa193e52a2429d312f8419ec8b08c"
+}

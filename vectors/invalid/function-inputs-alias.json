@@ -1,0 +1,8 @@
+{
+  "id": "invalid/function-inputs-alias",
+  "kind": "function",
+  "description": "Declared inputs are fully qualified; a short alias is not a name.",
+  "valid": false,
+  "input": "{\n  \"signature\": {\n    \"returns\": \"number\",\n    \"args\": {\n      \"quote\": {\n        \"valid\": false,\n        \"type\": \"string\"\n      },\n      \"date\": {\n        \"valid\": true,\n        \"type\": \"date\"\n      },\n      \"base\": {\n        \"valid\": false,\n        \"type\": \"string\"\n      },\n      \"amount\": {\n        \"valid\": false,\n        \"type\": \"number\"\n      }\n    }\n  },\n  \"inputs\": [\n    \"ecb/fx_rate\"\n  ],\n  \"code\": {\n    \"lang\": \"expr\",\n    \"body\": \"amount * rates.example.org/fx_rate(base: base, date: date, quote: quote)\\n\"\n  }\n}",
+  "error": "E_CANON_NAME"
+}
