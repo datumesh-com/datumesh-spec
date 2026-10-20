@@ -19,7 +19,7 @@ for i in range(n):
     assert len(ids) == 1, ids
     for f in FIELDS:
         vals = {k: rows[k].get(f) for k in names}
-        if len(set(map(json.dumps, vals.values()))) > 1:
+        if len({json.dumps(x, sort_keys=True) for x in vals.values()}) > 1:  # member order is not data
             mismatches.append((ids.pop() if ids else i, f, vals))
             break
     codes[rows[names[0]].get("error") or "OK"] += 1
