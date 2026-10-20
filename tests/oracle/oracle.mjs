@@ -27,7 +27,10 @@ for (const file of files(root)) {
   const ok = canonical === v.canonical && sha256(canonical) === v.sha256;
   if (!ok) { failed++; console.log(`FAIL ${v.id}\n  ours:   ${v.canonical}\n  oracle: ${canonical}`); }
   if (v.kind === "receipt") {
-    const good = verify(null, Buffer.from(canonical, "utf8"), ed25519(v.keypair.public), Buffer.from(v.sig, "hex"));
+    // The key comes from the vector's key document: hand-built vectors have no keypair.
+    const [host, kid] = value.computed_by.split("#");
+    const key = JSON.parse(v.keys[host].https.body).keys.find((k) => k.id === kid);
+    const good = verify(null, Buffer.from(canonical, "utf8"), ed25519(key.public), Buffer.from(v.sig, "hex"));
     if (!good) { failed++; console.log(`FAIL signature ${v.id}`); }
     sigs++;
   }
