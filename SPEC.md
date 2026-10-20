@@ -229,7 +229,7 @@ A cell binds every argument its function declares, and no others. Arguments are 
 | `licence_url` | 512 | characters in a licence URL |
 | `keys` | 64 | keys in one key publication |
 
-Exceeding a limit fails with `E_CANON_LIMIT`. DNS's own limits (63-character labels, 253-character names) are part of the DNS grammar and fail with `E_CANON_NAME`.
+Exceeding a limit fails with `E_CANON_LIMIT`, except `keys`: a key document with more than 64 keys is rejected whole, with `E_KEY_DOC` (9.2). DNS's own limits (63-character labels, 253-character names) are part of the DNS grammar and fail with `E_CANON_NAME`.
 
 Order of checks:
 - **Values and names.** A value or name is checked against its lexical form first and its length limit second. An argument name is then checked for reserved names.
@@ -280,7 +280,7 @@ On a mesh host `<mesh>`, the cell URI `cell://<rest>` is served at:
 https://<mesh>/cell/<rest>
 ```
 
-`<rest>` is copied byte for byte, query included. The mapping is reversible by stripping the prefix.
+`<rest>` is copied byte for byte, query included. The mapping is reversible by stripping the prefix. `<mesh>` is a DNS name (2.1), served on the default HTTPS port: no port, no IP address, no userinfo.
 
 ### 5.4 URI to reference and back
 
@@ -353,7 +353,7 @@ A client checks an envelope in this order and reports the first failure:
    If the request carried no `asof`, the receipt's `asof` is the mesh's "now", and the client accepts it.
 6. Check `trust` against the receipt, as above, and that `superseded_by` differs from the receipt's hash (`E_ENVELOPE`).
 
-Step 5 needs the request, which the envelope does not contain. A client MUST perform it; a library takes the requested cell id and `asof` as inputs. A malformed request description is the caller's error, not `E_ENVELOPE`. For outcomes without a receipt there is nothing to bind. Without it, a mesh could answer with a valid receipt for a different cell.
+Step 5 needs the request, which the envelope does not contain. A client MUST perform it; a library takes the requested cell id and `asof` as inputs. A malformed request description, meaning a `cell_id` that is not 64 lowercase hex digits or an `asof` that is not an instant, is the caller's error. It is not an `E_*` code: libraries report it the way their language reports a misused function. For outcomes without a receipt there is nothing to bind. Without it, a mesh could answer with a valid receipt for a different cell.
 
 An envelope that passes says only that this mesh made a well-formed statement, about the requested cell, citing a receipt that its signer signed.
 
@@ -553,7 +553,11 @@ The HTTPS document of 9.2 is the only way keys are published. A verifier resolve
 - **200** with a document that does not satisfy 9.2, or with no document: `E_KEY_DOC`.
 - **Anything else** is `E_KEY_UNAVAILABLE`. That includes 404 and every other status, any redirect, and any network, DNS-resolution, TLS or timeout failure. There is no fallback.
 
-A host that serves no document publishes no keys, and its receipts cannot be verified. Keys are resolved only for hosts that are DNS names (2.1).
+A host that serves no document publishes no keys, and its receipts cannot be verified.
+
+Keys are resolved only for hosts that are DNS names (2.1). A client does not fetch for any other host; it has no keys (`E_KEY_UNAVAILABLE`). A response offered for such a host cannot satisfy 9.2, whose `host` must be a DNS name, so interpreting it gives `E_KEY_DOC`.
+
+A client SHOULD bound retrieval, for example to 10 seconds and 256 KiB. A retrieval it abandons is `E_KEY_UNAVAILABLE`, like any other failure.
 
 *Rationale.* HTTPS is authenticated by the Web PKI, so one authenticated path is simpler and stronger than two paths with a precedence rule. A 404 is not treated differently from an outage, because a verifier cannot tell a host that never published keys from one whose document is temporarily missing, and either way it has no keys to check against.
 
@@ -586,7 +590,7 @@ A verifier runs these steps in order and stops at the first failure, reporting i
    - `A` or `R` does not decode to a curve point;
    - `A` or `R` has small order (its order divides 8).
 
-   Otherwise, accept exactly when the canonical encoding of [S]B − [k]A equals the bytes of `R` (the cofactorless equation). A key with a small-order component that is not itself small order (mixed order) is not rejected. These are the rules of libsodium's `crypto_sign_verify_detached`. The `receipt/ed25519-*` and `invalid/receipt-ed25519-*` vectors test each rule with signatures a permissive (cofactored) verifier accepts. A receipt that passes steps 1-6 is **signature-valid**.
+   Otherwise, accept exactly when the canonical encoding of [S]B − [k]A equals the bytes of `R` (the cofactorless equation). Compute − [k]A as the negation of the point [k]A, or as [k](−A). Do not compute it as [L − k]A: for a mixed-order `A`, [L]A is not the identity, so that gives a different point. A key with a small-order component that is not itself small order (mixed order) is not rejected. These are the rules of libsodium's `crypto_sign_verify_detached`. The `receipt/ed25519-*` and `invalid/receipt-ed25519-*` vectors test each rule with signatures a permissive (cofactored) verifier accepts. A receipt that passes steps 1-6 is **signature-valid**.
 7. **Recomputation** (optional; makes the receipt **fully verified**):
    1. Obtain the descriptor for `cell.fn_hash` (`E_FN_UNAVAILABLE`). First check that it hashes to `cell.fn_hash` (`E_FN_HASH_MISMATCH`), before anything else about it. Then check that it is canonical (sections 6-7, units included), reporting a failure with the code canonicalising it on its own would give.
    2. `cell.args` names exactly the declared arguments, each with its declared type: first any undeclared argument (`E_ARG_UNKNOWN`), then any unbound declared argument (`E_ARG_MISSING`), then any type mismatch (`E_ARG_TYPE`), each in JCS order of names.
@@ -672,7 +676,16 @@ The four failure classes a verifier distinguishes are: bad canonical form (parse
 | `unit` | `input`: JSON text of an object with exactly `cell` and `descriptor` (any other shape is `E_SCHEMA`) | `unit`: the resolved unit of the cell's value (7.1), or null when the function does not return a number |
 | `envelope` | `input`: the response body; `status`: the HTTP status; `keys`: an `env` per host; `request`: `{"cell_id", "asof"?}` for step 5 | `outcome`, and when there is a receipt, `trust` and `receipt_hash` |
 
-`canonical` is the canonical byte string as UTF-8 text. It may contain U+2028 and U+2029, which some JSON-lines tools treat as line breaks. `key_ids` are in document order. Receipt vectors built by hand (the Ed25519 strictness vectors) have no `keypair`, because their keys have no seed. Inputs are deliberately not canonical: member order is reversed, and there is whitespace and escaping. A valid receipt vector's expected verification result is success at `level`; an invalid one's is `error`. Keypairs come from fixed seeds and Ed25519 is deterministic, so `tools/gen_vectors.py` reproduces every file byte for byte.
+`canonical` is the canonical byte string as UTF-8 text. It may contain U+2028 and U+2029, which some JSON-lines tools treat as line breaks. `key_ids` are in document order. Receipt vectors built by hand (the Ed25519 strictness vectors) have no `keypair`, because their keys have no seed.
+
+A `recompute` object stands in for what step 7 obtains. It has three members:
+- `descriptor`: the descriptor offered for `cell.fn_hash`; when absent, the descriptor is unavailable (`E_FN_UNAVAILABLE`);
+- `inputs`: a map from receipt hash to the input receipt's JSON text; a hash with no entry is unavailable;
+- `value`: the typed scalar that evaluating the function gave, compared in 7.6. Vectors always give it.
+
+In an `env`, `status` is an integer HTTP status or the string `"error"`; vectors use no other form.
+
+A failed verification reports only its code. Whether a library also returns the receipt hash when it could compute one is the library's choice, and vectors do not record it. Inputs are deliberately not canonical: member order is reversed, and there is whitespace and escaping. A valid receipt vector's expected verification result is success at `level`; an invalid one's is `error`. Keypairs come from fixed seeds and Ed25519 is deterministic, so `tools/gen_vectors.py` reproduces every file byte for byte.
 
 The `env` for a host is `{"https": {"status": 200, "body": "<text>"}}` for a retrieved document, or `{"https": {"status": <other status>}}` or `{"https": {"status": "error"}}` for a failed retrieval. A host absent from `keys` behaves as `{"https": {"status": "error"}}`.
 
@@ -766,7 +779,7 @@ index-unit    = "index:" 4DIGIT [ "-" 2DIGIT [ "-" 2DIGIT ] ] "=" number   ; uni
 
 ### spec-0.2.1
 
-A text-only revision. It changes no hash: every `spec-0.2.0` vector file is byte-identical, which `tests/test_migration_0_2_1.py` checks. It writes down rules that the reference tool and both verifier libraries already followed, settles the gaps the libraries reported, and adds 19 vectors.
+A text-only revision. It changes no hash: every `spec-0.2.0` vector file is byte-identical, which `tests/test_migration_0_2_1.py` checks. It writes down rules that the reference tool and both verifier libraries already followed, settles the gaps the libraries reported, and adds 20 vectors. Two outdated vector descriptions were corrected; nothing else in an existing vector changed.
 
 - **Ed25519 strictness (10.1 step 6)** is now defined rule by rule, not by reference to libsodium. Six new vectors carry hand-built signatures that a permissive verifier accepts:
   - S not reduced;

@@ -1094,6 +1094,7 @@ def parse_key_doc(text, host):
     _shape_object(doc, ("host", "keys", "proto"), (), "$")
     if doc["proto"] != PROTO or doc["host"] != host:
         fail("E_KEY_DOC", "proto or host does not match", "$")
+    check_dns_name(doc["host"], "$.host")  # keys exist only for DNS names (SPEC.md 9.3)
     if not isinstance(doc["keys"], list) or not 1 <= len(doc["keys"]) <= LIMITS["keys"]:
         fail("E_KEY_DOC", f"keys must be an array of 1 to {LIMITS['keys']} keys", "$.keys")
     keys = []

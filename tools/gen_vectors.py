@@ -215,7 +215,7 @@ for name, raw, error, why in [
     ("instant-no-fraction", text(I("2024-03-15T16:00:00Z")), "E_CANON_INSTANT", "The fraction is mandatory."),
     ("instant-offset", text(I("2024-03-15T17:00:00.000000+01:00")), "E_CANON_INSTANT", "Only UTC, written Z."),
     ("instant-lowercase", text(I("2024-03-15t16:00:00.000000z")), "E_CANON_INSTANT", "T and Z are uppercase."),
-    ("type-unknown", text({"type": "decimal", "value": "1"}), "E_CANON_TYPE", "There are exactly five types."),
+    ("type-unknown", text({"type": "decimal", "value": "1"}), "E_CANON_TYPE", "There are exactly six types."),
     ("extra-member", text(S("EUR") | {"unit": "x"}), "E_SCHEMA", "A typed scalar has exactly type and value."),
     ("null-value", '{"type":"string","value":null}', "E_SCHEMA", "null is not a value."),
     ("duplicate-member", '{"type":"string","type":"number","value":"1"}', "E_PARSE_DUPLICATE_KEY", "Duplicate JSON members are rejected, not resolved."),
@@ -665,6 +665,9 @@ add("invalid/jcs-nesting-before-duplicate", "jcs",
     '{"a": 1, "a": 2, "b": ' + "[" * 64 + "]" * 64 + "}", "E_PARSE_JSON")
 add("invalid/jcs-brackets-in-strings", "jcs", "Brackets inside strings do not count towards depth; the duplicate is reported.",
     '{"a": "' + "[" * 100 + '", "a": 2}', "E_PARSE_DUPLICATE_KEY")
+add("invalid/keys-host-not-dns-name", "keys",
+    "Keys are resolved only for DNS names: a document for an uppercase host cannot satisfy 9.2.",
+    host="Rates.Example.org", env=https_env("Rates.Example.org", key_entry("rates-2020", T0)), error="E_KEY_DOC")
 add("invalid/keys-ok-without-body", "keys", "A 200 response without a document is a document error.",
     host="rates.example.org", env={"https": {"status": 200}}, error="E_KEY_DOC")
 for name, sig, why in [
@@ -1005,7 +1008,7 @@ add_envelope("envelope/ok-asof-now", "A request without asof: the receipt's asof
              {"outcome": "ok", "receipt": R_FX, "trust": "primary"}, 200, request={"cell_id": cell_id(FX_CELL)})
 
 for name, env, status, error, why in [
-    ("unknown-outcome", {"outcome": "maybe"}, 200, "E_ENVELOPE", "outcome is one of seven values."),
+    ("unknown-outcome", {"outcome": "maybe"}, 200, "E_ENVELOPE", "outcome is one of eight values."),
     ("ok-without-receipt", {"outcome": "ok", "trust": "primary"}, 200, "E_ENVELOPE", "ok carries a receipt."),
     ("ok-without-trust", {"outcome": "ok", "receipt": R_FX}, 200, "E_ENVELOPE", "ok carries trust."),
     ("not-covered-with-receipt", {"outcome": "not_covered", "receipt": R_FX}, 404, "E_ENVELOPE",

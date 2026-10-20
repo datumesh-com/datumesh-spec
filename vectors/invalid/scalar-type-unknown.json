@@ -1,7 +1,7 @@
 {
   "id": "invalid/scalar-type-unknown",
   "kind": "scalar",
-  "description": "There are exactly five types.",
+  "description": "There are exactly six types.",
   "valid": false,
   "input": "{\n  \"value\": \"1\",\n  \"type\": \"decimal\"\n}",
   "error": "E_CANON_TYPE"

@@ -76,7 +76,8 @@
       }
     },
     "host": {
-      "$ref": "defs.schema.json#/$defs/dnsName"
+      "type": "string",
+      "description": "The host keys are resolved for; a DNS name except in invalid vectors that test that rule."
     },
     "env": {
       "type": "object"
