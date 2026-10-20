@@ -368,7 +368,7 @@ Any JSON that is hashed, signed or verified is parsed strictly, as I-JSON (RFC 7
 - no string contains a lone surrogate, whether written raw or escaped;
 - `NaN`, `Infinity` and numbers outside the IEEE 754 double range are rejected.
 
-- nesting is at most 64 levels: a text with more than 64 `[` and `{` open at once, counted outside strings, is `E_PARSE_JSON`.
+- nesting is at most 64 levels: a text with more than 64 `[` and `{` open at once, counted outside strings, is `E_PARSE_JSON`. An implementation that also accepts already-parsed values applies the same limit to them: at most 64 nested arrays and objects.
 
 All other failures are `E_PARSE_JSON`. Failures are reported in this order:
 1. byte order mark;
