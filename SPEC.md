@@ -337,7 +337,7 @@ A client checks an envelope in this order and reports the first failure:
 5. **The receipt answers the request** (`E_ENVELOPE`). Its cell id (4.4) MUST equal the id of the cell requested. That is, the cell the request's URI denotes, resolved to the `fn_hash` the client used. If the request carried `asof`, the receipt's `asof` MUST equal it. If the request carried none, the receipt's `asof` is the mesh's "now", and the client accepts it. The same applies to the receipt of a `stale` envelope.
 6. Check `trust` against the receipt, as above, and that `superseded_by` differs from the receipt's hash (`E_ENVELOPE`).
 
-Step 5 needs the request, which the envelope does not contain. A client MUST perform it; a library takes the requested cell id and `asof` as inputs. Without it, a mesh could answer with a valid receipt for a different cell.
+Step 5 needs the request, which the envelope does not contain. A client MUST perform it; a library takes the requested cell id and `asof` as inputs. A malformed request description is the caller's error, not `E_ENVELOPE`. For outcomes without a receipt there is nothing to bind. Without it, a mesh could answer with a valid receipt for a different cell.
 
 An envelope that passes says only that this mesh made a well-formed statement, about the requested cell, citing a receipt that its signer signed.
 
@@ -402,7 +402,7 @@ The **function hash** is SHA-256 of the descriptor's canonical bytes. The name i
 
 A unit says what a number means. It is declared in the signature, never in a receipt: the function hash commits to it, and every receipt inherits it through `cell.fn_hash`. `units.md` lists the units and is normative. In a signature, a unit is one of:
 
-- **a literal**: a string listed in `units.md`, such as `"EUR"`, `"degC"`, `"percent"`, `"1"` or `"index:2015=100"`;
+- **a literal**: a string listed in `units.md`, or an index unit (`units.md` 2.4), such as `"EUR"`, `"degC"`, `"percent"`, `"1"` or `"index:2015=100"`;
 - **an argument reference** `{"arg": "<name>"}`: the value of the named argument, which must be an argument of the same signature of type `string`;
 - **a rate** `{"of": X, "per": Y}`: units of X per one unit of Y, where X and Y are each a currency code from `units.md` or an argument reference.
 

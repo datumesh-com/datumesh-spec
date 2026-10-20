@@ -23,7 +23,7 @@ import canon  # noqa: E402
 ROOT = canon.ROOT
 OUT = ROOT / "vectors"
 VECTORS = []
-OUTPUT_FIELDS = ("object", "canonical", "sha256", "https", "key_id", "key_ids", "sig", "level",
+OUTPUT_FIELDS = ("object", "canonical", "sha256", "https", "key_id", "key_ids", "sig", "level", "blob_checked",
                  "unit", "outcome", "trust", "receipt_hash")
 
 
