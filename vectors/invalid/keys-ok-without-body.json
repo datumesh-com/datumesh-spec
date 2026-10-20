@@ -1,0 +1,13 @@
+{
+  "id": "invalid/keys-ok-without-body",
+  "kind": "keys",
+  "description": "A 200 response without a document is a document error.",
+  "valid": false,
+  "host": "rates.example.org",
+  "env": {
+    "https": {
+      "status": 200
+    }
+  },
+  "error": "E_KEY_DOC"
+}

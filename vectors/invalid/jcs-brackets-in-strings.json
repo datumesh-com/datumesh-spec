@@ -1,0 +1,8 @@
+{
+  "id": "invalid/jcs-brackets-in-strings",
+  "kind": "jcs",
+  "description": "Brackets inside strings do not count towards depth; the duplicate is reported.",
+  "valid": false,
+  "input": "{\"a\": \"[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[\", \"a\": 2}",
+  "error": "E_PARSE_DUPLICATE_KEY"
+}

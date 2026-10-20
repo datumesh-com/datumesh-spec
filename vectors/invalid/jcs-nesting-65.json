@@ -1,0 +1,8 @@
+{
+  "id": "invalid/jcs-nesting-65",
+  "kind": "jcs",
+  "description": "65 nested arrays: deeper than 64 is rejected.",
+  "valid": false,
+  "input": "[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]",
+  "error": "E_PARSE_JSON"
+}

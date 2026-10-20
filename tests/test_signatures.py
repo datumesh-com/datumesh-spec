@@ -12,6 +12,8 @@ RECEIPTS = [v for v in canon.load_vectors() if v["kind"] == "receipt" and v["val
 class Signatures(unittest.TestCase):
     def test_sign_then_verify(self):
         for vec in RECEIPTS:
+            if "keypair" not in vec:  # hand-built Ed25519 vectors have no seed to sign with
+                continue
             with self.subTest(vec["id"]):
                 r = canon.parse_json(vec["input"])
                 unsigned = {k: v for k, v in r.items() if k != "sig"}

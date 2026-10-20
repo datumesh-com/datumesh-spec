@@ -1,0 +1,15 @@
+{
+  "id": "invalid/uri-asof-star",
+  "kind": "uri",
+  "description": "asof is decoded like a value, but * is not a slice there.",
+  "valid": false,
+  "input": "cell://math.example/pi?asof=*",
+  "signature": {
+    "args": {},
+    "returns": {
+      "type": "number",
+      "unit": "1"
+    }
+  },
+  "error": "E_CANON_PERCENT"
+}

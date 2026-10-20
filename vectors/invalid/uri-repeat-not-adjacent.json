@@ -1,0 +1,35 @@
+{
+  "id": "invalid/uri-repeat-not-adjacent",
+  "kind": "uri",
+  "description": "A repetition that is not adjacent is reported as an ordering error.",
+  "valid": false,
+  "input": "cell://rates.example.org/fx_rate?base=EUR&date=2024-03-15&base=GBP&quote=USD",
+  "signature": {
+    "args": {
+      "base": {
+        "type": "string",
+        "valid": false
+      },
+      "date": {
+        "type": "date",
+        "valid": true
+      },
+      "quote": {
+        "type": "string",
+        "valid": false
+      }
+    },
+    "returns": {
+      "type": "number",
+      "unit": {
+        "of": {
+          "arg": "quote"
+        },
+        "per": {
+          "arg": "base"
+        }
+      }
+    }
+  },
+  "error": "E_CANON_ARG_ORDER"
+}

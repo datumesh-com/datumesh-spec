@@ -1,0 +1,22 @@
+{
+  "id": "invalid/uri-signature-declaration-not-object",
+  "kind": "uri",
+  "description": "An argument declaration is not an object. The signature is taken as given, but must be readable (SPEC 5.4).",
+  "valid": false,
+  "input": "cell://rates.example.org/fx_rate?base=EUR&date=2024-03-15&quote=USD",
+  "signature": {
+    "args": {
+      "base": "string",
+      "date": {
+        "type": "date",
+        "valid": true
+      },
+      "quote": {
+        "type": "string",
+        "valid": false
+      }
+    },
+    "returns": "boolean"
+  },
+  "error": "E_SCHEMA"
+}

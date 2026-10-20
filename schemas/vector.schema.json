@@ -62,7 +62,7 @@
       "pattern": "^https://"
     },
     "signature": {
-      "type": "object"
+      "description": "The function signature parse uses; normally an object, deliberately malformed in some invalid vectors."
     },
     "key_id": {
       "type": "string",

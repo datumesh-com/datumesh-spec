@@ -1,0 +1,8 @@
+{
+  "id": "invalid/jcs-nesting-before-duplicate",
+  "kind": "jcs",
+  "description": "Depth is checked before anything else in the text: a duplicate member is not reported.",
+  "valid": false,
+  "input": "{\"a\": 1, \"a\": 2, \"b\": [[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]}",
+  "error": "E_PARSE_JSON"
+}

@@ -1,0 +1,9 @@
+{
+  "id": "invalid/uri-signature-not-object",
+  "kind": "uri",
+  "description": "The signature passed to parse is not an object. The signature is taken as given, but must be readable (SPEC 5.4).",
+  "valid": false,
+  "input": "cell://rates.example.org/fx_rate?base=EUR&date=2024-03-15&quote=USD",
+  "signature": "fx_rate",
+  "error": "E_SCHEMA"
+}

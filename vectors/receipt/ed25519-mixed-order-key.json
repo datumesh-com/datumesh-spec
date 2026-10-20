@@ -1,0 +1,19 @@
+{
+  "id": "receipt/ed25519-mixed-order-key",
+  "kind": "receipt",
+  "description": "The key has a small-order component but is not small order: a strict verifier accepts it (only small-order keys are rejected).",
+  "valid": true,
+  "input": "{\n  \"sig\": \"9e286d335160c6ff6ea5d8c7c5d506ae35ccf8f4dde523f3e55a97b716d128667f27a186b873d6627dcd2bc8f6c8cb88afe0082bbeed634980e08b4583447d02\",\n  \"value\": \"1.0892\",\n  \"valid\": {\n    \"date\": {\n      \"value\": \"2024-03-15\",\n      \"type\": \"date\"\n    }\n  },\n  \"type\": \"number\",\n  \"tx\": \"2024-03-15T16:00:00.000000Z\",\n  \"summary\": \"Signed with a mixed-order key.\",\n  \"publisher\": \"rates.example.org\",\n  \"proto\": \"datumesh/1\",\n  \"licence\": \"CC-BY-4.0\",\n  \"issued\": \"2024-03-16T09:00:00.000000Z\",\n  \"inputs\": [],\n  \"computed_by\": \"edge.example.net#9f3aeff7c631da76\",\n  \"cell\": {\n    \"ns\": \"rates.example.org\",\n    \"fn_hash\": \"7b58ecb8fd23b644c87951d0bd609790ff547cbb23fed27186c669ce2ce0aa80\",\n    \"fn\": \"fx_rate\",\n    \"args\": {\n      \"quote\": {\n        \"value\": \"USD\",\n        \"type\": \"string\"\n      },\n      \"date\": {\n        \"value\": \"2024-03-15\",\n        \"type\": \"date\"\n      },\n      \"base\": {\n        \"value\": \"EUR\",\n        \"type\": \"string\"\n      }\n    }\n  },\n  \"asof\": \"2024-03-16T09:00:00.000000Z\"\n}",
+  "keys": {
+    "edge.example.net": {
+      "https": {
+        "status": 200,
+        "body": "{\n  \"host\": \"edge.example.net\",\n  \"keys\": [\n    {\n      \"alg\": \"ed25519\",\n      \"id\": \"9f3aeff7c631da76\",\n      \"public\": \"887a7607d5dc136940df292b87c14a0e3dfdc1d4e74335665872a5219d12ad77\",\n      \"valid_from\": \"2020-01-01T00:00:00.000000Z\"\n    }\n  ],\n  \"proto\": \"datumesh/1\"\n}"
+      }
+    }
+  },
+  "canonical": "{\"asof\":\"2024-03-16T09:00:00.000000Z\",\"cell\":{\"args\":{\"base\":{\"type\":\"string\",\"value\":\"EUR\"},\"date\":{\"type\":\"date\",\"value\":\"2024-03-15\"},\"quote\":{\"type\":\"string\",\"value\":\"USD\"}},\"fn\":\"fx_rate\",\"fn_hash\":\"7b58ecb8fd23b644c87951d0bd609790ff547cbb23fed27186c669ce2ce0aa80\",\"ns\":\"rates.example.org\"},\"computed_by\":\"edge.example.net#9f3aeff7c631da76\",\"inputs\":[],\"issued\":\"2024-03-16T09:00:00.000000Z\",\"licence\":\"CC-BY-4.0\",\"proto\":\"datumesh/1\",\"publisher\":\"rates.example.org\",\"summary\":\"Signed with a mixed-order key.\",\"tx\":\"2024-03-15T16:00:00.000000Z\",\"type\":\"number\",\"valid\":{\"date\":{\"type\":\"date\",\"value\":\"2024-03-15\"}},\"value\":\"1.0892\"}",
+  "sha256": "32075b03e527dd56387396fbe8bc9186a0377d3983205a8e34d7e5faa1579122",
+  "sig": "9e286d335160c6ff6ea5d8c7c5d506ae35ccf8f4dde523f3e55a97b716d128667f27a186b873d6627dcd2bc8f6c8cb88afe0082bbeed634980e08b4583447d02",
+  "level": "signed"
+}

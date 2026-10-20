@@ -656,6 +656,85 @@ add_receipt("invalid/receipt-duplicate-member", "Duplicate members make the sign
 
 
 # ---------------------------------------------------------------------------
+# Rules written down in spec-0.2.1 (check orders, limits, readable signatures)
+
+add("jcs/nesting-64", "jcs", "64 nested arrays, the deepest allowed (SPEC 6.1).", "[" * 64 + "]" * 64)
+add("invalid/jcs-nesting-65", "jcs", "65 nested arrays: deeper than 64 is rejected.", "[" * 65 + "]" * 65, "E_PARSE_JSON")
+add("invalid/jcs-nesting-before-duplicate", "jcs",
+    "Depth is checked before anything else in the text: a duplicate member is not reported.",
+    '{"a": 1, "a": 2, "b": ' + "[" * 64 + "]" * 64 + "}", "E_PARSE_JSON")
+add("invalid/jcs-brackets-in-strings", "jcs", "Brackets inside strings do not count towards depth; the duplicate is reported.",
+    '{"a": "' + "[" * 100 + '", "a": 2}', "E_PARSE_DUPLICATE_KEY")
+add("invalid/keys-ok-without-body", "keys", "A 200 response without a document is a document error.",
+    host="rates.example.org", env={"https": {"status": 200}}, error="E_KEY_DOC")
+for name, sig, why in [
+    ("not-object", "fx_rate", "The signature passed to parse is not an object."),
+    ("declaration-not-object", {"args": {"base": "string", "date": {"type": "date", "valid": True},
+                                         "quote": {"type": "string", "valid": False}}, "returns": "boolean"},
+     "An argument declaration is not an object."),
+    ("declaration-without-type", {"args": {"base": {"valid": False}, "date": {"type": "date", "valid": True},
+                                           "quote": {"type": "string", "valid": False}}, "returns": "boolean"},
+     "An argument declaration has no type."),
+]:
+    add(f"invalid/uri-signature-{name}", "uri", why + " The signature is taken as given, but must be readable (SPEC 5.4).",
+        "cell://rates.example.org/fx_rate?base=EUR&date=2024-03-15&quote=USD", "E_SCHEMA", signature=sig)
+add("invalid/uri-repeat-not-adjacent", "uri", "A repetition that is not adjacent is reported as an ordering error.",
+    "cell://rates.example.org/fx_rate?base=EUR&date=2024-03-15&base=GBP&quote=USD", "E_CANON_ARG_ORDER", signature=SIG)
+add("invalid/uri-asof-star", "uri", "asof is decoded like a value, but * is not a slice there.",
+    "cell://math.example/pi?asof=*", "E_CANON_PERCENT", signature=PI["signature"])
+add_receipt("invalid/receipt-check-order-valid-before-time",
+            "Step 4 runs its checks in the order listed: the valid mismatch is reported before tx > asof.",
+            signed(receipt(FX_CELL, "number", "1.0892", "Two consistency errors.", "rates-2020",
+                           valid={"date": D("2024-03-14")}, tx="2024-03-17T00:00:00.000000Z"), "rates-2020"),
+            "rates-2020", "E_VALID_MISMATCH")
+add_receipt("invalid/receipt-licence-url-too-long", "A licence URL is checked for its grammar first, then its length (512).",
+            signed(receipt(FX_CELL, "number", "1.0892", "A long licence URL.", "rates-2020",
+                           licence="https://example.org/" + "l" * 493), "rates-2020"), "rates-2020", "E_CANON_LIMIT")
+add_receipt("invalid/receipt-licence-url-space", "A licence URL is https:// followed by printable ASCII without spaces.",
+            signed(receipt(FX_CELL, "number", "1.0892", "A licence URL with a space.", "rates-2020",
+                           licence="https://example.org/a licence"), "rates-2020"), "rates-2020", "E_CANON_LICENCE")
+
+# ---------------------------------------------------------------------------
+# Ed25519 strictness (spec-0.2.1: SPEC 10.1 step 6). Each receipt is signed by hand; all but
+# the mixed-order key satisfy the permissive (cofactored) equation and must still be rejected.
+
+import ed25519_edge  # noqa: E402
+
+EDGE = "edge.example.net"
+
+
+def edge_receipt(build, summary):
+    public, _ = build(b"")  # the key, to name it in computed_by
+    unsigned = receipt(FX_CELL, "number", "1.0892", summary, "rates-2020")
+    unsigned["computed_by"] = f"{EDGE}#{canon.key_id(public)}"
+    public, sig = build(canon.jcs(unsigned))
+    doc = {"host": EDGE, "keys": [{"alg": "ed25519", "id": canon.key_id(public), "public": public.hex(),
+                                   "valid_from": T0}], "proto": canon.PROTO}
+    keys = {EDGE: {"https": {"status": 200, "body": json.dumps(doc, indent=2)}}}
+    return dict(unsigned, sig=sig.hex()), keys, public
+
+
+def add_edge(id_, description, build, summary, error=None):
+    r, keys, _ = edge_receipt(build, summary)
+    add(id_, "receipt", description, text(r), error, keys=keys)  # no keypair: there is no seed
+
+
+add_edge("receipt/ed25519-mixed-order-key",
+         "The key has a small-order component but is not small order: a strict verifier accepts it "
+         "(only small-order keys are rejected).",
+         ed25519_edge.mixed_order_key, "Signed with a mixed-order key.")
+for name, build, why in [
+    ("s-not-reduced", ed25519_edge.s_not_reduced, "S is the honest S plus L: S >= L is rejected."),
+    ("small-order-key", ed25519_edge.small_order_key, "The key is the identity point, of order 1: small-order keys are rejected."),
+    ("small-order-r", ed25519_edge.small_order_r, "R is the identity point: a small-order R is rejected."),
+    ("non-canonical-r", ed25519_edge.non_canonical_r, "R encodes y as p + 1: a y at or above p is rejected."),
+    ("negative-zero-r", ed25519_edge.negative_zero_r, "R has x = 0 with the sign bit set: rejected."),
+]:
+    add_edge(f"invalid/receipt-ed25519-{name}",
+             why + " A permissive (cofactored) verifier would accept this signature.", build,
+             "A hand-built signature.", "E_SIGNATURE")
+
+# ---------------------------------------------------------------------------
 # Units (spec-0.2.0: SPEC 7.1, units.md)
 
 

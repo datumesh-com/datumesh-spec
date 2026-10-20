@@ -1,6 +1,6 @@
 # Datumesh protocol, version 1
 
-Status: draft, revision `spec-0.2.0`. Identifier in data: `datumesh/1`. Changes are listed in section 14.
+Status: draft, revision `spec-0.2.1`. Identifier in data: `datumesh/1`. Changes are listed in section 14.
 
 Datumesh is an open protocol for addressable, verifiable data cells: a name, a resolver, a signed answer, and a lineage you can follow. This document defines how a cell is named (the cell URI), how it is written as canonical bytes, what a signed answer (a receipt) contains, what a mesh returns around it (the response envelope), how keys are published, and how a verifier checks a receipt. The units a function may declare are listed in `units.md`, which is part of this specification. Storage formats, wire protocols, resolvers and the engine are out of scope.
 
@@ -93,7 +93,7 @@ There are exactly six types. A value has one lexical form per type. Any other sp
 | `instant` | string | `YYYY-MM-DDTHH:MM:SS.ffffffZ` | `"2024-03-15T16:00:00.000000Z"` | `E_CANON_INSTANT` |
 | `blob` | string | `<sha256>:<length>:<media type>` | `"9dc3…330a:17:text/plain"` | `E_CANON_BLOB` |
 
-A value whose JSON type does not match its declared type fails with `E_CANON_TYPE`, e.g. the string `"true"` for a boolean. A type name outside the six also fails with `E_CANON_TYPE`.
+A typed scalar's `value` must be a JSON string or boolean (`E_SCHEMA` otherwise: a JSON number, null, array or object). A string for a `boolean`, or a boolean for any other type, is `E_CANON_TYPE`, e.g. the string `"true"` for a boolean. A type name outside the six also fails with `E_CANON_TYPE`.
 
 ### 3.1 Numbers
 
@@ -124,6 +124,7 @@ Two numbers are equal exactly when their lexical forms are equal. A number value
 - **No offsets.** `+01:00` and `-00:00` are rejected; only `Z` appears anywhere in hashed data.
 - **Leap seconds are rejected.** `23:59:60` fails with `E_CANON_INSTANT`.
 - **Microsecond precision, always written.** `.000000` is mandatory.
+- Any failure, an impossible calendar date included, is `E_CANON_INSTANT`.
 
 *Rationale.* Microseconds are the precision of PostgreSQL `timestamptz`, Python `datetime` and most databases a publisher will record `tx` in, so a stored transaction time maps to an instant exactly, with no rounding. Milliseconds would round those values. Nanoseconds would claim a precision few systems have and would overflow 64-bit integer timestamps in year 2262. Fixed width means instants compare correctly as strings, which the verification procedure relies on. Leap seconds are rejected because POSIX time cannot represent them, systems that smear them disagree about what `23:59:60` is, and UTC will stop inserting them by 2035.
 
@@ -136,7 +137,7 @@ When a function needs a time zone, it declares an ordinary `string` argument and
 A string value is checked in this order:
 
 1. **Characters.** Every code point is assigned in Unicode 15.1 (General_Category is not `Cn`). It is not a surrogate. It is not a control character (U+0000-U+001F, U+007F-U+009F). Failure: `E_CANON_STRING`.
-2. **Normalisation.** The string is in Normalization Form C. A non-NFC string is rejected, not normalised. Failure: `E_CANON_STRING`.
+2. **Normalisation.** The string is in Normalization Form C, decided with Unicode 15.1 normalisation data or later. A non-NFC string is rejected, not normalised. Failure: `E_CANON_STRING`. An implementation whose platform has older normalisation data must bring its own, because older data can accept strings that are not NFC under 15.1.
 3. **Length.** At most 1024 bytes when encoded as UTF-8. Failure: `E_CANON_LIMIT`.
 
 The empty string is a valid value. Format characters (ZWJ, bidi controls) and private-use characters are allowed.
@@ -230,6 +231,11 @@ A cell binds every argument its function declares, and no others. Arguments are 
 
 Exceeding a limit fails with `E_CANON_LIMIT`. DNS's own limits (63-character labels, 253-character names) are part of the DNS grammar and fail with `E_CANON_NAME`.
 
+Order of checks:
+- **Values and names.** A value or name is checked against its lexical form first and its length limit second. An argument name is then checked for reserved names.
+- **Containers.** For an argument map, the count is checked before its members, and members are checked in JCS order of names. For an `inputs` array, its entries are checked first, then that they are strictly ascending (`E_CANON_SET`), then the count (`E_CANON_LIMIT`).
+- **Function names.** The 512-character `function_name` limit applies to `ns + "/" + fn` also when they are carried separately. It is checked after both parts are valid; in cells and references, after all their own members.
+
 ## 5. Cell URIs and response envelopes
 
 ### 5.1 Grammar
@@ -246,7 +252,7 @@ pct-encoded = "%" UPHEX UPHEX
 UPHEX      = DIGIT / "A" / "B" / "C" / "D" / "E" / "F"
 ```
 
-`namespace`, `name` and `instant` are as in sections 2 and 3. A cell URI has no fragment, no userinfo, no port and no empty query. The authority is the text between `cell://` and the first `/` (or `?`, or the end); an `@` or `:` in it is `E_PARSE_URI`, so `cell://user@rates.example.org/…` and `cell://rates.example.org:443/…` are rejected, not corrected. Failures of this outer grammar are `E_PARSE_URI`. Invalid names inside it are `E_CANON_NAME`.
+`namespace`, `name` and `instant` are as in sections 2 and 3. The outer grammar is `"cell://" path [ "?" query ]`. The path is split at its last `/` into namespace and function, and both are checked as names: no `/`, an empty segment or an empty function name is `E_CANON_NAME`. A parameter is split at its first `=`: a value runs to the next `&` and may contain `=`, which then fails percent-encoding (`a=b=c` is `E_CANON_PERCENT`). A cell URI has no fragment, no userinfo, no port and no empty query. The authority is the text between `cell://` and the first `/` (or `?`, or the end); an `@` or `:` in it is `E_PARSE_URI`, so `cell://user@rates.example.org/…` and `cell://rates.example.org:443/…` are rejected, not corrected. Failures of this outer grammar are `E_PARSE_URI`. Invalid names inside it are `E_CANON_NAME`.
 
 Example:
 
@@ -282,13 +288,19 @@ https://<mesh>/cell/<rest>
 
 1. the outer grammar, entirely before any name: the URI starts with `cell://`, contains no `#`, has no userinfo or port, and, if it contains `?`, the text after it is non-empty and each `&`-separated parameter contains `=` (`E_PARSE_URI`);
 2. the namespace and function names;
-3. parameter names left to right (grammar, reserved names, duplicates, order);
-4. the argument count;
-5. arguments against the signature (unknown arguments, then missing ones);
-6. each value left to right (percent-encoding, then its lexical form);
-7. `asof`.
+3. parameter names. If the last parameter is named `asof`, it is the asof parameter. Each other parameter, left to right, is checked completely before the next:
+   1. if its name is `asof`: `E_CANON_ARG_DUPLICATE` when there is an asof parameter, otherwise `E_CANON_ARG_ORDER`;
+   2. its name (`E_CANON_ARG_NAME`, or `E_CANON_LIMIT` when longer than 64), then reserved names (`dm_…`: `E_CANON_ARG_NAME`);
+   3. equal to the previous parameter's name: `E_CANON_ARG_DUPLICATE`;
+   4. sorting before it: `E_CANON_ARG_ORDER`.
 
-The first failure is reported. `signature` is taken as given: it comes from a descriptor already checked under section 7, and `parse` does not check it again. The result is a cell reference (4.3) whose typed scalars carry the declared types. `format(reference)` writes the unique URI. For every accepted URI, `format(parse(uri)) = uri`.
+   So a repetition that is not adjacent is reported as an ordering error;
+4. the argument count;
+5. the signature, then the arguments against it. The signature must be an object with an `args` object whose members are objects with a string `type`; otherwise `E_SCHEMA`, checked in JCS order of names. Then unknown arguments (`E_ARG_UNKNOWN`), then missing ones (`E_ARG_MISSING`);
+6. each value left to right (percent-encoding, then its lexical form). A type name outside the six is `E_CANON_TYPE` when a value of that argument is read; a slice reads none;
+7. `asof`, percent-decoded like a value (`E_CANON_PERCENT`; a bare `*` is not a slice there and fails percent-encoding), then checked as an instant (`E_CANON_INSTANT`).
+
+The first failure is reported. `signature` is taken as given: it comes from a descriptor already checked under section 7, and `parse` does not check it again beyond what step 5 needs to read it. The result is a cell reference (4.3) whose typed scalars carry the declared types. `format(reference)` writes the unique URI. For every accepted URI, `format(parse(uri)) = uri`.
 
 ### 5.5 Response envelope
 
@@ -356,7 +368,14 @@ Any JSON that is hashed, signed or verified is parsed strictly, as I-JSON (RFC 7
 - no string contains a lone surrogate, whether written raw or escaped;
 - `NaN`, `Infinity` and numbers outside the IEEE 754 double range are rejected.
 
-All other failures are `E_PARSE_JSON`.
+- nesting is at most 64 levels: a text with more than 64 `[` and `{` open at once, counted outside strings, is `E_PARSE_JSON`.
+
+All other failures are `E_PARSE_JSON`. Failures are reported in this order:
+1. byte order mark;
+2. invalid UTF-8;
+3. nesting deeper than 64, whatever else is wrong with the text;
+4. the first, in text order, of a syntax error, `NaN` or `Infinity`, a number that overflows a double, or a duplicate member. A duplicate is detected when its object closes. Underflow is not an error;
+5. a lone surrogate.
 
 ### 6.2 Canonical bytes
 
@@ -396,7 +415,7 @@ A function descriptor has exactly three members: the function's signature, its c
 - `signature.returns` is the value type: a type name, or `{"type": "number", "unit": …}` when the type is `number`.
 - Units are required on numbers and allowed nowhere else. Each of these fails with `E_CANON_UNIT`: a `number` argument without `unit`; `unit` on any other argument; `returns` written as the bare name `"number"`; a `returns` object whose type is not `number`, or that has no `unit`; and a unit that is not valid by 7.1. A declaration or `returns` object with a missing `type` or any other member is `E_SCHEMA`.
 - **Check order.** A descriptor's structure (`E_SCHEMA`), unit shapes included, is checked over the whole descriptor before any canonical-form rule. Then `code`, `inputs`, each argument in JCS order of names, and `returns`. Within an argument declaration: `type` (`E_CANON_TYPE`), then `unit`, then `valid`. For `returns`: the type name (`E_CANON_TYPE`), then that an object's type is `number` and that a bare name is not `number`, then the presence of `unit`, then the unit itself (all `E_CANON_UNIT`).
-- `code.lang` is a name identifying the language of `code.body`. `stored` means the function is a table of recorded values; by convention its body is empty and it declares no inputs. Other languages are defined by later steps. Until then, a body is an opaque text that the evaluator for `lang` interprets.
+- `code.lang` is a name identifying the language of `code.body`. `stored` means the function is a table of recorded values; by convention its body is empty and it declares no inputs. This convention is not enforced. Other languages are defined by later steps. Until then, a body is an opaque text that the evaluator for `lang` interprets.
 - `code.body` follows the string rules (3.5), except that TAB and LF are allowed, and its limit is 1 MiB. Line endings are LF.
 - `inputs` is the set of fully qualified function names whose cells this function may read. It is an array in ascending order with no duplicates (`E_CANON_SET`). Aliases are not names (`E_CANON_NAME`).
 
@@ -440,9 +459,19 @@ A receipt is a JSON object with exactly these members (`E_SCHEMA` for any missin
 | `publisher` | namespace | The namespace that owns the function. Equals `cell.ns`. |
 | `computed_by` | key reference | `<host>#<key id>` of the key that signed this receipt. |
 | `inputs` | array of receipt hashes | Receipts of the input cells read to compute `value`, ascending, no duplicates. Empty for stored cells. |
-| `licence` | string | An SPDX licence identifier (`CC-BY-4.0`) or an `https://` URL. |
+| `licence` | string | An SPDX licence identifier (`CC-BY-4.0`) or an `https://` URL, by the grammar below. |
 | `summary` | string | One human sentence saying what the value is. Non-empty. String rules apply. |
 | `sig` | 128 lowercase hex digits | Ed25519 signature (8.3). |
+
+The licence grammar:
+
+```
+licence   = spdx-id / https-url
+spdx-id   = ( ALPHA / DIGIT ) *( ALPHA / DIGIT / "." / "+" / "-" )   ; at most 64 characters
+https-url = "https://" 1*%x21-7E                                   ; at most 512 characters
+```
+
+A string starting `https://` is a URL, anything else an SPDX identifier. The identifier is not checked against the SPDX list, and the URL is not checked further. Grammar is checked first (`E_CANON_LICENCE`), then length (`E_CANON_LIMIT`).
 
 A receipt carries no unit. The unit of a `number` value is its function's declared return unit, resolved against `cell.args` (7.1); a client gets the descriptor through `cell.fn_hash`. A `blob` value names its content (3.7), which travels separately. Facts that may change after signing, such as staleness, supersession and the mesh's trust label, are never added to a receipt: they belong to the response envelope (5.5).
 
@@ -491,7 +520,7 @@ The signed bytes are exactly the hashed bytes. A receipt hash therefore identifi
 
 ### 9.1 Key id
 
-A key is an Ed25519 public key: 32 bytes, written as 64 lowercase hex digits. Its **key id** is the first 16 hex digits of SHA-256 over the 32 raw bytes. A key reference is `<host>#<key id>`, e.g. `rates.example.org#d712b32a2cc5cb7c`. The host is a DNS name (2.1), and keys for every namespace under a host are published by that host.
+A key is an Ed25519 public key: 32 bytes, written as 64 lowercase hex digits. Its **key id** is the first 16 hex digits of SHA-256 over the 32 raw bytes. A key reference is `<host>#<key id>`, e.g. `rates.example.org#d712b32a2cc5cb7c`. The host is a DNS name (2.1), and keys for every namespace under a host are published by that host. A reference without `#`, or with an invalid host, is `E_CANON_NAME`; the text after the first `#` must be 16 lowercase hex digits (`E_CANON_HEX`).
 
 ### 9.2 HTTPS key document
 
@@ -508,8 +537,9 @@ A key is an Ed25519 public key: 32 bytes, written as 64 lowercase hex digits. It
 }
 ```
 
+- The document has exactly `host`, `keys` and `proto` (`"datumesh/1"`). Each key has exactly `alg` (`"ed25519"`), `id`, `public`, `valid_from` and optionally `valid_to`, all strings.
 - `host` equals the host it was fetched from.
-- `keys` holds 1 to 64 entries. `id` MUST equal the key id of `public`, and no key may appear twice.
+- `keys` holds 1 to 64 entries. `id` MUST equal the key id of `public`, and no two keys share an `id` (and so no two share a `public`). A `public` that is not a valid curve point is not a document error: signatures made with it fail in step 6.
 - `valid_to` is optional (absent: open-ended). When present it is later than `valid_from`.
 - No redirects are followed.
 
@@ -520,10 +550,10 @@ A document that breaks any of these rules is rejected whole (`E_KEY_DOC`).
 The HTTPS document of 9.2 is the only way keys are published. A verifier resolves the keys of a host with one `GET https://<host>/.well-known/datumesh.json`:
 
 - **200** with a document satisfying 9.2: those are the host's keys.
-- **200** with a document that does not satisfy 9.2: `E_KEY_DOC`.
+- **200** with a document that does not satisfy 9.2, or with no document: `E_KEY_DOC`.
 - **Anything else** is `E_KEY_UNAVAILABLE`. That includes 404 and every other status, any redirect, and any network, DNS-resolution, TLS or timeout failure. There is no fallback.
 
-A host that serves no document publishes no keys, and its receipts cannot be verified.
+A host that serves no document publishes no keys, and its receipts cannot be verified. Keys are resolved only for hosts that are DNS names (2.1).
 
 *Rationale.* HTTPS is authenticated by the Web PKI, so one authenticated path is simpler and stronger than two paths with a precedence rule. A 404 is not treated differently from an outage, because a verifier cannot tell a host that never published keys from one whose document is temporarily missing, and either way it has no keys to check against.
 
@@ -544,16 +574,22 @@ A verifier runs these steps in order and stops at the first failure, reporting i
 1. **Parse** the bytes as strict JSON (6.1).
 2. **Structure.** Check the receipt has exactly the members of 8.1 with the right JSON types, `proto` is `datumesh/1`, `cell` has exactly `args`, `fn`, `fn_hash`, `ns`, and every argument is a typed scalar or the slice marker. Failure: `E_SCHEMA`.
 3. **Canonical form.** Check every member against its lexical rules: names, hex, instants, typed scalars (blobs included), licence, the summary, `inputs` ascending and unique, and limits. `value` is checked against `type`.
-4. **Consistency.**
+4. **Consistency.** These checks run in the order listed, not in JCS order:
    - No slice markers in `cell.args` or `valid` (`E_SLICE`).
    - `publisher` equals `cell.ns` (`E_PUBLISHER_MISMATCH`).
    - Every member of `valid` equals the same-named member of `cell.args` and is a date, instant or string (`E_VALID_MISMATCH`).
    - `tx <= asof <= issued` (`E_TIME_ORDER`).
 5. **Key.** Resolve the keys of the host in `computed_by` (9.3) and find the key with the given id (`E_KEY_UNKNOWN`). Check that `issued` is in its window (`E_KEY_NOT_VALID`).
-6. **Signature.** Verify `sig` over `payload` (8.3) with that key (`E_SIGNATURE`). Use RFC 8032 verification with the cofactorless equation, rejecting `S >= L`, non-canonical encodings of `R` and `A`, and small-order `A` and `R` (as libsodium does). A receipt that passes steps 1-6 is **signature-valid**.
+6. **Signature.** Verify `sig` over `payload` (8.3) with that key (`E_SIGNATURE`). Let `R` be the first 32 bytes of `sig`, `S` the last 32 as a little-endian integer, `A` the public key, and `k` = SHA-512(`R` ‖ `A` ‖ `payload`) as a little-endian integer, reduced mod `L`. Reject if:
+   - `S >= L`, the group order;
+   - the encoding of `A` or of `R` is not canonical: its `y` is at or above p = 2^255 − 19, or `x = 0` with the sign bit set;
+   - `A` or `R` does not decode to a curve point;
+   - `A` or `R` has small order (its order divides 8).
+
+   Otherwise, accept exactly when the canonical encoding of [S]B − [k]A equals the bytes of `R` (the cofactorless equation). A key with a small-order component that is not itself small order (mixed order) is not rejected. These are the rules of libsodium's `crypto_sign_verify_detached`. The `receipt/ed25519-*` and `invalid/receipt-ed25519-*` vectors test each rule with signatures a permissive (cofactored) verifier accepts. A receipt that passes steps 1-6 is **signature-valid**.
 7. **Recomputation** (optional; makes the receipt **fully verified**):
-   1. Obtain the descriptor for `cell.fn_hash` (`E_FN_UNAVAILABLE`). It must hash to `cell.fn_hash` (`E_FN_HASH_MISMATCH`) and be canonical (sections 6-7, units included).
-   2. `cell.args` names exactly the declared arguments (`E_ARG_UNKNOWN`, then `E_ARG_MISSING`), each with its declared type (`E_ARG_TYPE`).
+   1. Obtain the descriptor for `cell.fn_hash` (`E_FN_UNAVAILABLE`). First check that it hashes to `cell.fn_hash` (`E_FN_HASH_MISMATCH`), before anything else about it. Then check that it is canonical (sections 6-7, units included), reporting a failure with the code canonicalising it on its own would give.
+   2. `cell.args` names exactly the declared arguments, each with its declared type: first any undeclared argument (`E_ARG_UNKNOWN`), then any unbound declared argument (`E_ARG_MISSING`), then any type mismatch (`E_ARG_TYPE`), each in JCS order of names.
    3. `valid` holds exactly the declared valid-time arguments (`E_VALID_MISMATCH`).
    4. `type` equals the declared return type: `signature.returns`, or its `type` member when it is an object (`E_RETURN_TYPE`).
    5. For each hash in `inputs`, in order:
@@ -636,7 +672,7 @@ The four failure classes a verifier distinguishes are: bad canonical form (parse
 | `unit` | `input`: JSON text of an object with exactly `cell` and `descriptor` (any other shape is `E_SCHEMA`) | `unit`: the resolved unit of the cell's value (7.1), or null when the function does not return a number |
 | `envelope` | `input`: the response body; `status`: the HTTP status; `keys`: an `env` per host; `request`: `{"cell_id", "asof"?}` for step 5 | `outcome`, and when there is a receipt, `trust` and `receipt_hash` |
 
-`canonical` is the canonical byte string as UTF-8 text. Inputs are deliberately not canonical: member order is reversed, and there is whitespace and escaping. A valid receipt vector's expected verification result is success at `level`; an invalid one's is `error`. Keypairs come from fixed seeds and Ed25519 is deterministic, so `tools/gen_vectors.py` reproduces every file byte for byte.
+`canonical` is the canonical byte string as UTF-8 text. It may contain U+2028 and U+2029, which some JSON-lines tools treat as line breaks. `key_ids` are in document order. Receipt vectors built by hand (the Ed25519 strictness vectors) have no `keypair`, because their keys have no seed. Inputs are deliberately not canonical: member order is reversed, and there is whitespace and escaping. A valid receipt vector's expected verification result is success at `level`; an invalid one's is `error`. Keypairs come from fixed seeds and Ed25519 is deterministic, so `tools/gen_vectors.py` reproduces every file byte for byte.
 
 The `env` for a host is `{"https": {"status": 200, "body": "<text>"}}` for a retrieved document, or `{"https": {"status": <other status>}}` or `{"https": {"status": "error"}}` for a failed retrieval. A host absent from `keys` behaves as `{"https": {"status": "error"}}`.
 
@@ -727,6 +763,42 @@ index-unit    = "index:" 4DIGIT [ "-" 2DIGIT [ "-" 2DIGIT ] ] "=" number   ; uni
 ```
 
 ## 14. Changes
+
+### spec-0.2.1
+
+A text-only revision. It changes no hash: every `spec-0.2.0` vector file is byte-identical, which `tests/test_migration_0_2_1.py` checks. It writes down rules that the reference tool and both verifier libraries already followed, settles the gaps the libraries reported, and adds 19 vectors.
+
+- **Ed25519 strictness (10.1 step 6)** is now defined rule by rule, not by reference to libsodium. Six new vectors carry hand-built signatures that a permissive verifier accepts:
+  - S not reduced;
+  - a small-order key;
+  - a small-order R;
+  - a non-canonical R;
+  - an R with x = 0 and the sign bit set;
+  - a mixed-order key, which must be accepted.
+- **Check orders:**
+  - step 4's consistency checks run in the order listed;
+  - URI parameter names (5.4 step 3);
+  - container checks, and the length limit after the lexical form (4.5);
+  - JSON parse errors (6.1);
+  - step 7.1 checks the hash before canonical form;
+  - step 7.2 checks unknown, then missing, then type.
+- **JSON type codes (3):** a `value` that is not a string or boolean is `E_SCHEMA`; the wrong one of the two is `E_CANON_TYPE`.
+- **New limit (6.1):** nesting deeper than 64 levels is `E_PARSE_JSON`, checked before anything else in the text. The two libraries previously broke at different depths, above 512.
+- **`parse` (5.1, 5.4):**
+  - an unreadable signature, meaning not an object, or a declaration that is not an object or has no type, is `E_SCHEMA`;
+  - the outer URI grammar (path split, values containing `=`) is stated;
+  - `asof` decoding is stated.
+- **Grammar and member rules:**
+  - the licence grammar (8.1);
+  - key reference codes (9.1);
+  - the key document's exact members, and that an invalid curve point is not a document error (9.2);
+  - a 200 response without a document is `E_KEY_DOC` (9.3).
+- **Smaller statements:**
+  - instants report every failure as `E_CANON_INSTANT` (3.3);
+  - NFC uses Unicode 15.1 data or later (3.5);
+  - the `stored` convention is not enforced (7);
+  - vector-format notes (11).
+- **Reference tool fixes:** `tools/canon.py` no longer crashes on a 200 response without a body, or on deep nesting.
 
 ### spec-0.2.0
 

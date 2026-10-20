@@ -142,6 +142,7 @@ def parse_json(data, keep_integer_text=False):
         text = data
     if text.startswith("﻿"):
         fail("E_PARSE_JSON", "byte order mark")
+    _check_depth(text)
 
     def object_pairs(pairs):
         obj = {}
@@ -176,6 +177,31 @@ def parse_json(data, keep_integer_text=False):
         fail("E_PARSE_JSON", str(e))
     _reject_surrogates(value)
     return value
+
+
+MAX_DEPTH = 64
+
+
+def _check_depth(text):
+    """SPEC.md 6.1: at most 64 nested arrays and objects, counting [ and { outside strings.
+    Checked before anything else in the text, so it is reported whatever else is wrong."""
+    depth, in_string, escaped = 0, False, False
+    for ch in text:
+        if in_string:
+            if escaped:
+                escaped = False
+            elif ch == "\\":
+                escaped = True
+            elif ch == '"':
+                in_string = False
+        elif ch == '"':
+            in_string = True
+        elif ch in "[{":
+            depth += 1
+            if depth > MAX_DEPTH:
+                fail("E_PARSE_JSON", f"nested deeper than {MAX_DEPTH} levels")
+        elif ch in "]}":
+            depth -= 1
 
 
 def _reject_surrogates(value, path="$"):
@@ -962,7 +988,7 @@ def parse_uri(uri, signature):
         previous = name
     if len(params) > LIMITS["args"]:
         fail("E_CANON_LIMIT", f"more than {LIMITS['args']} arguments", "uri.query")
-    declared = signature["args"]
+    declared = _signature_args(signature)
     for name, raw in params:
         if name not in declared:
             fail("E_ARG_UNKNOWN", f"function declares no argument {name!r}", f"uri.query.{name}")
@@ -991,6 +1017,17 @@ def parse_uri(uri, signature):
         ref["asof"] = percent_decode(asof, "uri.query.asof")
         check_instant(ref["asof"], "uri.query.asof")
     return ref
+
+
+def _signature_args(signature):
+    """Step 5 of SPEC.md 5.4: the signature is taken as given, but must be readable."""
+    if not isinstance(signature, dict) or not isinstance(signature.get("args"), dict):
+        fail("E_SCHEMA", "the signature has no args object", "signature")
+    for name in keys_in_order(signature["args"]):
+        decl = signature["args"][name]
+        if not isinstance(decl, dict) or not isinstance(decl.get("type"), str):
+            fail("E_SCHEMA", "an argument declaration is an object with a string type", f"signature.args.{name}")
+    return signature["args"]
 
 
 def format_uri(ref):
@@ -1089,6 +1126,8 @@ def resolve_keys(host, env):
     https = (env or {}).get("https", {"status": "error"})
     if https["status"] != 200:
         fail("E_KEY_UNAVAILABLE", f"https key document: {https['status']}")
+    if "body" not in https:
+        fail("E_KEY_DOC", "a 200 response without a document")
     return parse_key_doc(https["body"], host)
 
 
@@ -1381,7 +1420,7 @@ def check_vector(vec):
                 problems.append(f"{field}: expected {vec[field]!r}, got {got.get(field)!r}")
         if vec["kind"] == "uri" and got["uri"] != vec["input"]:
             problems.append(f"URI does not round-trip: {got['uri']!r}")
-        if vec["kind"] == "receipt":
+        if vec["kind"] == "receipt" and "keypair" in vec:
             seed = bytes.fromhex(vec["keypair"]["seed"])
             _, public = keypair(seed)
             if public.hex() != vec["keypair"]["public"] or key_id(public) != vec["keypair"]["key_id"]:

@@ -1,0 +1,16 @@
+{
+  "id": "invalid/receipt-ed25519-small-order-r",
+  "kind": "receipt",
+  "description": "R is the identity point: a small-order R is rejected. A permissive (cofactored) verifier would accept this signature.",
+  "valid": false,
+  "input": "{\n  \"sig\": \"010000000000000000000000000000000000000000000000000000000000000001f27466081dd48204ab3073308030762406b654bc5ac9148f0d33addeb4210b\",\n  \"value\": \"1.0892\",\n  \"valid\": {\n    \"date\": {\n      \"value\": \"2024-03-15\",\n      \"type\": \"date\"\n    }\n  },\n  \"type\": \"number\",\n  \"tx\": \"2024-03-15T16:00:00.000000Z\",\n  \"summary\": \"A hand-built signature.\",\n  \"publisher\": \"rates.example.org\",\n  \"proto\": \"datumesh/1\",\n  \"licence\": \"CC-BY-4.0\",\n  \"issued\": \"2024-03-16T09:00:00.000000Z\",\n  \"inputs\": [],\n  \"computed_by\": \"edge.example.net#d2a1708eee729674\",\n  \"cell\": {\n    \"ns\": \"rates.example.org\",\n    \"fn_hash\": \"7b58ecb8fd23b644c87951d0bd609790ff547cbb23fed27186c669ce2ce0aa80\",\n    \"fn\": \"fx_rate\",\n    \"args\": {\n      \"quote\": {\n        \"value\": \"USD\",\n        \"type\": \"string\"\n      },\n      \"date\": {\n        \"value\": \"2024-03-15\",\n        \"type\": \"date\"\n      },\n      \"base\": {\n        \"value\": \"EUR\",\n        \"type\": \"string\"\n      }\n    }\n  },\n  \"asof\": \"2024-03-16T09:00:00.000000Z\"\n}",
+  "keys": {
+    "edge.example.net": {
+      "https": {
+        "status": 200,
+        "body": "{\n  \"host\": \"edge.example.net\",\n  \"keys\": [\n    {\n      \"alg\": \"ed25519\",\n      \"id\": \"d2a1708eee729674\",\n      \"public\": \"ca7601485053c9b0b0a360641967f1c597a1a6c5a2006724fabfd65efbc73947\",\n      \"valid_from\": \"2020-01-01T00:00:00.000000Z\"\n    }\n  ],\n  \"proto\": \"datumesh/1\"\n}"
+      }
+    }
+  },
+  "error": "E_SIGNATURE"
+}
