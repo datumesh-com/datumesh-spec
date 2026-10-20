@@ -1282,8 +1282,12 @@ def check_envelope(status, body, keyenv, request):
         result["receipt_hash"] = verify_receipt(jcs(r), keyenv)["hash"]
         if sha256_hex(jcs(r["cell"])) != request["cell_id"]:
             fail("E_ENVELOPE", "the receipt is for another cell than the one requested", "$.receipt.cell")
-        if "asof" in request and r["asof"] != request["asof"]:
-            fail("E_ENVELOPE", "the receipt answers another asof than the one requested", "$.receipt.asof")
+        if "asof" in request:
+            # A stale receipt is the last one known: its asof is at or before the one requested.
+            if env["outcome"] == "stale" and not r["asof"] <= request["asof"]:
+                fail("E_ENVELOPE", "a stale receipt's asof is after the one requested", "$.receipt.asof")
+            if env["outcome"] == "ok" and r["asof"] != request["asof"]:
+                fail("E_ENVELOPE", "the receipt answers another asof than the one requested", "$.receipt.asof")
         primary = r["computed_by"].split("#")[0] == r["cell"]["ns"].split("/")[0] and not r["inputs"]
         if primary != (env["trust"] == "primary"):
             fail("E_ENVELOPE", "trust is primary exactly when the publisher's host signed a stored answer", "$.trust")

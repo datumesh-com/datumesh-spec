@@ -334,7 +334,11 @@ A client checks an envelope in this order and reports the first failure:
 2. Check the members against the table and the rules above (`E_ENVELOPE`). Here `receipt` need only be an object. Every failure of a member's rule is `E_ENVELOPE`, including the rules `reason`, `quote` and `superseded_by` borrow from other sections.
 3. Check that the HTTP status matches `outcome` (`E_ENVELOPE`).
 4. If there is a receipt, verify it through step 6 of 10.1, with that procedure's codes.
-5. **The receipt answers the request** (`E_ENVELOPE`). Its cell id (4.4) MUST equal the id of the cell requested. That is, the cell the request's URI denotes, resolved to the `fn_hash` the client used. If the request carried `asof`, the receipt's `asof` MUST equal it. If the request carried none, the receipt's `asof` is the mesh's "now", and the client accepts it. The same applies to the receipt of a `stale` envelope.
+5. **The receipt answers the request** (`E_ENVELOPE`). Its cell id (4.4) MUST equal the id of the cell requested. That is, the cell the request's URI denotes, resolved to the `fn_hash` the client used. If the request carried `asof`:
+   - for `ok`, the receipt's `asof` MUST equal it;
+   - for `stale`, the receipt's `asof` MUST be at or before it. How much earlier is what `age_seconds` describes.
+
+   If the request carried no `asof`, the receipt's `asof` is the mesh's "now", and the client accepts it.
 6. Check `trust` against the receipt, as above, and that `superseded_by` differs from the receipt's hash (`E_ENVELOPE`).
 
 Step 5 needs the request, which the envelope does not contain. A client MUST perform it; a library takes the requested cell id and `asof` as inputs. A malformed request description is the caller's error, not `E_ENVELOPE`. For outcomes without a receipt there is nothing to bind. Without it, a mesh could answer with a valid receipt for a different cell.
@@ -685,7 +689,7 @@ Every choice this specification makes where its brief left room, with the main a
 | D28 | Staleness, supersession and trust live in an unsigned response envelope | New receipt members | Receipts already signed stay byte-identical and verifiable. These facts change after signing and are the mesh's claims, not the signer's. |
 | D29 | `trust: primary` is defined from the receipt (signer's host = namespace's host, no inputs), and a mesh must use it exactly then | Let the mesh choose its label freely | A client can check the one label that is checkable. |
 | D30 | One code, `E_ENVELOPE`, for every envelope rule | A code per envelope rule | An envelope is not hashed or signed, so a client needs to know only that the mesh's statement is malformed. Receipt failures inside it keep their own codes. |
-| D31 | A client binds an envelope's receipt to its request: same cell id, and the same `asof` when one was asked for | Trust the mesh to answer the question asked | Without the binding, a mesh can answer any request with any valid receipt. The binding needs nothing in the receipt or the envelope, only what the client already knows. |
+| D31 | A client binds an envelope's receipt to its request: the same cell id, and, when an `asof` was asked for, the same `asof` for `ok`, or one at or before it for `stale` | Trust the mesh to answer the question asked; or require an equal `asof` for `stale` too | Without the binding, a mesh can answer any request with any valid receipt. It needs nothing in the receipt or the envelope, only what the client already knows. A stale receipt is the last one known, so its `asof` is earlier by construction; the client learns how much earlier from `age_seconds`. |
 | D32 | Malformed requests are `bad_request` (HTTP 400) carrying a URI parse code; `error` (5xx) is for the mesh's own failures | One `error` outcome for both | A client should not retry its own mistake, and should know which part of the URI to fix. |
 
 ## Appendix A: collected ABNF
@@ -730,13 +734,13 @@ Three additions, released together so that there is one migration.
 
 - **Units (7.1, `units.md`).** Number arguments and number returns declare a unit: a listed literal, a reference to a string argument, or a rate `{"of", "per"}`. `returns` stays a bare type name for every other type (D23). New code `E_CANON_UNIT`.
 - **Blobs (3.7).** A sixth type, `blob`: `<sha256>:<length>:<media type>`. Verification step 7.7 checks content when it is available. New codes `E_CANON_BLOB` and `E_BLOB_MISMATCH`.
-- **Response envelope (5.5).** The JSON body a mesh returns: outcome (including `bad_request` for malformed requests), trust label, staleness, supersession, quotes, rate limits and errors, with HTTP status mappings. It is unsigned and outside the receipt. A client binds its receipt to the request: the same cell id, and the same `asof` when one was asked for (D31). New code `E_ENVELOPE`, schema `schemas/envelope.schema.json`.
+- **Response envelope (5.5).** The JSON body a mesh returns: outcome (including `bad_request` for malformed requests), trust label, staleness, supersession, quotes, rate limits and errors, with HTTP status mappings. It is unsigned and outside the receipt. A client binds its receipt to the request: the same cell id, and when an `asof` was asked for, the same `asof` (`ok`) or one at or before it (`stale`) (D31). New code `E_ENVELOPE`, schema `schemas/envelope.schema.json`.
 - **Open points from `spec-0.1.1` resolved.**
   - Userinfo and ports in a cell URI are `E_PARSE_URI` (5.1).
   - The outer grammar is checked before any name (5.4 step 1).
   - Step 7.5 now checks an input receipt's hash after verifying it, as the vector `invalid/receipt-input-invalid` always required.
   - The reference tool follows all three, and new vectors cover userinfo, ports and the check order.
-- **Vectors.** New kinds `unit` and `envelope`, the receipt field `blob_hex` with the output `blob_checked`, and the envelope field `request`. 134 new vectors.
+- **Vectors.** New kinds `unit` and `envelope`, the receipt field `blob_hex` with the output `blob_checked`, and the envelope field `request`. 136 new vectors.
 
 JCS, hashing, signing, keys and verification steps 1-6 are unchanged. The receipt format is unchanged: `proto` is still `datumesh/1`, and no member was added.
 

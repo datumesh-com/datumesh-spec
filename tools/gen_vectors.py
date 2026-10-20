@@ -916,6 +916,12 @@ for name, env, status, why in [
      "The URI omits an argument the function declares."),
 ]:
     add_envelope(f"envelope/{name}", why, env, status)
+add_envelope("envelope/stale-earlier-asof", "A stale receipt is the last one known: its asof may be before the requested asof.",
+             {"age_seconds": 172800, "outcome": "stale", "receipt": R_FX, "trust": "primary"}, 200,
+             request={"asof": "2024-03-18T09:00:00.000000Z", "cell_id": cell_id(FX_CELL)})
+add_envelope("invalid/envelope-stale-later-asof", "A stale receipt's asof cannot be after the requested asof.",
+             {"age_seconds": 60, "outcome": "stale", "receipt": R_FX, "trust": "primary"}, 200, "E_ENVELOPE",
+             request={"asof": "2024-03-15T09:00:00.000000Z", "cell_id": cell_id(FX_CELL)})
 add_envelope("envelope/ok-asof-now", "A request without asof: the receipt's asof is the mesh's now, and any is accepted.",
              {"outcome": "ok", "receipt": R_FX, "trust": "primary"}, 200, request={"cell_id": cell_id(FX_CELL)})
 
