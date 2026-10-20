@@ -1,0 +1,530 @@
+{
+  "description": "Sheet value -> Datumesh argument conversion cases for the spreadsheet add-ins (SPEC.md section 3). Non-normative design; the add-ins do not exist yet.",
+  "cases": [
+    {
+      "id": "number-float-noise",
+      "req": "SS-C5",
+      "host": "both",
+      "type": "number",
+      "value": {
+        "number": 0.30000000000000004
+      },
+      "expect": {
+        "arg": "0.3"
+      },
+      "note": "=0.1+0.2; rounded to Excel's 15 significant digits"
+    },
+    {
+      "id": "number-product",
+      "req": "SS-C5",
+      "host": "both",
+      "type": "number",
+      "value": {
+        "number": 108.91999999999999
+      },
+      "expect": {
+        "arg": "108.92"
+      },
+      "note": "=100*1.0892, the convert example"
+    },
+    {
+      "id": "number-integer",
+      "req": "SS-C5",
+      "host": "both",
+      "type": "number",
+      "value": {
+        "number": 45366
+      },
+      "expect": {
+        "arg": "45366"
+      }
+    },
+    {
+      "id": "number-negative",
+      "req": "SS-C5",
+      "host": "both",
+      "type": "number",
+      "value": {
+        "number": -17.25
+      },
+      "expect": {
+        "arg": "-17.25"
+      }
+    },
+    {
+      "id": "number-negative-zero",
+      "req": "SS-C5",
+      "host": "both",
+      "type": "number",
+      "value": {
+        "number": -0.0
+      },
+      "expect": {
+        "arg": "0"
+      }
+    },
+    {
+      "id": "number-large",
+      "req": "SS-C5",
+      "host": "both",
+      "type": "number",
+      "value": {
+        "number": 1e+21
+      },
+      "expect": {
+        "arg": "1000000000000000000000"
+      },
+      "note": "no exponent, no trailing point"
+    },
+    {
+      "id": "number-small",
+      "req": "SS-C5",
+      "host": "both",
+      "type": "number",
+      "value": {
+        "number": 1.5e-07
+      },
+      "expect": {
+        "arg": "0.00000015"
+      }
+    },
+    {
+      "id": "number-rounded-to-15",
+      "req": "SS-C5",
+      "host": "both",
+      "type": "number",
+      "value": {
+        "number": 123456789012345678
+      },
+      "expect": {
+        "arg": "123456789012346000"
+      },
+      "note": "lossy; use text for exact large integers"
+    },
+    {
+      "id": "number-third",
+      "req": "SS-C5",
+      "host": "both",
+      "type": "number",
+      "value": {
+        "number": 0.3333333333333333
+      },
+      "expect": {
+        "arg": "0.333333333333333"
+      }
+    },
+    {
+      "id": "number-too-long",
+      "req": "SS-C5",
+      "host": "both",
+      "type": "number",
+      "value": {
+        "number": 1e-300
+      },
+      "expect": {
+        "error": "E_CANON_LIMIT"
+      }
+    },
+    {
+      "id": "number-text-exact",
+      "req": "SS-C4",
+      "host": "both",
+      "type": "number",
+      "value": {
+        "text": "123456789012345678"
+      },
+      "expect": {
+        "arg": "123456789012345678"
+      }
+    },
+    {
+      "id": "number-text-not-canonical",
+      "req": "SS-C4",
+      "host": "both",
+      "type": "number",
+      "value": {
+        "text": "1.50"
+      },
+      "expect": {
+        "error": "E_CANON_NUMBER"
+      }
+    },
+    {
+      "id": "number-from-boolean",
+      "req": "SS-C1",
+      "host": "both",
+      "type": "number",
+      "value": {
+        "boolean": true
+      },
+      "expect": {
+        "error": "E_SHEET_TYPE"
+      }
+    },
+    {
+      "id": "string-text",
+      "req": "SS-C10",
+      "host": "both",
+      "type": "string",
+      "value": {
+        "text": "EUR"
+      },
+      "expect": {
+        "arg": "EUR"
+      }
+    },
+    {
+      "id": "string-from-number",
+      "req": "SS-C1",
+      "host": "both",
+      "type": "string",
+      "value": {
+        "number": 7
+      },
+      "expect": {
+        "error": "E_SHEET_TYPE"
+      },
+      "note": "a code typed as 007 became 7; never send \"7\""
+    },
+    {
+      "id": "string-empty-text-excel",
+      "req": "SS-C2a",
+      "host": "excel",
+      "type": "string",
+      "value": {
+        "text": ""
+      },
+      "expect": {
+        "arg": ""
+      }
+    },
+    {
+      "id": "string-empty-text-sheets",
+      "req": "SS-C2a",
+      "host": "sheets",
+      "type": "string",
+      "value": {
+        "text": ""
+      },
+      "expect": {
+        "error": "E_SHEET_EMPTY"
+      }
+    },
+    {
+      "id": "string-not-nfc",
+      "req": "SS-C10",
+      "host": "both",
+      "type": "string",
+      "value": {
+        "text": "Zürich"
+      },
+      "expect": {
+        "error": "E_CANON_STRING"
+      }
+    },
+    {
+      "id": "string-line-break",
+      "req": "SS-C10",
+      "host": "both",
+      "type": "string",
+      "value": {
+        "text": "a\nb"
+      },
+      "expect": {
+        "error": "E_CANON_STRING"
+      }
+    },
+    {
+      "id": "string-from-boolean",
+      "req": "SS-C1",
+      "host": "both",
+      "type": "string",
+      "value": {
+        "boolean": false
+      },
+      "expect": {
+        "error": "E_SHEET_TYPE"
+      }
+    },
+    {
+      "id": "boolean-true",
+      "req": "SS-C11",
+      "host": "both",
+      "type": "boolean",
+      "value": {
+        "boolean": true
+      },
+      "expect": {
+        "arg": "true"
+      }
+    },
+    {
+      "id": "boolean-from-text",
+      "req": "SS-C11",
+      "host": "both",
+      "type": "boolean",
+      "value": {
+        "text": "TRUE"
+      },
+      "expect": {
+        "error": "E_SHEET_TYPE"
+      }
+    },
+    {
+      "id": "date-excel-1900",
+      "req": "SS-C6",
+      "host": "excel",
+      "type": "date",
+      "value": {
+        "number": 45366
+      },
+      "context": {
+        "date_system": 1900
+      },
+      "expect": {
+        "arg": "2024-03-15"
+      }
+    },
+    {
+      "id": "date-excel-1904",
+      "req": "SS-C6",
+      "host": "excel",
+      "type": "date",
+      "value": {
+        "number": 43904
+      },
+      "context": {
+        "date_system": 1904
+      },
+      "expect": {
+        "arg": "2024-03-15"
+      }
+    },
+    {
+      "id": "date-excel-first-serial",
+      "req": "SS-C6",
+      "host": "excel",
+      "type": "date",
+      "value": {
+        "number": 61
+      },
+      "context": {
+        "date_system": 1900
+      },
+      "expect": {
+        "arg": "1900-03-01"
+      }
+    },
+    {
+      "id": "date-excel-fictitious-leap-day",
+      "req": "SS-C6",
+      "host": "excel",
+      "type": "date",
+      "value": {
+        "number": 60
+      },
+      "context": {
+        "date_system": 1900
+      },
+      "expect": {
+        "error": "E_SHEET_DATE"
+      },
+      "note": "Excel's 1900-02-29, which never existed"
+    },
+    {
+      "id": "date-excel-fraction",
+      "req": "SS-C6",
+      "host": "excel",
+      "type": "date",
+      "value": {
+        "number": 45366.5
+      },
+      "context": {
+        "date_system": 1900
+      },
+      "expect": {
+        "error": "E_SHEET_DATE"
+      }
+    },
+    {
+      "id": "date-excel-unknown-system",
+      "req": "SS-C6",
+      "host": "excel",
+      "type": "date",
+      "value": {
+        "number": 45366
+      },
+      "context": {
+        "date_system": null
+      },
+      "expect": {
+        "error": "E_SHEET_DATE_SYSTEM"
+      }
+    },
+    {
+      "id": "date-text-early",
+      "req": "SS-C4",
+      "host": "both",
+      "type": "date",
+      "value": {
+        "text": "1066-10-14"
+      },
+      "expect": {
+        "arg": "1066-10-14"
+      },
+      "note": "dates before 1900-03-01 are text"
+    },
+    {
+      "id": "date-text-not-canonical",
+      "req": "SS-C4",
+      "host": "both",
+      "type": "date",
+      "value": {
+        "text": "15/03/2024"
+      },
+      "expect": {
+        "error": "E_CANON_DATE"
+      }
+    },
+    {
+      "id": "date-sheets-midnight",
+      "req": "SS-C7",
+      "host": "sheets",
+      "type": "date",
+      "value": {
+        "date": "2024-03-15T00:00:00"
+      },
+      "context": {
+        "timezone": "Asia/Tokyo"
+      },
+      "expect": {
+        "arg": "2024-03-15"
+      },
+      "note": "formatting in UTC would give 2024-03-14"
+    },
+    {
+      "id": "date-sheets-not-midnight",
+      "req": "SS-C7",
+      "host": "sheets",
+      "type": "date",
+      "value": {
+        "date": "2024-03-15T09:30:00"
+      },
+      "context": {
+        "timezone": "Europe/Amsterdam"
+      },
+      "expect": {
+        "error": "E_SHEET_DATE"
+      }
+    },
+    {
+      "id": "date-sheets-plain-number",
+      "req": "SS-C1",
+      "host": "sheets",
+      "type": "date",
+      "value": {
+        "number": 45366
+      },
+      "context": {
+        "timezone": "Europe/Amsterdam"
+      },
+      "expect": {
+        "error": "E_SHEET_TYPE"
+      },
+      "note": "Sheets passes date cells as Date; a plain number is a number"
+    },
+    {
+      "id": "instant-excel-number",
+      "req": "SS-C8",
+      "host": "excel",
+      "type": "instant",
+      "value": {
+        "number": 45366.375
+      },
+      "context": {
+        "date_system": 1900
+      },
+      "expect": {
+        "error": "E_SHEET_ZONE"
+      }
+    },
+    {
+      "id": "instant-text",
+      "req": "SS-C4",
+      "host": "both",
+      "type": "instant",
+      "value": {
+        "text": "2024-03-15T08:00:00.000000Z"
+      },
+      "expect": {
+        "arg": "2024-03-15T08:00:00.000000Z"
+      }
+    },
+    {
+      "id": "instant-text-milliseconds",
+      "req": "SS-C4",
+      "host": "both",
+      "type": "instant",
+      "value": {
+        "text": "2024-03-15T08:00:00.123Z"
+      },
+      "expect": {
+        "error": "E_CANON_INSTANT"
+      }
+    },
+    {
+      "id": "instant-sheets-winter",
+      "req": "SS-C9",
+      "host": "sheets",
+      "type": "instant",
+      "value": {
+        "date": "2024-03-15T09:00:00.123"
+      },
+      "context": {
+        "timezone": "Europe/Amsterdam"
+      },
+      "expect": {
+        "arg": "2024-03-15T08:00:00.123000Z"
+      }
+    },
+    {
+      "id": "instant-sheets-summer",
+      "req": "SS-C9",
+      "host": "sheets",
+      "type": "instant",
+      "value": {
+        "date": "2024-07-01T09:00:00"
+      },
+      "context": {
+        "timezone": "Europe/Amsterdam"
+      },
+      "expect": {
+        "arg": "2024-07-01T07:00:00.000000Z"
+      }
+    },
+    {
+      "id": "empty-cell",
+      "req": "SS-C2",
+      "host": "both",
+      "type": "string",
+      "value": {
+        "empty": true
+      },
+      "expect": {
+        "error": "E_SHEET_EMPTY"
+      }
+    },
+    {
+      "id": "error-value",
+      "req": "SS-C3",
+      "host": "both",
+      "type": "number",
+      "value": {
+        "error": "#N/A"
+      },
+      "expect": {
+        "error": "E_SHEET_VALUE"
+      }
+    }
+  ]
+}

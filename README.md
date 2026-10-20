@@ -22,6 +22,10 @@ OK 501f744d910c585859a5be4f3b62385ed0d6803db53dbbf95dff5097a68bee0d signed by ra
 
 The URI names one cell: a function, rooted in a domain its publisher controls, applied to typed arguments, as of a transaction time. The receipt is that cell's signed answer. Its hash is SHA-256 over the RFC 8785 canonical JSON of everything except `sig`, and `sig` is Ed25519 over the same bytes. Verification finds the key `computed_by` names at `https://rates.example.org/.well-known/datumesh.json` (here supplied offline by `keyenv.json`) and checks the signature.
 
+## Integrations (design)
+
+[integrations/spreadsheets](integrations/spreadsheets/SPEC.md) specifies a future Excel add-in and Google Sheets add-on, with conversion test cases written ahead of the code. It is non-normative and not built.
+
 ## Running the tests
 
 The tools need Python 3.13 or later (for Unicode 15.1) and PyNaCl. Schema tests need `jsonschema`.
