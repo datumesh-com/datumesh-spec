@@ -174,6 +174,8 @@ class Schemas(unittest.TestCase):
         for vec in VECTORS:
             if vec["valid"] or vec["kind"] not in SCHEMA_FOR_KIND or vec["error"] not in SCHEMA_EXPRESSIBLE:
                 continue
+            if "blob_hex" in vec:  # E_SCHEMA from step 7.7 is about the content, not the receipt's shape
+                continue
             try:
                 doc = canon.parse_json(canon.vector_input(vec))
             except canon.DatumeshError:

@@ -25,6 +25,10 @@
       }
     }
   },
+  "request": {
+    "asof": "2024-03-16T09:00:00.000000Z",
+    "cell_id": "f566f2838815a8649fe467b7a41876c5d2b4deca9afb974b8c50caafd4633ca5"
+  },
   "outcome": "ok",
   "trust": "primary",
   "receipt_hash": "19a5fe3a744c5792f747fb4c286ce396ab44b95922de4f07937502fe595b6f81"

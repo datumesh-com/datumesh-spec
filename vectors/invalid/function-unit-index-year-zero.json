@@ -1,0 +1,8 @@
+{
+  "id": "invalid/function-unit-index-year-zero",
+  "kind": "function",
+  "description": "Index periods are years 0001 to 9999.",
+  "valid": false,
+  "input": "{\n  \"signature\": {\n    \"returns\": {\n      \"unit\": \"index:0000=100\",\n      \"type\": \"number\"\n    },\n    \"args\": {}\n  },\n  \"inputs\": [],\n  \"code\": {\n    \"lang\": \"stored\",\n    \"body\": \"\"\n  }\n}",
+  "error": "E_CANON_UNIT"
+}

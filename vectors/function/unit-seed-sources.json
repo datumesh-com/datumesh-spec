@@ -1,0 +1,9 @@
+{
+  "id": "function/unit-seed-sources",
+  "kind": "function",
+  "description": "The units added for the seed sources: hPa, mm, W/m2, cm, permille and km/h.",
+  "valid": true,
+  "input": "{\n  \"signature\": {\n    \"returns\": {\n      \"unit\": \"hPa\",\n      \"type\": \"number\"\n    },\n    \"args\": {\n      \"wind\": {\n        \"valid\": false,\n        \"unit\": \"km/h\",\n        \"type\": \"number\"\n      },\n      \"weight\": {\n        \"valid\": false,\n        \"unit\": \"permille\",\n        \"type\": \"number\"\n      },\n      \"snow\": {\n        \"valid\": false,\n        \"unit\": \"cm\",\n        \"type\": \"number\"\n      },\n      \"radiation\": {\n        \"valid\": false,\n        \"unit\": \"W/m2\",\n        \"type\": \"number\"\n      },\n      \"precipitation\": {\n        \"valid\": false,\n        \"unit\": \"mm\",\n        \"type\": \"number\"\n      },\n      \"date\": {\n        \"valid\": true,\n        \"type\": \"date\"\n      }\n    }\n  },\n  \"inputs\": [],\n  \"code\": {\n    \"lang\": \"stored\",\n    \"body\": \"\"\n  }\n}",
+  "canonical": "{\"code\":{\"body\":\"\",\"lang\":\"stored\"},\"inputs\":[],\"signature\":{\"args\":{\"date\":{\"type\":\"date\",\"valid\":true},\"precipitation\":{\"type\":\"number\",\"unit\":\"mm\",\"valid\":false},\"radiation\":{\"type\":\"number\",\"unit\":\"W/m2\",\"valid\":false},\"snow\":{\"type\":\"number\",\"unit\":\"cm\",\"valid\":false},\"weight\":{\"type\":\"number\",\"unit\":\"permille\",\"valid\":false},\"wind\":{\"type\":\"number\",\"unit\":\"km/h\",\"valid\":false}},\"returns\":{\"type\":\"number\",\"unit\":\"hPa\"}}}",
+  "sha256": "feff7773aeec19512919536df070f0f6b867c021774d19df27f7421fc7d844ce"
+}

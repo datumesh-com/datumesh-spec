@@ -246,7 +246,7 @@ pct-encoded = "%" UPHEX UPHEX
 UPHEX      = DIGIT / "A" / "B" / "C" / "D" / "E" / "F"
 ```
 
-`namespace`, `name` and `instant` are as in sections 2 and 3. A cell URI has no fragment, no userinfo, no port and no empty query. Failures of this outer grammar are `E_PARSE_URI`. Invalid names inside it are `E_CANON_NAME`.
+`namespace`, `name` and `instant` are as in sections 2 and 3. A cell URI has no fragment, no userinfo, no port and no empty query. The authority is the text between `cell://` and the first `/` (or `?`, or the end); an `@` or `:` in it is `E_PARSE_URI`, so `cell://user@rates.example.org/…` and `cell://rates.example.org:443/…` are rejected, not corrected. Failures of this outer grammar are `E_PARSE_URI`. Invalid names inside it are `E_CANON_NAME`.
 
 Example:
 
@@ -280,7 +280,7 @@ https://<mesh>/cell/<rest>
 
 `parse(uri, signature)` checks, in order:
 
-1. the outer grammar;
+1. the outer grammar, entirely before any name: the URI starts with `cell://`, contains no `#`, has no userinfo or port, and, if it contains `?`, the text after it is non-empty and each `&`-separated parameter contains `=` (`E_PARSE_URI`);
 2. the namespace and function names;
 3. parameter names left to right (grammar, reserved names, duplicates, order);
 4. the argument count;
@@ -288,7 +288,7 @@ https://<mesh>/cell/<rest>
 6. each value left to right (percent-encoding, then its lexical form);
 7. `asof`.
 
-The first failure is reported. The result is a cell reference (4.3) whose typed scalars carry the declared types. `format(reference)` writes the unique URI. For every accepted URI, `format(parse(uri)) = uri`.
+The first failure is reported. `signature` is taken as given: it comes from a descriptor already checked under section 7, and `parse` does not check it again. The result is a cell reference (4.3) whose typed scalars carry the declared types. `format(reference)` writes the unique URI. For every accepted URI, `format(parse(uri)) = uri`.
 
 ### 5.5 Response envelope
 
@@ -306,11 +306,12 @@ The envelope is an object whose `outcome` decides which other members it has. A 
 | `unlicensed` | 403 | none | none | The requester may not receive this cell. |
 | `payment_required` | 402 | `quote` | none | The cell is available for the quoted price. |
 | `rate_limited` | 429 | `retry_after_seconds` | none | Too many requests. The mesh SHOULD also send the `Retry-After` header with the same value. |
+| `bad_request` | 400 | `error` | none | The request is malformed: the cell URI does not parse. |
 | `error` | 500-599 | `error` | none | The mesh failed to produce an answer. |
 
 Members:
 
-- `outcome`: one of the seven strings above.
+- `outcome`: one of the eight strings above.
 - `receipt`: a receipt object (section 8), embedded as JSON. For `stale`, it is the last receipt the mesh knows for the cell.
 - `trust`: what the mesh asserts about how the receipt was produced:
   - `primary`: the host of `computed_by` equals the host of `cell.ns` (2.3), and `inputs` is empty. The publisher answered from its own records.
@@ -321,20 +322,24 @@ Members:
 - `age_seconds`: a non-negative integer. The number of seconds since the mesh last confirmed that the receipt was the current answer.
 - `superseded_by`: the receipt hash (8.3) of a newer receipt for the same cell at a later `tx`. It is not the receipt's own hash. A client fetches that receipt like any other.
 - `reason`: a non-empty string saying why the receipt was superseded, typically a correction. It follows the string rules (3.5) with the `summary` limit, and is only present with `superseded_by`.
-- `quote`: an object with exactly `amount`, a number in the form of 3.1 greater than zero; `currency`, a currency code from `units.md`; and `authorise`, an `https://` URL in the form of a licence URL (8.1) where the requester can pay.
+- `quote`: an object with exactly `amount`, a number in the form of 3.1 (128 characters at most) greater than zero; `currency`, any currency code listed in `units.md`, withdrawn codes included; and `authorise`, where the requester can pay, an `https://` URL by the licence URL rule (`https://` followed by printable ASCII, at most 512 characters).
 - `retry_after_seconds`: a non-negative integer.
-- `error`: a code from 10.2 saying what failed, e.g. `E_INPUT_UNAVAILABLE`.
+- `error`: what failed. For `bad_request`, one of the codes `parse` can raise (5.4): `E_PARSE_URI`, `E_CANON_NAME`, `E_CANON_ARG_NAME`, `E_CANON_ARG_DUPLICATE`, `E_CANON_ARG_ORDER`, `E_CANON_PERCENT`, `E_CANON_TYPE`, `E_CANON_NUMBER`, `E_CANON_DATE`, `E_CANON_INSTANT`, `E_CANON_STRING`, `E_CANON_BLOB`, `E_CANON_LIMIT`, `E_ARG_UNKNOWN`, `E_ARG_MISSING`. For `error`, any code in 10.2 except `E_ENVELOPE`, which is a client's code, e.g. `E_INPUT_UNAVAILABLE`.
 
-`age_seconds` and `retry_after_seconds` are JSON numbers with integral values, at most 2^53 - 1. They are the only JSON numbers in this specification, which is possible because envelopes are never hashed.
+**Integer members.** `age_seconds` and `retry_after_seconds` are JSON numbers written `0` or `[1-9][0-9]*`: no fraction, no exponent, no sign, and at most 2^53 - 1. So `30.0`, `3e1` and `-0` are `E_ENVELOPE`. They are the only JSON numbers in this specification, which is possible because envelopes are never hashed.
 
 A client checks an envelope in this order and reports the first failure:
 
 1. Parse the body as strict JSON (6.1).
-2. Check the members against the table and the rules above (`E_ENVELOPE`).
+2. Check the members against the table and the rules above (`E_ENVELOPE`). Here `receipt` need only be an object. Every failure of a member's rule is `E_ENVELOPE`, including the rules `reason`, `quote` and `superseded_by` borrow from other sections.
 3. Check that the HTTP status matches `outcome` (`E_ENVELOPE`).
-4. If there is a receipt, verify it through step 6 of 10.1 with that procedure's codes. Then check `trust` against the receipt, as above, and that `superseded_by` differs from the receipt's hash (`E_ENVELOPE`).
+4. If there is a receipt, verify it through step 6 of 10.1, with that procedure's codes.
+5. **The receipt answers the request** (`E_ENVELOPE`). Its cell id (4.4) MUST equal the id of the cell requested. That is, the cell the request's URI denotes, resolved to the `fn_hash` the client used. If the request carried `asof`, the receipt's `asof` MUST equal it. If the request carried none, the receipt's `asof` is the mesh's "now", and the client accepts it. The same applies to the receipt of a `stale` envelope.
+6. Check `trust` against the receipt, as above, and that `superseded_by` differs from the receipt's hash (`E_ENVELOPE`).
 
-An envelope that passes says only that this mesh made a well-formed statement about a receipt that its signer signed.
+Step 5 needs the request, which the envelope does not contain. A client MUST perform it; a library takes the requested cell id and `asof` as inputs. Without it, a mesh could answer with a valid receipt for a different cell.
+
+An envelope that passes says only that this mesh made a well-formed statement, about the requested cell, citing a receipt that its signer signed.
 
 ## 6. Canonical encoding and hashing
 
@@ -385,7 +390,8 @@ A function descriptor has exactly three members: the function's signature, its c
 
 - `signature.args` maps each argument name to its declaration: `{"type", "valid"}`, or `{"type", "unit", "valid"}` when the type is `number`. `valid: true` marks a valid-time argument, which must be a `date`, `instant` or `string` (`E_CANON_TYPE`). A period such as `2024-Q1` is a `string` valid-time argument whose format the function documents. At most 32 arguments.
 - `signature.returns` is the value type: a type name, or `{"type": "number", "unit": …}` when the type is `number`.
-- Units are required on numbers and allowed nowhere else. Each of these fails with `E_CANON_UNIT`: a `number` argument without `unit`; `unit` on any other argument; `returns` written as the bare name `"number"`; a `returns` object whose type is not `number`, or that has no `unit`; and a unit that is not valid by 7.1. A declaration or `returns` object with a missing `type` or any other member is `E_SCHEMA`. Within a declaration, `type` is checked first (`E_CANON_TYPE`), then `unit`, then `valid`.
+- Units are required on numbers and allowed nowhere else. Each of these fails with `E_CANON_UNIT`: a `number` argument without `unit`; `unit` on any other argument; `returns` written as the bare name `"number"`; a `returns` object whose type is not `number`, or that has no `unit`; and a unit that is not valid by 7.1. A declaration or `returns` object with a missing `type` or any other member is `E_SCHEMA`.
+- **Check order.** A descriptor's structure (`E_SCHEMA`), unit shapes included, is checked over the whole descriptor before any canonical-form rule. Then `code`, `inputs`, each argument in JCS order of names, and `returns`. Within an argument declaration: `type` (`E_CANON_TYPE`), then `unit`, then `valid`. For `returns`: the type name (`E_CANON_TYPE`), then that an object's type is `number` and that a bare name is not `number`, then the presence of `unit`, then the unit itself (all `E_CANON_UNIT`).
 - `code.lang` is a name identifying the language of `code.body`. `stored` means the function is a table of recorded values; by convention its body is empty and it declares no inputs. Other languages are defined by later steps. Until then, a body is an opaque text that the evaluator for `lang` interprets.
 - `code.body` follows the string rules (3.5), except that TAB and LF are allowed, and its limit is 1 MiB. Line endings are LF.
 - `inputs` is the set of fully qualified function names whose cells this function may read. It is an array in ascending order with no duplicates (`E_CANON_SET`). Aliases are not names (`E_CANON_NAME`).
@@ -407,7 +413,7 @@ A unit says what a number means. It is declared in the signature, never in a rec
 - Any other JSON shape for a unit is `E_SCHEMA`.
 - The list grows only through revisions of this specification. A code removed from ISO 4217 stays listed, because receipts that use it stay valid.
 
-**Resolution.** The unit of one cell's value is found by substituting the cell's argument values into the return unit. A rate is written `<of>/<per>`. A substituted value must itself be a listed unit, and on a side of a rate a currency code (`E_CANON_UNIT`). A slice marker cannot be substituted (`E_SLICE`). A function that does not return a number has no unit. The resolved string is for display and comparison; it is not hashed and cannot be written in a signature. `units.md` section 3 gives the full rules.
+**Resolution** is a client convenience; verification (10.1) never resolves units. The unit of one cell's value is found by substituting the cell's argument values into the return unit. A rate is written `<of>/<per>`. A substituted value must itself be a listed unit, and on a side of a rate a currency code (`E_CANON_UNIT`). A slice marker cannot be substituted (`E_SLICE`). A function that does not return a number has no unit. The resolved string is for display and comparison; it is not hashed and cannot be written in a signature. `units.md` section 3 gives the full rules, including the check order: the cell, then the descriptor's hash (`E_FN_HASH_MISMATCH`), then the descriptor, then substitution, where a referenced argument that is unbound is `E_ARG_MISSING`, a slice `E_SLICE`, and of another type `E_ARG_TYPE`.
 
 A verifier never checks a value against its unit, and never converts between units.
 
@@ -547,14 +553,17 @@ A verifier runs these steps in order and stops at the first failure, reporting i
    3. `valid` holds exactly the declared valid-time arguments (`E_VALID_MISMATCH`).
    4. `type` equals the declared return type: `signature.returns`, or its `type` member when it is an object (`E_RETURN_TYPE`).
    5. For each hash in `inputs`, in order:
-      - obtain the input receipt (`E_INPUT_UNAVAILABLE`), which must hash to the listed hash;
+      - obtain the receipt offered for it (`E_INPUT_UNAVAILABLE` if none);
       - verify it through step 6 (`E_INPUT_INVALID`);
+      - check that it hashes to the listed hash (`E_INPUT_UNAVAILABLE`);
       - check it is a cell of a declared input function (`E_INPUT_UNDECLARED`);
       - check it has the same `asof` (`E_TIME_ORDER`).
 
       If there are inputs, `tx` must equal the latest input `tx` (`E_TIME_ORDER`).
    6. Evaluate the function (for `stored`: look the value up as of `asof`). The result's `type` and `value` must equal the receipt's lexically (`E_VALUE_MISMATCH`).
-   7. **Blob content.** If `type` is `blob` and the content is available, it must have exactly `length` bytes and its SHA-256 must equal the blob's hash (`E_BLOB_MISMATCH`). This sub-step needs no descriptor and no inputs. It MAY run directly after step 6, without 7.1-7.6, and a verifier given content without being asked to recompute runs only this sub-step. Content of blob arguments is checked the same way by whoever retrieves it.
+   7. **Blob content.** If content is supplied: `type` must be `blob` (`E_SCHEMA` otherwise), and the content must have exactly `length` bytes and a SHA-256 equal to the blob's hash (`E_BLOB_MISMATCH`). This sub-step needs no descriptor and no inputs. It runs last: after 7.6 when recomputing, otherwise directly after step 6. Content of blob arguments is checked the same way by whoever retrieves it.
+
+   A receipt that passes 7.1-7.6 is at level `recomputed`; otherwise it stays `signed`. Step 7.7 does not change the level: passing it is reported separately, as `blob_checked`.
 
 Signature-valid means the holder of key `computed_by` stated this value. Whether to trust that party is policy, outside this specification.
 
@@ -566,8 +575,8 @@ The four failure classes a verifier distinguishes are: bad canonical form (parse
 |---|---|---|
 | `E_PARSE_JSON` | 1 | Not strict JSON: invalid UTF-8, BOM, lone surrogate, NaN/Infinity, syntax error. |
 | `E_PARSE_DUPLICATE_KEY` | 1 | A member name repeated in one object. |
-| `E_PARSE_URI` | URI | Not `cell://<path>[?<query>]`, has a fragment, empty query, or a parameter without `=`. |
-| `E_SCHEMA` | 2 | Missing or extra member, wrong JSON type, wrong `proto`, null. |
+| `E_PARSE_URI` | URI | Not `cell://<path>[?<query>]`, has a fragment, userinfo or a port, an empty query, or a parameter without `=`. |
+| `E_SCHEMA` | 2, 7 | Missing or extra member, wrong JSON type, wrong `proto`, null; content supplied for a value that is not a blob (7.7). |
 | `E_CANON_NAME` | 3 | Invalid DNS name, namespace, function name, code language or key reference. |
 | `E_CANON_ARG_NAME` | 3 | Invalid or reserved argument name. |
 | `E_CANON_ARG_DUPLICATE` | URI | An argument or `asof` repeated in a URI. |
@@ -584,29 +593,29 @@ The four failure classes a verifier distinguishes are: bad canonical form (parse
 | `E_CANON_LICENCE` | 3 | Licence neither an SPDX identifier nor an `https://` URL. |
 | `E_CANON_SET` | 3 | `inputs` not strictly ascending. |
 | `E_CANON_LIMIT` | 3 | A limit from 4.5 exceeded. |
-| `E_SLICE` | 4 | A slice marker in a receipt. |
+| `E_SLICE` | 4, unit | A slice marker in a receipt, or in an argument a unit refers to. |
 | `E_PUBLISHER_MISMATCH` | 4 | `publisher` differs from `cell.ns`. |
 | `E_VALID_MISMATCH` | 4, 7 | `valid` does not echo exactly the valid-time arguments. |
 | `E_TIME_ORDER` | 4, 7 | `tx <= asof <= issued` fails, inputs have another `asof`, or computed `tx` is not the latest input `tx`. |
 | `E_ARG_UNKNOWN` | URI, 7 | An argument the function does not declare. |
-| `E_ARG_MISSING` | URI, 7 | A declared argument not bound (slices are written `*`). |
+| `E_ARG_MISSING` | URI, 7, unit | A declared argument not bound (slices are written `*`). |
 | `E_KEY_UNAVAILABLE` | 5 | The key document could not be retrieved: any non-200 status (404 included), redirect, or network, DNS-resolution, TLS or timeout failure. |
 | `E_KEY_DOC` | 5 | The key document is malformed or breaks a rule of 9.2. |
 | `E_KEY_UNKNOWN` | 5 | The host's key document has no key with that id. |
 | `E_KEY_NOT_VALID` | 5 | `issued` is outside the key's validity window. |
 | `E_SIGNATURE` | 6 | The Ed25519 signature does not verify. |
 | `E_FN_UNAVAILABLE` | 7 | No descriptor found for `fn_hash`. |
-| `E_FN_HASH_MISMATCH` | 7 | The descriptor does not hash to `fn_hash`. |
-| `E_ARG_TYPE` | 7 | An argument's type differs from its declaration. |
+| `E_FN_HASH_MISMATCH` | 7, unit | The descriptor does not hash to `fn_hash`. |
+| `E_ARG_TYPE` | 7, unit | An argument's type differs from its declaration. |
 | `E_RETURN_TYPE` | 7 | `type` differs from the declared return type. |
 | `E_INPUT_UNAVAILABLE` | 7 | An input receipt cannot be found, or the one found has another hash. |
 | `E_INPUT_INVALID` | 7 | An input receipt is not signature-valid. |
 | `E_INPUT_UNDECLARED` | 7 | An input receipt is a cell of a function not in the descriptor's `inputs`. |
 | `E_VALUE_MISMATCH` | 7 | Recomputation gives a different type or value. |
 | `E_BLOB_MISMATCH` | 7 | Blob content has another length or hash than the blob states. |
-| `E_ENVELOPE` | envelope | A response envelope breaks a rule of 5.5, or its HTTP status does not match its outcome. |
+| `E_ENVELOPE` | envelope | A response envelope breaks a rule of 5.5, its HTTP status does not match its outcome, or its receipt does not answer the request. |
 
-"URI" marks codes raised while parsing a cell URI (5.4), and "envelope" codes raised while checking a response envelope (5.5). Canonicalising a scalar, cell, reference or descriptor on its own uses the same codes as steps 1-3.
+"URI" marks codes raised while parsing a cell URI (5.4), "envelope" codes raised while checking a response envelope (5.5), and "unit" codes raised while resolving a unit (7.1). Canonicalising a scalar, cell, reference or descriptor on its own uses the same codes as steps 1-3.
 
 ## 11. Test vectors
 
@@ -619,9 +628,9 @@ The four failure classes a verifier distinguishes are: bad canonical form (parse
 | `uri` | `input`: URI, `signature`: function signature | `object` (cell reference), `canonical`, `sha256`, `https` (on mesh `mesh.example`) |
 | `keyid` | `input`: public key hex | `key_id` |
 | `keys` | `host`, `env`: what the HTTPS request returned | `key_ids` |
-| `receipt` | `input`: receipt JSON text; `keypair` (`seed`, `public`, `key_id`); `keys`: an `env` per host; optional `recompute`; optional `blob_hex`: the content of a blob value, for step 7.7 | `canonical` (the signed payload), `sha256` (receipt hash), `sig`, `level` (`signed` or `recomputed`) |
-| `unit` | `input`: JSON text of `{"cell", "descriptor"}` | `unit`: the resolved unit of the cell's value (7.1), or null |
-| `envelope` | `input`: the response body; `status`: the HTTP status; `keys`: an `env` per host | `outcome`, and when there is a receipt, `trust` and `receipt_hash` |
+| `receipt` | `input`: receipt JSON text; `keypair` (`seed`, `public`, `key_id`); `keys`: an `env` per host; optional `recompute`; optional `blob_hex`: content for step 7.7 | `canonical` (the signed payload), `sha256` (receipt hash), `sig`, `level` (`signed` or `recomputed`); `blob_checked` (true) when `blob_hex` is given |
+| `unit` | `input`: JSON text of an object with exactly `cell` and `descriptor` (any other shape is `E_SCHEMA`) | `unit`: the resolved unit of the cell's value (7.1), or null when the function does not return a number |
+| `envelope` | `input`: the response body; `status`: the HTTP status; `keys`: an `env` per host; `request`: `{"cell_id", "asof"?}` for step 5 | `outcome`, and when there is a receipt, `trust` and `receipt_hash` |
 
 `canonical` is the canonical byte string as UTF-8 text. Inputs are deliberately not canonical: member order is reversed, and there is whitespace and escaping. A valid receipt vector's expected verification result is success at `level`; an invalid one's is `error`. Keypairs come from fixed seeds and Ed25519 is deterministic, so `tools/gen_vectors.py` reproduces every file byte for byte.
 
@@ -676,6 +685,8 @@ Every choice this specification makes where its brief left room, with the main a
 | D28 | Staleness, supersession and trust live in an unsigned response envelope | New receipt members | Receipts already signed stay byte-identical and verifiable. These facts change after signing and are the mesh's claims, not the signer's. |
 | D29 | `trust: primary` is defined from the receipt (signer's host = namespace's host, no inputs), and a mesh must use it exactly then | Let the mesh choose its label freely | A client can check the one label that is checkable. |
 | D30 | One code, `E_ENVELOPE`, for every envelope rule | A code per envelope rule | An envelope is not hashed or signed, so a client needs to know only that the mesh's statement is malformed. Receipt failures inside it keep their own codes. |
+| D31 | A client binds an envelope's receipt to its request: same cell id, and the same `asof` when one was asked for | Trust the mesh to answer the question asked | Without the binding, a mesh can answer any request with any valid receipt. The binding needs nothing in the receipt or the envelope, only what the client already knows. |
+| D32 | Malformed requests are `bad_request` (HTTP 400) carrying a URI parse code; `error` (5xx) is for the mesh's own failures | One `error` outcome for both | A client should not retry its own mistake, and should know which part of the URI to fix. |
 
 ## Appendix A: collected ABNF
 
@@ -719,8 +730,13 @@ Three additions, released together so that there is one migration.
 
 - **Units (7.1, `units.md`).** Number arguments and number returns declare a unit: a listed literal, a reference to a string argument, or a rate `{"of", "per"}`. `returns` stays a bare type name for every other type (D23). New code `E_CANON_UNIT`.
 - **Blobs (3.7).** A sixth type, `blob`: `<sha256>:<length>:<media type>`. Verification step 7.7 checks content when it is available. New codes `E_CANON_BLOB` and `E_BLOB_MISMATCH`.
-- **Response envelope (5.5).** The JSON body a mesh returns: outcome, trust label, staleness, supersession, quotes, rate limits and errors, with HTTP status mappings. It is unsigned and outside the receipt. New code `E_ENVELOPE`, schema `schemas/envelope.schema.json`.
-- **Vectors.** New kinds `unit` and `envelope`, and the receipt field `blob_hex`. 107 new vectors.
+- **Response envelope (5.5).** The JSON body a mesh returns: outcome (including `bad_request` for malformed requests), trust label, staleness, supersession, quotes, rate limits and errors, with HTTP status mappings. It is unsigned and outside the receipt. A client binds its receipt to the request: the same cell id, and the same `asof` when one was asked for (D31). New code `E_ENVELOPE`, schema `schemas/envelope.schema.json`.
+- **Open points from `spec-0.1.1` resolved.**
+  - Userinfo and ports in a cell URI are `E_PARSE_URI` (5.1).
+  - The outer grammar is checked before any name (5.4 step 1).
+  - Step 7.5 now checks an input receipt's hash after verifying it, as the vector `invalid/receipt-input-invalid` always required.
+  - The reference tool follows all three, and new vectors cover userinfo, ports and the check order.
+- **Vectors.** New kinds `unit` and `envelope`, the receipt field `blob_hex` with the output `blob_checked`, and the envelope field `request`. 134 new vectors.
 
 JCS, hashing, signing, keys and verification steps 1-6 are unchanged. The receipt format is unchanged: `proto` is still `datumesh/1`, and no member was added.
 

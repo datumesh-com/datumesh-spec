@@ -1,10 +1,13 @@
 # SPDX-License-Identifier: Apache-2.0
-"""Compare runner outputs field by field: python vs javascript vs reference."""
+"""Compare runner outputs field by field: python vs javascript vs reference.
+
+A field absent from an output counts as null."""
 import json
 import sys
 from collections import Counter
 
-FIELDS = ("error", "canonical", "sha256", "sig", "level")
+FIELDS = ("error", "canonical", "sha256", "sig", "level", "object", "https", "key_id", "key_ids",
+          "unit", "outcome", "trust", "receipt_hash")
 runs = {name: [json.loads(l) for l in open(path)] for name, path in (a.split("=") for a in sys.argv[1:])}
 names = list(runs)
 n = len(runs[names[0]])

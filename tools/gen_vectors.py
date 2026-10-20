@@ -394,6 +394,12 @@ for name, uri, sig, error, why in [
     ("empty-query", "cell://math.example/pi?", PI["signature"], "E_PARSE_URI", "A ? needs at least one parameter."),
     ("wrong-scheme", "https://rates.example.org/fx_rate?base=EUR&date=2024-03-15&quote=USD", SIG, "E_PARSE_URI", "The scheme is cell."),
     ("parameter-without-value", "cell://rates.example.org/fx_rate?base&date=2024-03-15&quote=USD", SIG, "E_PARSE_URI", "Every parameter has =."),
+    ("userinfo", "cell://user@rates.example.org/fx_rate?base=EUR&date=2024-03-15&quote=USD", SIG, "E_PARSE_URI", "A cell URI has no userinfo."),
+    ("port", "cell://rates.example.org:443/fx_rate?base=EUR&date=2024-03-15&quote=USD", SIG, "E_PARSE_URI", "A cell URI has no port."),
+    ("empty-port", "cell://rates.example.org:/fx_rate?base=EUR&date=2024-03-15&quote=USD", SIG, "E_PARSE_URI", "Not even an empty one."),
+    ("port-not-numeric", "cell://rates.example.org:x/fx_rate?base=EUR&date=2024-03-15&quote=USD", SIG, "E_PARSE_URI", "Any : in the authority."),
+    ("grammar-before-names", "cell://Rates.example.org/fx_rate?base", SIG, "E_PARSE_URI",
+     "The outer grammar is checked before any name: the parameter without = is reported, not the uppercase host."),
 ]:
     add(f"invalid/uri-{name}", "uri", why, uri, error, signature=sig)
 
@@ -689,6 +695,14 @@ for name, desc, why in [
      "A number argument declares its unit; the boolean return stays a bare type name."),
     ("unit-withdrawn-currency", stored({"date": DARG}, NUM({"of": "GRD", "per": "EUR"})),
      "Withdrawn currency codes used by historical rates remain units."),
+    ("unit-seed-sources", stored({"date": DARG, "station": SARG}, NUM("hPa")) | {"signature": {
+        "args": {"date": DARG, "precipitation": {"type": "number", "unit": "mm", "valid": False},
+                 "radiation": {"type": "number", "unit": "W/m2", "valid": False},
+                 "snow": {"type": "number", "unit": "cm", "valid": False},
+                 "weight": {"type": "number", "unit": "permille", "valid": False},
+                 "wind": {"type": "number", "unit": "km/h", "valid": False}},
+        "returns": NUM("hPa")}},
+     "The units added for the seed sources: hPa, mm, W/m2, cm, permille and km/h."),
 ]:
     add(f"function/{name}", "function", why, text(desc))
 
@@ -719,8 +733,19 @@ for name, desc, error, why in [
     ("unit-json-number", stored({}, NUM(1)), "E_SCHEMA", "A unit is a string or an object, never a JSON number."),
     ("unit-rate-extra-member", stored({}, NUM({"of": "USD", "per": "EUR", "scale": "1"})), "E_SCHEMA",
      "A rate has exactly the members of and per."),
+    ("unit-superscript", stored({}, NUM("W/m²")), "E_CANON_UNIT", "W/m2 is written in ASCII; W/m² is not a unit."),
+    ("unit-index-year-zero", stored({}, NUM("index:0000=100")), "E_CANON_UNIT", "Index periods are years 0001 to 9999."),
+    ("unit-arg-not-a-name", stored({"date": DARG}, NUM({"arg": "Bad"})), "E_CANON_UNIT",
+     "A reference to anything that is not an argument of the signature, even a malformed name."),
 ]:
     add(f"invalid/function-{name}", "function", why, text(desc), error)
+
+
+BAD_UNIT = stored({}, NUM("dollars"))
+add("invalid/unit-descriptor-not-canonical", "unit",
+    "A descriptor that hashes to fn_hash is still checked: its unit is not listed.",
+    text({"cell": {"args": {}, "fn": "f", "fn_hash": canon.function_hash(BAD_UNIT), "ns": "units.example.org"},
+          "descriptor": BAD_UNIT}), "E_CANON_UNIT")
 
 
 def unit_input(desc, cell):
@@ -751,6 +776,10 @@ for name, desc, cell, error, why in [
      "A referenced argument's value must itself be a listed unit."),
     ("slice", FX, FX_CELL | {"args": FX_ARGS | {"quote": "*"}}, "E_SLICE", "A slice over the unit's argument has no single unit."),
     ("fn-hash-mismatch", CONVERT, FX_CELL, "E_FN_HASH_MISMATCH", "The descriptor must be the cell's function."),
+    ("arg-missing", FX, FX_CELL | {"args": {k: v for k, v in FX_ARGS.items() if k != "quote"}}, "E_ARG_MISSING",
+     "The cell does not bind an argument the unit refers to."),
+    ("arg-type", FX, FX_CELL | {"args": FX_ARGS | {"quote": D("2024-03-15")}}, "E_ARG_TYPE",
+     "An argument the unit refers to is bound with another type than string."),
 ]:
     add(f"invalid/unit-{name}", "unit", why, unit_input(desc, cell), error)
 
@@ -819,6 +848,11 @@ R_BLOB = signed(receipt(filing_cell, "blob", blob(CSV, "text/csv"), "The filing 
                         "rates-2020"), "rates-2020")
 add_receipt("receipt/blob-value", "A blob value with its content: step 7.7 checks the content's length and hash.",
             R_BLOB, "rates-2020", blob_hex=CSV.hex())
+add_receipt("receipt/blob-value-recomputed", "Recomputation and the content check together: level recomputed, content checked.",
+            R_BLOB, "rates-2020", blob_hex=CSV.hex(),
+            recompute={"descriptor": FILING, "inputs": {}, "value": BL(blob(CSV, "text/csv"))})
+add_receipt("invalid/receipt-content-not-blob", "Content supplied for a value that is not a blob.", R_FX, "rates-2020",
+            "E_SCHEMA", blob_hex=HELLO.hex())
 add_receipt("invalid/receipt-blob-mismatch", "Content whose hash differs from the blob's.", R_BLOB, "rates-2020",
             "E_BLOB_MISMATCH", blob_hex=CSV.replace(b"1.0892", b"1.0893").hex())
 add_receipt("invalid/receipt-blob-length-mismatch", "Content with one byte more than the blob's length.", R_BLOB,
@@ -836,8 +870,17 @@ R_FX_CORRECTED = signed(receipt(FX_CELL, "number", "1.0893", "The corrected EUR/
 H_CORRECTED = canon.receipt_hash(R_FX_CORRECTED)
 
 
-def add_envelope(id_, description, env, status, error=None, raw=None):
-    add(id_, "envelope", description, raw if raw is not None else text(env), error, status=status, keys=ALL_KEYS)
+def cell_id(cell):
+    return canon.sha256_hex(canon.jcs(cell))
+
+
+def add_envelope(id_, description, env, status, error=None, raw=None, request=None):
+    """request defaults to the receipt's own cell (or fx_rate's) as of ASOF."""
+    if request is None:
+        cell = env["receipt"]["cell"] if env and isinstance(env.get("receipt"), dict) else FX_CELL
+        request = {"asof": ASOF, "cell_id": cell_id(cell)}
+    add(id_, "envelope", description, raw if raw is not None else text(env), error, status=status, keys=ALL_KEYS,
+        request=request)
 
 
 for name, env, status, why in [
@@ -868,8 +911,13 @@ for name, env, status, why in [
     ("rate-limited", {"outcome": "rate_limited", "retry_after_seconds": 30}, 429, "Too many requests: retry after 30 seconds."),
     ("error", {"error": "E_INPUT_UNAVAILABLE", "outcome": "error"}, 503, "The mesh could not compute the cell: an input was unavailable."),
     ("error-500", {"error": "E_FN_UNAVAILABLE", "outcome": "error"}, 500, "Any 5xx status carries outcome error."),
+    ("bad-request", {"error": "E_PARSE_URI", "outcome": "bad_request"}, 400, "The requested URI is malformed."),
+    ("bad-request-argument", {"error": "E_ARG_MISSING", "outcome": "bad_request"}, 400,
+     "The URI omits an argument the function declares."),
 ]:
     add_envelope(f"envelope/{name}", why, env, status)
+add_envelope("envelope/ok-asof-now", "A request without asof: the receipt's asof is the mesh's now, and any is accepted.",
+             {"outcome": "ok", "receipt": R_FX, "trust": "primary"}, 200, request={"cell_id": cell_id(FX_CELL)})
 
 for name, env, status, error, why in [
     ("unknown-outcome", {"outcome": "maybe"}, 200, "E_ENVELOPE", "outcome is one of seven values."),
@@ -907,6 +955,31 @@ for name, env, status, error, why in [
      "E_SIGNATURE", "The receipt inside an envelope is verified on its own terms."),
 ]:
     add_envelope(f"invalid/envelope-{name}", why, env, status, error)
+
+GBP_CELL = FX_CELL | {"args": FX_ARGS | {"quote": S("GBP")}}
+for name, env, status, request, why in [
+    ("wrong-cell", {"outcome": "ok", "receipt": R_FX, "trust": "primary"}, 200, {"asof": ASOF, "cell_id": cell_id(GBP_CELL)},
+     "A valid receipt for another cell than the one requested."),
+    ("wrong-asof", {"outcome": "ok", "receipt": R_FX, "trust": "primary"}, 200,
+     {"asof": "2024-03-17T09:00:00.000000Z", "cell_id": cell_id(FX_CELL)}, "A receipt answering another asof than requested."),
+    ("stale-wrong-cell", {"age_seconds": 60, "outcome": "stale", "receipt": R_FX, "trust": "primary"}, 200,
+     {"cell_id": cell_id(GBP_CELL)}, "The binding applies to a stale receipt too."),
+]:
+    add_envelope(f"invalid/envelope-{name}", why, env, status, "E_ENVELOPE", request=request)
+for name, env, status, why in [
+    ("bad-request-status", {"error": "E_PARSE_URI", "outcome": "bad_request"}, 500, "bad_request is HTTP 400."),
+    ("bad-request-code", {"error": "E_SIGNATURE", "outcome": "bad_request"}, 400,
+     "bad_request carries a code that parsing a cell URI can raise."),
+    ("error-envelope-code", {"error": "E_ENVELOPE", "outcome": "error"}, 500, "E_ENVELOPE is the client's code, not the mesh's."),
+]:
+    add_envelope(f"invalid/envelope-{name}", why, env, status, "E_ENVELOPE")
+for name, raw, why in [
+    ("seconds-decimal", '{"outcome": "rate_limited", "retry_after_seconds": 30.0}', "Integer members have no fraction: 30.0 is rejected."),
+    ("seconds-exponent", '{"outcome": "rate_limited", "retry_after_seconds": 3e1}', "Integer members have no exponent."),
+    ("seconds-negative-zero", '{"outcome": "rate_limited", "retry_after_seconds": -0}', "Integer members have no sign."),
+    ("seconds-too-large", '{"outcome": "rate_limited", "retry_after_seconds": 9007199254740992}', "At most 2^53 - 1."),
+]:
+    add_envelope(f"invalid/envelope-{name}", why, None, 429, "E_ENVELOPE", raw=raw)
 
 add_envelope("invalid/envelope-duplicate-member", "Envelopes are parsed strictly: no duplicate members.", None, 404,
              "E_PARSE_DUPLICATE_KEY", raw='{"outcome": "not_covered", "outcome": "ok"}')

@@ -1,0 +1,35 @@
+{
+  "id": "invalid/uri-port",
+  "kind": "uri",
+  "description": "A cell URI has no port.",
+  "valid": false,
+  "input": "cell://rates.example.org:443/fx_rate?base=EUR&date=2024-03-15&quote=USD",
+  "signature": {
+    "args": {
+      "base": {
+        "type": "string",
+        "valid": false
+      },
+      "date": {
+        "type": "date",
+        "valid": true
+      },
+      "quote": {
+        "type": "string",
+        "valid": false
+      }
+    },
+    "returns": {
+      "type": "number",
+      "unit": {
+        "of": {
+          "arg": "quote"
+        },
+        "per": {
+          "arg": "base"
+        }
+      }
+    }
+  },
+  "error": "E_PARSE_URI"
+}

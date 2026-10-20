@@ -1,0 +1,8 @@
+{
+  "id": "invalid/unit-descriptor-not-canonical",
+  "kind": "unit",
+  "description": "A descriptor that hashes to fn_hash is still checked: its unit is not listed.",
+  "valid": false,
+  "input": "{\n  \"descriptor\": {\n    \"signature\": {\n      \"returns\": {\n        \"unit\": \"dollars\",\n        \"type\": \"number\"\n      },\n      \"args\": {}\n    },\n    \"inputs\": [],\n    \"code\": {\n      \"lang\": \"stored\",\n      \"body\": \"\"\n    }\n  },\n  \"cell\": {\n    \"ns\": \"units.example.org\",\n    \"fn_hash\": \"e6018ca2048b9df9d5f8cd8bb258995775b458cc27c81549dbea25c4f1dee29a\",\n    \"fn\": \"f\",\n    \"args\": {}\n  }\n}",
+  "error": "E_CANON_UNIT"
+}

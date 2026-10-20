@@ -21,7 +21,7 @@
       "properties": {
         "body": {
           "type": "string",
-          "pattern": "^[^\u0000-\b\u000b-\u001f-]*$"
+          "pattern": "^[^\u0000-\b\u000b-\u001f\u007f-\u009f]*$"
         },
         "lang": {
           "$ref": "defs.schema.json#/$defs/name"

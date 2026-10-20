@@ -2,7 +2,8 @@
 """Generate N random receipt cases (JSON lines, SPEC.md section 11 vector format).
 
 About half are valid; the rest carry one corruption each, chosen to reach
-every verification step. The spec repo's reference tool signs them; the
+every verification step. Blob values come with their content (sometimes
+altered) for step 7.7. The spec repo's reference tool signs them; the
 libraries under test are only ever run on the output.
 
     python generate.py SPEC_REPO N SEED > cases.jsonl
@@ -20,6 +21,7 @@ import canon  # noqa: E402
 from test_fuzz import random_cell, random_instant, random_scalar, random_text  # noqa: E402
 
 rng = random.Random(SEED)
+CONTENT = {}  # blob value -> its content
 HOSTS = ["rates.example.org", "calc.example.net", "a1.example"]
 SEEDS = {h: [bytes([i + 1, j + 1]) * 16 for j in range(2)] for i, h in enumerate(HOSTS)}
 WINDOWS = [("2020-01-01T00:00:00.000000Z", "2024-06-01T00:00:00.000000Z"), ("2024-06-01T00:00:00.000000Z", None)]
@@ -50,6 +52,10 @@ def make_receipt():
     cell["ns"] = host + rng.choice(["", "/stats"])
     type_ = rng.choice(canon.TYPES)
     value = random_scalar(rng, type_)["value"]
+    if type_ == "blob":  # real content, so step 7.7 can pass
+        content = bytes(rng.randrange(256) for _ in range(rng.choice([0, 1, 50, 300])))
+        value = f"{canon.sha256_hex(content)}:{len(content)}:{rng.choice(['text/csv', 'image/png', 'application/ld+json'])}"
+        CONTENT[value] = content
     times = sorted(random_instant(rng) for _ in range(3))
     tx, asof = times[0], times[1]
     # issued inside one of the two key windows
@@ -132,6 +138,12 @@ for i in range(N):
     else:
         data, keys = corrupt(r, seed, keys)
     vec = {"id": f"cross/{i:04d}", "kind": "receipt", "description": "random", "valid": True, "keys": keys}
+    if r["value"] in CONTENT and rng.random() < 0.8:  # step 7.7: right content, or one flipped bit
+        content = bytearray(CONTENT[r["value"]])
+        if content and rng.random() < 0.3:
+            j = rng.randrange(len(content) * 8)
+            content[j // 8] ^= 1 << (j % 8)
+        vec["blob_hex"] = bytes(content).hex()
     if isinstance(data, bytes):
         vec["input_hex"] = data.hex()
     else:

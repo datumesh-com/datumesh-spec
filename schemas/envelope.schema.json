@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://datumesh.com/schemas/1/envelope.schema.json",
   "title": "Datumesh response envelope",
-  "description": "The JSON body a mesh returns at https://<mesh>/cell/<rest> (SPEC.md 5.5). Not hashed, not signed: the mesh's statement. Only the embedded receipt is verifiable. The HTTP status must match outcome; that, and trust: primary against the receipt, are checked by the procedure in 5.5.",
+  "description": "The JSON body a mesh returns at https://<mesh>/cell/<rest> (SPEC.md 5.5). Not hashed, not signed: the mesh's statement. Only the embedded receipt is verifiable. The HTTP status must match outcome; that, and trust: primary against the receipt, are checked by the procedure in 5.5. The receipt must also answer the request (step 5), which the body does not contain.",
   "type": "object",
   "required": [
     "outcome"
@@ -16,7 +16,8 @@
         "unlicensed",
         "payment_required",
         "rate_limited",
-        "error"
+        "error",
+        "bad_request"
       ]
     },
     "receipt": {
@@ -68,8 +69,49 @@
       "$ref": "#/$defs/seconds"
     },
     "error": {
-      "type": "string",
-      "pattern": "^E_[A-Z_]+$"
+      "enum": [
+        "E_PARSE_JSON",
+        "E_PARSE_DUPLICATE_KEY",
+        "E_PARSE_URI",
+        "E_SCHEMA",
+        "E_CANON_NAME",
+        "E_CANON_ARG_NAME",
+        "E_CANON_ARG_DUPLICATE",
+        "E_CANON_ARG_ORDER",
+        "E_CANON_PERCENT",
+        "E_CANON_TYPE",
+        "E_CANON_NUMBER",
+        "E_CANON_UNIT",
+        "E_CANON_DATE",
+        "E_CANON_INSTANT",
+        "E_CANON_STRING",
+        "E_CANON_BLOB",
+        "E_CANON_HEX",
+        "E_CANON_LICENCE",
+        "E_CANON_SET",
+        "E_CANON_LIMIT",
+        "E_SLICE",
+        "E_PUBLISHER_MISMATCH",
+        "E_VALID_MISMATCH",
+        "E_TIME_ORDER",
+        "E_ARG_UNKNOWN",
+        "E_ARG_MISSING",
+        "E_KEY_UNAVAILABLE",
+        "E_KEY_DOC",
+        "E_KEY_UNKNOWN",
+        "E_KEY_NOT_VALID",
+        "E_SIGNATURE",
+        "E_FN_UNAVAILABLE",
+        "E_FN_HASH_MISMATCH",
+        "E_ARG_TYPE",
+        "E_RETURN_TYPE",
+        "E_INPUT_UNAVAILABLE",
+        "E_INPUT_INVALID",
+        "E_INPUT_UNDECLARED",
+        "E_VALUE_MISMATCH",
+        "E_BLOB_MISMATCH"
+      ],
+      "description": "A code from SPEC.md 10.2 other than E_ENVELOPE; for bad_request, a URI parse code (5.5)."
     }
   },
   "dependentRequired": {
@@ -180,13 +222,49 @@
           "error"
         ]
       }
+    },
+    {
+      "properties": {
+        "outcome": {
+          "const": "bad_request"
+        },
+        "error": {
+          "enum": [
+            "E_PARSE_URI",
+            "E_CANON_NAME",
+            "E_CANON_ARG_NAME",
+            "E_CANON_ARG_DUPLICATE",
+            "E_CANON_ARG_ORDER",
+            "E_CANON_PERCENT",
+            "E_CANON_TYPE",
+            "E_CANON_NUMBER",
+            "E_CANON_DATE",
+            "E_CANON_INSTANT",
+            "E_CANON_STRING",
+            "E_CANON_BLOB",
+            "E_CANON_LIMIT",
+            "E_ARG_UNKNOWN",
+            "E_ARG_MISSING"
+          ]
+        }
+      },
+      "required": [
+        "error"
+      ],
+      "propertyNames": {
+        "enum": [
+          "outcome",
+          "error"
+        ]
+      }
     }
   ],
   "$defs": {
     "seconds": {
       "type": "integer",
       "minimum": 0,
-      "maximum": 9007199254740991
+      "maximum": 9007199254740991,
+      "description": "Written 0|[1-9][0-9]* (SPEC.md 5.5). JSON Schema cannot see that 30.0 is not written that way; the procedure in 5.5 checks it."
     }
   }
 }

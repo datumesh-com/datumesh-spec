@@ -22,9 +22,9 @@ A unit in a signature is one of three JSON forms:
 | Argument reference | `{"arg": "currency"}` | The unit is the value of the named argument. |
 | Rate | `{"of": "USD", "per": {"arg": "base"}}` | Units of `of` per one unit of `per`. |
 
-- An **argument reference** names an argument of the same signature whose type is `string`. The descriptor check is only that: the argument exists and is a string (`E_CANON_UNIT` otherwise). By convention such an argument holds a currency or unit code, and the publisher documents it as one.
+- An **argument reference** names an argument of the same signature whose type is `string`. The descriptor check is only that: the argument exists and is a string (`E_CANON_UNIT` otherwise). A name that is not an argument of the signature, whether or not it is a well-formed name (`{"arg": "Bad"}`), is `E_CANON_UNIT`. By convention such an argument holds a currency or unit code, and the publisher documents it as one.
 - A **rate** has exactly the members `of` and `per`. Each is a currency code from section 2.1 or an argument reference. Rates of other units, and rates of rates, cannot be written. Because rates have this one form, the string `"USD/EUR"` is not a unit.
-- A literal is a JSON string, a reference is an object with exactly the member `arg`, and a rate is an object with exactly `of` and `per`. Any other JSON shape is `E_SCHEMA`.
+- A literal is a JSON string, a reference is an object with exactly the member `arg` whose value is a string, and a rate is an object with exactly `of` and `per`, each a string or a reference. Any other JSON shape is `E_SCHEMA`, and is found while checking the descriptor's structure, before any canonical-form check (SPEC.md 7).
 
 Examples:
 
@@ -63,11 +63,12 @@ A code that leaves List One stays on this list, because receipts that use it rem
 
 ### 2.2 Physical units
 
-The seven SI base units, plus the derived units listed here, written with their standard symbols in ASCII:
+The seven SI base units, plus the other units listed here, written with their standard symbols in ASCII:
 
 ```units-physical
 m kg s A K mol cd
 degC m/s W kWh
+mm cm km/h hPa W/m2
 ```
 
 | Unit | Quantity |
@@ -83,16 +84,24 @@ degC m/s W kWh
 | `m/s` | metre per second, as one fixed symbol |
 | `W` | watt |
 | `kWh` | kilowatt-hour |
+| `mm` | millimetre |
+| `cm` | centimetre |
+| `km/h` | kilometre per hour, as one fixed symbol |
+| `hPa` | hectopascal |
+| `W/m2` | watt per square metre, as one fixed symbol (ASCII `2`, not `²`) |
+
+`mm` and `m` are different units, not two spellings of one: a value in `mm` is written in millimetres. Choose the unit the source publishes in.
 
 ### 2.3 Ratios and counts
 
 ```units-ratio
-percent bp 1 count
+percent permille bp 1 count
 ```
 
 | Unit | Meaning |
 |---|---|
 | `percent` | Parts per hundred: `2.5` means 2.5 %. |
+| `permille` | Parts per thousand: `25` means 2.5 %. |
 | `bp` | Basis points, parts per ten thousand: `25` means 0.25 %. |
 | `1` | A dimensionless quantity that is none of the others, such as a ratio of like quantities or a coefficient. |
 | `count` | A number of things. |
@@ -107,11 +116,22 @@ index-period = year [ "-" month [ "-" day ] ]           ; YYYY, YYYY-MM or YYYY-
 index-value  = number, greater than 0                   ; SPEC.md 3.1
 ```
 
-The period is a real calendar year, month or day, in the forms of SPEC.md 3.2. The value is a canonical number greater than zero. Examples: `index:2015=100` (UK CPI), `index:1984-01-03=1000` (an equity index based on one day).
+The period is a real calendar year, month or day, in the forms of SPEC.md 3.2: years `0001` to `9999`, so `index:0000=100` is not a unit. The value is a canonical number greater than zero. An index unit is a literal: it can be written wherever a literal can, but not as a side of a rate. A string that starts `index:` and breaks any of these rules, or is longer than 64 characters, is `E_CANON_UNIT`. Examples: `index:2015=100` (UK CPI), `index:1984-01-03=1000` (an equity index based on one day).
 
 ## 3. Resolving a unit
 
 The unit of one cell's value is found from the descriptor and the cell's arguments. A receipt carries both, the descriptor through `cell.fn_hash`.
+
+Resolution is a client convenience. Verification (SPEC.md 10.1) never resolves units, and a receipt whose unit cannot be resolved verifies like any other.
+
+`resolve(descriptor, cell)` checks, in this order, and reports the first failure:
+
+1. the cell: structure, then canonical form (SPEC.md 4.4);
+2. that the descriptor hashes to `cell.fn_hash` (`E_FN_HASH_MISMATCH`);
+3. the descriptor: structure, then canonical form (SPEC.md 7), as in verification step 7.1;
+4. substitution into the return unit, as below. For a rate, `of` is resolved before `per`.
+
+Only the arguments the return unit refers to are examined. A referenced argument the cell does not bind is `E_ARG_MISSING`, and one bound with a type other than `string` is `E_ARG_TYPE`. Other arguments are not checked against the signature; verification step 7.2 does that.
 
 - A literal resolves to itself.
 - An argument reference resolves to that argument's value in the cell. The value must itself be a literal unit from section 2, otherwise `E_CANON_UNIT`.
@@ -121,18 +141,26 @@ The unit of one cell's value is found from the descriptor and the cell's argumen
 
 The resolved string is for display and comparison. It is not hashed, and it is not a unit that may be written in a signature.
 
-## 4. Not on the list
+## 4. Seed sources
 
-These are quantities that the seed sources publish but this list cannot express directly. Each would need one more literal in a later revision, not a grammar:
+The seed sources' quantities and their units:
 
-| Source | Quantity | Their unit | Workaround in this revision |
-|---|---|---|---|
-| Open-Meteo | precipitation, snowfall | mm, cm | Publish in `m`. |
-| Open-Meteo | wind speed | km/h (default) | Request `m/s` from the source, or convert. |
-| Open-Meteo | surface pressure | hPa | None: no pressure unit is listed. |
-| Open-Meteo | shortwave radiation | W/m² | None. |
-| ONS | CPI item weights | parts per thousand | Publish in `percent` (divide by 10). |
+| Source | Quantity | Unit |
+|---|---|---|
+| European Central Bank | reference rate | `{"of": {"arg": "quote"}, "per": "EUR"}`, withdrawn currencies included |
+| ONS | CPI, CPIH | `index:2015=100` |
+| ONS | inflation rate | `percent` |
+| ONS | CPI item weights | `permille` |
+| Open-Meteo | temperature | `degC` |
+| Open-Meteo | precipitation, snowfall | `mm`, `cm` |
+| Open-Meteo | wind speed | `km/h` or `m/s` |
+| Open-Meteo | surface pressure | `hPa` |
+| Open-Meteo | shortwave radiation | `W/m2` |
+| Companies House | counts | `count` |
+| Companies House | share capital | a currency code, or `{"arg": …}` |
+
+Dates, such as incorporation dates, are values of type `date` and have no unit.
 
 ## 5. Changes
 
-- `spec-0.2.0`: first version.
+- `spec-0.2.0`: first version, including `mm`, `cm`, `km/h`, `hPa`, `W/m2` and `permille` for the seed sources.

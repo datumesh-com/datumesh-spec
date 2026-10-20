@@ -28,7 +28,7 @@
     },
     "string": {
       "type": "string",
-      "pattern": "^[^\u0000-\u001f-]*$",
+      "pattern": "^[^\u0000-\u001f\u007f-\u009f]*$",
       "maxLength": 1024
     },
     "type": {
@@ -608,6 +608,7 @@
             "VND",
             "VUV",
             "W",
+            "W/m2",
             "WST",
             "XAD",
             "XAF",
@@ -633,14 +634,19 @@
             "ZWG",
             "bp",
             "cd",
+            "cm",
             "count",
             "degC",
+            "hPa",
             "kWh",
             "kg",
+            "km/h",
             "m",
             "m/s",
+            "mm",
             "mol",
             "percent",
+            "permille",
             "s"
           ]
         },

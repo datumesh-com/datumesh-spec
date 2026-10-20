@@ -141,6 +141,24 @@
     },
     "receipt_hash": {
       "$ref": "defs.schema.json#/$defs/hex64"
+    },
+    "request": {
+      "type": "object",
+      "required": [
+        "cell_id"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "cell_id": {
+          "$ref": "defs.schema.json#/$defs/hex64"
+        },
+        "asof": {
+          "$ref": "defs.schema.json#/$defs/instant"
+        }
+      }
+    },
+    "blob_checked": {
+      "type": "boolean"
     }
   },
   "oneOf": [

@@ -123,7 +123,16 @@ def fail(code, detail, path="$"):
 _SURROGATE = re.compile("[\ud800-\udfff]")
 
 
-def parse_json(data):
+class JsonInteger(float):
+    """A JSON number written without fraction or exponent; keeps its text (SPEC 5.5)."""
+
+    def __new__(cls, text):
+        obj = super().__new__(cls, text)
+        obj.text = text
+        return obj
+
+
+def parse_json(data, keep_integer_text=False):
     if isinstance(data, (bytes, bytearray)):
         try:
             text = bytes(data).decode("utf-8")
@@ -148,6 +157,10 @@ def parse_json(data):
             fail("E_PARSE_JSON", f"number out of IEEE 754 range: {literal}")
         return value
 
+    def integer(literal):
+        number(literal)  # range check
+        return JsonInteger(literal)
+
     def constant(name):
         fail("E_PARSE_JSON", f"{name} is not JSON")
 
@@ -156,7 +169,7 @@ def parse_json(data):
             text,
             object_pairs_hook=object_pairs,
             parse_float=number,
-            parse_int=number,
+            parse_int=integer if keep_integer_text else number,
             parse_constant=constant,
         )
     except (ValueError, RecursionError) as e:
@@ -779,7 +792,7 @@ def resolved_unit(desc, cell):
     check_cell(cell, "$.cell")
     if function_hash(desc) != cell["fn_hash"]:
         fail("E_FN_HASH_MISMATCH", "descriptor does not hash to cell.fn_hash", "$.descriptor")
-    check_function(desc, "$.descriptor")
+    check_function(desc, "$.descriptor")  # structure, then canonical form
     returns = desc["signature"]["returns"]
     if isinstance(returns, str):
         return None
@@ -913,12 +926,10 @@ def parse_uri(uri, signature):
     if not m:
         fail("E_PARSE_URI", "not cell://<namespace>/<function>[?<query>] without fragment")
     path, query = m.group(1), m.group(2)
-    namespace, slash, function = path.rpartition("/")
-    if not slash:
-        fail("E_CANON_NAME", "missing namespace", "uri.path")
-    check_namespace(namespace, "uri.path")
-    check_name(function, "uri.path")
-    check_function_name(path, "uri.path")
+    # Step 1, the outer grammar, entirely before any name is examined.
+    authority = path.split("/", 1)[0]
+    if "@" in authority or ":" in authority:
+        fail("E_PARSE_URI", "a cell URI has no userinfo and no port")
     params = []
     if query is not None:
         if query == "":
@@ -928,6 +939,12 @@ def parse_uri(uri, signature):
             if not eq:
                 fail("E_PARSE_URI", f"parameter without '=': {part!r}")
             params.append((name, raw))
+    namespace, slash, function = path.rpartition("/")
+    if not slash:
+        fail("E_CANON_NAME", "missing namespace", "uri.path")
+    check_namespace(namespace, "uri.path")
+    check_name(function, "uri.path")
+    check_function_name(path, "uri.path")
     asof = None
     if params and params[-1][0] == "asof":
         asof = params.pop()[1]
@@ -1119,8 +1136,11 @@ def verify_receipt(data, keyenv, recompute=None, blob=None):
     if recompute is not None:  # step 7
         _recompute(r, recompute, keyenv)
         result["level"] = "recomputed"
-    if blob is not None and r["type"] == "blob":  # step 7.7
+    if blob is not None:  # step 7.7
+        if r["type"] != "blob":
+            fail("E_SCHEMA", "content was supplied for a value that is not a blob", "$.type")
         check_blob_content(r["value"], blob)
+        result["blob_checked"] = True
     return result
 
 
@@ -1182,17 +1202,27 @@ ENVELOPE_MEMBERS = {  # outcome -> (required, optional)
     "payment_required": (("outcome", "quote"), ()),
     "rate_limited": (("outcome", "retry_after_seconds"), ()),
     "error": (("error", "outcome"), ()),
+    "bad_request": (("error", "outcome"), ()),
 }
 ENVELOPE_STATUS = {
     "ok": range(200, 201), "stale": range(200, 201), "not_covered": range(404, 405),
     "unlicensed": range(403, 404), "payment_required": range(402, 403),
-    "rate_limited": range(429, 430), "error": range(500, 600),
+    "rate_limited": range(429, 430), "error": range(500, 600), "bad_request": range(400, 401),
 }
+# The codes parse(uri, signature) can raise (SPEC 5.4): what a bad_request may report.
+URI_CODES = (
+    "E_PARSE_URI", "E_CANON_NAME", "E_CANON_ARG_NAME", "E_CANON_ARG_DUPLICATE", "E_CANON_ARG_ORDER",
+    "E_CANON_PERCENT", "E_CANON_TYPE", "E_CANON_NUMBER", "E_CANON_DATE", "E_CANON_INSTANT",
+    "E_CANON_STRING", "E_CANON_BLOB", "E_CANON_LIMIT", "E_ARG_UNKNOWN", "E_ARG_MISSING",
+)
+_INTEGER = re.compile(r"0|[1-9][0-9]*")
 TRUST = ("primary", "verified", "unverified")
 
 
 def _seconds(value):
-    return (isinstance(value, float) and value.is_integer() and 0 <= value <= MAX_SAFE_INTEGER)
+    """An integer member: written 0|[1-9][0-9]*, at most 2^53 - 1."""
+    return (isinstance(value, JsonInteger) and _INTEGER.fullmatch(value.text) is not None
+            and int(value.text) <= MAX_SAFE_INTEGER)
 
 
 @_as_error("E_ENVELOPE")
@@ -1205,8 +1235,10 @@ def _check_envelope_members(env):
     _shape_object(env, required, optional, "$")
     if "age_seconds" in env and not _seconds(env["age_seconds"]):
         fail("E_ENVELOPE", "age_seconds is a non-negative integer", "$.age_seconds")
-    if "error" in env and env["error"] not in ERROR_CODES:
-        fail("E_ENVELOPE", "error is a code from SPEC.md 10.2", "$.error")
+    if "error" in env:
+        allowed = URI_CODES if env["outcome"] == "bad_request" else tuple(c for c in ERROR_CODES if c != "E_ENVELOPE")
+        if env["error"] not in allowed:
+            fail("E_ENVELOPE", f"{env['error']!r} is not a code this outcome can carry", "$.error")
     if "quote" in env:
         quote = env["quote"]
         _shape_object(quote, ("amount", "authorise", "currency"), (), "$.quote")
@@ -1237,9 +1269,10 @@ def _check_envelope_members(env):
         fail("E_ENVELOPE", f"trust is one of {', '.join(TRUST)}", "$.trust")
 
 
-def check_envelope(status, body, keyenv):
-    """Check a mesh response (SPEC.md 5.5): HTTP status and JSON body."""
-    env = parse_json(body)
+def check_envelope(status, body, keyenv, request):
+    """Check a mesh response (SPEC.md 5.5): HTTP status and JSON body, against the request:
+    {"cell_id": <cell id asked for>, "asof": <instant, if the request carried one>}."""
+    env = parse_json(body, keep_integer_text=True)
     _check_envelope_members(env)
     if status not in ENVELOPE_STATUS[env["outcome"]]:
         fail("E_ENVELOPE", f"status {status} does not match outcome {env['outcome']}", "$.outcome")
@@ -1247,6 +1280,10 @@ def check_envelope(status, body, keyenv):
     if "receipt" in env:
         r = env["receipt"]
         result["receipt_hash"] = verify_receipt(jcs(r), keyenv)["hash"]
+        if sha256_hex(jcs(r["cell"])) != request["cell_id"]:
+            fail("E_ENVELOPE", "the receipt is for another cell than the one requested", "$.receipt.cell")
+        if "asof" in request and r["asof"] != request["asof"]:
+            fail("E_ENVELOPE", "the receipt answers another asof than the one requested", "$.receipt.asof")
         primary = r["computed_by"].split("#")[0] == r["cell"]["ns"].split("/")[0] and not r["inputs"]
         if primary != (env["trust"] == "primary"):
             fail("E_ENVELOPE", "trust is primary exactly when the publisher's host signed a stored answer", "$.trust")
@@ -1302,28 +1339,30 @@ def run_vector(vec):
         if kind == "unit":
             obj = parse_json(vector_input(vec))
             _shape_object(obj, ("cell", "descriptor"), (), "$")
-            shape_function(obj["descriptor"], "$.descriptor")
             return {"unit": resolved_unit(obj["descriptor"], obj["cell"])}
         if kind == "envelope":
-            return check_envelope(vec["status"], vector_input(vec), vec["keys"])
+            return check_envelope(vec["status"], vector_input(vec), vec["keys"], vec["request"])
         if kind == "receipt":
             blob = bytes.fromhex(vec["blob_hex"]) if "blob_hex" in vec else None
             result = verify_receipt(vector_input(vec), vec["keys"], vec.get("recompute"), blob)
             r = parse_json(vector_input(vec))
             payload = receipt_payload(r)
-            return {
+            out = {
                 "canonical": payload.decode(),
                 "sha256": sha256_hex(payload),
                 "sig": r["sig"],
                 "level": result["level"],
             }
+            if blob is not None:
+                out["blob_checked"] = result["blob_checked"]
+            return out
         raise ValueError(f"unknown vector kind {kind!r}")
     except DatumeshError as e:
         return {"error": e.code, "detail": str(e)}
 
 
 OUTPUT_FIELDS = ("canonical", "sha256", "object", "uri", "https", "key_id", "key_ids", "sig", "level",
-                 "unit", "outcome", "trust", "receipt_hash")
+                 "blob_checked", "unit", "outcome", "trust", "receipt_hash")
 
 
 def check_vector(vec):

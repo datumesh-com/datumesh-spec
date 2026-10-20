@@ -1,0 +1,8 @@
+{
+  "id": "invalid/function-unit-arg-not-a-name",
+  "kind": "function",
+  "description": "A reference to anything that is not an argument of the signature, even a malformed name.",
+  "valid": false,
+  "input": "{\n  \"signature\": {\n    \"returns\": {\n      \"unit\": {\n        \"arg\": \"Bad\"\n      },\n      \"type\": \"number\"\n    },\n    \"args\": {\n      \"date\": {\n        \"valid\": true,\n        \"type\": \"date\"\n      }\n    }\n  },\n  \"inputs\": [],\n  \"code\": {\n    \"lang\": \"stored\",\n    \"body\": \"\"\n  }\n}",
+  "error": "E_CANON_UNIT"
+}

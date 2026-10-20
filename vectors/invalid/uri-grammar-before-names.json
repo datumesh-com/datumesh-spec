@@ -1,0 +1,35 @@
+{
+  "id": "invalid/uri-grammar-before-names",
+  "kind": "uri",
+  "description": "The outer grammar is checked before any name: the parameter without = is reported, not the uppercase host.",
+  "valid": false,
+  "input": "cell://Rates.example.org/fx_rate?base",
+  "signature": {
+    "args": {
+      "base": {
+        "type": "string",
+        "valid": false
+      },
+      "date": {
+        "type": "date",
+        "valid": true
+      },
+      "quote": {
+        "type": "string",
+        "valid": false
+      }
+    },
+    "returns": {
+      "type": "number",
+      "unit": {
+        "of": {
+          "arg": "quote"
+        },
+        "per": {
+          "arg": "base"
+        }
+      }
+    }
+  },
+  "error": "E_PARSE_URI"
+}
