@@ -1,3 +1,5 @@
+<p align="center"><img src="assets/datumesh-logo.svg" alt="Datumesh" width="180"></p>
+
 # datumesh-spec
 
 Datumesh is an open protocol for addressable, verifiable data cells: a name, a resolver, a signed answer, and a lineage you can follow.

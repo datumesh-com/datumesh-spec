@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # SPDX-License-Identifier: Apache-2.0
-"""Deploy site/index.html as a static Cloudflare Worker on datumesh.com and www.
+"""Deploy site/index.html and the logo files as a static Cloudflare Worker on datumesh.com and www.
 
     CF_API_TOKEN=... python3 site/deploy.py      (or the token in /root/cf-key)
 
@@ -8,6 +8,7 @@ The token needs Workers Scripts: Edit (account) and Workers Routes: Edit
 (zone datumesh.com). Free plan; no server, no storage, no DNS change.
 """
 
+import base64
 import json
 import os
 import pathlib
@@ -19,6 +20,15 @@ SCRIPT = "datumesh-holding"
 ROUTES = ["datumesh.com/*", "www.datumesh.com/*"]
 API = "https://api.cloudflare.com/client/v4"
 HERE = pathlib.Path(__file__).resolve().parent
+ASSETS = HERE.parent / "assets"
+# Path served -> (file, content type). Everything is embedded in the Worker.
+FILES = {
+    "/": (HERE / "index.html", "text/html; charset=utf-8"),
+    "/datumesh-logo.svg": (ASSETS / "datumesh-logo.svg", "image/svg+xml"),
+    "/datumesh-mark.svg": (ASSETS / "datumesh-mark.svg", "image/svg+xml"),
+    "/favicon.ico": (ASSETS / "datumesh-mark.svg", "image/svg+xml"),
+    "/datumesh.png": (ASSETS / "datumesh.png", "image/png"),
+}
 
 
 def token():
@@ -41,8 +51,16 @@ def call(method, path, body=None, content_type="application/json"):
 
 
 def worker_source():
-    html = (HERE / "index.html").read_text(encoding="utf-8")
-    return f"""const HTML = {json.dumps(html)};
+    files = {
+        path: {"type": ctype, "b64": base64.b64encode(file.read_bytes()).decode()}
+        for path, (file, ctype) in FILES.items()
+    }
+    return f"""const FILES = {json.dumps(files)};
+const decoded = {{}};
+function body(path) {{
+  if (!decoded[path]) decoded[path] = Uint8Array.from(atob(FILES[path].b64), (c) => c.charCodeAt(0));
+  return decoded[path];
+}}
 export default {{
   fetch(request) {{
     const url = new URL(request.url);
@@ -50,12 +68,14 @@ export default {{
       url.protocol = "https:";
       return Response.redirect(url.toString(), 301);
     }}
-    return new Response(HTML, {{
+    const path = url.pathname === "/index.html" ? "/" : url.pathname;
+    if (!FILES[path]) return new Response("Not found", {{ status: 404, headers: {{ "content-type": "text/plain" }} }});
+    return new Response(body(path), {{
       headers: {{
-        "content-type": "text/html; charset=utf-8",
+        "content-type": FILES[path].type,
         "cache-control": "public, max-age=300",
         "x-content-type-options": "nosniff",
-        "content-security-policy": "default-src 'none'; style-src 'unsafe-inline'",
+        "content-security-policy": "default-src 'none'; style-src 'unsafe-inline'; img-src 'self'",
       }},
     }});
   }},

@@ -26,6 +26,16 @@ class HoldingPage(unittest.TestCase):
                     body = response.read().decode("utf-8")
                 self.assertIn(SENTENCE, body)
                 self.assertIn(f'href="{REPO}"', body)
+                self.assertIn('src="/datumesh-logo.svg"', body)
+
+    def test_logo_files(self):
+        for path, ctype in [("/datumesh-logo.svg", "image/svg+xml"), ("/datumesh-mark.svg", "image/svg+xml"),
+                            ("/datumesh.png", "image/png")]:
+            with self.subTest(path):
+                request = urllib.request.Request("https://datumesh.com" + path, headers={"User-Agent": "datumesh-spec-test"})
+                with urllib.request.urlopen(request, timeout=20) as response:
+                    self.assertEqual(response.status, 200)
+                    self.assertEqual(response.headers["content-type"], ctype)
 
 
 if __name__ == "__main__":
