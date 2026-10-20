@@ -20,7 +20,7 @@ class SpreadsheetCases(unittest.TestCase):
         ids = [c["id"] for c in CASES]
         self.assertEqual(len(ids), len(set(ids)))
         for case in CASES:
-            self.assertIn(f"**{case['req']}**", SPEC, case["id"])
+            self.assertRegex(SPEC, rf"\*\*{case['req']}[ *]", case["id"])
             self.assertIn(case["host"], ("excel", "sheets", "both"))
             self.assertIn(case["type"], canon.TYPES)
 
