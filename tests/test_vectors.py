@@ -96,9 +96,24 @@ class Coverage(unittest.TestCase):
             self.assertEqual(vec["_file"], f"vectors/{vec['id']}.json")
 
     def test_every_error_code_has_a_vector(self):
-        used = {v["error"] for v in VECTORS if not v["valid"]}
+        # E_EVAL_UNAVAILABLE is not a failure: it appears as the code of valid receipt vectors.
+        used = {v["error"] for v in VECTORS if not v["valid"]} | {v["code"] for v in VECTORS if "code" in v}
         self.assertEqual(set(canon.ERROR_CODES) - used, set())
         self.assertEqual(used - set(canon.ERROR_CODES), set())
+
+    def test_code_only_on_valid_receipts_at_level_signed(self):
+        """spec-0.3.0, SPEC 11: a valid receipt vector may carry code E_EVAL_UNAVAILABLE, at level signed."""
+        with_code = [v for v in VECTORS if "code" in v]
+        self.assertGreaterEqual(len(with_code), 3)
+        for vec in with_code:
+            with self.subTest(vec["id"]):
+                self.assertEqual((vec["kind"], vec["valid"], vec["level"], vec["code"]),
+                                 ("receipt", True, "signed", "E_EVAL_UNAVAILABLE"))
+                self.assertNotIn("value", vec["recompute"])
+        for vec in VECTORS:
+            if vec["kind"] == "receipt" and vec["valid"] and "recompute" in vec and "value" not in vec["recompute"]:
+                with self.subTest(vec["id"]):
+                    self.assertIn("code", vec)
 
     def test_spec_0_3_0_counts(self):
         """The time rules of spec-0.3.0: inputs with differing asofs, and ok/stale under the revised binding."""
