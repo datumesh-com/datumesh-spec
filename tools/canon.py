@@ -1125,9 +1125,12 @@ def resolve_keys(host, env):
     env describes what the HTTPS request returned for this host:
       {"https": {"status": 200, "body": "..."} | {"status": <other>} | {"status": "error"}}
     """
-    https = (env or {}).get("https", {"status": "error"})
-    if https["status"] != 200:
-        fail("E_KEY_UNAVAILABLE", f"https key document: {https['status']}")
+    https = (env or {}).get("https") or {"status": "error"}
+    status = https.get("status")
+    # Only the number 200 is a retrieved document; any other status, including the string "200"
+    # or none at all, is a failed retrieval (SPEC.md 9.3, 11).
+    if isinstance(status, bool) or not isinstance(status, (int, float)) or status != 200:
+        fail("E_KEY_UNAVAILABLE", f"https key document: {status!r}")
     if "body" not in https:
         fail("E_KEY_DOC", "a 200 response without a document")
     return parse_key_doc(https["body"], host)

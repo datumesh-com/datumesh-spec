@@ -1190,6 +1190,26 @@ add_receipt("invalid/receipt-eval-unavailable-blob-mismatch", "No evaluation, th
 add_envelope("envelope/error-eval-unavailable", "A mesh that could not evaluate the cell reports E_EVAL_UNAVAILABLE, "
              "a code in 10.2.", {"error": "E_EVAL_UNAVAILABLE", "outcome": "error"}, 503)
 
+# ---------------------------------------------------------------------------
+# Open library questions settled in spec-0.3.0 (DEF-16(b), DEF-17, JS note 32)
+
+RATES_DOC = https_env(RATES, key_entry("rates-2020", T0))["https"]["body"]
+add("invalid/keys-status-string", "keys", "Only the number 200 is a retrieved document: the string \"200\" is a "
+    "failed retrieval like any other status (SPEC 9.3, 11).",
+    host=RATES, env={"https": {"body": RATES_DOC, "status": "200"}}, error="E_KEY_UNAVAILABLE")
+add("invalid/keys-status-missing", "keys", "A response without a status is a failed retrieval.",
+    host=RATES, env={"https": {"body": RATES_DOC}}, error="E_KEY_UNAVAILABLE")
+add_receipt("invalid/receipt-descriptor-null", "A null descriptor is a value offered for fn_hash, not an absent one: "
+            "it does not hash to fn_hash (SPEC 10.1 step 7.1, 11).", R_FX, "rates-2020", "E_FN_HASH_MISMATCH",
+            recompute={"descriptor": None, "inputs": {}, "value": N("1.0892")})
+add_receipt("invalid/receipt-descriptor-text", "In a vector, the descriptor is a JSON value, never text to parse: a "
+            "JSON string holding the descriptor's canonical text is a string, and does not hash to fn_hash.",
+            R_FX, "rates-2020", "E_FN_HASH_MISMATCH",
+            recompute={"descriptor": canon.jcs(FX).decode(), "inputs": {}, "value": N("1.0892")})
+add("scalar/blob-media-type-long-subtype", "scalar", "The 128-character limit is on the whole media type: a subtype of "
+    "126 characters is allowed, within RFC 6838's 127 per name (SPEC 3.7).", text(BL(f"{H}:17:a/" + "x" * 126)))
+add("invalid/scalar-blob-media-type-long-subtype", "scalar", "A subtype of 127 characters makes the media type 129 "
+    "characters long.", text(BL(f"{H}:17:a/" + "x" * 127)), "E_CANON_BLOB")
 
 
 def main():

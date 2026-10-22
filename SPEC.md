@@ -163,6 +163,7 @@ restricted-name = ( lower / DIGIT ) *( lower / DIGIT / "!" / "#" / "$" / "&" / "
 - The hash is lowercase hex. The length is a canonical non-negative integer, at most 2^53 - 1.
 - The media type is an RFC 6838 `type/subtype`, lowercase, with no parameters and no whitespace. `text/csv;charset=utf-8` and `text/CSV` are rejected. Content of a `text/*` blob SHOULD be UTF-8.
 - Every failure is `E_CANON_BLOB`, including a media type longer than 128 characters.
+- The 128-character limit applies to the media type as a whole, not to each name: either name may be up to 126 characters, so `a/` followed by 126 characters is accepted and `a/` followed by 127 is not. RFC 6838 limits each name to 127 characters; a media type within 128 always satisfies that, so no separate per-name limit applies.
 
 Only the blob string is hashed and signed. The content is retrieved out of band, by its hash; how is outside this revision. Content that does not hash to `sha256`, or does not have exactly `length` bytes, is not the blob's content (`E_BLOB_MISMATCH`, 10.1 step 7.7). A blob has no unit and cannot be a valid-time argument (section 7). The string type and its 1024-byte limit are unchanged: text longer than that is published as a blob.
 
@@ -562,6 +563,8 @@ The HTTPS document of 9.2 is the only way keys are published. A verifier resolve
 - **200** with a document that does not satisfy 9.2, or with no document: `E_KEY_DOC`.
 - **Anything else** is `E_KEY_UNAVAILABLE`. That includes 404 and every other status, any redirect, and any network, DNS-resolution, TLS or timeout failure. There is no fallback.
 
+The status is the integer HTTP status code of the response. A library that takes a response as input instead of fetching it (9.4) treats any status other than the integer 200 as "anything else": a non-integer status, such as the string `"200"`, or no status at all, is `E_KEY_UNAVAILABLE`.
+
 A host that serves no document publishes no keys, and its receipts cannot be verified.
 
 Keys are resolved only for hosts that are DNS names (2.1). A client does not fetch for any other host; it has no keys (`E_KEY_UNAVAILABLE`). A response offered for such a host cannot satisfy 9.2, whose `host` must be a DNS name, so interpreting it gives `E_KEY_DOC`.
@@ -601,7 +604,9 @@ A verifier runs these steps in order and stops at the first failure, reporting i
 
    Otherwise, accept exactly when the canonical encoding of [S]B − [k]A equals the bytes of `R` (the cofactorless equation). Compute − [k]A as the negation of the point [k]A, or as [k](−A). Do not compute it as [L − k]A: for a mixed-order `A`, [L]A is not the identity, so that gives a different point. A key with a small-order component that is not itself small order (mixed order) is not rejected. These are the rules of libsodium's `crypto_sign_verify_detached`. The `receipt/ed25519-*` and `invalid/receipt-ed25519-*` vectors test each rule with signatures a permissive (cofactored) verifier accepts. A receipt that passes steps 1-6 is **signature-valid**.
 7. **Recomputation** (optional; makes the receipt **fully verified**):
-   1. Obtain the descriptor for `cell.fn_hash` (`E_FN_UNAVAILABLE`). First check that it hashes to `cell.fn_hash` (`E_FN_HASH_MISMATCH`), before anything else about it. Then check that it is canonical (sections 6-7, units included), reporting a failure with the code canonicalising it on its own would give.
+   1. Obtain the descriptor for `cell.fn_hash` (`E_FN_UNAVAILABLE` when none is obtained). First check that it hashes to `cell.fn_hash` (`E_FN_HASH_MISMATCH`), before anything else about it. Then check that it is canonical (sections 6-7, units included), reporting a failure with the code canonicalising it on its own would give.
+
+      What is obtained is a JSON value, and its hash is SHA-256 of that value's canonical bytes. A verifier that obtains the descriptor as bytes parses them strictly first (6.1), reporting a parse failure with its code. Only obtaining nothing is unavailability: a JSON `null`, or any other value that is not the descriptor, is a descriptor offered, and fails the hash check (`E_FN_HASH_MISMATCH`), as there is no null value (3.6).
    2. `cell.args` names exactly the declared arguments, each with its declared type: first any undeclared argument (`E_ARG_UNKNOWN`), then any unbound declared argument (`E_ARG_MISSING`), then any type mismatch (`E_ARG_TYPE`), each in JCS order of names.
    3. `valid` holds exactly the declared valid-time arguments (`E_VALID_MISMATCH`).
    4. `type` equals the declared return type: `signature.returns`, or its `type` member when it is an object (`E_RETURN_TYPE`).
@@ -691,11 +696,11 @@ The four failure classes a verifier distinguishes are: bad canonical form (parse
 `canonical` is the canonical byte string as UTF-8 text. It may contain U+2028 and U+2029, which some JSON-lines tools treat as line breaks. `key_ids` are in document order. Receipt vectors built by hand (the Ed25519 strictness vectors) have no `keypair`, because their keys have no seed.
 
 A `recompute` object stands in for what step 7 obtains. It has three members:
-- `descriptor`: the descriptor offered for `cell.fn_hash`; when absent, the descriptor is unavailable (`E_FN_UNAVAILABLE`);
+- `descriptor`: the descriptor offered for `cell.fn_hash`, as a JSON value; when absent, the descriptor is unavailable (`E_FN_UNAVAILABLE`). It is never text to parse: a JSON string here is a string value offered as the descriptor, even when it holds a descriptor's text, and like `null` it does not hash to `fn_hash` (`E_FN_HASH_MISMATCH`, 10.1 step 7.1). Only an absent member means unavailable;
 - `inputs`: a map from receipt hash to the input receipt's JSON text; a hash with no entry is unavailable;
 - `value`: the typed scalar that evaluating the function gave, compared in 7.6. When absent, evaluation is unavailable: once 7.1-7.5 pass, the result is success at level `signed` with `E_EVAL_UNAVAILABLE` reported, and such a valid vector has `level: "signed"` and `code: "E_EVAL_UNAVAILABLE"`.
 
-In an `env`, `status` is an integer HTTP status or the string `"error"`; vectors use no other form.
+In an `env`, `status` is an integer HTTP status or the string `"error"`. Only the integer 200 is a retrieved document: any other value, including the string `"200"`, and an `https` object without `status`, is a failed retrieval (`E_KEY_UNAVAILABLE`, 9.3), as the vectors `invalid/keys-status-string` and `invalid/keys-status-missing` show.
 
 A failed verification reports only its code. Whether a library also returns the receipt hash when it could compute one is the library's choice, and vectors do not record it. Inputs are deliberately not canonical: member order is reversed, and there is whitespace and escaping. A valid receipt vector's expected verification result is success at `level`, with `code` when given (a library reports no code otherwise); an invalid one's is `error`. `code` is the only output that names a code on success, and it is never `error`'s. Keypairs come from fixed seeds and Ed25519 is deterministic, so `tools/gen_vectors.py` reproduces every file byte for byte.
 
@@ -754,6 +759,7 @@ Every choice this specification makes where its brief left room, with the main a
 | D32 | Malformed requests are `bad_request` (HTTP 400) carrying a URI parse code; `error` (5xx) is for the mesh's own failures | One `error` outcome for both | A client should not retry its own mistake, and should know which part of the URI to fix. |
 | D33 | A publisher of a stored receipt SHOULD set `asof = tx`. An issuer of a computed receipt SHOULD set `asof` to the latest `asof` among its input receipts, which equals the latest input `tx` (so `asof = tx`) when every input follows the first rule (8.2) | Let an input's `asof` exceed the receipt's `asof` as long as its `tx` does not, which would make `asof = tx` always possible | The second rule always satisfies D17 and depends on the inputs alone, so each version of a computed cell has exactly one canonical receipt, immutable and cacheable, even when an input's `asof` is later than its `tx` (as in `receipt/stored-number`). The alternative was rejected because a computed receipt could then cite an input its signer had not yet seen as of the receipt's `asof`. Both rules are SHOULD only: verification does not check them, and no vector's result depends on them. |
 | D34 | A verifier that cannot evaluate a function reports `E_EVAL_UNAVAILABLE` with success at level `signed` (10.1 step 7.6) | Fail the receipt, with `E_FN_UNAVAILABLE` or `E_VALUE_MISMATCH`; or say nothing | Neither existing code says what happened: the descriptor was found, and nothing was compared. Failing would turn a signature-valid receipt invalid for a reason that is the verifier's, not the receipt's. Saying nothing would hide that recomputation did not happen. |
+| D35 | A null descriptor, or one given as a value that is not the descriptor, is a descriptor offered and fails the hash check; only obtaining nothing is `E_FN_UNAVAILABLE` (10.1 step 7.1) | Treat `null` as absent | There is no null value (3.6): absence is expressed by absence. Reading `null` as "none" would give one input two meanings depending on the implementation. |
 
 ## Appendix A: collected ABNF
 
