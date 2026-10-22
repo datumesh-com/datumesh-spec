@@ -100,6 +100,18 @@ class Coverage(unittest.TestCase):
         self.assertEqual(set(canon.ERROR_CODES) - used, set())
         self.assertEqual(used - set(canon.ERROR_CODES), set())
 
+    def test_spec_0_3_0_counts(self):
+        """The time rules of spec-0.3.0: inputs with differing asofs, and ok/stale under the revised binding."""
+        receipts = {v["id"]: v for v in VECTORS if v["kind"] == "receipt"}
+        self.assertEqual(receipts["receipt/computed-inputs-earlier-asof"]["level"], "recomputed")
+        self.assertEqual(receipts["receipt/computed-input-equal-asof"]["level"], "recomputed")
+        self.assertEqual(receipts["invalid/receipt-input-later-asof"]["error"], "E_TIME_ORDER")
+        envelopes = {v["id"]: v for v in VECTORS if v["kind"] == "envelope"}
+        ok, stale = envelopes["envelope/served-ok"], envelopes["envelope/served-stale"]
+        self.assertEqual((ok["outcome"], stale["outcome"]), ("ok", "stale"))
+        self.assertEqual(ok["request"], stale["request"])
+        self.assertEqual(json.loads(ok["input"])["receipt"], json.loads(stale["input"])["receipt"])
+
     def test_every_type_appears_valid_and_invalid(self):
         for type_ in canon.TYPES:
             scalars = [v for v in VECTORS if v["kind"] == "scalar" and f'"{type_}"' in v.get("input", "")]

@@ -1,8 +1,8 @@
 {
   "id": "invalid/envelope-wrong-asof",
   "kind": "envelope",
-  "description": "A receipt answering another asof than requested.",
-  "valid": false,
+  "description": "A receipt whose asof is a day earlier than the requested asof, served as ok. Changed in spec-0.3.0: valid. ok binds the receipt to an asof at or before the requested one, like stale (SPEC 5.5, D31); it was E_ENVELOPE when ok required an equal asof. The file keeps its spec-0.2.1 path.",
+  "valid": true,
   "input": "{\n  \"trust\": \"primary\",\n  \"receipt\": {\n    \"sig\": \"ddf61d49ff6593f7b0d94c76f19fefdd27f47778740b3666fc1c3315ec00c5d216f887c4078deb05c83d4d743453c6fecc568473663b3282ac4eda8c3eadcf01\",\n    \"value\": \"1.0892\",\n    \"valid\": {\n      \"date\": {\n        \"value\": \"2024-03-15\",\n        \"type\": \"date\"\n      }\n    },\n    \"type\": \"number\",\n    \"tx\": \"2024-03-15T16:00:00.000000Z\",\n    \"summary\": \"1 EUR was worth 1.0892 USD at the 15 March 2024 reference rate.\",\n    \"publisher\": \"rates.example.org\",\n    \"proto\": \"datumesh/1\",\n    \"licence\": \"CC-BY-4.0\",\n    \"issued\": \"2024-03-16T09:00:00.000000Z\",\n    \"inputs\": [],\n    \"computed_by\": \"rates.example.org#d712b32a2cc5cb7c\",\n    \"cell\": {\n      \"ns\": \"rates.example.org\",\n      \"fn_hash\": \"7b58ecb8fd23b644c87951d0bd609790ff547cbb23fed27186c669ce2ce0aa80\",\n      \"fn\": \"fx_rate\",\n      \"args\": {\n        \"quote\": {\n          \"value\": \"USD\",\n          \"type\": \"string\"\n        },\n        \"date\": {\n          \"value\": \"2024-03-15\",\n          \"type\": \"date\"\n        },\n        \"base\": {\n          \"value\": \"EUR\",\n          \"type\": \"string\"\n        }\n      }\n    },\n    \"asof\": \"2024-03-16T09:00:00.000000Z\"\n  },\n  \"outcome\": \"ok\"\n}",
   "status": 200,
   "keys": {
@@ -29,5 +29,7 @@
     "asof": "2024-03-17T09:00:00.000000Z",
     "cell_id": "f566f2838815a8649fe467b7a41876c5d2b4deca9afb974b8c50caafd4633ca5"
   },
-  "error": "E_ENVELOPE"
+  "outcome": "ok",
+  "trust": "primary",
+  "receipt_hash": "19a5fe3a744c5792f747fb4c286ce396ab44b95922de4f07937502fe595b6f81"
 }
