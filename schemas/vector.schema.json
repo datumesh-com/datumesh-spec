@@ -160,6 +160,10 @@
     },
     "blob_checked": {
       "type": "boolean"
+    },
+    "code": {
+      "description": "A code reported with success (SPEC.md 11): only E_EVAL_UNAVAILABLE, on a valid receipt vector at level signed.",
+      "const": "E_EVAL_UNAVAILABLE"
     }
   },
   "oneOf": [
@@ -197,6 +201,24 @@
     "not": {
       "required": [
         "error"
+      ]
+    }
+  },
+  "dependentSchemas": {
+    "code": {
+      "properties": {
+        "kind": {
+          "const": "receipt"
+        },
+        "valid": {
+          "const": true
+        },
+        "level": {
+          "const": "signed"
+        }
+      },
+      "required": [
+        "level"
       ]
     }
   }

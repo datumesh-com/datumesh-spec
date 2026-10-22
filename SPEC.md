@@ -336,7 +336,7 @@ Members:
 - `reason`: a non-empty string saying why the receipt was superseded, typically a correction. It follows the string rules (3.5) with the `summary` limit, and is only present with `superseded_by`.
 - `quote`: an object with exactly `amount`, a number in the form of 3.1 (128 characters at most) greater than zero; `currency`, any currency code listed in `units.md`, withdrawn codes included; and `authorise`, where the requester can pay, an `https://` URL by the licence URL rule (`https://` followed by printable ASCII, at most 512 characters).
 - `retry_after_seconds`: a non-negative integer.
-- `error`: what failed. For `bad_request`, one of the codes `parse` can raise (5.4): `E_PARSE_URI`, `E_CANON_NAME`, `E_CANON_ARG_NAME`, `E_CANON_ARG_DUPLICATE`, `E_CANON_ARG_ORDER`, `E_CANON_PERCENT`, `E_CANON_TYPE`, `E_CANON_NUMBER`, `E_CANON_DATE`, `E_CANON_INSTANT`, `E_CANON_STRING`, `E_CANON_BLOB`, `E_CANON_LIMIT`, `E_ARG_UNKNOWN`, `E_ARG_MISSING`. For `error`, any code in 10.2 except `E_ENVELOPE`, which is a client's code, e.g. `E_INPUT_UNAVAILABLE`.
+- `error`: what failed. For `bad_request`, one of the codes `parse` can raise (5.4): `E_PARSE_URI`, `E_CANON_NAME`, `E_CANON_ARG_NAME`, `E_CANON_ARG_DUPLICATE`, `E_CANON_ARG_ORDER`, `E_CANON_PERCENT`, `E_CANON_TYPE`, `E_CANON_NUMBER`, `E_CANON_DATE`, `E_CANON_INSTANT`, `E_CANON_STRING`, `E_CANON_BLOB`, `E_CANON_LIMIT`, `E_ARG_UNKNOWN`, `E_ARG_MISSING`. For `error`, any code in 10.2 except `E_ENVELOPE`, which is a client's code, e.g. `E_INPUT_UNAVAILABLE`, or `E_EVAL_UNAVAILABLE` when the mesh could not evaluate the cell's function.
 
 **Integer members.** `age_seconds` and `retry_after_seconds` are JSON numbers written `0` or `[1-9][0-9]*`: no fraction, no exponent, no sign, and at most 2^53 - 1. So `30.0`, `3e1` and `-0` are `E_ENVELOPE`. They are the only JSON numbers in this specification, which is possible because envelopes are never hashed.
 
@@ -614,7 +614,9 @@ A verifier runs these steps in order and stops at the first failure, reporting i
 
       If there are inputs, `tx` must equal the latest input `tx` (`E_TIME_ORDER`).
    6. Evaluate the function (for `stored`: look the value up as of `asof`). The result's `type` and `value` must equal the receipt's lexically (`E_VALUE_MISMATCH`).
-   7. **Blob content.** If content is supplied: `type` must be `blob` (`E_SCHEMA` otherwise), and the content must have exactly `length` bytes and a SHA-256 equal to the blob's hash (`E_BLOB_MISMATCH`). This sub-step needs no descriptor and no inputs. It runs last: after 7.6 when recomputing, otherwise directly after step 6. Content of blob arguments is checked the same way by whoever retrieves it.
+
+      If the verifier cannot evaluate the function (it has no runtime for the descriptor's `lang`, an evaluation budget is exceeded, or its evaluator cannot obtain the inputs it needs), recomputation stops here with `E_EVAL_UNAVAILABLE`. This is not a verification failure, and it is distinct from `E_FN_UNAVAILABLE` (no descriptor, 7.1) and `E_VALUE_MISMATCH` (evaluated, and different). The result is success at level `signed`, with the code reported alongside it (at path `$.value`, where an implementation reports paths): the receipt is still signature-valid, and the caller learns that recomputation did not happen and why. It is reported only after 7.1-7.5 have passed; a failure there is reported instead.
+   7. **Blob content.** If content is supplied: `type` must be `blob` (`E_SCHEMA` otherwise), and the content must have exactly `length` bytes and a SHA-256 equal to the blob's hash (`E_BLOB_MISMATCH`). This sub-step needs no descriptor and no inputs. It runs last: after 7.6 when recomputing, otherwise directly after step 6. It also runs after 7.6 ended with `E_EVAL_UNAVAILABLE`: if it passes, the code is still reported; if it fails, its failure replaces the code as an ordinary failure. Content of blob arguments is checked the same way by whoever retrieves it.
 
    A receipt that passes 7.1-7.6 is at level `recomputed`; otherwise it stays `signed`. Step 7.7 does not change the level: passing it is reported separately, as `blob_checked`.
 
@@ -622,7 +624,7 @@ Signature-valid means the holder of key `computed_by` stated this value. Whether
 
 ### 10.2 Error codes
 
-The four failure classes a verifier distinguishes are: bad canonical form (parse, schema and canon codes), unknown or unusable key (key codes), bad signature, and value mismatch on recomputation (the remaining codes).
+The four failure classes a verifier distinguishes are: bad canonical form (parse, schema and canon codes), unknown or unusable key (key codes), bad signature, and value mismatch on recomputation (the remaining codes). One code, `E_EVAL_UNAVAILABLE`, is not a failure: it is reported with success (10.1 step 7.6).
 
 | Code | Step | Meaning |
 |---|---|---|
@@ -665,6 +667,7 @@ The four failure classes a verifier distinguishes are: bad canonical form (parse
 | `E_INPUT_INVALID` | 7 | An input receipt is not signature-valid. |
 | `E_INPUT_UNDECLARED` | 7 | An input receipt is a cell of a function not in the descriptor's `inputs`. |
 | `E_VALUE_MISMATCH` | 7 | Recomputation gives a different type or value. |
+| `E_EVAL_UNAVAILABLE` | 7 | The verifier could not evaluate the function (7.6). Not a failure: reported with success at level `signed`. |
 | `E_BLOB_MISMATCH` | 7 | Blob content has another length or hash than the blob states. |
 | `E_ENVELOPE` | envelope | A response envelope breaks a rule of 5.5, its HTTP status does not match its outcome, or its receipt does not answer the request. |
 
@@ -681,7 +684,7 @@ The four failure classes a verifier distinguishes are: bad canonical form (parse
 | `uri` | `input`: URI, `signature`: function signature | `object` (cell reference), `canonical`, `sha256`, `https` (on mesh `mesh.example`) |
 | `keyid` | `input`: public key hex | `key_id` |
 | `keys` | `host`, `env`: what the HTTPS request returned | `key_ids` |
-| `receipt` | `input`: receipt JSON text; `keypair` (`seed`, `public`, `key_id`); `keys`: an `env` per host; optional `recompute`; optional `blob_hex`: content for step 7.7 | `canonical` (the signed payload), `sha256` (receipt hash), `sig`, `level` (`signed` or `recomputed`); `blob_checked` (true) when `blob_hex` is given |
+| `receipt` | `input`: receipt JSON text; `keypair` (`seed`, `public`, `key_id`); `keys`: an `env` per host; optional `recompute`; optional `blob_hex`: content for step 7.7 | `canonical` (the signed payload), `sha256` (receipt hash), `sig`, `level` (`signed` or `recomputed`); `blob_checked` (true) when `blob_hex` is given; `code` (`E_EVAL_UNAVAILABLE`) when `recompute` has no `value` |
 | `unit` | `input`: JSON text of an object with exactly `cell` and `descriptor` (any other shape is `E_SCHEMA`) | `unit`: the resolved unit of the cell's value (7.1), or null when the function does not return a number |
 | `envelope` | `input`: the response body; `status`: the HTTP status; `keys`: an `env` per host; `request`: `{"cell_id", "asof"?}` for step 5 | `outcome`, and when there is a receipt, `trust` and `receipt_hash` |
 
@@ -690,11 +693,11 @@ The four failure classes a verifier distinguishes are: bad canonical form (parse
 A `recompute` object stands in for what step 7 obtains. It has three members:
 - `descriptor`: the descriptor offered for `cell.fn_hash`; when absent, the descriptor is unavailable (`E_FN_UNAVAILABLE`);
 - `inputs`: a map from receipt hash to the input receipt's JSON text; a hash with no entry is unavailable;
-- `value`: the typed scalar that evaluating the function gave, compared in 7.6. Vectors always give it.
+- `value`: the typed scalar that evaluating the function gave, compared in 7.6. When absent, evaluation is unavailable: once 7.1-7.5 pass, the result is success at level `signed` with `E_EVAL_UNAVAILABLE` reported, and such a valid vector has `level: "signed"` and `code: "E_EVAL_UNAVAILABLE"`.
 
 In an `env`, `status` is an integer HTTP status or the string `"error"`; vectors use no other form.
 
-A failed verification reports only its code. Whether a library also returns the receipt hash when it could compute one is the library's choice, and vectors do not record it. Inputs are deliberately not canonical: member order is reversed, and there is whitespace and escaping. A valid receipt vector's expected verification result is success at `level`; an invalid one's is `error`. Keypairs come from fixed seeds and Ed25519 is deterministic, so `tools/gen_vectors.py` reproduces every file byte for byte.
+A failed verification reports only its code. Whether a library also returns the receipt hash when it could compute one is the library's choice, and vectors do not record it. Inputs are deliberately not canonical: member order is reversed, and there is whitespace and escaping. A valid receipt vector's expected verification result is success at `level`, with `code` when given (a library reports no code otherwise); an invalid one's is `error`. `code` is the only output that names a code on success, and it is never `error`'s. Keypairs come from fixed seeds and Ed25519 is deterministic, so `tools/gen_vectors.py` reproduces every file byte for byte.
 
 The `env` for a host is `{"https": {"status": 200, "body": "<text>"}}` for a retrieved document, or `{"https": {"status": <other status>}}` or `{"https": {"status": "error"}}` for a failed retrieval. A host absent from `keys` behaves as `{"https": {"status": "error"}}`.
 
@@ -748,8 +751,9 @@ Every choice this specification makes where its brief left room, with the main a
 | D29 | `trust: primary` is defined from the receipt (signer's host = namespace's host, no inputs), and a mesh must use it exactly then | Let the mesh choose its label freely | A client can check the one label that is checkable. |
 | D30 | One code, `E_ENVELOPE`, for every envelope rule | A code per envelope rule | An envelope is not hashed or signed, so a client needs to know only that the mesh's statement is malformed. Receipt failures inside it keep their own codes. |
 | D31 | A client binds an envelope's receipt to its request: the same cell id, and, when an `asof` was asked for, a receipt `asof` at or before it, for `ok` and `stale` alike. `ok` asserts the receipt is the cell's latest version known as of the requested `asof`; `stale` does not, and carries `age_seconds` (revised in `spec-0.3.0`) | Until `spec-0.2.1`: an equal `asof` for `ok`, at or before for `stale`. Also: trust the mesh to answer the question asked | Without the binding, a mesh can answer any request with any valid receipt. It needs nothing in the receipt or the envelope, only what the client already knows. An equal `asof` forced a newly signed receipt for every distinct `asof` requested, so no receipt was reusable, and a publisher's own receipt could never be `ok` for an explicit `asof`. A receipt's value stands until the next version, so one receipt answers every later `asof` up to it. What `ok` adds over `stale` is the mesh's assertion of currency, which a client could not check under the old rule either (it could check only the equal `asof`, which says nothing about later versions). |
-| D33 | A publisher of a stored receipt SHOULD set `asof = tx`. An issuer of a computed receipt SHOULD set `asof` to the latest `asof` among its input receipts, which equals the latest input `tx` (so `asof = tx`) when every input follows the first rule (8.2) | Let an input's `asof` exceed the receipt's `asof` as long as its `tx` does not, which would make `asof = tx` always possible | The second rule always satisfies D17 and depends on the inputs alone, so each version of a computed cell has exactly one canonical receipt, immutable and cacheable, even when an input's `asof` is later than its `tx` (as in `receipt/stored-number`). The alternative was rejected because a computed receipt could then cite an input its signer had not yet seen as of the receipt's `asof`. Both rules are SHOULD only: verification does not check them, and no vector's result depends on them. |
 | D32 | Malformed requests are `bad_request` (HTTP 400) carrying a URI parse code; `error` (5xx) is for the mesh's own failures | One `error` outcome for both | A client should not retry its own mistake, and should know which part of the URI to fix. |
+| D33 | A publisher of a stored receipt SHOULD set `asof = tx`. An issuer of a computed receipt SHOULD set `asof` to the latest `asof` among its input receipts, which equals the latest input `tx` (so `asof = tx`) when every input follows the first rule (8.2) | Let an input's `asof` exceed the receipt's `asof` as long as its `tx` does not, which would make `asof = tx` always possible | The second rule always satisfies D17 and depends on the inputs alone, so each version of a computed cell has exactly one canonical receipt, immutable and cacheable, even when an input's `asof` is later than its `tx` (as in `receipt/stored-number`). The alternative was rejected because a computed receipt could then cite an input its signer had not yet seen as of the receipt's `asof`. Both rules are SHOULD only: verification does not check them, and no vector's result depends on them. |
+| D34 | A verifier that cannot evaluate a function reports `E_EVAL_UNAVAILABLE` with success at level `signed` (10.1 step 7.6) | Fail the receipt, with `E_FN_UNAVAILABLE` or `E_VALUE_MISMATCH`; or say nothing | Neither existing code says what happened: the descriptor was found, and nothing was compared. Failing would turn a signature-valid receipt invalid for a reason that is the verifier's, not the receipt's. Saying nothing would hide that recomputation did not happen. |
 
 ## Appendix A: collected ABNF
 

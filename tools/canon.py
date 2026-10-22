@@ -77,6 +77,7 @@ ERROR_CODES = (
     "E_INPUT_INVALID",
     "E_INPUT_UNDECLARED",
     "E_VALUE_MISMATCH",
+    "E_EVAL_UNAVAILABLE",
     "E_BLOB_MISMATCH",
     "E_ENVELOPE",
 )
@@ -1154,10 +1155,13 @@ def verify_receipt(data, keyenv, recompute=None, blob=None):
     """Run the verification procedure. Returns a summary or raises DatumeshError.
 
     keyenv maps host -> resolve_keys env. recompute, if given, enables step 7:
-      {"descriptor": {...} (absent: unavailable),
+      {"descriptor": {...} (absent: unavailable; any value given, null included, is offered),
        "inputs": {hash: receipt JSON text},
-       "value": {"type": ..., "value": ...}}
+       "value": {"type": ..., "value": ...} (absent: the function cannot be evaluated)}
     blob, if given, is the content bytes of a blob value, checked in step 7.7.
+
+    The result has "code": "E_EVAL_UNAVAILABLE" when 7.1-7.5 passed but there was no value to
+    compare in 7.6: verification succeeds at level signed, with the code reported.
     """
     r = parse_json(data)  # step 1
     check_receipt_form(r)  # steps 2-4
@@ -1174,8 +1178,10 @@ def verify_receipt(data, keyenv, recompute=None, blob=None):
         fail("E_SIGNATURE", "Ed25519 verification failed", "$.sig")
     result = {"hash": receipt_hash(r), "key": r["computed_by"], "level": "signed"}
     if recompute is not None:  # step 7
-        _recompute(r, recompute, keyenv)
-        result["level"] = "recomputed"
+        if _recompute(r, recompute, keyenv):
+            result["level"] = "recomputed"
+        else:  # step 7.6 could not run: not a failure
+            result["code"] = "E_EVAL_UNAVAILABLE"
     if blob is not None:  # step 7.7
         if r["type"] != "blob":
             fail("E_SCHEMA", "content was supplied for a value that is not a blob", "$.type")
@@ -1226,8 +1232,11 @@ def _recompute(r, recompute, keyenv):
         input_tx.append(ir["tx"])
     if input_tx and r["tx"] != max(input_tx):
         fail("E_TIME_ORDER", "a computed cell's tx is the latest tx of its inputs", "$.tx")
+    if "value" not in recompute:  # step 7.6: the function cannot be evaluated
+        return False
     if recompute["value"] != {"type": r["type"], "value": r["value"]}:
         fail("E_VALUE_MISMATCH", "recomputed value differs from the receipt", "$.value")
+    return True
 
 
 # ---------------------------------------------------------------------------
@@ -1398,6 +1407,8 @@ def run_vector(vec):
             }
             if blob is not None:
                 out["blob_checked"] = result["blob_checked"]
+            if "code" in result:
+                out["code"] = result["code"]
             return out
         raise ValueError(f"unknown vector kind {kind!r}")
     except DatumeshError as e:
@@ -1405,7 +1416,7 @@ def run_vector(vec):
 
 
 OUTPUT_FIELDS = ("canonical", "sha256", "object", "uri", "https", "key_id", "key_ids", "sig", "level",
-                 "blob_checked", "unit", "outcome", "trust", "receipt_hash")
+                 "blob_checked", "code", "unit", "outcome", "trust", "receipt_hash")
 
 
 def check_vector(vec):
@@ -1418,6 +1429,8 @@ def check_vector(vec):
         for field in OUTPUT_FIELDS:
             if field in vec and vec[field] != got.get(field):
                 problems.append(f"{field}: expected {vec[field]!r}, got {got.get(field)!r}")
+        if vec["kind"] == "receipt" and "code" in got and "code" not in vec:
+            problems.append(f"code: expected none, got {got['code']!r}")
         if vec["kind"] == "uri" and got["uri"] != vec["input"]:
             problems.append(f"URI does not round-trip: {got['uri']!r}")
         if vec["kind"] == "receipt" and "keypair" in vec:

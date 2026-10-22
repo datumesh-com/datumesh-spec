@@ -109,6 +109,7 @@
         "E_INPUT_INVALID",
         "E_INPUT_UNDECLARED",
         "E_VALUE_MISMATCH",
+        "E_EVAL_UNAVAILABLE",
         "E_BLOB_MISMATCH"
       ],
       "description": "A code from SPEC.md 10.2 other than E_ENVELOPE; for bad_request, a URI parse code (5.5)."

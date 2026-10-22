@@ -24,7 +24,7 @@ ROOT = canon.ROOT
 OUT = ROOT / "vectors"
 VECTORS = []
 OUTPUT_FIELDS = ("object", "canonical", "sha256", "https", "key_id", "key_ids", "sig", "level", "blob_checked",
-                 "unit", "outcome", "trust", "receipt_hash")
+                 "code", "unit", "outcome", "trust", "receipt_hash")
 
 
 # Vectors from spec-0.1.1 whose bytes changed in spec-0.2.0, and why. tests/test_migration.py
@@ -1159,6 +1159,36 @@ add_envelope("invalid/envelope-stale-earlier-asof-without-age", "envelope/served
 add_envelope("invalid/envelope-ok-with-age", "envelope/served-ok with age_seconds: ok does not carry it.",
              {"age_seconds": 0, "outcome": "ok", "receipt": R_FX, "trust": "primary"}, 200, "E_ENVELOPE",
              request=PAIR_REQUEST)
+
+# ---------------------------------------------------------------------------
+# A verifier that cannot evaluate the function (spec-0.3.0: SPEC 10.1 step 7.6, E_EVAL_UNAVAILABLE).
+# A recompute object without value: success at level signed, with the code reported.
+
+add_receipt("receipt/eval-unavailable-stored", "Recomputation of a stored cell whose value cannot be looked up: 7.1-7.5 "
+            "pass, 7.6 cannot run. Success at level signed, with E_EVAL_UNAVAILABLE reported.",
+            R_FX, "rates-2020", recompute={"descriptor": FX, "inputs": {}})
+add_receipt("receipt/eval-unavailable-computed", "A computed cell whose function the verifier cannot evaluate: the "
+            "descriptor and the input receipt check out (7.1-7.5), the value is not compared. Level signed, "
+            "E_EVAL_UNAVAILABLE reported.",
+            R_CONVERT, "calc-2020", recompute={"descriptor": CONVERT, "inputs": {H_FX: text(R_FX)}})
+add_receipt("invalid/receipt-eval-unavailable-fn-unavailable", "No descriptor and no evaluation: 7.1 fails first, so "
+            "the result is E_FN_UNAVAILABLE, not E_EVAL_UNAVAILABLE.", R_FX, "rates-2020", "E_FN_UNAVAILABLE",
+            recompute={"inputs": {}})
+add_receipt("invalid/receipt-eval-unavailable-input-unavailable", "No evaluation, and an input receipt cannot be found: "
+            "7.5 fails first.", R_CONVERT, "calc-2020", "E_INPUT_UNAVAILABLE",
+            recompute={"descriptor": CONVERT, "inputs": {}})
+add_receipt("invalid/receipt-eval-unavailable-input-later-asof", "No evaluation, and an input's asof is after the "
+            "receipt's: 7.5 fails first.", R_CROSS_EARLY, "calc-2020", "E_TIME_ORDER",
+            recompute={k: v for k, v in CROSS_RECOMPUTE.items() if k != "value"})
+add_receipt("receipt/eval-unavailable-blob-checked", "No evaluation, then step 7.7 checks the blob content and "
+            "passes: level signed, blob_checked, and E_EVAL_UNAVAILABLE still reported.",
+            R_BLOB, "rates-2020", blob_hex=CSV.hex(), recompute={"descriptor": FILING, "inputs": {}})
+add_receipt("invalid/receipt-eval-unavailable-blob-mismatch", "No evaluation, then step 7.7 fails: the blob mismatch "
+            "replaces E_EVAL_UNAVAILABLE as an ordinary failure.",
+            R_BLOB, "rates-2020", "E_BLOB_MISMATCH", blob_hex=CSV.replace(b"1.0892", b"1.0893").hex(),
+            recompute={"descriptor": FILING, "inputs": {}})
+add_envelope("envelope/error-eval-unavailable", "A mesh that could not evaluate the cell reports E_EVAL_UNAVAILABLE, "
+             "a code in 10.2.", {"error": "E_EVAL_UNAVAILABLE", "outcome": "error"}, 503)
 
 
 
