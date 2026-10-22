@@ -4,7 +4,7 @@
 
 Datumesh is an open protocol for addressable, verifiable data cells: a name, a resolver, a signed answer, and a lineage you can follow.
 
-This repository is the protocol's specification ([SPEC.md](SPEC.md), revision `spec-0.2.0`, with [units.md](units.md)), its JSON Schemas ([schemas/](schemas/)), its test vectors ([vectors/](vectors/)), and a reference canonicaliser used to generate and check them ([tools/canon.py](tools/canon.py)). The canonicaliser is a test tool, not a library.
+This repository is the protocol's specification ([SPEC.md](SPEC.md), revision `spec-0.3.0`, with [units.md](units.md)), its JSON Schemas ([schemas/](schemas/)), its test vectors ([vectors/](vectors/)), and a reference canonicaliser used to generate and check them ([tools/canon.py](tools/canon.py)). The canonicaliser is a test tool, not a library.
 
 ## In ten lines
 
@@ -45,8 +45,11 @@ With Docker only:
 
 ```sh
 docker run --rm -v "$PWD":/w -w /w python:3.13-slim sh -c \
-  'pip -q install pynacl==1.5.0 jsonschema==4.23.0 && python tools/canon.py check && cd tests && python -m unittest -v'
+  'apt-get -qq update && apt-get -qq install -y git >/dev/null && git config --global --add safe.directory /w &&
+   pip -q install pynacl==1.5.0 jsonschema==4.23.0 && python tools/canon.py check && cd tests && python -m unittest -v'
 ```
+
+`tests/test_migration_0_3_0.py` reads the `spec-0.2.1` files from git, so it needs `git` and the full history (it is skipped without `git`).
 
 Independent cross-check of every canonical form, hash and signature with the `canonicalize` npm package and Node's crypto:
 

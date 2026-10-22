@@ -1,6 +1,6 @@
 # Datumesh protocol, version 1
 
-Status: draft, revision `spec-0.2.1`. Identifier in data: `datumesh/1`. Changes are listed in section 14.
+Status: draft, revision `spec-0.3.0`. Identifier in data: `datumesh/1`. Changes are listed in section 14.
 
 Datumesh is an open protocol for addressable, verifiable data cells: a name, a resolver, a signed answer, and a lineage you can follow. This document defines how a cell is named (the cell URI), how it is written as canonical bytes, what a signed answer (a receipt) contains, what a mesh returns around it (the response envelope), how keys are published, and how a verifier checks a receipt. The units a function may declare are listed in `units.md`, which is part of this specification. Storage formats, wire protocols, resolvers and the engine are out of scope.
 
@@ -796,6 +796,32 @@ index-unit    = "index:" 4DIGIT [ "-" 2DIGIT [ "-" 2DIGIT ] ] "=" number   ; uni
 ```
 
 ## 14. Changes
+
+### spec-0.3.0
+
+Time rules that work with real lineage. Two rules turned out unworkable with real data, and both become more permissive. It changes no hash: every receipt hash, cell id, function hash, canonical form and signature in the `spec-0.2.1` vectors is unchanged, and every `spec-0.2.1` vector file is byte-identical except the one whose expected result changed, which differs only in its result members and description. `tests/test_migration_0_3_0.py` checks this against the `spec-0.2.1` files in git, and recomputes the receipt hash of every receipt in every `spec-0.2.1` vector, inputs and envelope receipts included. `proto` is still `datumesh/1`.
+
+- **D17 revised (8.2, 10.1 step 7.5, 10.2).** An input receipt's `asof` is at or before the receipt's `asof` (`E_TIME_ORDER`), instead of equal to it. Stored inputs are signed by their publishers at their own `asof` and cannot be re-signed, so a computed cell with two stored inputs published at different times could never satisfy the old rule. `tx` is still the latest input `tx`. By signing, `computed_by` asserts each input was its cell's latest version as of the receipt's `asof`; recomputation checks determinism given exactly those inputs, not their currency.
+- **D31 revised (5.5).** For `ok`, the receipt's `asof` is at or before the requested `asof`, as for `stale`, instead of equal to it. An equal `asof` forced a newly signed receipt for every distinct `asof` requested, so no receipt was reusable. `ok` asserts the receipt is the cell's latest version known as of the requested `asof`; `stale` differs only in that the mesh cannot assert that, and carries `age_seconds`. On the wire the two are told apart by `outcome` and by `age_seconds`; neither assertion is checkable by a client.
+- **Two SHOULDs (8.2, D33).** A stored receipt's publisher sets `asof = tx`; a computed receipt's issuer sets `asof` to the latest input `asof`. No vector's result depends on them.
+- **`E_EVAL_UNAVAILABLE` (10.1 step 7.6, 10.2, 11, D34).** A verifier that cannot evaluate the function reports this code with success at level `signed`; the receipt stays signature-valid. Step 7.7 still runs, and its failure replaces the code. In the vectors, a `recompute` without `value` means evaluation is unavailable, and a valid receipt vector gains the output `code`. A valid receipt vector's expected result is success at `level`, with `code` when given. A mesh may carry the code in an `error` envelope.
+- **Library questions settled.**
+  - A non-integer HTTP status, or none, is a failed retrieval (`E_KEY_UNAVAILABLE`; 9.3, 11).
+  - A descriptor is obtained as a JSON value; `null`, or a JSON string in a vector, is a descriptor offered and fails the hash check (`E_FN_HASH_MISMATCH`); only obtaining nothing is `E_FN_UNAVAILABLE` (10.1 step 7.1, 11, D35).
+  - The 128-character media type limit is on the whole media type, with no per-name limit (3.7).
+- **Reference tool.** `tools/canon.py` follows all of the above, reports `code` for receipt vectors, and no longer crashes on an `https` response without `status`.
+- **Vectors.** 26 new, 365 in all.
+  - Time rules: `receipt/computed-inputs-earlier-asof`, `receipt/computed-input-equal-asof`, `invalid/receipt-input-later-asof`; envelopes `envelope/ok-earlier-asof`, `envelope/ok-equal-asof`, `envelope/ok-no-requested-asof`, `envelope/served-ok` and `envelope/served-stale` (one receipt and request, both outcomes), `invalid/envelope-ok-later-asof`, `invalid/envelope-stale-later-than-request`, `invalid/envelope-stale-earlier-asof-without-age`, `invalid/envelope-ok-with-age`.
+  - `E_EVAL_UNAVAILABLE`: `receipt/eval-unavailable-stored`, `receipt/eval-unavailable-computed`, `receipt/eval-unavailable-blob-checked`, `invalid/receipt-eval-unavailable-fn-unavailable`, `invalid/receipt-eval-unavailable-input-unavailable`, `invalid/receipt-eval-unavailable-input-later-asof`, `invalid/receipt-eval-unavailable-blob-mismatch`, `envelope/error-eval-unavailable`.
+  - Settled questions: `invalid/keys-status-string`, `invalid/keys-status-missing`, `invalid/receipt-descriptor-null`, `invalid/receipt-descriptor-text`, `scalar/blob-media-type-long-subtype`, `invalid/scalar-blob-media-type-long-subtype`.
+
+**Expected results that changed.** One, because the rules became more permissive:
+
+| Vector | spec-0.2.1 | spec-0.3.0 | Why |
+|---|---|---|---|
+| `invalid/envelope-wrong-asof` | `E_ENVELOPE` | valid: `ok`, trust `primary`, receipt hash `19a5fe3a744c5792f747fb4c286ce396ab44b95922de4f07937502fe595b6f81` | Its receipt's `asof` is a day before the requested `asof`, which `ok` now accepts (D31). The file keeps its path under `invalid/`. |
+
+No other vector's expected result changed. In particular, `receipt/computed-with-lineage` and the other computed vectors have inputs with an equal `asof`, which the revised D17 still accepts, and `invalid/envelope-stale-later-asof` stays `E_ENVELOPE`.
 
 ### spec-0.2.1
 

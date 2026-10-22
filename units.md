@@ -1,6 +1,6 @@
 # Datumesh units
 
-Status: part of `spec-0.2.0`, normative. SPEC.md section 7.1 says where units appear; this document says which units exist.
+Status: part of `spec-0.3.0` (unchanged since `spec-0.2.0`), normative. SPEC.md section 7.1 says where units appear; this document says which units exist.
 
 A function declares the unit of every number it takes or returns. The unit lives in the function's signature, so the function hash commits to it and every receipt inherits it through `cell.fn_hash`. A receipt never carries a unit itself.
 

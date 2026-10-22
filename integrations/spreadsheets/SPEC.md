@@ -1,6 +1,6 @@
 # Datumesh in spreadsheets: Excel add-in and Google Sheets add-on
 
-Status: **design, non-normative, not built.** This document specifies two future integrations so that their tests can be written before their code. It does not change the protocol (`../../SPEC.md`, `spec-0.2.0`). Where it uses protocol terms (cell, receipt, slice, `asof`) they mean what the protocol says.
+Status: **design, non-normative, not built.** This document specifies two future integrations so that their tests can be written before their code. It does not change the protocol (`../../SPEC.md`, `spec-0.3.0`). Where it uses protocol terms (cell, receipt, slice, `asof`) they mean what the protocol says.
 
 Dependencies that do not exist yet: a mesh that resolves function names and serves receipts (SPEC 5.3), and a function-resolution endpoint returning descriptors. Verification reuses the JavaScript verifier `@datumesh/verify`.
 
