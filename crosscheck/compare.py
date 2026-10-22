@@ -6,7 +6,7 @@ import json
 import sys
 from collections import Counter
 
-FIELDS = ("error", "canonical", "sha256", "sig", "level", "object", "https", "key_id", "key_ids",
+FIELDS = ("error", "canonical", "sha256", "sig", "level", "code", "object", "https", "key_id", "key_ids",
           "unit", "outcome", "trust", "receipt_hash")
 runs = {name: [json.loads(l) for l in open(path)] for name, path in (a.split("=") for a in sys.argv[1:])}
 names = list(runs)

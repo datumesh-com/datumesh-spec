@@ -6,6 +6,12 @@ every verification step. Blob values come with their content (sometimes
 altered) for step 7.7. The spec repo's reference tool signs them; the
 libraries under test are only ever run on the output.
 
+After those N cases come N // 4 lineage cases (spec-0.3.0) with a recompute
+object: computed receipts over stored inputs whose asofs are earlier than,
+equal to or later than the receipt's (D17), with tx right or wrong, and with
+an evaluation value that matches, differs or is absent (E_EVAL_UNAVAILABLE);
+sometimes the descriptor or an input is missing, or blob content follows.
+
     python generate.py SPEC_REPO N SEED > cases.jsonl
 """
 
@@ -148,4 +154,85 @@ for i in range(N):
         vec["input_hex"] = data.hex()
     else:
         vec["input"] = data
+    print(json.dumps(vec, ensure_ascii=True))
+
+
+# --- lineage (spec-0.3.0: SPEC 8.2, 10.1 steps 7.5-7.7) ------------------------------------------
+# A separate random stream, so the cases above stay what they were for a given seed.
+
+lin = random.Random(SEED * 7919 + 1)
+STORED = {"code": {"body": "", "lang": "stored"}, "inputs": [],
+          "signature": {"args": {"date": {"type": "date", "valid": True}, "series": {"type": "string", "valid": False}},
+                        "returns": {"type": "number", "unit": "1"}}}
+STORED_HASH = canon.sha256_hex(canon.jcs(STORED))
+
+
+def computed_descriptor(returns):
+    return {"code": {"body": "sum(rates.example.org/series(date: date, series: s) for s in inputs)\n", "lang": "expr"},
+            "inputs": ["rates.example.org/series"],
+            "signature": {"args": {"date": {"type": "date", "valid": True}}, "returns": returns}}
+
+
+def lineage_instant(day, second):
+    return f"2023-05-{day:02d}T{second // 3600:02d}:{second // 60 % 60:02d}:{second % 60:02d}.000000Z"
+
+
+def stored_input(name, tx, asof):
+    key = SEEDS["rates.example.org"][0]  # 2020-2024 window; every lineage time is in 2023
+    _, public = canon.keypair(key)
+    r = {"asof": asof, "cell": {"args": {"date": {"type": "date", "value": "2023-05-01"}, "series": {"type": "string", "value": name}},
+                                "fn": "series", "fn_hash": STORED_HASH, "ns": "rates.example.org"},
+         "computed_by": f"rates.example.org#{canon.key_id(public)}", "inputs": [], "issued": asof, "licence": "CC-BY-4.0",
+         "proto": canon.PROTO, "publisher": "rates.example.org", "summary": f"Series {name}.", "tx": tx, "type": "number",
+         "valid": {"date": {"type": "date", "value": "2023-05-01"}}, "value": str(lin.randint(1, 99))}
+    return canon.sign_receipt(r, key)
+
+
+for i in range(N // 4):
+    asof = lineage_instant(10, lin.randrange(3600, 80000))
+    stored = []
+    for j in range(lin.randint(1, 3)):
+        relation = lin.choice(["earlier", "earlier", "equal", "later"])
+        input_asof = {"earlier": lineage_instant(lin.randint(2, 9), lin.randrange(86400)), "equal": asof,
+                      "later": lineage_instant(lin.randint(11, 20), lin.randrange(86400))}[relation]
+        tx = input_asof if lin.random() < 0.6 else lineage_instant(1, lin.randrange(86400))  # asof = tx, or earlier
+        stored.append((relation, stored_input(f"s{j}", tx, input_asof)))
+    hashes = {canon.receipt_hash(r): r for _, r in stored}
+    blob = lin.random() < 0.2
+    if blob:
+        content = bytes(lin.randrange(256) for _ in range(lin.choice([0, 7, 40])))
+        type_, value = "blob", f"{canon.sha256_hex(content)}:{len(content)}:text/csv"
+        desc = computed_descriptor("blob")
+    else:
+        type_, value = "number", str(sum(int(r["value"]) for _, r in stored))
+        desc = computed_descriptor({"type": "number", "unit": "1"})
+    tx = max(r["tx"] for _, r in stored)
+    if lin.random() < 0.1:  # not the latest input tx
+        tx = lineage_instant(1, 0)
+    if lin.random() < 0.3:  # the SHOULD of 8.2: the latest input asof
+        asof = max(max(r["asof"] for _, r in stored), tx)
+    signer = SEEDS["calc.example.net"][0]
+    _, public = canon.keypair(signer)
+    receipt = canon.sign_receipt({
+        "asof": asof, "cell": {"args": {"date": {"type": "date", "value": "2023-05-01"}}, "fn": "total",
+                               "fn_hash": canon.sha256_hex(canon.jcs(desc)), "ns": "calc.example.net"},
+        "computed_by": f"calc.example.net#{canon.key_id(public)}", "inputs": sorted(hashes), "issued": asof,
+        "licence": "CC-BY-4.0", "proto": canon.PROTO, "publisher": "calc.example.net", "summary": "A total.",
+        "tx": min(tx, asof), "type": type_, "valid": {"date": {"type": "date", "value": "2023-05-01"}}, "value": value,
+    }, signer)
+    recompute = {"descriptor": desc, "inputs": {h: serialise(r) for h, r in hashes.items()}}
+    evaluation = lin.choice(["match", "match", "absent", "absent", "differs"])
+    if evaluation == "match":
+        recompute["value"] = {"type": type_, "value": value}
+    elif evaluation == "differs":
+        recompute["value"] = {"type": "number", "value": "100000"}
+    if lin.random() < 0.05:
+        del recompute["descriptor"]
+    if lin.random() < 0.05:
+        recompute["inputs"].pop(sorted(hashes)[0])
+    relations = "-".join(sorted({rel for rel, _ in stored}))
+    vec = {"id": f"cross-lineage/{i:04d}-{relations}-{evaluation}", "kind": "receipt", "description": "random lineage",
+           "valid": True, "keys": env(), "recompute": recompute, "input": serialise(receipt)}
+    if blob and lin.random() < 0.8:
+        vec["blob_hex"] = (content if lin.random() < 0.7 else content + b"x").hex()
     print(json.dumps(vec, ensure_ascii=True))

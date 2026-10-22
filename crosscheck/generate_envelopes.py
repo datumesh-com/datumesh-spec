@@ -6,9 +6,14 @@ request asked for, and how the outcome presents the answer:
 - the requested cell: the receipt's own, a sibling differing in one argument, the same arguments
   under another function hash or namespace, or another function entirely;
 - the requested asof: none, equal, earlier or later than the receipt's, by a microsecond or a year;
-- the outcome: ok or stale (with age_seconds), with the HTTP status and trust label that match.
-So the cases aim at stale/ok confusion and at a receipt for a different cell. The reference tool
-signs; the libraries only run.
+- the outcome: ok or stale, with the HTTP status and trust label that match; stale usually with
+  age_seconds and ok usually without, but sometimes the other way round, since age_seconds is
+  what tells the two apart on the wire.
+Since spec-0.3.0 (SPEC 5.5 step 5, D31) ok and stale bind alike: the receipt's asof must be at
+or before the requested asof. So the cases aim at stale/ok confusion (the receipt's asof earlier,
+equal or later than requested, with or without a requested asof, under both outcomes), at
+age_seconds presence, and at a receipt for a different cell. The reference tool signs; the
+libraries only run.
 
     python generate_envelopes.py SPEC_REPO N SEED > envelopes.jsonl
 """
@@ -83,12 +88,13 @@ for i in range(N):
     outcome = rng.choice(["ok", "stale"])
     env = {"outcome": outcome, "receipt": r,
            "trust": "primary" if is_primary(r) else rng.choice(["verified", "unverified"])}
-    if outcome == "stale":
+    if (outcome == "stale") != (rng.random() < 0.1):  # 10%: stale without age_seconds, ok with it
         env["age_seconds"] = rng.choice([0, 1, 3600, 31536000])
     if rng.random() < 0.1:  # the mesh mislabels the outcome's trust
         env["trust"] = rng.choice(["primary", "verified", "unverified"])
     request = {"cell_id": cell_id(SIBLINGS["same"] if rng.random() < 0.7 else rng.choice(list(SIBLINGS.values())))}
     label, requested_asof = rng.choice([("none", None)] + NEAR[asof])
+    label += "-age" if "age_seconds" in env else ""
     if requested_asof is not None:
         request["asof"] = requested_asof
     print(json.dumps({"id": f"envelope-adv/{i:04d}-{outcome}-{answered}-{label}", "kind": "envelope",

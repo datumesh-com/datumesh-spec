@@ -168,8 +168,9 @@ def random_envelope():
     if request is None:  # the request the receipt answers, with or without asof
         cell = env["receipt"]["cell"] if isinstance(env.get("receipt"), dict) and "cell" in env["receipt"] else POOL[0]["cell"]
         request = {"cell_id": canon.sha256_hex(canon.jcs(cell))}
-        if rng.random() < 0.5:
-            request["asof"] = "2024-03-16T09:00:00.000000Z"
+        if rng.random() < 0.5:  # the pool's asof is 2024-03-16T09:00: equal, later or earlier than requested
+            request["asof"] = rng.choice(["2024-03-16T09:00:00.000000Z", "2024-03-17T09:00:00.000000Z",
+                                          "2024-03-16T08:59:59.999999Z"])
     return status, env, request
 
 
