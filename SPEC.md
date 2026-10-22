@@ -312,8 +312,8 @@ The envelope is an object whose `outcome` decides which other members it has. A 
 
 | `outcome` | HTTP status | Required members | Optional members | Meaning |
 |---|---|---|---|---|
-| `ok` | 200 | `receipt`, `trust` | `superseded_by`, `reason` | The receipt answers the cell as of the requested `asof`. |
-| `stale` | 200 | `receipt`, `trust`, `age_seconds` | `superseded_by`, `reason` | The mesh could not get a current answer and serves the last receipt it knows. |
+| `ok` | 200 | `receipt`, `trust` | `superseded_by`, `reason` | The receipt is for the requested cell, its `asof` is at or before the requested `asof`, and the mesh asserts that it is the cell's latest version known as of the requested `asof`. |
+| `stale` | 200 | `receipt`, `trust`, `age_seconds` | `superseded_by`, `reason` | As `ok`, except that the mesh cannot assert that the receipt is current: it could not get a current answer and serves the last receipt it knows. |
 | `not_covered` | 404 | none | none | The mesh has no receipt for this cell: it does not serve the function, or the cell has no value. |
 | `unlicensed` | 403 | none | none | The requester may not receive this cell. |
 | `payment_required` | 402 | `quote` | none | The cell is available for the quoted price. |
@@ -324,7 +324,7 @@ The envelope is an object whose `outcome` decides which other members it has. A 
 Members:
 
 - `outcome`: one of the eight strings above.
-- `receipt`: a receipt object (section 8), embedded as JSON. For `stale`, it is the last receipt the mesh knows for the cell.
+- `receipt`: a receipt object (section 8), embedded as JSON. For `ok`, it is the cell's latest version as of the requested `asof`, which may have been signed at an earlier `asof`. For `stale`, it is the last receipt the mesh knows for the cell.
 - `trust`: what the mesh asserts about how the receipt was produced:
   - `primary`: the host of `computed_by` equals the host of `cell.ns` (2.3), and `inputs` is empty. The publisher answered from its own records.
   - `verified`: not primary, and the mesh recomputed the receipt (10.1 step 7) and it matched.
@@ -346,12 +346,15 @@ A client checks an envelope in this order and reports the first failure:
 2. Check the members against the table and the rules above (`E_ENVELOPE`). Here `receipt` need only be an object. Every failure of a member's rule is `E_ENVELOPE`, including the rules `reason`, `quote` and `superseded_by` borrow from other sections.
 3. Check that the HTTP status matches `outcome` (`E_ENVELOPE`).
 4. If there is a receipt, verify it through step 6 of 10.1, with that procedure's codes.
-5. **The receipt answers the request** (`E_ENVELOPE`). Its cell id (4.4) MUST equal the id of the cell requested. That is, the cell the request's URI denotes, resolved to the `fn_hash` the client used. If the request carried `asof`:
-   - for `ok`, the receipt's `asof` MUST equal it;
-   - for `stale`, the receipt's `asof` MUST be at or before it. How much earlier is what `age_seconds` describes.
-
-   If the request carried no `asof`, the receipt's `asof` is the mesh's "now", and the client accepts it.
+5. **The receipt answers the request** (`E_ENVELOPE`). Its cell id (4.4) MUST equal the id of the cell requested. That is, the cell the request's URI denotes, resolved to the `fn_hash` the client used. If the request carried `asof`, the receipt's `asof` MUST be at or before it, for `ok` and `stale` alike. If the request carried no `asof`, it asked for the mesh's "now", and the client accepts any receipt `asof`.
 6. Check `trust` against the receipt, as above, and that `superseded_by` differs from the receipt's hash (`E_ENVELOPE`).
+
+A receipt states a cell's value as of its own `asof`, and that value stands until the cell's next version. So one receipt answers every `asof` from its own up to the next version's, and a mesh serves it as `ok` for all of them without anything being re-signed. The two outcomes that carry a receipt differ only in what the mesh asserts about it:
+
+- `ok`: the receipt is the cell's latest version known as of the requested `asof` (as of now, when none was requested);
+- `stale`: the mesh cannot assert that. It serves the last receipt it knows, and `age_seconds` says how long ago it last confirmed it as current.
+
+On the wire, the two are always told apart: by `outcome`, and by `age_seconds`, which `stale` requires and `ok` forbids. A client checks the same binding for both (step 5): the cell, and an `asof` at or before the one requested. It cannot check either assertion. Whether an `ok` receipt is in fact the latest version, and how old a `stale` one is, are the mesh's claims (12); a client that doubts them asks another mesh.
 
 Step 5 needs the request, which the envelope does not contain. A client MUST perform it; a library takes the requested cell id and `asof` as inputs. A malformed request description, meaning a `cell_id` that is not 64 lowercase hex digits or an `asof` that is not an instant, is the caller's error. It is not an `E_*` code: libraries report it the way their language reports a misused function. For outcomes without a receipt there is nothing to bind. Without it, a mesh could answer with a valid receipt for a different cell.
 
@@ -500,7 +503,13 @@ Example (`vectors/receipt/stored-number.json`):
 ### 8.2 Time
 
 - `tx <= asof <= issued` always holds (`E_TIME_ORDER`).
-- For a computed cell, `tx` is the latest `tx` among its input receipts, i.e. the moment the computed value became knowable. All input receipts share the receipt's `asof`. This makes recomputation deterministic: the same cell as of the same `asof` gives the same value and the same `tx`.
+- For a computed cell, every input receipt has an `asof` at or before the receipt's `asof` (`E_TIME_ORDER`), and `tx` is the latest `tx` among its input receipts, i.e. the moment the computed value became knowable. Input receipts need not share an `asof`: a stored receipt is signed by its publisher at its own `asof`, and nobody else can re-sign it, so inputs published at different times keep different `asof`s.
+- By signing, `computed_by` asserts that each input receipt was the latest version of its cell as of the receipt's `asof`. Recomputation (10.1 step 7) checks that the value follows deterministically from exactly those inputs, which `inputs` pins by hash. It does not check that they were current: that is the signer's statement, like the value itself.
+- **Choosing `asof`** (D33). Two rules, one for each kind of issuer:
+  1. A publisher of a stored receipt SHOULD set `asof = tx`.
+  2. An issuer of a computed receipt SHOULD set `asof` to the latest `asof` among its input receipts. When every input follows rule 1, this equals the latest input `tx`, so `asof = tx`.
+
+  Rule 2 always satisfies the rule on input `asof`s above, and it is determined by the inputs alone, so each version of a computed cell has exactly one canonical receipt: immutable, cacheable, and served as `ok` for every later requested `asof` until the next version (5.5). That holds even when an input's `asof` is later than its `tx`, as in `receipt/stored-number`. Both rules are SHOULD only: verification does not check them.
 - `issued` exists because `asof` can be in the past. A receipt answering "as of 2020", signed today, must be checked against the key valid today, not the key valid in 2020.
 
 ### 8.3 Receipt hash and signature
@@ -601,7 +610,7 @@ A verifier runs these steps in order and stops at the first failure, reporting i
       - verify it through step 6 (`E_INPUT_INVALID`);
       - check that it hashes to the listed hash (`E_INPUT_UNAVAILABLE`);
       - check it is a cell of a declared input function (`E_INPUT_UNDECLARED`);
-      - check it has the same `asof` (`E_TIME_ORDER`).
+      - check its `asof` is at or before the receipt's `asof` (`E_TIME_ORDER`).
 
       If there are inputs, `tx` must equal the latest input `tx` (`E_TIME_ORDER`).
    6. Evaluate the function (for `stored`: look the value up as of `asof`). The result's `type` and `value` must equal the receipt's lexically (`E_VALUE_MISMATCH`).
@@ -640,7 +649,7 @@ The four failure classes a verifier distinguishes are: bad canonical form (parse
 | `E_SLICE` | 4, unit | A slice marker in a receipt, or in an argument a unit refers to. |
 | `E_PUBLISHER_MISMATCH` | 4 | `publisher` differs from `cell.ns`. |
 | `E_VALID_MISMATCH` | 4, 7 | `valid` does not echo exactly the valid-time arguments. |
-| `E_TIME_ORDER` | 4, 7 | `tx <= asof <= issued` fails, inputs have another `asof`, or computed `tx` is not the latest input `tx`. |
+| `E_TIME_ORDER` | 4, 7 | `tx <= asof <= issued` fails, an input receipt's `asof` is after the receipt's, or computed `tx` is not the latest input `tx`. |
 | `E_ARG_UNKNOWN` | URI, 7 | An argument the function does not declare. |
 | `E_ARG_MISSING` | URI, 7, unit | A declared argument not bound (slices are written `*`). |
 | `E_KEY_UNAVAILABLE` | 5 | The key document could not be retrieved: any non-200 status (404 included), redirect, or network, DNS-resolution, TLS or timeout failure. |
@@ -700,7 +709,7 @@ The vectors use reserved example domains (`example.org`, `example.net`, `.exampl
 - **Revocation** is by shortening `valid_to`. There is no other revocation list.
 - **Text in summaries and strings** may contain bidi controls and confusable characters. Display it as data.
 - **Blob content** is untrusted until step 7.7 passes. Check the length before downloading or hashing more than that many bytes. Do not let the media type override what a client would otherwise do with the bytes: it is the publisher's claim.
-- **Envelopes are unsigned.** TLS authenticates the mesh, not what it says. `stale`, `superseded_by`, `verified` and every non-`ok` outcome are the mesh's claims, and a mesh can lie about them or omit them. A client that needs a newer value asks with a later `asof`, or asks another mesh.
+- **Envelopes are unsigned.** TLS authenticates the mesh, not what it says. `stale`, `superseded_by`, `verified`, every non-`ok` outcome, and the currency that `ok` asserts are the mesh's claims, and a mesh can lie about them or omit them. In particular, a mesh can serve an outdated receipt as `ok`: the client checks only that its `asof` is at or before the requested one. A client that needs a newer value asks with a later `asof`, or asks another mesh.
 
 ## 13. Decisions and rationale
 
@@ -724,7 +733,7 @@ Every choice this specification makes where its brief left room, with the main a
 | D14 | `inputs` are sets: sorted, unique; same for descriptor inputs | Ordered lists | Lineage is a set; order would be a second spelling. |
 | D15 | Keys only from the HTTPS key document; every retrieval failure, 404 included, is `E_KEY_UNAVAILABLE` | DNS TXT as a fallback (removed in `spec-0.1.1`) | One Web-PKI-authenticated path; nothing to downgrade to. |
 | D16 | Keys published per DNS host, covering its path namespaces | Per-namespace key files | `/.well-known` exists only at an origin's root (RFC 8615). |
-| D17 | Computed `tx` = latest input `tx`; inputs share `asof` | `tx` = evaluation time | Makes recomputation deterministic and checkable. |
+| D17 | Computed `tx` = latest input `tx`; every input receipt's `asof` is at or before the receipt's `asof`; by signing, `computed_by` asserts each input was its cell's latest version as of the receipt's `asof` (revised in `spec-0.3.0`) | Until `spec-0.2.1`: every input receipt shares the receipt's `asof`. Also `tx` = evaluation time | A stored input is signed by its publisher at its own `asof` and cannot be re-signed by anyone else, so a computed cell with two stored inputs published at different times could never satisfy the old rule. Recomputation stays deterministic and checkable given the inputs, which `inputs` pins by hash; their currency is the signer's assertion, which no verifier could check under the old rule either. `tx` = latest input `tx` is kept: it is when the value became knowable. |
 | D18 | "Declared inputs" in the function hash = names of functions it may read | Declared arguments | Arguments are already in the signature; dependencies are what the brief's third component can add. |
 | D19 | Descriptor `code` is `{lang, body}`; `stored` for stored functions | Hash of external source | Self-contained hash input; languages defined later. |
 | D20 | Licence: one SPDX identifier or `https://` URL, not an SPDX expression | Full SPDX expressions | Brief says identifier; expressions add a grammar to canonicalise. |
@@ -738,7 +747,8 @@ Every choice this specification makes where its brief left room, with the main a
 | D28 | Staleness, supersession and trust live in an unsigned response envelope | New receipt members | Receipts already signed stay byte-identical and verifiable. These facts change after signing and are the mesh's claims, not the signer's. |
 | D29 | `trust: primary` is defined from the receipt (signer's host = namespace's host, no inputs), and a mesh must use it exactly then | Let the mesh choose its label freely | A client can check the one label that is checkable. |
 | D30 | One code, `E_ENVELOPE`, for every envelope rule | A code per envelope rule | An envelope is not hashed or signed, so a client needs to know only that the mesh's statement is malformed. Receipt failures inside it keep their own codes. |
-| D31 | A client binds an envelope's receipt to its request: the same cell id, and, when an `asof` was asked for, the same `asof` for `ok`, or one at or before it for `stale` | Trust the mesh to answer the question asked; or require an equal `asof` for `stale` too | Without the binding, a mesh can answer any request with any valid receipt. It needs nothing in the receipt or the envelope, only what the client already knows. A stale receipt is the last one known, so its `asof` is earlier by construction; the client learns how much earlier from `age_seconds`. |
+| D31 | A client binds an envelope's receipt to its request: the same cell id, and, when an `asof` was asked for, a receipt `asof` at or before it, for `ok` and `stale` alike. `ok` asserts the receipt is the cell's latest version known as of the requested `asof`; `stale` does not, and carries `age_seconds` (revised in `spec-0.3.0`) | Until `spec-0.2.1`: an equal `asof` for `ok`, at or before for `stale`. Also: trust the mesh to answer the question asked | Without the binding, a mesh can answer any request with any valid receipt. It needs nothing in the receipt or the envelope, only what the client already knows. An equal `asof` forced a newly signed receipt for every distinct `asof` requested, so no receipt was reusable, and a publisher's own receipt could never be `ok` for an explicit `asof`. A receipt's value stands until the next version, so one receipt answers every later `asof` up to it. What `ok` adds over `stale` is the mesh's assertion of currency, which a client could not check under the old rule either (it could check only the equal `asof`, which says nothing about later versions). |
+| D33 | A publisher of a stored receipt SHOULD set `asof = tx`. An issuer of a computed receipt SHOULD set `asof` to the latest `asof` among its input receipts, which equals the latest input `tx` (so `asof = tx`) when every input follows the first rule (8.2) | Let an input's `asof` exceed the receipt's `asof` as long as its `tx` does not, which would make `asof = tx` always possible | The second rule always satisfies D17 and depends on the inputs alone, so each version of a computed cell has exactly one canonical receipt, immutable and cacheable, even when an input's `asof` is later than its `tx` (as in `receipt/stored-number`). The alternative was rejected because a computed receipt could then cite an input its signer had not yet seen as of the receipt's `asof`. Both rules are SHOULD only: verification does not check them, and no vector's result depends on them. |
 | D32 | Malformed requests are `bad_request` (HTTP 400) carrying a URI parse code; `error` (5xx) is for the mesh's own failures | One `error` outcome for both | A client should not retry its own mistake, and should know which part of the URI to fix. |
 
 ## Appendix A: collected ABNF

@@ -1048,8 +1048,6 @@ GBP_CELL = FX_CELL | {"args": FX_ARGS | {"quote": S("GBP")}}
 for name, env, status, request, why in [
     ("wrong-cell", {"outcome": "ok", "receipt": R_FX, "trust": "primary"}, 200, {"asof": ASOF, "cell_id": cell_id(GBP_CELL)},
      "A valid receipt for another cell than the one requested."),
-    ("wrong-asof", {"outcome": "ok", "receipt": R_FX, "trust": "primary"}, 200,
-     {"asof": "2024-03-17T09:00:00.000000Z", "cell_id": cell_id(FX_CELL)}, "A receipt answering another asof than requested."),
     ("stale-wrong-cell", {"age_seconds": 60, "outcome": "stale", "receipt": R_FX, "trust": "primary"}, 200,
      {"cell_id": cell_id(GBP_CELL)}, "The binding applies to a stale receipt too."),
 ]:
@@ -1071,6 +1069,97 @@ for name, raw, why in [
 
 add_envelope("invalid/envelope-duplicate-member", "Envelopes are parsed strictly: no duplicate members.", None, 404,
              "E_PARSE_DUPLICATE_KEY", raw='{"outcome": "not_covered", "outcome": "ok"}')
+
+
+# The one spec-0.2.1 vector whose expected result changed in spec-0.3.0 (tests/test_migration_0_3_0.py).
+# It keeps its path, so the file under invalid/ is now a valid vector.
+add_envelope("invalid/envelope-wrong-asof",
+             "A receipt whose asof is a day earlier than the requested asof, served as ok. Changed in spec-0.3.0: "
+             "valid. ok binds the receipt to an asof at or before the requested one, like stale (SPEC 5.5, D31); "
+             "it was E_ENVELOPE when ok required an equal asof. The file keeps its spec-0.2.1 path.",
+             {"outcome": "ok", "receipt": R_FX, "trust": "primary"}, 200,
+             request={"asof": "2024-03-17T09:00:00.000000Z", "cell_id": cell_id(FX_CELL)})
+
+# ---------------------------------------------------------------------------
+# Time rules that work with real lineage (spec-0.3.0: SPEC 8.2, 10.1 step 7.5, D17)
+
+CROSS = {
+    "code": {"body": "round(rates.example.org/fx_rate(base: \"EUR\", date: date, quote: quote)"
+                     " / rates.example.org/fx_rate(base: \"EUR\", date: date, quote: base), 4)\n", "lang": "expr"},
+    "inputs": ["rates.example.org/fx_rate"],
+    "signature": {"args": {"base": SARG, "date": DARG, "quote": SARG},
+                  "returns": NUM({"of": {"arg": "quote"}, "per": {"arg": "base"}})},
+}
+CROSS_CELL = cell_of(CROSS, CALC, "cross_rate", {"base": S("USD"), "date": D("2024-03-15"), "quote": S("GBP")})
+GBP_TX = "2024-03-15T16:05:00.000000Z"
+# A stored receipt that follows the SHOULD of 8.2: asof = tx. R_FX does not (its asof is later than its tx).
+R_GBP_PUBLISHED = signed(receipt(GBP_CELL, "number", "0.8556",
+                                 "1 EUR was worth 0.8556 GBP at the 15 March 2024 reference rate, published at 16:05 UTC.",
+                                 "rates-2020", asof=GBP_TX, tx=GBP_TX), "rates-2020")
+H_GBP_PUBLISHED = canon.receipt_hash(R_GBP_PUBLISHED)
+CROSS_INPUTS = sorted([H_FX, H_GBP_PUBLISHED])
+CROSS_RECOMPUTE = {"descriptor": CROSS, "inputs": {H_FX: text(R_FX), H_GBP_PUBLISHED: text(R_GBP_PUBLISHED)},
+                   "value": N("0.7855")}
+
+
+def cross_receipt(asof, issued, summary):
+    return signed(receipt(CROSS_CELL, "number", "0.7855", summary, "calc-2020", asof=asof, tx=GBP_TX, issued=issued,
+                          inputs=CROSS_INPUTS), "calc-2020")
+
+
+add_receipt("receipt/computed-inputs-earlier-asof",
+            "A computed cell with two stored inputs published at different times: their asofs (2024-03-15T16:05 and "
+            "2024-03-16T09:00) differ, and both are before the receipt's asof (2024-03-16T12:00). Every input asof "
+            "is at or before the receipt's (D17), and tx is the latest input tx.",
+            cross_receipt("2024-03-16T12:00:00.000000Z", "2024-03-16T12:00:00.000000Z",
+                          "1 USD was worth 0.7855 GBP at the 15 March 2024 reference rates, as of 12:00 UTC on 16 March."),
+            "calc-2020", recompute=CROSS_RECOMPUTE)
+add_receipt("receipt/computed-input-equal-asof",
+            "The same inputs, with the receipt's asof equal to the later input's asof (2024-03-16T09:00), as the "
+            "SHOULD of 8.2 recommends: the latest asof among the inputs.",
+            cross_receipt("2024-03-16T09:00:00.000000Z", "2024-03-16T09:00:02.000000Z",
+                          "1 USD was worth 0.7855 GBP at the 15 March 2024 reference rates."),
+            "calc-2020", recompute=CROSS_RECOMPUTE)
+R_CROSS_EARLY = cross_receipt("2024-03-16T08:00:00.000000Z", "2024-03-16T08:00:00.000000Z",
+                              "Cites an input whose asof is an hour after its own.")
+add_receipt("invalid/receipt-input-later-asof",
+            "An input receipt's asof (2024-03-16T09:00) is after the receipt's asof (2024-03-16T08:00): the signer "
+            "cites an input it could not have seen as of its own asof (10.1 step 7.5).",
+            R_CROSS_EARLY, "calc-2020", "E_TIME_ORDER", recompute=CROSS_RECOMPUTE)
+
+# Envelopes under the revised binding (SPEC 5.5 step 5, D31): ok and stale both bind to an asof at or
+# before the requested one; they differ in what the mesh asserts, which the wire carries as outcome and
+# age_seconds.
+PAIR_REQUEST = {"asof": "2024-03-17T12:00:00.000000Z", "cell_id": cell_id(FX_CELL)}
+add_envelope("envelope/ok-earlier-asof", "ok with a receipt whose asof is before the requested asof: one receipt "
+             "answers every asof up to the cell's next version, and the mesh asserts it is still the latest.",
+             {"outcome": "ok", "receipt": R_FX, "trust": "primary"}, 200,
+             request={"asof": "2024-03-20T00:00:00.000000Z", "cell_id": cell_id(FX_CELL)})
+add_envelope("envelope/ok-equal-asof", "ok with a receipt whose asof equals the requested asof.",
+             {"outcome": "ok", "receipt": R_CONVERT, "trust": "verified"}, 200,
+             request={"asof": ASOF, "cell_id": cell_id(R_CONVERT["cell"])})
+add_envelope("invalid/envelope-ok-later-asof", "ok with a receipt whose asof is a microsecond after the requested asof.",
+             {"outcome": "ok", "receipt": R_FX, "trust": "primary"}, 200, "E_ENVELOPE",
+             request={"asof": "2024-03-16T08:59:59.999999Z", "cell_id": cell_id(FX_CELL)})
+add_envelope("envelope/ok-no-requested-asof", "ok for a request without asof, which asks for now: any receipt asof is "
+             "accepted.", {"outcome": "ok", "receipt": R_CONVERT, "trust": "unverified"}, 200,
+             request={"cell_id": cell_id(R_CONVERT["cell"])})
+add_envelope("envelope/served-ok", "The receipt and request of envelope/served-stale, served as ok: the mesh asserts "
+             "that the receipt is the cell's latest version as of the requested asof.",
+             {"outcome": "ok", "receipt": R_FX, "trust": "primary"}, 200, request=PAIR_REQUEST)
+add_envelope("envelope/served-stale", "The receipt and request of envelope/served-ok, served as stale: the mesh cannot "
+             "assert that the receipt is current, and says when it last could in age_seconds.",
+             {"age_seconds": 97200, "outcome": "stale", "receipt": R_FX, "trust": "primary"}, 200, request=PAIR_REQUEST)
+add_envelope("invalid/envelope-stale-later-than-request", "stale with a receipt whose asof is an hour after the "
+             "requested asof.", {"age_seconds": 0, "outcome": "stale", "receipt": R_CONVERT, "trust": "verified"}, 200,
+             "E_ENVELOPE", request={"asof": "2024-03-16T08:00:00.000000Z", "cell_id": cell_id(R_CONVERT["cell"])})
+add_envelope("invalid/envelope-stale-earlier-asof-without-age", "envelope/served-stale without age_seconds: stale "
+             "requires it, and it is what tells stale from ok on the wire.",
+             {"outcome": "stale", "receipt": R_FX, "trust": "primary"}, 200, "E_ENVELOPE", request=PAIR_REQUEST)
+add_envelope("invalid/envelope-ok-with-age", "envelope/served-ok with age_seconds: ok does not carry it.",
+             {"age_seconds": 0, "outcome": "ok", "receipt": R_FX, "trust": "primary"}, 200, "E_ENVELOPE",
+             request=PAIR_REQUEST)
+
 
 
 def main():

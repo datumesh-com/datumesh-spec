@@ -1221,8 +1221,8 @@ def _recompute(r, recompute, keyenv):
             fail("E_INPUT_UNAVAILABLE", f"supplied receipt does not hash to {h}", "$.inputs")
         if ir["cell"]["ns"] + "/" + ir["cell"]["fn"] not in desc["inputs"]:
             fail("E_INPUT_UNDECLARED", f"input {h} is a cell of an undeclared function", "$.inputs")
-        if ir["asof"] != r["asof"]:
-            fail("E_TIME_ORDER", "input receipts must share the receipt's asof", "$.inputs")
+        if not ir["asof"] <= r["asof"]:
+            fail("E_TIME_ORDER", "an input receipt's asof is after the receipt's asof", "$.inputs")
         input_tx.append(ir["tx"])
     if input_tx and r["tx"] != max(input_tx):
         fail("E_TIME_ORDER", "a computed cell's tx is the latest tx of its inputs", "$.tx")
@@ -1322,12 +1322,11 @@ def check_envelope(status, body, keyenv, request):
         result["receipt_hash"] = verify_receipt(jcs(r), keyenv)["hash"]
         if sha256_hex(jcs(r["cell"])) != request["cell_id"]:
             fail("E_ENVELOPE", "the receipt is for another cell than the one requested", "$.receipt.cell")
-        if "asof" in request:
-            # A stale receipt is the last one known: its asof is at or before the one requested.
-            if env["outcome"] == "stale" and not r["asof"] <= request["asof"]:
-                fail("E_ENVELOPE", "a stale receipt's asof is after the one requested", "$.receipt.asof")
-            if env["outcome"] == "ok" and r["asof"] != request["asof"]:
-                fail("E_ENVELOPE", "the receipt answers another asof than the one requested", "$.receipt.asof")
+        # ok and stale alike: a receipt answers every asof from its own up to the cell's next
+        # version, so its asof is at or before the one requested (D31). What ok adds, that the
+        # receipt is the latest version known as of the requested asof, is the mesh's claim.
+        if "asof" in request and not r["asof"] <= request["asof"]:
+            fail("E_ENVELOPE", "the receipt's asof is after the one requested", "$.receipt.asof")
         primary = r["computed_by"].split("#")[0] == r["cell"]["ns"].split("/")[0] and not r["inputs"]
         if primary != (env["trust"] == "primary"):
             fail("E_ENVELOPE", "trust is primary exactly when the publisher's host signed a stored answer", "$.trust")
