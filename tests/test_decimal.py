@@ -1,6 +1,9 @@
 # SPDX-License-Identifier: Apache-2.0
-"""Brief test 2 (decimal half): the formula dialect's decimal arithmetic (SPEC 15.4) matches a
-reference decimal library on random cases.
+"""Brief test 2 (decimal half): the formula dialect's decimal arithmetic (SPEC 15.9) matches a
+reference decimal library on random cases, and the transcendental algorithms (SPEC 15.9.3) are
+compared with mpdecimal (Python's decimal) or a high-precision series, with every divergence
+counted: the 40-digit algorithm is normative, and a divergence is a hard case, never more than
+one unit in the 34th digit.
 
 tools/fdecimal.py implements the rule with Python integers only: exact result, rounded once to 34
 significant digits half-even, then the range rule (the canonical form is at most 128 characters).
@@ -21,6 +24,8 @@ SEED = int(os.environ.get("DATUMESH_DECIMAL_SEED", "20261024"))
 
 CTX = decimal.Context(prec=34, rounding=decimal.ROUND_HALF_EVEN, Emin=-6143, Emax=6144, clamp=0,
                       traps=[decimal.InvalidOperation, decimal.DivisionByZero, decimal.Overflow])
+HIGH = decimal.Context(prec=90, rounding=decimal.ROUND_HALF_EVEN, Emin=-999999, Emax=999999)
+DOWN40 = decimal.Context(prec=40, rounding=decimal.ROUND_DOWN, Emin=-999999, Emax=999999)
 EXACT = decimal.Context(prec=100000, rounding=decimal.ROUND_HALF_EVEN, Emin=-999999, Emax=999999,
                         traps=[decimal.InvalidOperation, decimal.DivisionByZero, decimal.Overflow])
 
@@ -100,10 +105,12 @@ class Arithmetic(unittest.TestCase):
         self.compare("div", fdecimal.div, ref, cases)
 
     def test_sqrt(self):
+        """SQRT-T40: the exact root truncated to 40 digits, then half-even to 34."""
         def ref(a):
             if a < 0:
                 return "E_FORMULA_DOMAIN"
-            return reference(CTX.sqrt(a))
+            root = HIGH.sqrt(a)
+            return reference(CTX.plus(DOWN40.plus(root)))
         cases = self.operands(1, spread=120)
         cases += [(str(k * k),) for k in range(1, 50)] + [("0",), ("2",), ("0.0001",)]
         self.compare("sqrt", fdecimal.sqrt, ref, cases)
@@ -192,6 +199,145 @@ class Aggregates(unittest.TestCase):
                 expected = "E_FORMULA_RANGE" if "E_FORMULA_RANGE" in steps else reference(CTX.sqrt(v))
                 self.assertEqual(ours(fdecimal.stdev, [fdecimal.Dec.parse(x) for x in xs], population), expected,
                                  f"stdev({xs}, population={population})")
+
+
+DIVERGENCES = {}
+
+
+def _series_sin_cos(x, cos=False):
+    """A 90-digit reference: Taylor series after reduction by a 90-digit pi."""
+    pi = HIGH_PI
+    k = (x / (pi / 2)).to_integral_value(rounding=decimal.ROUND_HALF_EVEN)
+    r = x - k * (pi / 2)
+    s = t = r if not cos else decimal.Decimal(1)
+    for j in range(1, 80):
+        t = -t * r * r / (((2 * j) * (2 * j + 1)) if not cos else ((2 * j - 1) * (2 * j)))
+        s += t
+    return s, int(k) % 4
+
+
+def _atan_series(t):
+    s = term = t
+    for j in range(1, 400):
+        term = term * t * t
+        s += (-1) ** j * term / (2 * j + 1)
+    return s
+
+
+decimal.getcontext().prec = 90
+HIGH_PI = 16 * (lambda x: _atan_series(x))(decimal.Decimal(1) / 5) - 4 * _atan_series(decimal.Decimal(1) / 239)
+
+
+def high_sin(x):
+    s, q = _series_sin_cos(x)
+    c, _ = _series_sin_cos(x, cos=True)
+    return [s, c, -s, -c][q]
+
+
+def high_cos(x):
+    s, q = _series_sin_cos(x)
+    c, _ = _series_sin_cos(x, cos=True)
+    return [c, -s, -c, s][q]
+
+
+def high_atan2(y, x):
+    a, b = abs(y), abs(x)
+    swap = a > b
+    t = b / a if swap else a / b
+    for _ in range(3):
+        t = t / (1 + (1 + t * t).sqrt())
+    angle = 8 * _atan_series(t)
+    if swap:
+        angle = HIGH_PI / 2 - angle
+    if x < 0:
+        angle = HIGH_PI - angle
+    return -angle if y < 0 else angle
+
+
+class Transcendental(unittest.TestCase):
+    """The algorithms against correctly rounded references. A divergence is a hard case: the
+    reference and the algorithm differ by exactly one unit in the 34th digit. They are counted
+    (tests/test_decimal.py prints the counts) and must stay rare."""
+
+    def setUp(self):
+        self.rng = random.Random(SEED + 2)
+
+    def check(self, name, fn, ref, cases):
+        diverged = 0
+        for args in cases:
+            ours_ = ours(fn, *[fdecimal.Dec.parse(a) for a in args])
+            theirs = ref(*[decimal.Decimal(a) for a in args])
+            if ours_ != theirs:
+                self.assertNotIn("E_", ours_ + theirs, f"{name}{args}: {ours_} vs {theirs}")
+                ulp = decimal.Decimal(1).scaleb(decimal.Decimal(theirs).adjusted() - 33)
+                self.assertLessEqual(abs(decimal.Decimal(ours_) - decimal.Decimal(theirs)), ulp, f"{name}{args}")
+                diverged += 1
+        DIVERGENCES[name] = (diverged, len(cases))
+        self.assertLessEqual(diverged, max(2, len(cases) // 1000), name)
+
+    def numbers(self, lo, hi, places=20):
+        out = []
+        for _ in range(N):
+            d = decimal.Decimal(self.rng.uniform(lo, hi)).quantize(decimal.Decimal(1).scaleb(-self.rng.randrange(0, places)))
+            out.append((canonical(d),))
+        return out
+
+    def test_exp(self):
+        self.check("exp", fdecimal.exp, lambda a: reference(CTX.exp(a)), self.numbers(-290, 290) + [("0",), ("1",), ("-1",)])
+
+    def test_ln(self):
+        cases = [(random_number(self.rng, spread=60).lstrip("-") or "1",) for _ in range(N)]
+        cases = [c for c in cases if c[0] != "0"] + [("1",), ("10",), ("0.1",), ("2",)]
+        self.check("ln", fdecimal.ln, lambda a: reference(CTX.ln(a)), cases)
+
+    def test_power_non_integer(self):
+        def ref(a, b):
+            exact = EXACT.multiply(b, HIGH.ln(a))
+            return reference(CTX.plus(HIGH.exp(exact)))
+        cases = []
+        for _ in range(N):
+            a = canonical(decimal.Decimal(self.rng.uniform(0.01, 1000)).quantize(decimal.Decimal("1e-8")))
+            b = canonical(decimal.Decimal(self.rng.uniform(-20, 20)).quantize(decimal.Decimal("1e-6")))
+            if "." in b and a != "0":
+                cases.append((a, b))
+        self.check("pow", fdecimal.pow_frac, ref, cases)
+
+    def test_sin_cos(self):
+        cases = self.numbers(-1000, 1000, 15)
+        self.check("sin", fdecimal.sin, lambda a: reference(CTX.plus(high_sin(a))), cases)
+        self.check("cos", fdecimal.cos, lambda a: reference(CTX.plus(high_cos(a))), cases)
+
+    def test_atan2(self):
+        cases = [(a[0], b[0]) for a, b in zip(self.numbers(-100, 100, 12), self.numbers(-100, 100, 12))]
+        cases += [("1", "0"), ("-1", "0"), ("0", "-1"), ("0", "1"), ("1", "1"), ("-1", "-1")]
+        self.check("atan2", fdecimal.atan2, lambda y, x: reference(CTX.plus(high_atan2(y, x))), cases)
+
+    def test_sqrt_divergences(self):
+        cases = [(random_number(self.rng, spread=60).lstrip("-") or "1",) for _ in range(N)]
+        self.check("sqrt-vs-correctly-rounded", fdecimal.sqrt, lambda a: reference(CTX.sqrt(a)), cases)
+
+    def test_constructed_hard_case_the_algorithm_wins(self):
+        """A root whose digits 35-41 are 5000001: correctly rounded it goes up; truncated to 40
+        digits it is a tie, and half-even keeps the even 34-digit neighbour."""
+        r = decimal.Decimal(10 ** 33 + 2) + decimal.Decimal("0.5000001")
+        x = EXACT.multiply(r, r)
+        text = canonical(x)
+        self.assertLessEqual(len(text), 128)
+        self.assertEqual(reference(CTX.sqrt(x)), str(10 ** 33 + 3))  # correctly rounded
+        self.assertEqual(str(fdecimal.sqrt(fdecimal.Dec.parse(text))), str(10 ** 33 + 2))  # the algorithm
+
+    def test_haversine(self):
+        P = fdecimal.Dec.parse
+        self.assertEqual(str(fdecimal.haversine(P("51.5074"), P("-0.1278"), P("48.8566"), P("2.3522"))), "343556.535")
+        self.assertEqual(str(fdecimal.haversine(P("0"), P("0"), P("0"), P("180"))), "20015114.442")
+        self.assertEqual(str(fdecimal.haversine(P("10"), P("20"), P("10"), P("20"))), "0")
+        with self.assertRaises(fdecimal.ArithmeticFault):
+            fdecimal.haversine(P("91"), P("0"), P("0"), P("0"))
+
+    @classmethod
+    def tearDownClass(cls):
+        print("\nhard cases (divergences from the correctly rounded reference): " +
+              ", ".join(f"{k} {d}/{n}" for k, (d, n) in sorted(DIVERGENCES.items())), file=__import__("sys").stderr)
 
 
 class Rules(unittest.TestCase):
