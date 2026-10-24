@@ -190,6 +190,15 @@ def slice_schema(doc):
 
 
 class Schemas(unittest.TestCase):
+    def test_schemas_have_no_raw_control_characters(self):
+        """JavaScript library entries 31 and 45: control characters in patterns are written as
+        \\u escapes, never raw (U+0000-U+001F other than LF, and U+007F-U+009F)."""
+        for path in (ROOT / "schemas").glob("*.json"):
+            text = path.read_text(encoding="utf-8")
+            with self.subTest(path.name):
+                bad = sorted({hex(ord(c)) for c in text if (ord(c) < 0x20 and c != "\n") or 0x7F <= ord(c) <= 0x9F})
+                self.assertEqual(bad, [])
+
     def test_schemas_are_valid_2020_12(self):
         for path in (ROOT / "schemas").glob("*.json"):
             with self.subTest(path.name):

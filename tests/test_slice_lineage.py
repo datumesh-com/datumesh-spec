@@ -55,6 +55,38 @@ class Vectors(unittest.TestCase):
             self.assertIn("lineage", vec["recompute"])
 
 
+class Supersession(unittest.TestCase):
+    """10.1 step 7.6, as the reference applies it (spec-0.4.0 text settled after the libraries' findings)."""
+
+    def setUp(self):
+        self.vec = VECTORS["receipt/slice-superseded"]
+        self.r = json.loads(self.vec["input"])
+
+    def verify(self, lineage):
+        rec = dict(self.vec["recompute"], lineage=lineage)
+        try:
+            return canon.verify_receipt(self.vec["input"].encode(), self.vec["keys"], rec).get("code")
+        except canon.DatumeshError as e:
+            return e.code
+
+    def test_the_vector(self):
+        self.assertEqual(self.verify(self.vec["recompute"]["lineage"]), "E_INPUT_SUPERSEDED")
+
+    def test_order_does_not_matter(self):
+        self.assertEqual(self.verify(list(reversed(self.vec["recompute"]["lineage"]))), "E_INPUT_SUPERSEDED")
+
+    def test_replaced_entry_must_be_absent(self):
+        lineage = sorted(set(self.vec["recompute"]["lineage"]) | set(self.r["inputs"]))
+        self.assertEqual(self.verify(lineage), "E_VALUE_MISMATCH")
+
+    def test_items_that_are_not_entries_replace_nothing(self):
+        """RS-37: an item that is not a string replaces nothing; it is not an error of its own."""
+        for junk in (None, 7, {"a": 1}, ["x"]):
+            with self.subTest(junk=junk):
+                self.assertEqual(self.verify([junk]), "E_VALUE_MISMATCH")
+                self.assertEqual(self.verify(self.vec["recompute"]["lineage"] + [junk]), "E_INPUT_SUPERSEDED")
+
+
 class EntryForm(unittest.TestCase):
     H = "a" * 64
 
