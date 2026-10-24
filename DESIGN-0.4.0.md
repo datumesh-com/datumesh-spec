@@ -1,8 +1,43 @@
 # spec-0.4.0 design memo: the formula dialect and slice-as-lineage
 
-Status: phase 1 of step 1.3, part 1, for review. Nothing in SPEC.md, `units.md`, the schemas, the
-vectors or the tools changes until this memo is accepted. Base: `main` at `3bac3d4` (tag
-`spec-0.3.0`).
+Status: accepted on 2026-10-24 with the user's decisions below (phase 1 of step 1.3, part 1).
+Base: `main` at `3bac3d4` (tag `spec-0.3.0`).
+
+## Decisions after review (the user, 2026-10-24)
+
+1. **`-2^2` and `2^3^2`** are rejected (`E_FORMULA_AMBIGUOUS`), as proposed.
+2. **Positional arguments bind by a declared order, `signature.order`**, not by ascending name
+   order. `order` is an optional member of the signature: an array listing every argument name
+   exactly once. When absent, a descriptor's bytes and hash are exactly as before, so no existing
+   descriptor or receipt hash changes. In a read, positional arguments bind by `order` and labelled
+   ones by name; positional arguments come first; more positional arguments than `order` has is an
+   error; a positional argument in a read of a function without `order` is refused at define time.
+   Formula descriptors always carry `order`. Classes (1.3b) use the same `order` for key tuples.
+   The canonical AST still turns positional arguments into labelled ones. Older verifiers reject a
+   descriptor with `order`, as with `extent`. Amended: 1.3, 2.1, 3.3, 6.3, section 18 (D43 replaced
+   by D64).
+3. **Run-time faults give `not_covered`, carrying the formula code** in the envelope, so a fault is
+   not mistaken for missing data. The envelope gains an optional member on `not_covered` only; no
+   existing envelope vector's result changes. The engine variant is a later library step. Amended:
+   3.5, D58.
+4. **Test 7**: two slice entries (temperatures and weights) are acceptable. Amended: 7.6.
+5. **Accepted as proposed**: case-insensitive built-ins and keywords, printed lowercase; the three
+   whitespace-sensitive lexical rules; bare literals take the context's unit except against
+   percent, permille and bp; `first_known`, `last_corrected` and `superseded` deferred to the
+   standard library; `E_INPUT_SUPERSEDED` as success at level `signed` with the code; the units
+   `min`, `h`, `d` and `km`; asof-dependent receipts one per requested asof, with the mesh rule.
+6. **Excel equivalence vectors** are based on Microsoft's documented semantics, with the
+   documentation page cited per function in the table, and are marked documentation-derived. No
+   real Excel is used.
+
+Two small simplifications made while implementing, recorded here: `degC` multiplied or divided by
+anything is `E_FORMULA_UNIT_OFFSET` (5.4 had an exception for a bare `1`, which bought nothing),
+and `not_covered`'s new member is named `fault`, not `error`, so that `error` keeps one meaning
+across outcomes (3.5).
+
+---
+
+## Phase 1 memo (as reviewed, amended where marked)
 
 Read for it: the user's brief (`BRIEF-1.3.md`, whose fixed decisions, required grammar and stop
 conditions are not reopened here), the user's decision log (as saved on 2026-10-24), SPEC.md,
@@ -12,7 +47,7 @@ answering rule, how a computed receipt's `asof` and `tx` are chosen), the core's
 the DEFECTS files of the three libraries.
 
 Every choice below is a proposal with the main alternative and the reason. Section 18 collects
-them as draft rows D36-D63 for SPEC.md section 13. Section 16 lists the stop-condition risks;
+them as draft rows D36-D64 for SPEC.md section 13. Section 16 lists the stop-condition risks;
 none holds. Section 17 lists the points that need the user.
 
 **Conflicts between the brief and the decision log** (the brief wins; named so nobody is
@@ -125,7 +160,10 @@ ws            = *( SP / HTAB / LF )                            ; between any two
 ```
 
 Positional arguments come first, then labelled ones (`E_FORMULA_ARG_ORDER`); a label appears
-once (`E_FORMULA_ARG_DUPLICATE`).
+once (`E_FORMULA_ARG_DUPLICATE`). *(Amended after review.)* In a read, positional arguments bind
+by the callee's `signature.order`; a read with a positional argument of a function without
+`order` is `E_FORMULA_POSITIONAL`, and more positional arguments than `order` lists is
+`E_FORMULA_ARITY`.
 
 ### 1.4 Precedence and associativity
 
@@ -256,9 +294,8 @@ AST**:
 - aliases replaced by fully qualified names (from the resolver's alias map);
 - built-in names and keywords lowercased; `if(c, a, b)` and `and(a, b, c)` turned into the
   keyword forms (`and(a, b, c)` is `(a and b) and c`);
-- positional arguments of reads turned into labelled ones. Signatures have no argument order
-  (an object, 4.2), so the positional order is the ascending (JCS) order of the callee's
-  argument names: `fx_rate(base, date, quote)` happens to read naturally. Built-ins have their
+- positional arguments of reads turned into labelled ones, by the callee's declared
+  `signature.order` *(amended after review: not by ascending name order)*. Built-ins have their
   own fixed parameter order;
 - nothing else: no constant folding, no reordering, no simplification. `-5` stays `neg(5)`;
   `1 + 2` stays a sum.
@@ -380,6 +417,8 @@ signs a receipt for a failed evaluation. How the engine maps them is in 3.5.
 | `E_FORMULA_ARG_MISSING` | A callee argument not bound (open arguments are written `*`) |
 | `E_FORMULA_ARG_DUPLICATE` | An argument bound twice |
 | `E_FORMULA_ARG_ORDER` | A positional argument after a labelled one |
+| `E_FORMULA_POSITIONAL` | A positional argument in a read of a function whose signature has no `order` *(added after review)* |
+| `E_FORMULA_ORDER` | A formula descriptor whose signature has no `order` *(added after review)* |
 | `E_FORMULA_TYPE` | A type mismatch anywhere |
 | `E_FORMULA_SLICE_VALUE` | A slice where a scalar is required, including the function's result |
 | `E_FORMULA_UNIT_MISMATCH` | Units differ where they must agree (5.2) |
@@ -428,7 +467,11 @@ dynamically constructed name therefore fails at parse.
 
 Excel shows `#DIV/0!` in a cell; a receipt cannot hold an error, and there is no null. An
 evaluation that faults gives the cell **no value**: the engine answers `not_covered`, as it
-already does when an input has none. *Alternative:* an `error` envelope with
+already does when an input has none. *(Amended after review.)* The `not_covered` envelope gains an
+optional member `fault`, one of the evaluation fault codes (`E_FORMULA_DIV_ZERO`,
+`E_FORMULA_DOMAIN`, `E_FORMULA_RANGE`, `E_FORMULA_EMPTY`, `E_FORMULA_ABSENT`, `E_FORMULA_FUTURE`),
+so that a fault is not mistaken for missing data. Fuel exhaustion is not a fault (another mesh may
+have more fuel) and stays an `error` envelope with `E_EVAL_UNAVAILABLE`. *Alternative:* an `error` envelope with
 `E_EVAL_UNAVAILABLE`. Rejected: the fault is a deterministic property of the cell, not a failure
 of the mesh, and any mesh will find the same; retrying cannot help. The engine needs a new
 `EvalError` variant carrying the formula code (an additive change).
@@ -576,8 +619,8 @@ checker treats it as affine:
 
 - `degC - degC` is `K` (a difference); `degC + K` and `degC - K` are `degC`; comparison of two
   `degC` is allowed; a bare literal added to `degC` takes `K`.
-- `degC + degC`, `degC * x` and `degC / x` (other than by a bare literal 1), and `sum` over
-  `degC`, are `E_FORMULA_UNIT_OFFSET`.
+- `degC + degC`, `degC * x` and `degC / x` (for any `x`, *amended*), and `sum` over `degC`, are
+  `E_FORMULA_UNIT_OFFSET`.
 - Affine combinations are allowed: `mean`, `median`, `min`, `max`, `first`, `last`, lookups,
   `interpolate`; `stdev` of `degC` is in `K`.
 
@@ -791,9 +834,8 @@ every other language.
 
 The brief's test 7 says a weighted mean over 1,000 stations "records one slice input". With the
 weights in a second function, `sum(temp(*, d) * weight(*)) / sum(weight(*))` reads two slices and
-records two entries, one per slice, instead of 2,000 receipt hashes. This memo reads the test as
-"one entry for the 1,000 temperatures"; a test with literally one entry needs the weights inside
-the same function or derived from the keys. 17.5 asks the user.
+records two entries, one per slice, instead of 2,000 receipt hashes. *(Decided after review: two
+entries are acceptable.)*
 
 ---
 
@@ -1299,7 +1341,7 @@ case mapping; Excel equivalence without a real Excel (12).
 
 ---
 
-## 17. Open points for the user
+## 17. Open points for the user (all settled after review; see the top)
 
 1. **Case.** Built-ins and keywords case-insensitive (`SUM`, `ASOF()` accepted; printed lowercase),
    names case-sensitive. Or strict lowercase with a hint?
@@ -1336,7 +1378,7 @@ case mapping; Excel equivalence without a real Excel (12).
 | D40 | Bare ISO dates and canonical instants are literals | `date("…")` or a sigil | Matches the URI and the decision log; only a subtraction nobody writes without spaces is lost |
 | D41 | Number literals must be canonical (3.1) | Accept `1.50`, `1e3` and normalise | One spelling in source and body |
 | D42 | The function hash covers the printed canonical AST as `code.body`; a non-canonical body is rejected; the AST hash is a test artefact | Hash the AST JSON as the body | The body stays readable; one AST, one body, one hash |
-| D43 | Positional read arguments follow the ascending order of argument names; the AST is always labelled | Declaration order | Signatures are JSON objects with no order |
+| D43 | *(Replaced by D64 after review.)* | | |
 | D44 | `inputs` is derived from the body and must equal the derived set | Declared by the author | The brief |
 | D45 | Decimal: exact then round half-even to 34 digits per operation; every intermediate within the 128-character canonical form; no negative zero | decimal128's exponent range for intermediates | Fewer behaviours to reproduce; nothing outside the canonical form could be returned anyway |
 | D46 | Integer exponents only, exact then rounded once; `sqrt` correctly rounded; `stdev` a fixed sequence of correctly rounded steps | Non-integer powers via `exp`/`ln` | No float-free correctly rounded algorithm needs to be specified for them |
@@ -1351,13 +1393,14 @@ case mapping; Excel equivalence without a real Excel (12).
 | D55 | New code `E_SLICE_MEMBER` for a member outside its slice | Reuse `E_INPUT_UNDECLARED` | A different lie, which a reader should be able to tell apart |
 | D56 | Lookups take the metric from the argument type, work along one dimension per group, and a bound narrows the recorded slice | A separate "group by"; read whole slices | Real-time aggregates at a cadence become one bounded slice per cell |
 | D57 | No cell reads inside lambdas; slices join on equal open argument names | Per-member reads | Per-member reads would bring back the 4,096-entry problem |
-| D58 | Evaluation faults give no value (`not_covered`); `otherwise` catches only slice-proved absence | Excel-style error values; catch everything | There is no null; only slice absence is in the lineage |
+| D58 | Evaluation faults give no value: `not_covered`, with the fault code in the envelope's optional `fault` member; `otherwise` catches only slice-proved absence | Excel-style error values; catch everything; an `error` envelope | There is no null; only slice absence is in the lineage; a fault is a property of the cell, not a failure of the mesh, but must not look like missing data |
 | D59 | `asof()` is the evaluation asof; an asof-dependent receipt's `asof` is the evaluation asof, and it is not reused for other asofs | Forbid `asof()`; choose `asof` from inputs | The receipt must recompute at its own `asof` |
 | D60 | `first_known`, `last_corrected`, `superseded` deferred to the standard library | Built-ins now | Expressible over `versions`; built-ins are hard to change |
 | D61 | Calendars are slices; weekends a parameter | A built-in holiday table | Data is cells: lineage, versions, licences |
 | D62 | `E_INPUT_SUPERSEDED` (7.6) is success at level `signed` with the code, raised when the resolver's lineage replaces an input by a later version of the same cell or slice | A failure; a bare `E_VALUE_MISMATCH` | The receipt is historical, not wrong (D34's reasoning) |
 | D33 (revised) | The computed `asof` SHOULD also include binding starts, explicit transaction times read, and the evaluation asof for asof-dependent bodies | Input `asof`s only | The SHOULD was incomplete, not wrong |
 | D63 | Normative fuel table | Implementation-defined fuel | Two evaluators exhaust a budget at the same point; vectors can state fuel |
+| D64 | Positional arguments bind by an optional, hashed `signature.order` listing every argument once; formula descriptors always carry it; positional before labelled; a positional read of a function without `order` is refused at define time; the canonical AST is labelled (decided after review) | Ascending name order; a required `order`, which would change every descriptor and receipt hash; positional arguments only for one-argument functions, or labels only | Authors and readers expect the declared order; optional means no existing hash changes; classes (1.3b) reuse it for key tuples |
 
 ---
 
