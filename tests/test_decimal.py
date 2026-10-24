@@ -187,7 +187,9 @@ class Aggregates(unittest.TestCase):
                     ss = EXACT.add(ss, EXACT.multiply(d, d))
                 ss = CTX.plus(ss)
                 v = CTX.divide(ss, decimal.Decimal(n if population else n - 1))
-                expected = reference(CTX.sqrt(v))
+                # The range rule applies to every step, not only to the result.
+                steps = [reference(m), reference(ss), reference(v)]
+                expected = "E_FORMULA_RANGE" if "E_FORMULA_RANGE" in steps else reference(CTX.sqrt(v))
                 self.assertEqual(ours(fdecimal.stdev, [fdecimal.Dec.parse(x) for x in xs], population), expected,
                                  f"stdev({xs}, population={population})")
 
