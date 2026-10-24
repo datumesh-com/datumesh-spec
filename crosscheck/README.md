@@ -2,6 +2,9 @@
 
 `run.sh` runs the Python (`datumesh`), JavaScript (`@datumesh/verify`) and Rust (`datumesh-core`) implementations and the reference tool over the same inputs: every vector in `vectors/`; randomly generated receipts (about half corrupted, reaching every verification step, with blob content for step 7.7), followed by computed receipts with a `recompute` object whose stored inputs have `asof`s earlier than, equal to or later than the receipt's, and whose evaluation value matches, differs or is absent (`E_EVAL_UNAVAILABLE`, since `spec-0.3.0`); random function descriptors with units, their unit resolution, and random response envelopes (`generate_02.py`); adversarial envelope requests aimed at stale/ok confusion (the receipt's `asof` earlier, equal or later than requested, with and without a requested `asof`, and `age_seconds` present or absent under both outcomes) and receipts for another cell (`generate_envelopes.py`); and mutated cell URIs. The implementations must agree on every byte, hash, signature, level, code reported with success (`E_EVAL_UNAVAILABLE`), unit, envelope outcome and error code. The reference tool is compared too, on every set; since `spec-0.2.0` it agrees on URIs as well.
 
+Since `spec-0.4.0` two more sets: slice-lineage receipts (`generate_slices.py`: computed receipts citing slices, with manifests and members, about half corrupted at each new check of 10.1 step 7.5 and at `E_INPUT_SUPERSEDED`), which every verifier library of `spec-0.4.0` must agree on; and formula cases (`generate_formula.py`: grammar sources, some mutated, evaluations over a fuzz world, and decimal cases for every operation), on which an implementation of the formula dialect must agree with the reference to the last digit (`FORMULA_RUNNER`; without it the reference runs them twice, which checks its determinism). `LIBS=0.3` checks libraries of `spec-0.3.0`: the vector set is then the `spec-0.3.0` vectors only.
+
 ```sh
-crosscheck/run.sh 1000 7     # needs Docker and git
+crosscheck/run.sh 1000 7                 # needs Docker and git
+LIBS=0.3 crosscheck/run.sh 1000 7        # libraries of spec-0.3.0
 ```

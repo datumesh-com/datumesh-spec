@@ -7,7 +7,10 @@ import sys
 from collections import Counter
 
 FIELDS = ("error", "canonical", "sha256", "sig", "level", "code", "object", "https", "key_id", "key_ids",
-          "unit", "outcome", "trust", "receipt_hash")
+          "unit", "outcome", "trust", "receipt_hash",
+          # spec-0.4.0: slices and the formula dialect
+          "slice_id", "members_hash", "entry", "ast_sha256", "body", "inputs", "returns", "asof_dependent", "token",
+          "value", "lineage", "tx", "receipt_asof", "fuel_used", "results")
 runs = {name: [json.loads(l) for l in open(path)] for name, path in (a.split("=") for a in sys.argv[1:])}
 names = list(runs)
 n = len(runs[names[0]])

@@ -10,6 +10,7 @@ signed pool, about half of them perturbed. The reference tool signs; the librari
 """
 
 import json
+import os
 import random
 import sys
 
@@ -21,6 +22,8 @@ import canon  # noqa: E402
 
 rng = random.Random(SEED)
 LITERALS = sorted(set().union(*canon.UNITS.values()))
+if os.environ.get("LIBS") == "0.3":  # libraries of spec-0.3.0 list the units of that revision
+    LITERALS = [u for u in LITERALS if u not in ("min", "h", "d", "km", "deg")]
 CURRENCIES = sorted(canon.CURRENCIES)
 NEAR_MISSES = ["usd", "Usd", "EUR ", " EUR", "USD/EUR", "°C", "degc", "KWH", "kwh", "%", "percent ", "", "XXX",
                "index:2015=100.0", "index:2015=0", "index:2015-02-30=100", "index:15=100", "index:2015=-1",
