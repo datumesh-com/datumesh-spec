@@ -1,0 +1,8 @@
+{
+  "id": "invalid/slice-schema",
+  "kind": "slice",
+  "description": "A range object has exactly hi, lo and type.",
+  "valid": false,
+  "input": "{\n  \"ns\": \"data.example.org\",\n  \"fn_hash\": \"e18ab921761089909a83eacfd7e88b71a580da2d35610769557f035fdb2b8169\",\n  \"fn\": \"daily\",\n  \"args\": {\n    \"date\": {\n      \"type\": \"date\",\n      \"step\": \"1\",\n      \"lo\": \"2026-03-01\",\n      \"hi\": \"2026-03-05\"\n    }\n  }\n}",
+  "error": "E_SCHEMA"
+}

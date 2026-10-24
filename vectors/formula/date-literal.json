@@ -1,0 +1,184 @@
+{
+  "id": "formula/date-literal",
+  "kind": "formula",
+  "description": "A bare ISO date is a date literal, never a subtraction.",
+  "valid": true,
+  "input": "2024-03-15",
+  "env": {
+    "aliases": {},
+    "functions": {},
+    "name": "calc.example.net/f",
+    "signature": {
+      "args": {
+        "a": {
+          "type": "number",
+          "valid": false,
+          "unit": "EUR"
+        },
+        "b": {
+          "type": "number",
+          "valid": false,
+          "unit": "EUR"
+        },
+        "c": {
+          "type": "number",
+          "valid": false,
+          "unit": "USD"
+        },
+        "n": {
+          "type": "number",
+          "valid": false,
+          "unit": "1"
+        },
+        "k": {
+          "type": "number",
+          "valid": false,
+          "unit": "1"
+        },
+        "x": {
+          "type": "number",
+          "valid": false,
+          "unit": "1"
+        },
+        "r": {
+          "type": "number",
+          "valid": false,
+          "unit": "percent"
+        },
+        "t1": {
+          "type": "number",
+          "valid": false,
+          "unit": "degC"
+        },
+        "t2": {
+          "type": "number",
+          "valid": false,
+          "unit": "degC"
+        },
+        "amount": {
+          "type": "number",
+          "valid": false,
+          "unit": {
+            "arg": "base"
+          }
+        },
+        "count": {
+          "type": "number",
+          "valid": false,
+          "unit": "count"
+        },
+        "plat": {
+          "type": "number",
+          "valid": false,
+          "unit": "deg"
+        },
+        "plon": {
+          "type": "number",
+          "valid": false,
+          "unit": "deg"
+        },
+        "dist": {
+          "type": "number",
+          "valid": false,
+          "unit": "m"
+        },
+        "secs": {
+          "type": "number",
+          "valid": false,
+          "unit": "s"
+        },
+        "s": {
+          "type": "string",
+          "valid": false
+        },
+        "name": {
+          "type": "string",
+          "valid": false
+        },
+        "base": {
+          "type": "string",
+          "valid": false
+        },
+        "quote": {
+          "type": "string",
+          "valid": false
+        },
+        "station": {
+          "type": "string",
+          "valid": false
+        },
+        "tenor": {
+          "type": "string",
+          "valid": false
+        },
+        "item": {
+          "type": "string",
+          "valid": false
+        },
+        "stations": {
+          "type": "string",
+          "valid": false
+        },
+        "p": {
+          "type": "string",
+          "valid": false
+        },
+        "d": {
+          "type": "date",
+          "valid": true
+        },
+        "d2": {
+          "type": "date",
+          "valid": true
+        },
+        "t": {
+          "type": "instant",
+          "valid": true
+        },
+        "flag": {
+          "type": "boolean",
+          "valid": false
+        }
+      },
+      "order": [
+        "a",
+        "amount",
+        "b",
+        "base",
+        "c",
+        "count",
+        "d",
+        "d2",
+        "dist",
+        "flag",
+        "item",
+        "k",
+        "n",
+        "name",
+        "p",
+        "plat",
+        "plon",
+        "quote",
+        "r",
+        "s",
+        "secs",
+        "station",
+        "stations",
+        "t",
+        "t1",
+        "t2",
+        "tenor",
+        "x"
+      ],
+      "returns": "date"
+    }
+  },
+  "ast": "{\"node\":\"date\",\"value\":\"2024-03-15\"}",
+  "ast_sha256": "e2fc6d14ce66cd3546cf790482d0caa7e87da0cdb9fe1c01bff37e7ee2ff71c2",
+  "body": "2024-03-15\n",
+  "inputs": [],
+  "returns": {
+    "type": "date"
+  },
+  "asof_dependent": false
+}

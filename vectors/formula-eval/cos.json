@@ -1,0 +1,56 @@
+{
+  "id": "formula-eval/cos",
+  "kind": "formula-eval",
+  "description": "cos(x)  (with x = 1)",
+  "valid": true,
+  "world": {
+    "functions": {
+      "calc.example.net/e": {
+        "bound": "2026-01-01T00:00:00.000000Z",
+        "descriptor": {
+          "code": {
+            "body": "cos(x)\n",
+            "lang": "formula"
+          },
+          "inputs": [],
+          "signature": {
+            "args": {
+              "x": {
+                "type": "number",
+                "valid": false,
+                "unit": "1"
+              }
+            },
+            "order": [
+              "x"
+            ],
+            "returns": {
+              "type": "number",
+              "unit": "1"
+            }
+          }
+        }
+      }
+    },
+    "receipts": []
+  },
+  "cell": {
+    "args": {
+      "x": {
+        "type": "number",
+        "value": "1"
+      }
+    },
+    "fn": "calc.example.net/e"
+  },
+  "asof": "2026-06-01T00:00:00.000000Z",
+  "receipt_hash": "5fa4d041989d32bd90d7ae6968a59631822bb05332df113355f8c939d296bb47",
+  "value": {
+    "type": "number",
+    "value": "0.5403023058681397174009366074429766"
+  },
+  "lineage": [],
+  "tx": "0001-01-01T00:00:00.000000Z",
+  "receipt_asof": "0001-01-01T00:00:00.000000Z",
+  "fuel_used": 52
+}

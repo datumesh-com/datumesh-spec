@@ -1,0 +1,56 @@
+{
+  "id": "formula-eval/convert-degrees",
+  "kind": "formula-eval",
+  "description": "convert(x, \"1\")  (with x = 180)",
+  "valid": true,
+  "world": {
+    "functions": {
+      "calc.example.net/e": {
+        "bound": "2026-01-01T00:00:00.000000Z",
+        "descriptor": {
+          "code": {
+            "body": "convert(x, \"1\")\n",
+            "lang": "formula"
+          },
+          "inputs": [],
+          "signature": {
+            "args": {
+              "x": {
+                "type": "number",
+                "valid": false,
+                "unit": "deg"
+              }
+            },
+            "order": [
+              "x"
+            ],
+            "returns": {
+              "type": "number",
+              "unit": "1"
+            }
+          }
+        }
+      }
+    },
+    "receipts": []
+  },
+  "cell": {
+    "args": {
+      "x": {
+        "type": "number",
+        "value": "180"
+      }
+    },
+    "fn": "calc.example.net/e"
+  },
+  "asof": "2026-06-01T00:00:00.000000Z",
+  "receipt_hash": "e07a109a31fc3205e2f8d5918a67bbb1e90e5068f1a461bd2e2d9e224fcf65b5",
+  "value": {
+    "type": "number",
+    "value": "3.141592653589793238462643383279503"
+  },
+  "lineage": [],
+  "tx": "0001-01-01T00:00:00.000000Z",
+  "receipt_asof": "0001-01-01T00:00:00.000000Z",
+  "fuel_used": 2
+}

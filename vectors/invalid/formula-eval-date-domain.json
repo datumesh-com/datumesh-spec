@@ -1,0 +1,32 @@
+{
+  "id": "invalid/formula-eval-date-domain",
+  "kind": "formula-eval",
+  "description": "date(2023, 2, 29)  (with no arguments)",
+  "valid": false,
+  "world": {
+    "functions": {
+      "calc.example.net/e": {
+        "bound": "2026-01-01T00:00:00.000000Z",
+        "descriptor": {
+          "code": {
+            "body": "date(2023, 2, 29)\n",
+            "lang": "formula"
+          },
+          "inputs": [],
+          "signature": {
+            "args": {},
+            "order": [],
+            "returns": "date"
+          }
+        }
+      }
+    },
+    "receipts": []
+  },
+  "cell": {
+    "args": {},
+    "fn": "calc.example.net/e"
+  },
+  "asof": "2026-06-01T00:00:00.000000Z",
+  "error": "E_FORMULA_DOMAIN"
+}

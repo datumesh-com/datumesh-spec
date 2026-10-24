@@ -1,0 +1,10 @@
+{
+  "id": "slice/unbounded",
+  "kind": "slice",
+  "description": "An unbounded slice: the cell object of SPEC 4.4 with a *; its id is that cell id.",
+  "valid": true,
+  "input": "{\n  \"ns\": \"data.example.org\",\n  \"fn_hash\": \"e18ab921761089909a83eacfd7e88b71a580da2d35610769557f035fdb2b8169\",\n  \"fn\": \"daily\",\n  \"args\": {\n    \"date\": \"*\"\n  }\n}",
+  "canonical": "{\"args\":{\"date\":\"*\"},\"fn\":\"daily\",\"fn_hash\":\"e18ab921761089909a83eacfd7e88b71a580da2d35610769557f035fdb2b8169\",\"ns\":\"data.example.org\"}",
+  "sha256": "a45784ce2a47fcaa2bdc589af888cd5acc3eeb63206f8083292f4a12e0249719",
+  "slice_id": "a45784ce2a47fcaa2bdc589af888cd5acc3eeb63206f8083292f4a12e0249719"
+}

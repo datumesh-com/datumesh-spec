@@ -1,0 +1,134 @@
+{
+  "id": "receipt/slice-superseded",
+  "kind": "receipt",
+  "description": "A backdated correction of an input: re-evaluated at the receipt's asof, the evaluation reads a later version of the same cell; the receipt is historical, not wrong: success at level signed with E_INPUT_SUPERSEDED.",
+  "valid": true,
+  "input": "{\n  \"sig\": \"ddb76ca5cdc628ec42d4f3ae4ef8c87737b581d363e23d26807e906a6932b65e11a8d4c66f4b6ac28e2841dc0f1bd8a23872f65097761a7f95649bde48cc2e05\",\n  \"value\": \"120\",\n  \"valid\": {},\n  \"type\": \"number\",\n  \"tx\": \"2026-03-02T09:00:00.000000Z\",\n  \"summary\": \"Computed by the Datumesh formula reference evaluator.\",\n  \"publisher\": \"shop.example.net\",\n  \"proto\": \"datumesh/1\",\n  \"licence\": \"CC0-1.0\",\n  \"issued\": \"2026-03-02T09:00:00.000000Z\",\n  \"inputs\": [\n    \"caf1ceaeb53ffd4d5135743931c4b5ed4a2f16fda859192e633696c9ec36fa81\",\n    \"eebf2854f5cf787bb758be37ed644a90cac5f7ce504069468e98697558edc81a\"\n  ],\n  \"computed_by\": \"mesh.example.net#cd42547c321bfc08\",\n  \"cell\": {\n    \"ns\": \"shop.example.net\",\n    \"fn_hash\": \"b5bf897e00de35c9b06b57151cd20297c7b229e202d04b0fa51efcfcc9c656d0\",\n    \"fn\": \"total\",\n    \"args\": {\n      \"item\": {\n        \"value\": \"bolt\",\n        \"type\": \"string\"\n      }\n    }\n  },\n  \"asof\": \"2026-03-02T09:00:00.000000Z\"\n}",
+  "keypair": {
+    "seed": "9345ff06f5e4ab63b6f40048c12368f88370bf2402984bf6bf47fa11cfdf399d",
+    "public": "e6d9d1c7634ea284e533a84e5a2f35978a31fcbcae18bf490b790b516e4b8fb1",
+    "key_id": "cd42547c321bfc08"
+  },
+  "keys": {
+    "calc.example.net": {
+      "https": {
+        "status": 200,
+        "body": "{\n  \"host\": \"calc.example.net\",\n  \"keys\": [\n    {\n      \"alg\": \"ed25519\",\n      \"id\": \"a06403c25203d202\",\n      \"public\": \"d0def49fb2866f7377684bd565c04d2d7bd7bc7151d9ee46ee7580f649cca5aa\",\n      \"valid_from\": \"2020-01-01T00:00:00.000000Z\"\n    }\n  ],\n  \"proto\": \"datumesh/1\"\n}"
+      }
+    },
+    "calendars.example.org": {
+      "https": {
+        "status": 200,
+        "body": "{\n  \"host\": \"calendars.example.org\",\n  \"keys\": [\n    {\n      \"alg\": \"ed25519\",\n      \"id\": \"d36465cb16755445\",\n      \"public\": \"41f67e3cdcd30f73cc3937f85e7d713db43ae39b4f2444035975a07c52090bea\",\n      \"valid_from\": \"2020-01-01T00:00:00.000000Z\"\n    }\n  ],\n  \"proto\": \"datumesh/1\"\n}"
+      }
+    },
+    "curve.example.net": {
+      "https": {
+        "status": 200,
+        "body": "{\n  \"host\": \"curve.example.net\",\n  \"keys\": [\n    {\n      \"alg\": \"ed25519\",\n      \"id\": \"9a72762ed570f43a\",\n      \"public\": \"161e75b308d0db529cb44dc5eb59bca0b4ad76c5d67a7909800e0ff8a9e9625f\",\n      \"valid_from\": \"2020-01-01T00:00:00.000000Z\"\n    }\n  ],\n  \"proto\": \"datumesh/1\"\n}"
+      }
+    },
+    "data.example.org": {
+      "https": {
+        "status": 200,
+        "body": "{\n  \"host\": \"data.example.org\",\n  \"keys\": [\n    {\n      \"alg\": \"ed25519\",\n      \"id\": \"efb20f82a7e15e96\",\n      \"public\": \"ffca8bfde74858ed9d7d9c20d53daff82728a4af926a5ca1bad0c248bc747cd9\",\n      \"valid_from\": \"2020-01-01T00:00:00.000000Z\"\n    }\n  ],\n  \"proto\": \"datumesh/1\"\n}"
+      }
+    },
+    "fz.example.org": {
+      "https": {
+        "status": 200,
+        "body": "{\n  \"host\": \"fz.example.org\",\n  \"keys\": [\n    {\n      \"alg\": \"ed25519\",\n      \"id\": \"5f049a6861968d9b\",\n      \"public\": \"f2ee57fef42d2af587d26f27627b13ce01366a0d6d68be4f069fe84ec5d548a0\",\n      \"valid_from\": \"2020-01-01T00:00:00.000000Z\"\n    }\n  ],\n  \"proto\": \"datumesh/1\"\n}"
+      }
+    },
+    "geo.example.org": {
+      "https": {
+        "status": 200,
+        "body": "{\n  \"host\": \"geo.example.org\",\n  \"keys\": [\n    {\n      \"alg\": \"ed25519\",\n      \"id\": \"01a1eda486e56105\",\n      \"public\": \"b2261195634b4614e0158d8f4bf13a95cd9f415e8eb780dcee351ecbe29099db\",\n      \"valid_from\": \"2020-01-01T00:00:00.000000Z\"\n    }\n  ],\n  \"proto\": \"datumesh/1\"\n}"
+      }
+    },
+    "math.example.net": {
+      "https": {
+        "status": 200,
+        "body": "{\n  \"host\": \"math.example.net\",\n  \"keys\": [\n    {\n      \"alg\": \"ed25519\",\n      \"id\": \"72fdbeceffb7847a\",\n      \"public\": \"6f6e15d329f97d2fb061178ee79b980f7ccbc56dd7ec538e4b4ec0af5a2bbe9c\",\n      \"valid_from\": \"2020-01-01T00:00:00.000000Z\"\n    }\n  ],\n  \"proto\": \"datumesh/1\"\n}"
+      }
+    },
+    "mesh.example.net": {
+      "https": {
+        "status": 200,
+        "body": "{\n  \"host\": \"mesh.example.net\",\n  \"keys\": [\n    {\n      \"alg\": \"ed25519\",\n      \"id\": \"cd42547c321bfc08\",\n      \"public\": \"e6d9d1c7634ea284e533a84e5a2f35978a31fcbcae18bf490b790b516e4b8fb1\",\n      \"valid_from\": \"2020-01-01T00:00:00.000000Z\"\n    }\n  ],\n  \"proto\": \"datumesh/1\"\n}"
+      }
+    },
+    "rates.example.org": {
+      "https": {
+        "status": 200,
+        "body": "{\n  \"host\": \"rates.example.org\",\n  \"keys\": [\n    {\n      \"alg\": \"ed25519\",\n      \"id\": \"69d6132b3eb2db9a\",\n      \"public\": \"ca06cece014796c408978413db8b131aeba2014d56da69e12611c937a8ad76e7\",\n      \"valid_from\": \"2020-01-01T00:00:00.000000Z\"\n    }\n  ],\n  \"proto\": \"datumesh/1\"\n}"
+      }
+    },
+    "sheet.example.org": {
+      "https": {
+        "status": 200,
+        "body": "{\n  \"host\": \"sheet.example.org\",\n  \"keys\": [\n    {\n      \"alg\": \"ed25519\",\n      \"id\": \"206a7d600aae48b2\",\n      \"public\": \"f9431ab9865f692b20608223b603c7146d63fd725a4e389ad056d76f4c9b7853\",\n      \"valid_from\": \"2020-01-01T00:00:00.000000Z\"\n    }\n  ],\n  \"proto\": \"datumesh/1\"\n}"
+      }
+    },
+    "shop.example.net": {
+      "https": {
+        "status": 200,
+        "body": "{\n  \"host\": \"shop.example.net\",\n  \"keys\": [\n    {\n      \"alg\": \"ed25519\",\n      \"id\": \"24fe7dc93d01d22c\",\n      \"public\": \"50c32417716582ba2261bb4f4a87087e83a4af5fbb6039eb5c8f58a9899e13fe\",\n      \"valid_from\": \"2020-01-01T00:00:00.000000Z\"\n    }\n  ],\n  \"proto\": \"datumesh/1\"\n}"
+      }
+    },
+    "weather.example.org": {
+      "https": {
+        "status": 200,
+        "body": "{\n  \"host\": \"weather.example.org\",\n  \"keys\": [\n    {\n      \"alg\": \"ed25519\",\n      \"id\": \"060678a6fa418e5d\",\n      \"public\": \"cd4b82119344ac55c534a917e3cb71813f7414436ee17b354bf9c5065ef73991\",\n      \"valid_from\": \"2020-01-01T00:00:00.000000Z\"\n    }\n  ],\n  \"proto\": \"datumesh/1\"\n}"
+      }
+    }
+  },
+  "recompute": {
+    "descriptor": {
+      "code": {
+        "body": "shop.example.net/price(item: item) + shop.example.net/tax(item: item)\n",
+        "lang": "formula"
+      },
+      "inputs": [
+        "shop.example.net/price",
+        "shop.example.net/tax"
+      ],
+      "signature": {
+        "args": {
+          "item": {
+            "type": "string",
+            "valid": false
+          }
+        },
+        "order": [
+          "item"
+        ],
+        "returns": {
+          "type": "number",
+          "unit": "EUR"
+        }
+      }
+    },
+    "inputs": {
+      "13d814152eff07d6d2c3254bfc90c9819a1c0250d6a83743c71564d48ac4c555": "{\"asof\": \"2026-03-02T09:00:00.000000Z\", \"cell\": {\"args\": {\"item\": {\"type\": \"string\", \"value\": \"bolt\"}}, \"fn\": \"total\", \"fn_hash\": \"b5bf897e00de35c9b06b57151cd20297c7b229e202d04b0fa51efcfcc9c656d0\", \"ns\": \"shop.example.net\"}, \"computed_by\": \"mesh.example.net#cd42547c321bfc08\", \"inputs\": [\"61b97e51bf1411ad6c4ad11c157609905b341c4e9f81709e2def6d66fc2e7fc9\", \"eebf2854f5cf787bb758be37ed644a90cac5f7ce504069468e98697558edc81a\"], \"issued\": \"2026-03-02T09:00:00.000000Z\", \"licence\": \"CC0-1.0\", \"proto\": \"datumesh/1\", \"publisher\": \"shop.example.net\", \"summary\": \"Computed by the Datumesh formula reference evaluator.\", \"tx\": \"2026-03-02T09:00:00.000000Z\", \"type\": \"number\", \"valid\": {}, \"value\": \"121\", \"sig\": \"cabb66f17056034c7539c145d314b3df23dd700cdd0eb589f544304f6dcfa736aa132e68c9205119209336aac69749cb8a43f90cafcf7dfc8c048ad391945501\"}",
+      "61b97e51bf1411ad6c4ad11c157609905b341c4e9f81709e2def6d66fc2e7fc9": "{\"asof\": \"2026-03-01T12:00:00.000000Z\", \"cell\": {\"args\": {\"item\": {\"type\": \"string\", \"value\": \"bolt\"}}, \"fn\": \"price\", \"fn_hash\": \"4193e310f5c949998b3f339d2ad56567286ebd0828504b3f31a2c671e99c71a7\", \"ns\": \"shop.example.net\"}, \"computed_by\": \"shop.example.net#24fe7dc93d01d22c\", \"inputs\": [], \"issued\": \"2026-03-01T12:00:00.000000Z\", \"licence\": \"CC-BY-4.0\", \"proto\": \"datumesh/1\", \"publisher\": \"shop.example.net\", \"summary\": \"A recorded value of price.\", \"tx\": \"2026-03-01T12:00:00.000000Z\", \"type\": \"number\", \"valid\": {}, \"value\": \"101\", \"sig\": \"40d8b520c3f53f2bcd59936d4ee2a98050af70e01f0fee469fff0054f40c15bed95ebcd5ba4b39967979ec68fc8268f1da1197ec599f721a94df10e73643080c\"}",
+      "a98433270227c8cbf5da154ea224c8b7892a026054809139b0692b40344907b0": "{\"asof\": \"2026-03-02T09:00:00.000000Z\", \"cell\": {\"args\": {\"item\": {\"type\": \"string\", \"value\": \"bolt\"}}, \"fn\": \"total\", \"fn_hash\": \"b5bf897e00de35c9b06b57151cd20297c7b229e202d04b0fa51efcfcc9c656d0\", \"ns\": \"shop.example.net\"}, \"computed_by\": \"mesh.example.net#cd42547c321bfc08\", \"inputs\": [\"caf1ceaeb53ffd4d5135743931c4b5ed4a2f16fda859192e633696c9ec36fa81\", \"eebf2854f5cf787bb758be37ed644a90cac5f7ce504069468e98697558edc81a\"], \"issued\": \"2026-03-02T09:00:00.000000Z\", \"licence\": \"CC0-1.0\", \"proto\": \"datumesh/1\", \"publisher\": \"shop.example.net\", \"summary\": \"Computed by the Datumesh formula reference evaluator.\", \"tx\": \"2026-03-02T09:00:00.000000Z\", \"type\": \"number\", \"valid\": {}, \"value\": \"120\", \"sig\": \"ddb76ca5cdc628ec42d4f3ae4ef8c87737b581d363e23d26807e906a6932b65e11a8d4c66f4b6ac28e2841dc0f1bd8a23872f65097761a7f95649bde48cc2e05\"}",
+      "caf1ceaeb53ffd4d5135743931c4b5ed4a2f16fda859192e633696c9ec36fa81": "{\"asof\": \"2026-03-01T09:00:00.000000Z\", \"cell\": {\"args\": {\"item\": {\"type\": \"string\", \"value\": \"bolt\"}}, \"fn\": \"price\", \"fn_hash\": \"4193e310f5c949998b3f339d2ad56567286ebd0828504b3f31a2c671e99c71a7\", \"ns\": \"shop.example.net\"}, \"computed_by\": \"shop.example.net#24fe7dc93d01d22c\", \"inputs\": [], \"issued\": \"2026-03-01T09:00:00.000000Z\", \"licence\": \"CC-BY-4.0\", \"proto\": \"datumesh/1\", \"publisher\": \"shop.example.net\", \"summary\": \"A recorded value of price.\", \"tx\": \"2026-03-01T09:00:00.000000Z\", \"type\": \"number\", \"valid\": {}, \"value\": \"100\", \"sig\": \"f50d37e293869c709ce424697eaabd849553e1310b3714259c7bcbb856cdf8a2b8816c129370467cf1fcb8c4a635e5f6a94f5727e3c741382f9866a5d1a8dd0f\"}",
+      "eebf2854f5cf787bb758be37ed644a90cac5f7ce504069468e98697558edc81a": "{\"asof\": \"2026-03-02T09:00:00.000000Z\", \"cell\": {\"args\": {\"item\": {\"type\": \"string\", \"value\": \"bolt\"}}, \"fn\": \"tax\", \"fn_hash\": \"4193e310f5c949998b3f339d2ad56567286ebd0828504b3f31a2c671e99c71a7\", \"ns\": \"shop.example.net\"}, \"computed_by\": \"shop.example.net#24fe7dc93d01d22c\", \"inputs\": [], \"issued\": \"2026-03-02T09:00:00.000000Z\", \"licence\": \"CC-BY-4.0\", \"proto\": \"datumesh/1\", \"publisher\": \"shop.example.net\", \"summary\": \"A recorded value of tax.\", \"tx\": \"2026-03-02T09:00:00.000000Z\", \"type\": \"number\", \"valid\": {}, \"value\": \"20\", \"sig\": \"98e560202e8564ebfb728deed007c576834023dd69dcf3fe4f699a85e5d0c04ef6510c3082146f80ea7b8252965439e7d61ef00212cab701c92869d60203f90a\"}"
+    },
+    "manifests": {},
+    "value": {
+      "type": "number",
+      "value": "121"
+    },
+    "lineage": [
+      "61b97e51bf1411ad6c4ad11c157609905b341c4e9f81709e2def6d66fc2e7fc9",
+      "eebf2854f5cf787bb758be37ed644a90cac5f7ce504069468e98697558edc81a"
+    ]
+  },
+  "canonical": "{\"asof\":\"2026-03-02T09:00:00.000000Z\",\"cell\":{\"args\":{\"item\":{\"type\":\"string\",\"value\":\"bolt\"}},\"fn\":\"total\",\"fn_hash\":\"b5bf897e00de35c9b06b57151cd20297c7b229e202d04b0fa51efcfcc9c656d0\",\"ns\":\"shop.example.net\"},\"computed_by\":\"mesh.example.net#cd42547c321bfc08\",\"inputs\":[\"caf1ceaeb53ffd4d5135743931c4b5ed4a2f16fda859192e633696c9ec36fa81\",\"eebf2854f5cf787bb758be37ed644a90cac5f7ce504069468e98697558edc81a\"],\"issued\":\"2026-03-02T09:00:00.000000Z\",\"licence\":\"CC0-1.0\",\"proto\":\"datumesh/1\",\"publisher\":\"shop.example.net\",\"summary\":\"Computed by the Datumesh formula reference evaluator.\",\"tx\":\"2026-03-02T09:00:00.000000Z\",\"type\":\"number\",\"valid\":{},\"value\":\"120\"}",
+  "sha256": "a98433270227c8cbf5da154ea224c8b7892a026054809139b0692b40344907b0",
+  "sig": "ddb76ca5cdc628ec42d4f3ae4ef8c87737b581d363e23d26807e906a6932b65e11a8d4c66f4b6ac28e2841dc0f1bd8a23872f65097761a7f95649bde48cc2e05",
+  "level": "signed",
+  "code": "E_INPUT_SUPERSEDED"
+}

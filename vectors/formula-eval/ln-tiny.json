@@ -1,0 +1,56 @@
+{
+  "id": "formula-eval/ln-tiny",
+  "kind": "formula-eval",
+  "description": "ln(x)  (with x = 0.000000000000000000000000000001)",
+  "valid": true,
+  "world": {
+    "functions": {
+      "calc.example.net/e": {
+        "bound": "2026-01-01T00:00:00.000000Z",
+        "descriptor": {
+          "code": {
+            "body": "ln(x)\n",
+            "lang": "formula"
+          },
+          "inputs": [],
+          "signature": {
+            "args": {
+              "x": {
+                "type": "number",
+                "valid": false,
+                "unit": "1"
+              }
+            },
+            "order": [
+              "x"
+            ],
+            "returns": {
+              "type": "number",
+              "unit": "1"
+            }
+          }
+        }
+      }
+    },
+    "receipts": []
+  },
+  "cell": {
+    "args": {
+      "x": {
+        "type": "number",
+        "value": "0.000000000000000000000000000001"
+      }
+    },
+    "fn": "calc.example.net/e"
+  },
+  "asof": "2026-06-01T00:00:00.000000Z",
+  "receipt_hash": "fa610fb833eeb2115b3ed141e364dfe3fbd18a539865d1d306cf053e72daad24",
+  "value": {
+    "type": "number",
+    "value": "-69.07755278982137052053974364053093"
+  },
+  "lineage": [],
+  "tx": "0001-01-01T00:00:00.000000Z",
+  "receipt_asof": "0001-01-01T00:00:00.000000Z",
+  "fuel_used": 82
+}

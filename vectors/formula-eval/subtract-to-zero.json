@@ -1,0 +1,56 @@
+{
+  "id": "formula-eval/subtract-to-zero",
+  "kind": "formula-eval",
+  "description": "x - x  (with x = 1.5)",
+  "valid": true,
+  "world": {
+    "functions": {
+      "calc.example.net/e": {
+        "bound": "2026-01-01T00:00:00.000000Z",
+        "descriptor": {
+          "code": {
+            "body": "x - x\n",
+            "lang": "formula"
+          },
+          "inputs": [],
+          "signature": {
+            "args": {
+              "x": {
+                "type": "number",
+                "valid": false,
+                "unit": "1"
+              }
+            },
+            "order": [
+              "x"
+            ],
+            "returns": {
+              "type": "number",
+              "unit": "1"
+            }
+          }
+        }
+      }
+    },
+    "receipts": []
+  },
+  "cell": {
+    "args": {
+      "x": {
+        "type": "number",
+        "value": "1.5"
+      }
+    },
+    "fn": "calc.example.net/e"
+  },
+  "asof": "2026-06-01T00:00:00.000000Z",
+  "receipt_hash": "f37147da470093ada8dc07a4b7876c3b7c4f6ed13c745642807c31058afef761",
+  "value": {
+    "type": "number",
+    "value": "0"
+  },
+  "lineage": [],
+  "tx": "0001-01-01T00:00:00.000000Z",
+  "receipt_asof": "0001-01-01T00:00:00.000000Z",
+  "fuel_used": 3
+}

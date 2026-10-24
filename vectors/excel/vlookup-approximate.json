@@ -1,0 +1,151 @@
+{
+  "id": "excel/vlookup-approximate",
+  "kind": "excel",
+  "description": "=VLOOKUP(35000,A2:B4,2,TRUE) is partial as last_before(sheet.example.org/band(*), 35000). Bands A2:B4: (0, 0.1), (10000, 0.2), (50000, 0.4).",
+  "valid": true,
+  "excel": "=VLOOKUP(35000,A2:B4,2,TRUE)",
+  "doc": "https://support.microsoft.com/en-us/excel/functions/vlookup-function",
+  "documentation_derived": true,
+  "status": "partial",
+  "sample": "Bands A2:B4: (0, 0.1), (10000, 0.2), (50000, 0.4).",
+  "excel_result": {
+    "type": "number",
+    "value": "0.2"
+  },
+  "formula": "last_before(sheet.example.org/band(*), 35000)",
+  "signature": {
+    "args": {},
+    "order": [],
+    "returns": {
+      "type": "number",
+      "unit": "1"
+    }
+  },
+  "world": {
+    "functions": {
+      "sheet.example.org/band": {
+        "bound": "2026-01-01T00:00:00.000000Z",
+        "descriptor": {
+          "code": {
+            "body": "",
+            "lang": "stored"
+          },
+          "inputs": [],
+          "signature": {
+            "args": {
+              "threshold": {
+                "type": "number",
+                "valid": false,
+                "unit": "1"
+              }
+            },
+            "returns": {
+              "type": "number",
+              "unit": "1"
+            },
+            "order": [
+              "threshold"
+            ]
+          }
+        }
+      }
+    },
+    "receipts": [
+      {
+        "asof": "2026-02-01T00:00:00.000000Z",
+        "cell": {
+          "args": {
+            "threshold": {
+              "type": "number",
+              "value": "0"
+            }
+          },
+          "fn": "band",
+          "fn_hash": "745a3bbdcccdaa5358c7f1bf92f7a7a9c85923dadf8cf17efe5d7ed4ed391b50",
+          "ns": "sheet.example.org"
+        },
+        "computed_by": "sheet.example.org#206a7d600aae48b2",
+        "inputs": [],
+        "issued": "2026-02-01T00:00:00.000000Z",
+        "licence": "CC-BY-4.0",
+        "proto": "datumesh/1",
+        "publisher": "sheet.example.org",
+        "summary": "A recorded value of band.",
+        "tx": "2026-02-01T00:00:00.000000Z",
+        "type": "number",
+        "valid": {},
+        "value": "0.1",
+        "sig": "59531f064b9d5641d403fa1731fd614d722cf3f5a2c2144c3cdd2ca8bcbd58b6928393cd5acb89762ff4b9564aea55de63957e1fca1c3ff3abb84af95d821305"
+      },
+      {
+        "asof": "2026-02-01T00:00:00.000000Z",
+        "cell": {
+          "args": {
+            "threshold": {
+              "type": "number",
+              "value": "10000"
+            }
+          },
+          "fn": "band",
+          "fn_hash": "745a3bbdcccdaa5358c7f1bf92f7a7a9c85923dadf8cf17efe5d7ed4ed391b50",
+          "ns": "sheet.example.org"
+        },
+        "computed_by": "sheet.example.org#206a7d600aae48b2",
+        "inputs": [],
+        "issued": "2026-02-01T00:00:00.000000Z",
+        "licence": "CC-BY-4.0",
+        "proto": "datumesh/1",
+        "publisher": "sheet.example.org",
+        "summary": "A recorded value of band.",
+        "tx": "2026-02-01T00:00:00.000000Z",
+        "type": "number",
+        "valid": {},
+        "value": "0.2",
+        "sig": "73922d59e597859112a9c6e867078f446c1b2f5ccb4d6328f3a31e98950fc55d3ac371c5a187d52732e186c0dc541d08b4c28f7e33ddc463d1ff9e0bcede0804"
+      },
+      {
+        "asof": "2026-02-01T00:00:00.000000Z",
+        "cell": {
+          "args": {
+            "threshold": {
+              "type": "number",
+              "value": "50000"
+            }
+          },
+          "fn": "band",
+          "fn_hash": "745a3bbdcccdaa5358c7f1bf92f7a7a9c85923dadf8cf17efe5d7ed4ed391b50",
+          "ns": "sheet.example.org"
+        },
+        "computed_by": "sheet.example.org#206a7d600aae48b2",
+        "inputs": [],
+        "issued": "2026-02-01T00:00:00.000000Z",
+        "licence": "CC-BY-4.0",
+        "proto": "datumesh/1",
+        "publisher": "sheet.example.org",
+        "summary": "A recorded value of band.",
+        "tx": "2026-02-01T00:00:00.000000Z",
+        "type": "number",
+        "valid": {},
+        "value": "0.4",
+        "sig": "4a250642d62d85842824705f838c4c7c372771bd8a4f1927d8093d0d4b59c18707800268d8ff20b17158dbefdb64d4166368b4a5765dc275cbc7483a6c05f70d"
+      }
+    ]
+  },
+  "cell": {
+    "args": {},
+    "fn": "sheet.example.net/case"
+  },
+  "asof": "2026-06-01T00:00:00.000000Z",
+  "receipt_hash": "2029f918830b364b5535f0c44f2dc6fa7c51992996237166623d9439fbf1599f",
+  "body": "last_before(sheet.example.org/band(threshold: *), 35000)\n",
+  "value": {
+    "type": "number",
+    "value": "0.2"
+  },
+  "lineage": [
+    "slice:ab7e23dbb79326c2ea63fab671d78be05e43bd6857bc2d1fc9c662a0b65d9dbc:061a80c268767483223a37acd48f4f48ca7df6c6e698f0064f2c0aa5405b651e"
+  ],
+  "tx": "2026-02-01T00:00:00.000000Z",
+  "receipt_asof": "2026-02-01T00:00:00.000000Z",
+  "fuel_used": 10
+}

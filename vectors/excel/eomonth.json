@@ -1,0 +1,40 @@
+{
+  "id": "excel/eomonth",
+  "kind": "excel",
+  "description": "=EOMONTH(DATE(2024,1,15),1) is supported as end_of_month(add_months(2024-01-15, 1)).",
+  "valid": true,
+  "excel": "=EOMONTH(DATE(2024,1,15),1)",
+  "doc": "https://support.microsoft.com/en-us/excel/functions/eomonth-function",
+  "documentation_derived": true,
+  "status": "supported",
+  "sample": "",
+  "excel_result": {
+    "type": "date",
+    "value": "2024-02-29"
+  },
+  "formula": "end_of_month(add_months(2024-01-15, 1))",
+  "signature": {
+    "args": {},
+    "order": [],
+    "returns": "date"
+  },
+  "world": {
+    "functions": {},
+    "receipts": []
+  },
+  "cell": {
+    "args": {},
+    "fn": "sheet.example.net/case"
+  },
+  "asof": "2026-06-01T00:00:00.000000Z",
+  "receipt_hash": "4d1fca157947b52f96534b0aa0755179fb089d740118ff8c193307334c3aeff7",
+  "body": "end_of_month(add_months(2024-01-15, 1))\n",
+  "value": {
+    "type": "date",
+    "value": "2024-02-29"
+  },
+  "lineage": [],
+  "tx": "0001-01-01T00:00:00.000000Z",
+  "receipt_asof": "0001-01-01T00:00:00.000000Z",
+  "fuel_used": 4
+}

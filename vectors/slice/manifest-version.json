@@ -1,0 +1,12 @@
+{
+  "id": "slice/manifest-version",
+  "kind": "slice",
+  "description": "A version slice's manifest.",
+  "valid": true,
+  "input": "{\n  \"slice\": {\n    \"to\": \"2026-05-01T00:00:00.000000Z\",\n    \"from\": \"2026-01-01T00:00:00.000000Z\",\n    \"cell\": {\n      \"ns\": \"data.example.org\",\n      \"fn_hash\": \"4193e310f5c949998b3f339d2ad56567286ebd0828504b3f31a2c671e99c71a7\",\n      \"fn\": \"price\",\n      \"args\": {\n        \"item\": {\n          \"value\": \"bolt\",\n          \"type\": \"string\"\n        }\n      }\n    }\n  },\n  \"members\": [\n    \"29c1b289e7522195b362e44f54e05470b69ad20540ab60a18a05e5bf6951f13d\",\n    \"ca0df2c95aa144c1d0ff2ff3c8f967fdc1de9ef0c4120b3726416701b519d619\"\n  ]\n}",
+  "canonical": "{\"members\":[\"29c1b289e7522195b362e44f54e05470b69ad20540ab60a18a05e5bf6951f13d\",\"ca0df2c95aa144c1d0ff2ff3c8f967fdc1de9ef0c4120b3726416701b519d619\"],\"slice\":{\"cell\":{\"args\":{\"item\":{\"type\":\"string\",\"value\":\"bolt\"}},\"fn\":\"price\",\"fn_hash\":\"4193e310f5c949998b3f339d2ad56567286ebd0828504b3f31a2c671e99c71a7\",\"ns\":\"data.example.org\"},\"from\":\"2026-01-01T00:00:00.000000Z\",\"to\":\"2026-05-01T00:00:00.000000Z\"}}",
+  "sha256": "9444c8ea22111ad01456ffd970ecad33bd7c132e01c6249684b2528427b747ae",
+  "slice_id": "0afced7269ccc814c8d5ad0b581a1735bb5c7dd1ba9fd1317b0ca10dab231df7",
+  "members_hash": "aa8c2e9bc4b3af2f51573999440099825f2651bcf1e024b1fcceb0dddcdbe74c",
+  "entry": "slice:0afced7269ccc814c8d5ad0b581a1735bb5c7dd1ba9fd1317b0ca10dab231df7:aa8c2e9bc4b3af2f51573999440099825f2651bcf1e024b1fcceb0dddcdbe74c"
+}

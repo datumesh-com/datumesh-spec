@@ -1,0 +1,52 @@
+{
+  "id": "formula-eval/end-of-month",
+  "kind": "formula-eval",
+  "description": "end_of_month(d)  (with d = 2024-02-10)",
+  "valid": true,
+  "world": {
+    "functions": {
+      "calc.example.net/e": {
+        "bound": "2026-01-01T00:00:00.000000Z",
+        "descriptor": {
+          "code": {
+            "body": "end_of_month(d)\n",
+            "lang": "formula"
+          },
+          "inputs": [],
+          "signature": {
+            "args": {
+              "d": {
+                "type": "date",
+                "valid": true
+              }
+            },
+            "order": [
+              "d"
+            ],
+            "returns": "date"
+          }
+        }
+      }
+    },
+    "receipts": []
+  },
+  "cell": {
+    "args": {
+      "d": {
+        "type": "date",
+        "value": "2024-02-10"
+      }
+    },
+    "fn": "calc.example.net/e"
+  },
+  "asof": "2026-06-01T00:00:00.000000Z",
+  "receipt_hash": "766d7abd87cb0e3c95850774ccd2a47b3f336167f78684c9eae0f04d29664625",
+  "value": {
+    "type": "date",
+    "value": "2024-02-29"
+  },
+  "lineage": [],
+  "tx": "0001-01-01T00:00:00.000000Z",
+  "receipt_asof": "0001-01-01T00:00:00.000000Z",
+  "fuel_used": 2
+}

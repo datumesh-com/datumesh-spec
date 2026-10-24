@@ -1,0 +1,53 @@
+{
+  "id": "formula-eval/fixed-pad",
+  "kind": "formula-eval",
+  "description": "fixed(x, 3)  (with x = 1.2)",
+  "valid": true,
+  "world": {
+    "functions": {
+      "calc.example.net/e": {
+        "bound": "2026-01-01T00:00:00.000000Z",
+        "descriptor": {
+          "code": {
+            "body": "fixed(x, 3)\n",
+            "lang": "formula"
+          },
+          "inputs": [],
+          "signature": {
+            "args": {
+              "x": {
+                "type": "number",
+                "valid": false,
+                "unit": "1"
+              }
+            },
+            "order": [
+              "x"
+            ],
+            "returns": "string"
+          }
+        }
+      }
+    },
+    "receipts": []
+  },
+  "cell": {
+    "args": {
+      "x": {
+        "type": "number",
+        "value": "1.2"
+      }
+    },
+    "fn": "calc.example.net/e"
+  },
+  "asof": "2026-06-01T00:00:00.000000Z",
+  "receipt_hash": "4742d51a871a5627d334a2c3076d398f55d6bad9138b434b520a2b57aefbd965",
+  "value": {
+    "type": "string",
+    "value": "1.200"
+  },
+  "lineage": [],
+  "tx": "0001-01-01T00:00:00.000000Z",
+  "receipt_asof": "0001-01-01T00:00:00.000000Z",
+  "fuel_used": 3
+}

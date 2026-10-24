@@ -1,0 +1,13 @@
+{
+  "id": "invalid/envelope-not-covered-fault-unknown",
+  "kind": "envelope",
+  "description": "Only evaluation faults: running out of fuel is the mesh's failure (error, E_EVAL_UNAVAILABLE).",
+  "valid": false,
+  "input": "{\"fault\": \"E_FORMULA_BUDGET\", \"outcome\": \"not_covered\"}",
+  "status": 404,
+  "keys": {},
+  "request": {
+    "cell_id": "f3d317bcf19ebe4e2fdd4a1978ecbe904a33abd3398c48e6d9b8e79e13209a14"
+  },
+  "error": "E_ENVELOPE"
+}

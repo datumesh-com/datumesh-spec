@@ -1,0 +1,43 @@
+{
+  "id": "excel/weekday",
+  "kind": "excel",
+  "description": "=WEEKDAY(DATE(2024,3,15)) is supported as mod(weekday(2024-03-15), 7) + 1. Return type 1: Sunday is 1.",
+  "valid": true,
+  "excel": "=WEEKDAY(DATE(2024,3,15))",
+  "doc": "https://support.microsoft.com/en-us/excel/functions/weekday-function",
+  "documentation_derived": true,
+  "status": "supported",
+  "sample": "Return type 1: Sunday is 1.",
+  "excel_result": {
+    "type": "number",
+    "value": "6"
+  },
+  "formula": "mod(weekday(2024-03-15), 7) + 1",
+  "signature": {
+    "args": {},
+    "order": [],
+    "returns": {
+      "type": "number",
+      "unit": "1"
+    }
+  },
+  "world": {
+    "functions": {},
+    "receipts": []
+  },
+  "cell": {
+    "args": {},
+    "fn": "sheet.example.net/case"
+  },
+  "asof": "2026-06-01T00:00:00.000000Z",
+  "receipt_hash": "1a9b38e4d93f653b5eca40e2c349c3a894596e61bc53289b72ca663c3a8a9453",
+  "body": "mod(weekday(2024-03-15), 7) + 1\n",
+  "value": {
+    "type": "number",
+    "value": "6"
+  },
+  "lineage": [],
+  "tx": "0001-01-01T00:00:00.000000Z",
+  "receipt_asof": "0001-01-01T00:00:00.000000Z",
+  "fuel_used": 6
+}

@@ -1,0 +1,56 @@
+{
+  "id": "formula-eval/exp",
+  "kind": "formula-eval",
+  "description": "exp(x)  (with x = 1)",
+  "valid": true,
+  "world": {
+    "functions": {
+      "calc.example.net/e": {
+        "bound": "2026-01-01T00:00:00.000000Z",
+        "descriptor": {
+          "code": {
+            "body": "exp(x)\n",
+            "lang": "formula"
+          },
+          "inputs": [],
+          "signature": {
+            "args": {
+              "x": {
+                "type": "number",
+                "valid": false,
+                "unit": "1"
+              }
+            },
+            "order": [
+              "x"
+            ],
+            "returns": {
+              "type": "number",
+              "unit": "1"
+            }
+          }
+        }
+      }
+    },
+    "receipts": []
+  },
+  "cell": {
+    "args": {
+      "x": {
+        "type": "number",
+        "value": "1"
+      }
+    },
+    "fn": "calc.example.net/e"
+  },
+  "asof": "2026-06-01T00:00:00.000000Z",
+  "receipt_hash": "a06283e645c300940513f81c2c11faaf3ab35a0a02ce021d0730e2d2351d3b9b",
+  "value": {
+    "type": "number",
+    "value": "2.718281828459045235360287471352662"
+  },
+  "lineage": [],
+  "tx": "0001-01-01T00:00:00.000000Z",
+  "receipt_asof": "0001-01-01T00:00:00.000000Z",
+  "fuel_used": 52
+}

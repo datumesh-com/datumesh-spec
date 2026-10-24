@@ -21,6 +21,7 @@ class Determinism(unittest.TestCase):
         rng = random.Random(SEED)
         spec = G.world_fuzz()
         worlds = [formula.world_of(spec), formula.world_of(spec)]
+        env = {"functions": {n: f["descriptor"] for n, f in spec["functions"].items()}}  # the bodies read only these
         outcomes = {"value": 0, "fault": 0}
         for i in range(N):
             source, returns = G.random_expression(rng)
@@ -29,7 +30,7 @@ class Determinism(unittest.TestCase):
             results = []
             for world in worlds:
                 try:
-                    descriptor = formula.define(fq, sig, source, {"functions": {n: f["descriptor"] for n, f in world.functions.items()}})
+                    descriptor = formula.define(fq, sig, source, env)
                     world.bind(fq, descriptor, G.BOUND)
                     a = world.get(fq, G.FUZZ_ARGS, G.LATER)
                     results.append(("receipt", a.text))

@@ -1,0 +1,9 @@
+{
+  "id": "function/formula-descriptor",
+  "kind": "function",
+  "description": "A formula descriptor as define writes it: body printed from the canonical AST, inputs derived, order present.",
+  "valid": true,
+  "input": "{\n  \"signature\": {\n    \"returns\": {\n      \"unit\": \"1\",\n      \"type\": \"number\"\n    },\n    \"order\": [\n      \"n\"\n    ],\n    \"args\": {\n      \"n\": {\n        \"unit\": \"1\",\n        \"valid\": false,\n        \"type\": \"number\"\n      }\n    }\n  },\n  \"inputs\": [\n    \"math.example.net/fib\"\n  ],\n  \"code\": {\n    \"lang\": \"formula\",\n    \"body\": \"if n < 2 then n else math.example.net/fib(n: n - 1) + math.example.net/fib(n: n - 2)\\n\"\n  }\n}",
+  "canonical": "{\"code\":{\"body\":\"if n < 2 then n else math.example.net/fib(n: n - 1) + math.example.net/fib(n: n - 2)\\n\",\"lang\":\"formula\"},\"inputs\":[\"math.example.net/fib\"],\"signature\":{\"args\":{\"n\":{\"type\":\"number\",\"unit\":\"1\",\"valid\":false}},\"order\":[\"n\"],\"returns\":{\"type\":\"number\",\"unit\":\"1\"}}}",
+  "sha256": "57d53ffeba8da488066cf64fd2d71e870dd661845e11cd2cee006145ab033516"
+}

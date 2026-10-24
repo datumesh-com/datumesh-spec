@@ -1,0 +1,13 @@
+{
+  "id": "envelope/not-covered-fault",
+  "kind": "envelope",
+  "description": "A computed cell with no value: not_covered, with the formula fault code so that a fault is not mistaken for missing data (SPEC 5.5).",
+  "valid": true,
+  "input": "{\"fault\": \"E_FORMULA_DIV_ZERO\", \"outcome\": \"not_covered\"}",
+  "status": 404,
+  "keys": {},
+  "request": {
+    "cell_id": "f3d317bcf19ebe4e2fdd4a1978ecbe904a33abd3398c48e6d9b8e79e13209a14"
+  },
+  "outcome": "not_covered"
+}

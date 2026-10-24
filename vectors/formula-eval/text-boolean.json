@@ -1,0 +1,40 @@
+{
+  "id": "formula-eval/text-boolean",
+  "kind": "formula-eval",
+  "description": "text(1 < 2)  (with no arguments)",
+  "valid": true,
+  "world": {
+    "functions": {
+      "calc.example.net/e": {
+        "bound": "2026-01-01T00:00:00.000000Z",
+        "descriptor": {
+          "code": {
+            "body": "text(1 < 2)\n",
+            "lang": "formula"
+          },
+          "inputs": [],
+          "signature": {
+            "args": {},
+            "order": [],
+            "returns": "string"
+          }
+        }
+      }
+    },
+    "receipts": []
+  },
+  "cell": {
+    "args": {},
+    "fn": "calc.example.net/e"
+  },
+  "asof": "2026-06-01T00:00:00.000000Z",
+  "receipt_hash": "98c633228e559028da5f7310300c70de57d2f5c298ad7cdbc607b97562ef988b",
+  "value": {
+    "type": "string",
+    "value": "true"
+  },
+  "lineage": [],
+  "tx": "0001-01-01T00:00:00.000000Z",
+  "receipt_asof": "0001-01-01T00:00:00.000000Z",
+  "fuel_used": 4
+}

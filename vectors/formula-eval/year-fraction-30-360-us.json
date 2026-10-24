@@ -1,0 +1,64 @@
+{
+  "id": "formula-eval/year-fraction-30-360-us",
+  "kind": "formula-eval",
+  "description": "year_fraction(d, d2, \"30/360_us\")  (with d = 2024-02-29, d2 = 2024-03-31)",
+  "valid": true,
+  "world": {
+    "functions": {
+      "calc.example.net/e": {
+        "bound": "2026-01-01T00:00:00.000000Z",
+        "descriptor": {
+          "code": {
+            "body": "year_fraction(d, d2, \"30/360_us\")\n",
+            "lang": "formula"
+          },
+          "inputs": [],
+          "signature": {
+            "args": {
+              "d": {
+                "type": "date",
+                "valid": true
+              },
+              "d2": {
+                "type": "date",
+                "valid": true
+              }
+            },
+            "order": [
+              "d",
+              "d2"
+            ],
+            "returns": {
+              "type": "number",
+              "unit": "1"
+            }
+          }
+        }
+      }
+    },
+    "receipts": []
+  },
+  "cell": {
+    "args": {
+      "d": {
+        "type": "date",
+        "value": "2024-02-29"
+      },
+      "d2": {
+        "type": "date",
+        "value": "2024-03-31"
+      }
+    },
+    "fn": "calc.example.net/e"
+  },
+  "asof": "2026-06-01T00:00:00.000000Z",
+  "receipt_hash": "97e44e305760b9106a4993686f4ace5ffea023b323a566f994c18773f041d742",
+  "value": {
+    "type": "number",
+    "value": "0.08333333333333333333333333333333333"
+  },
+  "lineage": [],
+  "tx": "0001-01-01T00:00:00.000000Z",
+  "receipt_asof": "0001-01-01T00:00:00.000000Z",
+  "fuel_used": 3
+}

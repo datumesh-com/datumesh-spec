@@ -1,0 +1,40 @@
+{
+  "id": "excel/concat",
+  "kind": "excel",
+  "description": "=CONCAT(\"a\",\"b\",\"c\") is supported as concat(\"a\", \"b\", \"c\").",
+  "valid": true,
+  "excel": "=CONCAT(\"a\",\"b\",\"c\")",
+  "doc": "https://support.microsoft.com/en-us/excel/functions/concat-function",
+  "documentation_derived": true,
+  "status": "supported",
+  "sample": "",
+  "excel_result": {
+    "type": "string",
+    "value": "abc"
+  },
+  "formula": "concat(\"a\", \"b\", \"c\")",
+  "signature": {
+    "args": {},
+    "order": [],
+    "returns": "string"
+  },
+  "world": {
+    "functions": {},
+    "receipts": []
+  },
+  "cell": {
+    "args": {},
+    "fn": "sheet.example.net/case"
+  },
+  "asof": "2026-06-01T00:00:00.000000Z",
+  "receipt_hash": "27f8f938d3e38d5fe346d83e1ece7be0ae26b8ed048723ddd02042fb33bd0a1f",
+  "body": "concat(\"a\", \"b\", \"c\")\n",
+  "value": {
+    "type": "string",
+    "value": "abc"
+  },
+  "lineage": [],
+  "tx": "0001-01-01T00:00:00.000000Z",
+  "receipt_asof": "0001-01-01T00:00:00.000000Z",
+  "fuel_used": 5
+}

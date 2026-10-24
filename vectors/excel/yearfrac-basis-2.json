@@ -1,0 +1,43 @@
+{
+  "id": "excel/yearfrac-basis-2",
+  "kind": "excel",
+  "description": "=ROUND(YEARFRAC(DATE(2024,1,1),DATE(2024,7,1),2),10) is partial as round(year_fraction(2024-01-01, 2024-07-01, \"act/360\"), 10). Basis 2 (actual/360).",
+  "valid": true,
+  "excel": "=ROUND(YEARFRAC(DATE(2024,1,1),DATE(2024,7,1),2),10)",
+  "doc": "https://support.microsoft.com/en-us/excel/functions/yearfrac-function",
+  "documentation_derived": true,
+  "status": "partial",
+  "sample": "Basis 2 (actual/360).",
+  "excel_result": {
+    "type": "number",
+    "value": "0.5055555556"
+  },
+  "formula": "round(year_fraction(2024-01-01, 2024-07-01, \"act/360\"), 10)",
+  "signature": {
+    "args": {},
+    "order": [],
+    "returns": {
+      "type": "number",
+      "unit": "1"
+    }
+  },
+  "world": {
+    "functions": {},
+    "receipts": []
+  },
+  "cell": {
+    "args": {},
+    "fn": "sheet.example.net/case"
+  },
+  "asof": "2026-06-01T00:00:00.000000Z",
+  "receipt_hash": "f5a757afdfae2a059d807886d619c8c4c73c6cc92f30e417b6a6558fb94e0ddc",
+  "body": "round(year_fraction(2024-01-01, 2024-07-01, \"act/360\"), digits: 10)\n",
+  "value": {
+    "type": "number",
+    "value": "0.5055555556"
+  },
+  "lineage": [],
+  "tx": "0001-01-01T00:00:00.000000Z",
+  "receipt_asof": "0001-01-01T00:00:00.000000Z",
+  "fuel_used": 5
+}

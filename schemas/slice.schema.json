@@ -1,0 +1,69 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://datumesh.com/schemas/1/slice.schema.json",
+  "title": "Datumesh slice object",
+  "description": "The object whose JCS SHA-256 is a slice id (SPEC.md 15.13): a cell with open (*) or ranged arguments, or a version slice.",
+  "oneOf": [
+    {
+      "type": "object",
+      "required": [
+        "args",
+        "fn",
+        "fn_hash",
+        "ns"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "args": {
+          "type": "object",
+          "maxProperties": 32,
+          "propertyNames": {
+            "$ref": "defs.schema.json#/$defs/argName"
+          },
+          "additionalProperties": {
+            "anyOf": [
+              {
+                "const": "*"
+              },
+              {
+                "$ref": "defs.schema.json#/$defs/rangeObject"
+              },
+              {
+                "$ref": "defs.schema.json#/$defs/scalar"
+              }
+            ]
+          }
+        },
+        "fn": {
+          "$ref": "defs.schema.json#/$defs/name"
+        },
+        "fn_hash": {
+          "$ref": "defs.schema.json#/$defs/hex64"
+        },
+        "ns": {
+          "$ref": "defs.schema.json#/$defs/namespace"
+        }
+      }
+    },
+    {
+      "type": "object",
+      "required": [
+        "cell",
+        "from",
+        "to"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "cell": {
+          "$ref": "cell.schema.json"
+        },
+        "from": {
+          "$ref": "defs.schema.json#/$defs/instant"
+        },
+        "to": {
+          "$ref": "defs.schema.json#/$defs/instant"
+        }
+      }
+    }
+  ]
+}

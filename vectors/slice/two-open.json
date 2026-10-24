@@ -1,0 +1,10 @@
+{
+  "id": "slice/two-open",
+  "kind": "slice",
+  "description": "Two open arguments.",
+  "valid": true,
+  "input": "{\n  \"ns\": \"weather.example.org\",\n  \"fn_hash\": \"dde08ce4ae70eb8bb08cea18e3cad37b53a74efa186c4bd25db8d423f202f5c1\",\n  \"fn\": \"temp\",\n  \"args\": {\n    \"t\": \"*\",\n    \"station\": \"*\"\n  }\n}",
+  "canonical": "{\"args\":{\"station\":\"*\",\"t\":\"*\"},\"fn\":\"temp\",\"fn_hash\":\"dde08ce4ae70eb8bb08cea18e3cad37b53a74efa186c4bd25db8d423f202f5c1\",\"ns\":\"weather.example.org\"}",
+  "sha256": "19d74a839fba7f396c2b82c7cd7b762e7d4cc214e00382ead710b8ac7c0cb200",
+  "slice_id": "19d74a839fba7f396c2b82c7cd7b762e7d4cc214e00382ead710b8ac7c0cb200"
+}

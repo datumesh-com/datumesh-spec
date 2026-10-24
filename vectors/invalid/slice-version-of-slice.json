@@ -1,0 +1,8 @@
+{
+  "id": "invalid/slice-version-of-slice",
+  "kind": "slice",
+  "description": "A version slice is of one cell.",
+  "valid": false,
+  "input": "{\n  \"to\": \"2026-05-01T00:00:00.000000Z\",\n  \"from\": \"2026-01-01T00:00:00.000000Z\",\n  \"cell\": {\n    \"ns\": \"data.example.org\",\n    \"fn_hash\": \"4193e310f5c949998b3f339d2ad56567286ebd0828504b3f31a2c671e99c71a7\",\n    \"fn\": \"price\",\n    \"args\": {\n      \"item\": \"*\"\n    }\n  }\n}",
+  "error": "E_SLICE"
+}

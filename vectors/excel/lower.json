@@ -1,0 +1,40 @@
+{
+  "id": "excel/lower",
+  "kind": "excel",
+  "description": "=LOWER(\"ÄBC\") is supported as lower(\"ÄBC\").",
+  "valid": true,
+  "excel": "=LOWER(\"ÄBC\")",
+  "doc": "https://support.microsoft.com/en-us/excel/functions/lower-function",
+  "documentation_derived": true,
+  "status": "supported",
+  "sample": "",
+  "excel_result": {
+    "type": "string",
+    "value": "äbc"
+  },
+  "formula": "lower(\"ÄBC\")",
+  "signature": {
+    "args": {},
+    "order": [],
+    "returns": "string"
+  },
+  "world": {
+    "functions": {},
+    "receipts": []
+  },
+  "cell": {
+    "args": {},
+    "fn": "sheet.example.net/case"
+  },
+  "asof": "2026-06-01T00:00:00.000000Z",
+  "receipt_hash": "270c7accc8a4cb695611333637e23516a89b9bc03ac0247b1ed83e7d5ada96cf",
+  "body": "lower(\"ÄBC\")\n",
+  "value": {
+    "type": "string",
+    "value": "äbc"
+  },
+  "lineage": [],
+  "tx": "0001-01-01T00:00:00.000000Z",
+  "receipt_asof": "0001-01-01T00:00:00.000000Z",
+  "fuel_used": 3
+}

@@ -1,0 +1,341 @@
+{
+  "id": "formula-eval/business-days-reversed",
+  "kind": "formula-eval",
+  "description": "business_days(d2, d, calendar: calendars.example.org/holiday(\"gb-eaw\", *))  (with d = 2026-04-01, d2 = 2026-04-10)",
+  "valid": true,
+  "world": {
+    "functions": {
+      "calc.example.net/e": {
+        "bound": "2026-01-01T00:00:00.000000Z",
+        "descriptor": {
+          "code": {
+            "body": "business_days(d2, d, calendar: calendars.example.org/holiday(calendar: \"gb-eaw\", date: *))\n",
+            "lang": "formula"
+          },
+          "inputs": [
+            "calendars.example.org/holiday"
+          ],
+          "signature": {
+            "args": {
+              "d": {
+                "type": "date",
+                "valid": true
+              },
+              "d2": {
+                "type": "date",
+                "valid": true
+              }
+            },
+            "order": [
+              "d",
+              "d2"
+            ],
+            "returns": {
+              "type": "number",
+              "unit": "d"
+            }
+          }
+        }
+      },
+      "calendars.example.org/holiday": {
+        "bound": "2026-01-01T00:00:00.000000Z",
+        "descriptor": {
+          "code": {
+            "body": "",
+            "lang": "stored"
+          },
+          "inputs": [],
+          "signature": {
+            "args": {
+              "calendar": {
+                "type": "string",
+                "valid": false
+              },
+              "date": {
+                "type": "date",
+                "valid": true
+              }
+            },
+            "returns": "string",
+            "order": [
+              "calendar",
+              "date"
+            ]
+          }
+        }
+      }
+    },
+    "receipts": [
+      {
+        "asof": "2025-12-01T00:00:00.000000Z",
+        "cell": {
+          "args": {
+            "calendar": {
+              "type": "string",
+              "value": "gb-eaw"
+            },
+            "date": {
+              "type": "date",
+              "value": "2026-04-03"
+            }
+          },
+          "fn": "holiday",
+          "fn_hash": "3bff8d46fce6af1fdcb3a28767f7713a662ed1df49e6b2505138c46205306ead",
+          "ns": "calendars.example.org"
+        },
+        "computed_by": "calendars.example.org#d36465cb16755445",
+        "inputs": [],
+        "issued": "2025-12-01T00:00:00.000000Z",
+        "licence": "CC-BY-4.0",
+        "proto": "datumesh/1",
+        "publisher": "calendars.example.org",
+        "summary": "A recorded value of holiday.",
+        "tx": "2025-12-01T00:00:00.000000Z",
+        "type": "string",
+        "valid": {
+          "date": {
+            "type": "date",
+            "value": "2026-04-03"
+          }
+        },
+        "value": "Good Friday",
+        "sig": "941b1cdb6b8b53f347efdc31d184a6e60205fe2cda70b47241e4fe7ae95e664fe78cced42ab385861cd7affb37ca8af0015b4d9da986244cec19c16ae4e73b0b"
+      },
+      {
+        "asof": "2025-12-01T00:00:00.000000Z",
+        "cell": {
+          "args": {
+            "calendar": {
+              "type": "string",
+              "value": "gb-eaw"
+            },
+            "date": {
+              "type": "date",
+              "value": "2026-04-06"
+            }
+          },
+          "fn": "holiday",
+          "fn_hash": "3bff8d46fce6af1fdcb3a28767f7713a662ed1df49e6b2505138c46205306ead",
+          "ns": "calendars.example.org"
+        },
+        "computed_by": "calendars.example.org#d36465cb16755445",
+        "inputs": [],
+        "issued": "2025-12-01T00:00:00.000000Z",
+        "licence": "CC-BY-4.0",
+        "proto": "datumesh/1",
+        "publisher": "calendars.example.org",
+        "summary": "A recorded value of holiday.",
+        "tx": "2025-12-01T00:00:00.000000Z",
+        "type": "string",
+        "valid": {
+          "date": {
+            "type": "date",
+            "value": "2026-04-06"
+          }
+        },
+        "value": "Easter Monday",
+        "sig": "4f8f06cc43b1876931eea5d4a5ee6d21f471840e67454c934f8f9370f1e08dce790678672f1a213cb14398682be714eaf4731a1ff85380de03dbfaa591780c0b"
+      },
+      {
+        "asof": "2025-12-01T00:00:00.000000Z",
+        "cell": {
+          "args": {
+            "calendar": {
+              "type": "string",
+              "value": "gb-eaw"
+            },
+            "date": {
+              "type": "date",
+              "value": "2026-05-04"
+            }
+          },
+          "fn": "holiday",
+          "fn_hash": "3bff8d46fce6af1fdcb3a28767f7713a662ed1df49e6b2505138c46205306ead",
+          "ns": "calendars.example.org"
+        },
+        "computed_by": "calendars.example.org#d36465cb16755445",
+        "inputs": [],
+        "issued": "2025-12-01T00:00:00.000000Z",
+        "licence": "CC-BY-4.0",
+        "proto": "datumesh/1",
+        "publisher": "calendars.example.org",
+        "summary": "A recorded value of holiday.",
+        "tx": "2025-12-01T00:00:00.000000Z",
+        "type": "string",
+        "valid": {
+          "date": {
+            "type": "date",
+            "value": "2026-05-04"
+          }
+        },
+        "value": "Early May bank holiday",
+        "sig": "9ce963f5eae8b8afa71bdf751fc8ec242d32990cf97d5d349ba1b5ade16a6cfff13be74ba937538f71d4b58290a7ae0bb9272a536c5d128d11dec50b39935801"
+      },
+      {
+        "asof": "2025-12-01T00:00:00.000000Z",
+        "cell": {
+          "args": {
+            "calendar": {
+              "type": "string",
+              "value": "gb-eaw"
+            },
+            "date": {
+              "type": "date",
+              "value": "2026-05-25"
+            }
+          },
+          "fn": "holiday",
+          "fn_hash": "3bff8d46fce6af1fdcb3a28767f7713a662ed1df49e6b2505138c46205306ead",
+          "ns": "calendars.example.org"
+        },
+        "computed_by": "calendars.example.org#d36465cb16755445",
+        "inputs": [],
+        "issued": "2025-12-01T00:00:00.000000Z",
+        "licence": "CC-BY-4.0",
+        "proto": "datumesh/1",
+        "publisher": "calendars.example.org",
+        "summary": "A recorded value of holiday.",
+        "tx": "2025-12-01T00:00:00.000000Z",
+        "type": "string",
+        "valid": {
+          "date": {
+            "type": "date",
+            "value": "2026-05-25"
+          }
+        },
+        "value": "Spring bank holiday",
+        "sig": "705d9da3994527851cb3921a15a40111b4a9b3ce604831e5796b225a1c0d9d8d8c4b13a4bc9b4aff8852af250cf5cf3a9a894e5a3068b41451bcb3da36018e01"
+      },
+      {
+        "asof": "2025-12-01T00:00:00.000000Z",
+        "cell": {
+          "args": {
+            "calendar": {
+              "type": "string",
+              "value": "gb-eaw"
+            },
+            "date": {
+              "type": "date",
+              "value": "2026-08-31"
+            }
+          },
+          "fn": "holiday",
+          "fn_hash": "3bff8d46fce6af1fdcb3a28767f7713a662ed1df49e6b2505138c46205306ead",
+          "ns": "calendars.example.org"
+        },
+        "computed_by": "calendars.example.org#d36465cb16755445",
+        "inputs": [],
+        "issued": "2025-12-01T00:00:00.000000Z",
+        "licence": "CC-BY-4.0",
+        "proto": "datumesh/1",
+        "publisher": "calendars.example.org",
+        "summary": "A recorded value of holiday.",
+        "tx": "2025-12-01T00:00:00.000000Z",
+        "type": "string",
+        "valid": {
+          "date": {
+            "type": "date",
+            "value": "2026-08-31"
+          }
+        },
+        "value": "Summer bank holiday",
+        "sig": "f7a0d7b2bd281056532c12a0f2472b7b340f437319e77a6c66721a2c1c082916aba42e9350ce1b762d07d7c8ca2850a74882790c4077b81139b636c12060540f"
+      },
+      {
+        "asof": "2025-12-01T00:00:00.000000Z",
+        "cell": {
+          "args": {
+            "calendar": {
+              "type": "string",
+              "value": "gb-eaw"
+            },
+            "date": {
+              "type": "date",
+              "value": "2026-12-25"
+            }
+          },
+          "fn": "holiday",
+          "fn_hash": "3bff8d46fce6af1fdcb3a28767f7713a662ed1df49e6b2505138c46205306ead",
+          "ns": "calendars.example.org"
+        },
+        "computed_by": "calendars.example.org#d36465cb16755445",
+        "inputs": [],
+        "issued": "2025-12-01T00:00:00.000000Z",
+        "licence": "CC-BY-4.0",
+        "proto": "datumesh/1",
+        "publisher": "calendars.example.org",
+        "summary": "A recorded value of holiday.",
+        "tx": "2025-12-01T00:00:00.000000Z",
+        "type": "string",
+        "valid": {
+          "date": {
+            "type": "date",
+            "value": "2026-12-25"
+          }
+        },
+        "value": "Christmas Day",
+        "sig": "2ded2b23321c679a77f66bcbf2c6ef591df6e15a7e82fed30854f76e9a1d80e3de7911d75f0a4fba08bacfda3f382db03da09593061e569feff33b6964d9930c"
+      },
+      {
+        "asof": "2025-12-01T00:00:00.000000Z",
+        "cell": {
+          "args": {
+            "calendar": {
+              "type": "string",
+              "value": "gb-eaw"
+            },
+            "date": {
+              "type": "date",
+              "value": "2026-12-28"
+            }
+          },
+          "fn": "holiday",
+          "fn_hash": "3bff8d46fce6af1fdcb3a28767f7713a662ed1df49e6b2505138c46205306ead",
+          "ns": "calendars.example.org"
+        },
+        "computed_by": "calendars.example.org#d36465cb16755445",
+        "inputs": [],
+        "issued": "2025-12-01T00:00:00.000000Z",
+        "licence": "CC-BY-4.0",
+        "proto": "datumesh/1",
+        "publisher": "calendars.example.org",
+        "summary": "A recorded value of holiday.",
+        "tx": "2025-12-01T00:00:00.000000Z",
+        "type": "string",
+        "valid": {
+          "date": {
+            "type": "date",
+            "value": "2026-12-28"
+          }
+        },
+        "value": "Boxing Day (substitute)",
+        "sig": "888cf8babb64d635c8568a493df7d113b9e79fc65a5bdc7f73d6aade32b47d77ea00bc5432b8afbd492cf5ff66dbb7c32cad428ab9e45ae8a741463bef1fe000"
+      }
+    ]
+  },
+  "cell": {
+    "args": {
+      "d": {
+        "type": "date",
+        "value": "2026-04-01"
+      },
+      "d2": {
+        "type": "date",
+        "value": "2026-04-10"
+      }
+    },
+    "fn": "calc.example.net/e"
+  },
+  "asof": "2026-06-01T00:00:00.000000Z",
+  "receipt_hash": "e50d3abf023914c0783096492051e2b489a2979dbf15f7cd2d592c3d7bd34de5",
+  "value": {
+    "type": "number",
+    "value": "-6"
+  },
+  "lineage": [
+    "slice:d902674109315129ef734aa122ac23cd359681458fce4c11f5d0263a91774bde:487b5aa7919564c9ba3fe10311cb9689d229b8d2bfef20a5887e4f7af302304c"
+  ],
+  "tx": "2025-12-01T00:00:00.000000Z",
+  "receipt_asof": "2026-01-01T00:00:00.000000Z",
+  "fuel_used": 23
+}

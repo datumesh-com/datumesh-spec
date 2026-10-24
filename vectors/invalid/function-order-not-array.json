@@ -1,0 +1,8 @@
+{
+  "id": "invalid/function-order-not-array",
+  "kind": "function",
+  "description": "order is an array.",
+  "valid": false,
+  "input": "{\n  \"signature\": {\n    \"order\": \"base,quote,date\",\n    \"returns\": {\n      \"unit\": {\n        \"per\": {\n          \"arg\": \"base\"\n        },\n        \"of\": {\n          \"arg\": \"quote\"\n        }\n      },\n      \"type\": \"number\"\n    },\n    \"args\": {\n      \"quote\": {\n        \"valid\": false,\n        \"type\": \"string\"\n      },\n      \"date\": {\n        \"valid\": true,\n        \"type\": \"date\"\n      },\n      \"base\": {\n        \"valid\": false,\n        \"type\": \"string\"\n      }\n    }\n  },\n  \"inputs\": [],\n  \"code\": {\n    \"lang\": \"stored\",\n    \"body\": \"\"\n  }\n}",
+  "error": "E_SCHEMA"
+}

@@ -1,0 +1,40 @@
+{
+  "id": "formula-eval/date-leap",
+  "kind": "formula-eval",
+  "description": "date(2024, 2, 29)  (with no arguments)",
+  "valid": true,
+  "world": {
+    "functions": {
+      "calc.example.net/e": {
+        "bound": "2026-01-01T00:00:00.000000Z",
+        "descriptor": {
+          "code": {
+            "body": "date(2024, 2, 29)\n",
+            "lang": "formula"
+          },
+          "inputs": [],
+          "signature": {
+            "args": {},
+            "order": [],
+            "returns": "date"
+          }
+        }
+      }
+    },
+    "receipts": []
+  },
+  "cell": {
+    "args": {},
+    "fn": "calc.example.net/e"
+  },
+  "asof": "2026-06-01T00:00:00.000000Z",
+  "receipt_hash": "fcd4641e4fcb39956805ad8e28a94288327d1e4db1e995f594489f9dd85d8d56",
+  "value": {
+    "type": "date",
+    "value": "2024-02-29"
+  },
+  "lineage": [],
+  "tx": "0001-01-01T00:00:00.000000Z",
+  "receipt_asof": "0001-01-01T00:00:00.000000Z",
+  "fuel_used": 4
+}

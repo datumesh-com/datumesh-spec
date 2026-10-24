@@ -1,0 +1,43 @@
+{
+  "id": "excel/atan2",
+  "kind": "excel",
+  "description": "=ROUND(ATAN2(1,2),10) is supported as round(atan2(2, 1), 10). Excel's argument order is ATAN2(x, y).",
+  "valid": true,
+  "excel": "=ROUND(ATAN2(1,2),10)",
+  "doc": "https://support.microsoft.com/en-us/excel/functions/atan2-function",
+  "documentation_derived": true,
+  "status": "supported",
+  "sample": "Excel's argument order is ATAN2(x, y).",
+  "excel_result": {
+    "type": "number",
+    "value": "1.1071487178"
+  },
+  "formula": "round(atan2(2, 1), 10)",
+  "signature": {
+    "args": {},
+    "order": [],
+    "returns": {
+      "type": "number",
+      "unit": "1"
+    }
+  },
+  "world": {
+    "functions": {},
+    "receipts": []
+  },
+  "cell": {
+    "args": {},
+    "fn": "sheet.example.net/case"
+  },
+  "asof": "2026-06-01T00:00:00.000000Z",
+  "receipt_hash": "01242298798b0ee96620957f53053f82363695434b1ca2e733522eb2d75dee62",
+  "body": "round(atan2(2, 1), digits: 10)\n",
+  "value": {
+    "type": "number",
+    "value": "1.1071487178"
+  },
+  "lineage": [],
+  "tx": "0001-01-01T00:00:00.000000Z",
+  "receipt_asof": "0001-01-01T00:00:00.000000Z",
+  "fuel_used": 65
+}

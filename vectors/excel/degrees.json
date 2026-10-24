@@ -1,0 +1,43 @@
+{
+  "id": "excel/degrees",
+  "kind": "excel",
+  "description": "=ROUND(DEGREES(PI()),10) is partial as round(convert(pi(), \"deg\"), 10).",
+  "valid": true,
+  "excel": "=ROUND(DEGREES(PI()),10)",
+  "doc": "https://support.microsoft.com/en-us/excel/functions/degrees-function",
+  "documentation_derived": true,
+  "status": "partial",
+  "sample": "",
+  "excel_result": {
+    "type": "number",
+    "value": "180"
+  },
+  "formula": "round(convert(pi(), \"deg\"), 10)",
+  "signature": {
+    "args": {},
+    "order": [],
+    "returns": {
+      "type": "number",
+      "unit": "deg"
+    }
+  },
+  "world": {
+    "functions": {},
+    "receipts": []
+  },
+  "cell": {
+    "args": {},
+    "fn": "sheet.example.net/case"
+  },
+  "asof": "2026-06-01T00:00:00.000000Z",
+  "receipt_hash": "171b9eb1f03223e9200fc607beefc06bd0fbf8623623dfb05e6d87e1eb2de9cd",
+  "body": "round(convert(pi(), \"deg\"), digits: 10)\n",
+  "value": {
+    "type": "number",
+    "value": "180"
+  },
+  "lineage": [],
+  "tx": "0001-01-01T00:00:00.000000Z",
+  "receipt_asof": "0001-01-01T00:00:00.000000Z",
+  "fuel_used": 4
+}

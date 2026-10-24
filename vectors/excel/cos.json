@@ -1,0 +1,43 @@
+{
+  "id": "excel/cos",
+  "kind": "excel",
+  "description": "=ROUND(COS(PI()/3),10) is supported as round(cos(pi() / 3), 10).",
+  "valid": true,
+  "excel": "=ROUND(COS(PI()/3),10)",
+  "doc": "https://support.microsoft.com/en-us/excel/functions/cos-function",
+  "documentation_derived": true,
+  "status": "supported",
+  "sample": "",
+  "excel_result": {
+    "type": "number",
+    "value": "0.5"
+  },
+  "formula": "round(cos(pi() / 3), 10)",
+  "signature": {
+    "args": {},
+    "order": [],
+    "returns": {
+      "type": "number",
+      "unit": "1"
+    }
+  },
+  "world": {
+    "functions": {},
+    "receipts": []
+  },
+  "cell": {
+    "args": {},
+    "fn": "sheet.example.net/case"
+  },
+  "asof": "2026-06-01T00:00:00.000000Z",
+  "receipt_hash": "ec36b6bacaa66c2b68101b8a82f8a258173bdb7c1df46b1c3ea645cc519e7ea1",
+  "body": "round(cos(pi() / 3), digits: 10)\n",
+  "value": {
+    "type": "number",
+    "value": "0.5"
+  },
+  "lineage": [],
+  "tx": "0001-01-01T00:00:00.000000Z",
+  "receipt_asof": "0001-01-01T00:00:00.000000Z",
+  "fuel_used": 56
+}

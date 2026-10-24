@@ -1,0 +1,105 @@
+{
+  "id": "formula-eval/blob-equality",
+  "kind": "formula-eval",
+  "description": "data.example.org/doc(s) = data.example.org/doc(s)  (with s = acme)",
+  "valid": true,
+  "world": {
+    "functions": {
+      "calc.example.net/e": {
+        "bound": "2026-01-01T00:00:00.000000Z",
+        "descriptor": {
+          "code": {
+            "body": "data.example.org/doc(company: s) = data.example.org/doc(company: s)\n",
+            "lang": "formula"
+          },
+          "inputs": [
+            "data.example.org/doc"
+          ],
+          "signature": {
+            "args": {
+              "s": {
+                "type": "string",
+                "valid": false
+              }
+            },
+            "order": [
+              "s"
+            ],
+            "returns": "boolean"
+          }
+        }
+      },
+      "data.example.org/doc": {
+        "bound": "2026-01-01T00:00:00.000000Z",
+        "descriptor": {
+          "code": {
+            "body": "",
+            "lang": "stored"
+          },
+          "inputs": [],
+          "signature": {
+            "args": {
+              "company": {
+                "type": "string",
+                "valid": false
+              }
+            },
+            "returns": "blob",
+            "order": [
+              "company"
+            ]
+          }
+        }
+      }
+    },
+    "receipts": [
+      {
+        "asof": "2026-01-10T00:00:00.000000Z",
+        "cell": {
+          "args": {
+            "company": {
+              "type": "string",
+              "value": "acme"
+            }
+          },
+          "fn": "doc",
+          "fn_hash": "fe1fb0a3f2c7fbf6b1c2f81011469c35ae600021f1a6a745bb5675f37d147806",
+          "ns": "data.example.org"
+        },
+        "computed_by": "data.example.org#efb20f82a7e15e96",
+        "inputs": [],
+        "issued": "2026-01-10T00:00:00.000000Z",
+        "licence": "CC-BY-4.0",
+        "proto": "datumesh/1",
+        "publisher": "data.example.org",
+        "summary": "A recorded value of doc.",
+        "tx": "2026-01-10T00:00:00.000000Z",
+        "type": "blob",
+        "valid": {},
+        "value": "c24a25db9ff6ced41e8ae1e3601603baa06d74003627d0b4f6d5fae52157624d:17:text/plain",
+        "sig": "60a81756da96e271aeb210a0d04b66ad72a2e5e0e7c945fbaa188888d856e3a4db73c9b47c73a8ba09fb1f079512a0c4bec33b0371d76b7b029460ca80177e05"
+      }
+    ]
+  },
+  "cell": {
+    "args": {
+      "s": {
+        "type": "string",
+        "value": "acme"
+      }
+    },
+    "fn": "calc.example.net/e"
+  },
+  "asof": "2026-06-01T00:00:00.000000Z",
+  "receipt_hash": "c1387a6e91fb903d4360d8554017743bd9460a482246330a84d01ff73498b4f9",
+  "value": {
+    "type": "boolean",
+    "value": true
+  },
+  "lineage": [
+    "91425de8dd2f38d71ae4d4f1203074e13b599911a5b8beabe269ce548f793074"
+  ],
+  "tx": "2026-01-10T00:00:00.000000Z",
+  "receipt_asof": "2026-01-10T00:00:00.000000Z",
+  "fuel_used": 7
+}

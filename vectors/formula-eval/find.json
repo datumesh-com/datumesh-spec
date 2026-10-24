@@ -1,0 +1,55 @@
+{
+  "id": "formula-eval/find",
+  "kind": "formula-eval",
+  "description": "find(\"m\", s)  (with s = Datumesh)",
+  "valid": true,
+  "world": {
+    "functions": {
+      "calc.example.net/e": {
+        "bound": "2026-01-01T00:00:00.000000Z",
+        "descriptor": {
+          "code": {
+            "body": "find(\"m\", s)\n",
+            "lang": "formula"
+          },
+          "inputs": [],
+          "signature": {
+            "args": {
+              "s": {
+                "type": "string",
+                "valid": false
+              }
+            },
+            "order": [
+              "s"
+            ],
+            "returns": {
+              "type": "number",
+              "unit": "1"
+            }
+          }
+        }
+      }
+    },
+    "receipts": []
+  },
+  "cell": {
+    "args": {
+      "s": {
+        "type": "string",
+        "value": "Datumesh"
+      }
+    },
+    "fn": "calc.example.net/e"
+  },
+  "asof": "2026-06-01T00:00:00.000000Z",
+  "receipt_hash": "afcf9f5c006946d0a11e62e273058852300162305b46aba3e6b4e0294a04ee69",
+  "value": {
+    "type": "number",
+    "value": "5"
+  },
+  "lineage": [],
+  "tx": "0001-01-01T00:00:00.000000Z",
+  "receipt_asof": "0001-01-01T00:00:00.000000Z",
+  "fuel_used": 3
+}

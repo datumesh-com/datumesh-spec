@@ -21,7 +21,7 @@
       "properties": {
         "body": {
           "type": "string",
-          "pattern": "^[^\u0000-\b\u000b-\u001f\u007f-\u009f]*$"
+          "pattern": "^[^\u0000-\b\u000b-\u001f-]*$"
         },
         "lang": {
           "$ref": "defs.schema.json#/$defs/name"
@@ -66,6 +66,35 @@
               },
               "valid": {
                 "type": "boolean"
+              },
+              "extent": {
+                "description": "Optional (spec-0.4.0): the argument's declared extent (SPEC.md 7): values in the type's order, or a range for date and integer number arguments.",
+                "oneOf": [
+                  {
+                    "type": "array",
+                    "maxItems": 4096,
+                    "uniqueItems": true,
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  {
+                    "type": "object",
+                    "required": [
+                      "hi",
+                      "lo"
+                    ],
+                    "additionalProperties": false,
+                    "properties": {
+                      "hi": {
+                        "type": "string"
+                      },
+                      "lo": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                ]
               }
             },
             "allOf": [
@@ -109,6 +138,76 @@
                     ]
                   }
                 }
+              },
+              {
+                "if": {
+                  "properties": {
+                    "type": {
+                      "enum": [
+                        "boolean",
+                        "blob"
+                      ]
+                    }
+                  }
+                },
+                "then": {
+                  "not": {
+                    "required": [
+                      "extent"
+                    ]
+                  }
+                }
+              },
+              {
+                "if": {
+                  "required": [
+                    "extent"
+                  ],
+                  "properties": {
+                    "extent": {
+                      "type": "object"
+                    }
+                  }
+                },
+                "then": {
+                  "properties": {
+                    "type": {
+                      "enum": [
+                        "date",
+                        "number"
+                      ]
+                    }
+                  }
+                }
+              },
+              {
+                "if": {
+                  "required": [
+                    "extent"
+                  ],
+                  "properties": {
+                    "type": {
+                      "const": "number"
+                    },
+                    "extent": {
+                      "type": "object"
+                    }
+                  }
+                },
+                "then": {
+                  "properties": {
+                    "extent": {
+                      "properties": {
+                        "hi": {
+                          "pattern": "^-?(0|[1-9][0-9]*)$"
+                        },
+                        "lo": {
+                          "pattern": "^-?(0|[1-9][0-9]*)$"
+                        }
+                      }
+                    }
+                  }
+                }
               }
             ]
           }
@@ -139,6 +238,15 @@
               }
             }
           ]
+        },
+        "order": {
+          "description": "Optional (spec-0.4.0): every argument name exactly once, the order positional arguments bind in (SPEC.md 7). Absent: labels only.",
+          "type": "array",
+          "uniqueItems": true,
+          "maxItems": 32,
+          "items": {
+            "$ref": "defs.schema.json#/$defs/argName"
+          }
         }
       }
     }

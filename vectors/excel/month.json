@@ -1,0 +1,43 @@
+{
+  "id": "excel/month",
+  "kind": "excel",
+  "description": "=MONTH(DATE(2024,3,15)) is supported as month(2024-03-15).",
+  "valid": true,
+  "excel": "=MONTH(DATE(2024,3,15))",
+  "doc": "https://support.microsoft.com/en-us/excel/functions/month-function",
+  "documentation_derived": true,
+  "status": "supported",
+  "sample": "",
+  "excel_result": {
+    "type": "number",
+    "value": "3"
+  },
+  "formula": "month(2024-03-15)",
+  "signature": {
+    "args": {},
+    "order": [],
+    "returns": {
+      "type": "number",
+      "unit": "1"
+    }
+  },
+  "world": {
+    "functions": {},
+    "receipts": []
+  },
+  "cell": {
+    "args": {},
+    "fn": "sheet.example.net/case"
+  },
+  "asof": "2026-06-01T00:00:00.000000Z",
+  "receipt_hash": "f0d1f2d5409f9463e49c1d291c8f2e263b1a6a2050189cbc515a27dfa5a40188",
+  "body": "month(2024-03-15)\n",
+  "value": {
+    "type": "number",
+    "value": "3"
+  },
+  "lineage": [],
+  "tx": "0001-01-01T00:00:00.000000Z",
+  "receipt_asof": "0001-01-01T00:00:00.000000Z",
+  "fuel_used": 2
+}

@@ -1,0 +1,65 @@
+{
+  "id": "invalid/formula-eval-cycle",
+  "kind": "formula-eval",
+  "description": "math.example.net/loop(1)  (with no arguments)",
+  "valid": false,
+  "world": {
+    "functions": {
+      "calc.example.net/e": {
+        "bound": "2026-01-01T00:00:00.000000Z",
+        "descriptor": {
+          "code": {
+            "body": "math.example.net/loop(n: 1)\n",
+            "lang": "formula"
+          },
+          "inputs": [
+            "math.example.net/loop"
+          ],
+          "signature": {
+            "args": {},
+            "order": [],
+            "returns": {
+              "type": "number",
+              "unit": "1"
+            }
+          }
+        }
+      },
+      "math.example.net/loop": {
+        "bound": "2026-01-01T00:00:00.000000Z",
+        "descriptor": {
+          "code": {
+            "body": "math.example.net/loop(n: n) + 1\n",
+            "lang": "formula"
+          },
+          "inputs": [
+            "math.example.net/loop"
+          ],
+          "signature": {
+            "args": {
+              "n": {
+                "type": "number",
+                "valid": false,
+                "unit": "1"
+              }
+            },
+            "order": [
+              "n"
+            ],
+            "returns": {
+              "type": "number",
+              "unit": "1"
+            }
+          }
+        }
+      }
+    },
+    "receipts": []
+  },
+  "cell": {
+    "args": {},
+    "fn": "calc.example.net/e"
+  },
+  "asof": "2026-06-01T00:00:00.000000Z",
+  "error": "E_FORMULA_CYCLE"
+}

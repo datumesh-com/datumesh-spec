@@ -1,0 +1,40 @@
+{
+  "id": "excel/concatenate",
+  "kind": "excel",
+  "description": "=CONCATENATE(\"a\",\"b\",\"c\") is supported as \"a\" & \"b\" & \"c\".",
+  "valid": true,
+  "excel": "=CONCATENATE(\"a\",\"b\",\"c\")",
+  "doc": "https://support.microsoft.com/en-us/excel/functions/concatenate-function",
+  "documentation_derived": true,
+  "status": "supported",
+  "sample": "",
+  "excel_result": {
+    "type": "string",
+    "value": "abc"
+  },
+  "formula": "\"a\" & \"b\" & \"c\"",
+  "signature": {
+    "args": {},
+    "order": [],
+    "returns": "string"
+  },
+  "world": {
+    "functions": {},
+    "receipts": []
+  },
+  "cell": {
+    "args": {},
+    "fn": "sheet.example.net/case"
+  },
+  "asof": "2026-06-01T00:00:00.000000Z",
+  "receipt_hash": "e7ced2fe07299f786aaec8f0aaa7b12d359137660cc9a3753b6612a0998a8b9b",
+  "body": "\"a\" & \"b\" & \"c\"\n",
+  "value": {
+    "type": "string",
+    "value": "abc"
+  },
+  "lineage": [],
+  "tx": "0001-01-01T00:00:00.000000Z",
+  "receipt_asof": "0001-01-01T00:00:00.000000Z",
+  "fuel_used": 5
+}

@@ -1,0 +1,150 @@
+{
+  "id": "excel/hlookup",
+  "kind": "excel",
+  "description": "=HLOOKUP(\"washer\",B1:D2,2,FALSE) is partial as at(sheet.example.org/price(*), \"washer\"). The price table laid out in rows.",
+  "valid": true,
+  "excel": "=HLOOKUP(\"washer\",B1:D2,2,FALSE)",
+  "doc": "https://support.microsoft.com/en-us/excel/functions/hlookup-function",
+  "documentation_derived": true,
+  "status": "partial",
+  "sample": "The price table laid out in rows.",
+  "excel_result": {
+    "type": "number",
+    "value": "0.1"
+  },
+  "formula": "at(sheet.example.org/price(*), \"washer\")",
+  "signature": {
+    "args": {},
+    "order": [],
+    "returns": {
+      "type": "number",
+      "unit": "1"
+    }
+  },
+  "world": {
+    "functions": {
+      "sheet.example.org/price": {
+        "bound": "2026-01-01T00:00:00.000000Z",
+        "descriptor": {
+          "code": {
+            "body": "",
+            "lang": "stored"
+          },
+          "inputs": [],
+          "signature": {
+            "args": {
+              "item": {
+                "type": "string",
+                "valid": false
+              }
+            },
+            "returns": {
+              "type": "number",
+              "unit": "1"
+            },
+            "order": [
+              "item"
+            ]
+          }
+        }
+      }
+    },
+    "receipts": [
+      {
+        "asof": "2026-02-01T00:00:00.000000Z",
+        "cell": {
+          "args": {
+            "item": {
+              "type": "string",
+              "value": "bolt"
+            }
+          },
+          "fn": "price",
+          "fn_hash": "0b940d9203d0ded0ef5b572dabdebb028406ca97984ca7aea4be891db9110a82",
+          "ns": "sheet.example.org"
+        },
+        "computed_by": "sheet.example.org#206a7d600aae48b2",
+        "inputs": [],
+        "issued": "2026-02-01T00:00:00.000000Z",
+        "licence": "CC-BY-4.0",
+        "proto": "datumesh/1",
+        "publisher": "sheet.example.org",
+        "summary": "A recorded value of price.",
+        "tx": "2026-02-01T00:00:00.000000Z",
+        "type": "number",
+        "valid": {},
+        "value": "2.5",
+        "sig": "1f9cf197d79e7f183b460ebe88d885cff636c03d1896b30b54715e5c69faefea9125e6b4dae6701388f524f50f1a24adce16fcdd1204b08bd35ff8e2637c9c0c"
+      },
+      {
+        "asof": "2026-02-01T00:00:00.000000Z",
+        "cell": {
+          "args": {
+            "item": {
+              "type": "string",
+              "value": "nut"
+            }
+          },
+          "fn": "price",
+          "fn_hash": "0b940d9203d0ded0ef5b572dabdebb028406ca97984ca7aea4be891db9110a82",
+          "ns": "sheet.example.org"
+        },
+        "computed_by": "sheet.example.org#206a7d600aae48b2",
+        "inputs": [],
+        "issued": "2026-02-01T00:00:00.000000Z",
+        "licence": "CC-BY-4.0",
+        "proto": "datumesh/1",
+        "publisher": "sheet.example.org",
+        "summary": "A recorded value of price.",
+        "tx": "2026-02-01T00:00:00.000000Z",
+        "type": "number",
+        "valid": {},
+        "value": "0.25",
+        "sig": "9c3e813598bb78c83a924df931b85f6723eabcb0ac79adf8071493604d5b9116402ccf93016fd2149a64b18f0d486eb7e16f9ff6877023616b4cc8a690d25b07"
+      },
+      {
+        "asof": "2026-02-01T00:00:00.000000Z",
+        "cell": {
+          "args": {
+            "item": {
+              "type": "string",
+              "value": "washer"
+            }
+          },
+          "fn": "price",
+          "fn_hash": "0b940d9203d0ded0ef5b572dabdebb028406ca97984ca7aea4be891db9110a82",
+          "ns": "sheet.example.org"
+        },
+        "computed_by": "sheet.example.org#206a7d600aae48b2",
+        "inputs": [],
+        "issued": "2026-02-01T00:00:00.000000Z",
+        "licence": "CC-BY-4.0",
+        "proto": "datumesh/1",
+        "publisher": "sheet.example.org",
+        "summary": "A recorded value of price.",
+        "tx": "2026-02-01T00:00:00.000000Z",
+        "type": "number",
+        "valid": {},
+        "value": "0.1",
+        "sig": "7765bbe637385e6f94e471d3f54ef2fdcc6b6f1886e843fc7f036ece70eb2c344f55824266a847208dc8bafb6b8b6fd1a187d854ed5a9d79cc0b8820d16d560f"
+      }
+    ]
+  },
+  "cell": {
+    "args": {},
+    "fn": "sheet.example.net/case"
+  },
+  "asof": "2026-06-01T00:00:00.000000Z",
+  "receipt_hash": "4c7c5b89179cecb83dad8be56093aabf4552c7a4cebda5727f234b16289f8905",
+  "body": "at(sheet.example.org/price(item: *), \"washer\")\n",
+  "value": {
+    "type": "number",
+    "value": "0.1"
+  },
+  "lineage": [
+    "slice:64d94f5de335346c79272024f4576d8e0dca3060d4b88e1ba53860be85514875:fd38379903da854a7e969d6c581b948a0be5c337bed008d810de47acbad04c91"
+  ],
+  "tx": "2026-02-01T00:00:00.000000Z",
+  "receipt_asof": "2026-02-01T00:00:00.000000Z",
+  "fuel_used": 10
+}

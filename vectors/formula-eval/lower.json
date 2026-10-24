@@ -1,0 +1,52 @@
+{
+  "id": "formula-eval/lower",
+  "kind": "formula-eval",
+  "description": "lower(s)  (with s = ÄBC)",
+  "valid": true,
+  "world": {
+    "functions": {
+      "calc.example.net/e": {
+        "bound": "2026-01-01T00:00:00.000000Z",
+        "descriptor": {
+          "code": {
+            "body": "lower(s)\n",
+            "lang": "formula"
+          },
+          "inputs": [],
+          "signature": {
+            "args": {
+              "s": {
+                "type": "string",
+                "valid": false
+              }
+            },
+            "order": [
+              "s"
+            ],
+            "returns": "string"
+          }
+        }
+      }
+    },
+    "receipts": []
+  },
+  "cell": {
+    "args": {
+      "s": {
+        "type": "string",
+        "value": "ÄBC"
+      }
+    },
+    "fn": "calc.example.net/e"
+  },
+  "asof": "2026-06-01T00:00:00.000000Z",
+  "receipt_hash": "9025be40264a8606960b65a047eb4803fcbc5bb7a9a64379206d04ff529eac9c",
+  "value": {
+    "type": "string",
+    "value": "äbc"
+  },
+  "lineage": [],
+  "tx": "0001-01-01T00:00:00.000000Z",
+  "receipt_asof": "0001-01-01T00:00:00.000000Z",
+  "fuel_used": 3
+}

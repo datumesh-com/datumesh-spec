@@ -108,11 +108,24 @@
         "E_INPUT_UNAVAILABLE",
         "E_INPUT_INVALID",
         "E_INPUT_UNDECLARED",
+        "E_SLICE_MEMBER",
         "E_VALUE_MISMATCH",
         "E_EVAL_UNAVAILABLE",
+        "E_INPUT_SUPERSEDED",
         "E_BLOB_MISMATCH"
       ],
       "description": "A code from SPEC.md 10.2 other than E_ENVELOPE; for bad_request, a URI parse code (5.5)."
+    },
+    "fault": {
+      "description": "For not_covered only (spec-0.4.0): the formula evaluation fault that gave the cell no value (SPEC.md 5.5, 15.11).",
+      "enum": [
+        "E_FORMULA_DIV_ZERO",
+        "E_FORMULA_DOMAIN",
+        "E_FORMULA_RANGE",
+        "E_FORMULA_EMPTY",
+        "E_FORMULA_ABSENT",
+        "E_FORMULA_FUTURE"
+      ]
     }
   },
   "dependentRequired": {
@@ -166,10 +179,20 @@
     {
       "properties": {
         "outcome": {
-          "enum": [
-            "not_covered",
-            "unlicensed"
-          ]
+          "const": "not_covered"
+        }
+      },
+      "propertyNames": {
+        "enum": [
+          "outcome",
+          "fault"
+        ]
+      }
+    },
+    {
+      "properties": {
+        "outcome": {
+          "const": "unlicensed"
         }
       },
       "propertyNames": {

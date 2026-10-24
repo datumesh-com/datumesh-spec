@@ -1,0 +1,52 @@
+{
+  "id": "formula-eval/trim",
+  "kind": "formula-eval",
+  "description": "trim(s)  (with s =   a   b  )",
+  "valid": true,
+  "world": {
+    "functions": {
+      "calc.example.net/e": {
+        "bound": "2026-01-01T00:00:00.000000Z",
+        "descriptor": {
+          "code": {
+            "body": "trim(s)\n",
+            "lang": "formula"
+          },
+          "inputs": [],
+          "signature": {
+            "args": {
+              "s": {
+                "type": "string",
+                "valid": false
+              }
+            },
+            "order": [
+              "s"
+            ],
+            "returns": "string"
+          }
+        }
+      }
+    },
+    "receipts": []
+  },
+  "cell": {
+    "args": {
+      "s": {
+        "type": "string",
+        "value": "  a   b  "
+      }
+    },
+    "fn": "calc.example.net/e"
+  },
+  "asof": "2026-06-01T00:00:00.000000Z",
+  "receipt_hash": "88adc8f7bd89d1dd2c3375e85a1979bc321516b7028c706b0d61ed632f83b491",
+  "value": {
+    "type": "string",
+    "value": "a b"
+  },
+  "lineage": [],
+  "tx": "0001-01-01T00:00:00.000000Z",
+  "receipt_asof": "0001-01-01T00:00:00.000000Z",
+  "fuel_used": 3
+}

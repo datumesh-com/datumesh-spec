@@ -1,0 +1,9 @@
+{
+  "id": "function/extent-values",
+  "kind": "function",
+  "description": "Per-argument extents: values in their type's order (numbers numerically).",
+  "valid": true,
+  "input": "{\n  \"signature\": {\n    \"order\": [\n      \"currency\",\n      \"tenor\"\n    ],\n    \"returns\": {\n      \"unit\": \"1\",\n      \"type\": \"number\"\n    },\n    \"args\": {\n      \"tenor\": {\n        \"extent\": [\n          \"0.25\",\n          \"0.5\",\n          \"1\",\n          \"2\",\n          \"10\"\n        ],\n        \"unit\": \"1\",\n        \"valid\": false,\n        \"type\": \"number\"\n      },\n      \"currency\": {\n        \"extent\": [\n          \"CHF\",\n          \"EUR\",\n          \"GBP\",\n          \"USD\"\n        ],\n        \"valid\": false,\n        \"type\": \"string\"\n      }\n    }\n  },\n  \"inputs\": [],\n  \"code\": {\n    \"lang\": \"formula\",\n    \"body\": \"1\\n\"\n  }\n}",
+  "canonical": "{\"code\":{\"body\":\"1\\n\",\"lang\":\"formula\"},\"inputs\":[],\"signature\":{\"args\":{\"currency\":{\"extent\":[\"CHF\",\"EUR\",\"GBP\",\"USD\"],\"type\":\"string\",\"valid\":false},\"tenor\":{\"extent\":[\"0.25\",\"0.5\",\"1\",\"2\",\"10\"],\"type\":\"number\",\"unit\":\"1\",\"valid\":false}},\"order\":[\"currency\",\"tenor\"],\"returns\":{\"type\":\"number\",\"unit\":\"1\"}}}",
+  "sha256": "69d4bd67a5485d337ed3d13fba3757794a76f4594863f341a6e711a8cbf0d38c"
+}

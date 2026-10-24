@@ -1,0 +1,43 @@
+{
+  "id": "excel/int",
+  "kind": "excel",
+  "description": "=INT(-3.5) is supported as floor(-3.5).",
+  "valid": true,
+  "excel": "=INT(-3.5)",
+  "doc": "https://support.microsoft.com/en-us/excel/functions/int-function",
+  "documentation_derived": true,
+  "status": "supported",
+  "sample": "",
+  "excel_result": {
+    "type": "number",
+    "value": "-4"
+  },
+  "formula": "floor(-3.5)",
+  "signature": {
+    "args": {},
+    "order": [],
+    "returns": {
+      "type": "number",
+      "unit": "1"
+    }
+  },
+  "world": {
+    "functions": {},
+    "receipts": []
+  },
+  "cell": {
+    "args": {},
+    "fn": "sheet.example.net/case"
+  },
+  "asof": "2026-06-01T00:00:00.000000Z",
+  "receipt_hash": "ea2dd023afc37d33cda8c93ac67e59f9a0bdf75e16664e69000e4f7c887c8fb9",
+  "body": "floor(-3.5)\n",
+  "value": {
+    "type": "number",
+    "value": "-4"
+  },
+  "lineage": [],
+  "tx": "0001-01-01T00:00:00.000000Z",
+  "receipt_asof": "0001-01-01T00:00:00.000000Z",
+  "fuel_used": 3
+}

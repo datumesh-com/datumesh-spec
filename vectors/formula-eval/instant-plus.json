@@ -1,0 +1,52 @@
+{
+  "id": "formula-eval/instant-plus",
+  "kind": "formula-eval",
+  "description": "t + 90 min  (with t = 2026-03-01T10:00:00.000000Z)",
+  "valid": true,
+  "world": {
+    "functions": {
+      "calc.example.net/e": {
+        "bound": "2026-01-01T00:00:00.000000Z",
+        "descriptor": {
+          "code": {
+            "body": "t + 90 min\n",
+            "lang": "formula"
+          },
+          "inputs": [],
+          "signature": {
+            "args": {
+              "t": {
+                "type": "instant",
+                "valid": true
+              }
+            },
+            "order": [
+              "t"
+            ],
+            "returns": "instant"
+          }
+        }
+      }
+    },
+    "receipts": []
+  },
+  "cell": {
+    "args": {
+      "t": {
+        "type": "instant",
+        "value": "2026-03-01T10:00:00.000000Z"
+      }
+    },
+    "fn": "calc.example.net/e"
+  },
+  "asof": "2026-06-01T00:00:00.000000Z",
+  "receipt_hash": "b47d1cf6bd1701f12b9a8c1726b1cc902268d04adcb932d6b53beb53af0456d6",
+  "value": {
+    "type": "instant",
+    "value": "2026-03-01T11:30:00.000000Z"
+  },
+  "lineage": [],
+  "tx": "0001-01-01T00:00:00.000000Z",
+  "receipt_asof": "0001-01-01T00:00:00.000000Z",
+  "fuel_used": 3
+}

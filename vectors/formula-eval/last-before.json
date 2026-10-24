@@ -1,0 +1,274 @@
+{
+  "id": "formula-eval/last-before",
+  "kind": "formula-eval",
+  "description": "last_before(weather.example.org/temp(s, *), t, 10 min)  (with s = kew, t = 2026-03-01T10:05:00.000000Z)",
+  "valid": true,
+  "world": {
+    "functions": {
+      "calc.example.net/e": {
+        "bound": "2026-01-01T00:00:00.000000Z",
+        "descriptor": {
+          "code": {
+            "body": "last_before(weather.example.org/temp(station: s, t: *), t, bound: 10 min)\n",
+            "lang": "formula"
+          },
+          "inputs": [
+            "weather.example.org/temp"
+          ],
+          "signature": {
+            "args": {
+              "s": {
+                "type": "string",
+                "valid": false
+              },
+              "t": {
+                "type": "instant",
+                "valid": true
+              }
+            },
+            "order": [
+              "s",
+              "t"
+            ],
+            "returns": {
+              "type": "number",
+              "unit": "degC"
+            }
+          }
+        }
+      },
+      "weather.example.org/temp": {
+        "bound": "2026-01-01T00:00:00.000000Z",
+        "descriptor": {
+          "code": {
+            "body": "",
+            "lang": "stored"
+          },
+          "inputs": [],
+          "signature": {
+            "args": {
+              "station": {
+                "type": "string",
+                "valid": false
+              },
+              "t": {
+                "type": "instant",
+                "valid": true
+              }
+            },
+            "returns": {
+              "type": "number",
+              "unit": "degC"
+            },
+            "order": [
+              "station",
+              "t"
+            ]
+          }
+        }
+      }
+    },
+    "receipts": [
+      {
+        "asof": "2026-03-01T10:00:05.000000Z",
+        "cell": {
+          "args": {
+            "station": {
+              "type": "string",
+              "value": "kew"
+            },
+            "t": {
+              "type": "instant",
+              "value": "2026-03-01T10:00:00.000000Z"
+            }
+          },
+          "fn": "temp",
+          "fn_hash": "dde08ce4ae70eb8bb08cea18e3cad37b53a74efa186c4bd25db8d423f202f5c1",
+          "ns": "weather.example.org"
+        },
+        "computed_by": "weather.example.org#060678a6fa418e5d",
+        "inputs": [],
+        "issued": "2026-03-01T10:00:05.000000Z",
+        "licence": "CC-BY-4.0",
+        "proto": "datumesh/1",
+        "publisher": "weather.example.org",
+        "summary": "A recorded value of temp.",
+        "tx": "2026-03-01T10:00:05.000000Z",
+        "type": "number",
+        "valid": {
+          "t": {
+            "type": "instant",
+            "value": "2026-03-01T10:00:00.000000Z"
+          }
+        },
+        "value": "11.5",
+        "sig": "26267c3b10c7e69efd4e692b7d0ed94126048eefe01ed61df042b1ac9f3a1728db71f186be6ed42cfca3b50e839cce9422cd1413ebd4baf6b3516d0dbe3d3906"
+      },
+      {
+        "asof": "2026-03-01T10:07:05.000000Z",
+        "cell": {
+          "args": {
+            "station": {
+              "type": "string",
+              "value": "kew"
+            },
+            "t": {
+              "type": "instant",
+              "value": "2026-03-01T10:07:00.000000Z"
+            }
+          },
+          "fn": "temp",
+          "fn_hash": "dde08ce4ae70eb8bb08cea18e3cad37b53a74efa186c4bd25db8d423f202f5c1",
+          "ns": "weather.example.org"
+        },
+        "computed_by": "weather.example.org#060678a6fa418e5d",
+        "inputs": [],
+        "issued": "2026-03-01T10:07:05.000000Z",
+        "licence": "CC-BY-4.0",
+        "proto": "datumesh/1",
+        "publisher": "weather.example.org",
+        "summary": "A recorded value of temp.",
+        "tx": "2026-03-01T10:07:05.000000Z",
+        "type": "number",
+        "valid": {
+          "t": {
+            "type": "instant",
+            "value": "2026-03-01T10:07:00.000000Z"
+          }
+        },
+        "value": "11.7",
+        "sig": "7bd46b858d9c5917b237a701a22b25be6145a8ab7ed0d3a5539a10180cb270b401f1bf3b7b50d4aef7b9738f70cd3d86d7da634c68f99cd16a18ae2a87c41e0d"
+      },
+      {
+        "asof": "2026-03-01T09:58:41.000000Z",
+        "cell": {
+          "args": {
+            "station": {
+              "type": "string",
+              "value": "ely"
+            },
+            "t": {
+              "type": "instant",
+              "value": "2026-03-01T09:58:30.000000Z"
+            }
+          },
+          "fn": "temp",
+          "fn_hash": "dde08ce4ae70eb8bb08cea18e3cad37b53a74efa186c4bd25db8d423f202f5c1",
+          "ns": "weather.example.org"
+        },
+        "computed_by": "weather.example.org#060678a6fa418e5d",
+        "inputs": [],
+        "issued": "2026-03-01T09:58:41.000000Z",
+        "licence": "CC-BY-4.0",
+        "proto": "datumesh/1",
+        "publisher": "weather.example.org",
+        "summary": "A recorded value of temp.",
+        "tx": "2026-03-01T09:58:41.000000Z",
+        "type": "number",
+        "valid": {
+          "t": {
+            "type": "instant",
+            "value": "2026-03-01T09:58:30.000000Z"
+          }
+        },
+        "value": "9.25",
+        "sig": "1f8166e5a5c3fec2fbb514dad2f7ed8ab7f478979af57756cdc9ee4a4c97161667d7ba6016d6096c85e4997930721b8fae9e108d7bde1d83558fa11f2463de00"
+      },
+      {
+        "asof": "2026-03-01T10:12:09.000000Z",
+        "cell": {
+          "args": {
+            "station": {
+              "type": "string",
+              "value": "ely"
+            },
+            "t": {
+              "type": "instant",
+              "value": "2026-03-01T10:12:00.000000Z"
+            }
+          },
+          "fn": "temp",
+          "fn_hash": "dde08ce4ae70eb8bb08cea18e3cad37b53a74efa186c4bd25db8d423f202f5c1",
+          "ns": "weather.example.org"
+        },
+        "computed_by": "weather.example.org#060678a6fa418e5d",
+        "inputs": [],
+        "issued": "2026-03-01T10:12:09.000000Z",
+        "licence": "CC-BY-4.0",
+        "proto": "datumesh/1",
+        "publisher": "weather.example.org",
+        "summary": "A recorded value of temp.",
+        "tx": "2026-03-01T10:12:09.000000Z",
+        "type": "number",
+        "valid": {
+          "t": {
+            "type": "instant",
+            "value": "2026-03-01T10:12:00.000000Z"
+          }
+        },
+        "value": "9.5",
+        "sig": "a8815e90cdae6de7ca75fbf0403e12cf620f0bf10e2b63c1e6b21cb63058da44a2630f23806d1cbc45125b2a51bb9b98cce7968dbff7483f387f75214b74d30d"
+      },
+      {
+        "asof": "2026-03-01T12:00:00.000000Z",
+        "cell": {
+          "args": {
+            "station": {
+              "type": "string",
+              "value": "kew"
+            },
+            "t": {
+              "type": "instant",
+              "value": "2026-03-01T10:09:00.000000Z"
+            }
+          },
+          "fn": "temp",
+          "fn_hash": "dde08ce4ae70eb8bb08cea18e3cad37b53a74efa186c4bd25db8d423f202f5c1",
+          "ns": "weather.example.org"
+        },
+        "computed_by": "weather.example.org#060678a6fa418e5d",
+        "inputs": [],
+        "issued": "2026-03-01T12:00:00.000000Z",
+        "licence": "CC-BY-4.0",
+        "proto": "datumesh/1",
+        "publisher": "weather.example.org",
+        "summary": "A recorded value of temp.",
+        "tx": "2026-03-01T12:00:00.000000Z",
+        "type": "number",
+        "valid": {
+          "t": {
+            "type": "instant",
+            "value": "2026-03-01T10:09:00.000000Z"
+          }
+        },
+        "value": "11.9",
+        "sig": "728dbbabc7ae939b3c14aa1810142424c994ac2a337dad6f5f00f69ec7b228e7707ce51a03934f4045ad1eeed2582161a4c30ceefcaa7ff62a640d7f8aeff40d"
+      }
+    ]
+  },
+  "cell": {
+    "args": {
+      "s": {
+        "type": "string",
+        "value": "kew"
+      },
+      "t": {
+        "type": "instant",
+        "value": "2026-03-01T10:05:00.000000Z"
+      }
+    },
+    "fn": "calc.example.net/e"
+  },
+  "asof": "2026-06-01T00:00:00.000000Z",
+  "receipt_hash": "d881b601da49524d353feba42f3daf2cc219eec9c6af4581098b00580ff3fc64",
+  "value": {
+    "type": "number",
+    "value": "11.5"
+  },
+  "lineage": [
+    "slice:6e18a38e2a6abd4bd78ae3d1028c6d3610132f7404da5ffec85dd841d2fb07dd:e6ca85b2e1474613b35ef393a61a5a2f26fa601d792b3f485f312cbb0ef39a02"
+  ],
+  "tx": "2026-03-01T10:00:05.000000Z",
+  "receipt_asof": "2026-03-01T10:00:05.000000Z",
+  "fuel_used": 8
+}

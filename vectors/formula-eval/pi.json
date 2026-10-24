@@ -1,0 +1,43 @@
+{
+  "id": "formula-eval/pi",
+  "kind": "formula-eval",
+  "description": "pi()  (with no arguments)",
+  "valid": true,
+  "world": {
+    "functions": {
+      "calc.example.net/e": {
+        "bound": "2026-01-01T00:00:00.000000Z",
+        "descriptor": {
+          "code": {
+            "body": "pi()\n",
+            "lang": "formula"
+          },
+          "inputs": [],
+          "signature": {
+            "args": {},
+            "order": [],
+            "returns": {
+              "type": "number",
+              "unit": "1"
+            }
+          }
+        }
+      }
+    },
+    "receipts": []
+  },
+  "cell": {
+    "args": {},
+    "fn": "calc.example.net/e"
+  },
+  "asof": "2026-06-01T00:00:00.000000Z",
+  "receipt_hash": "e9e2495b3b920b99aa962f1592762cad99bcccc2ba49310836e4ddca62c66e78",
+  "value": {
+    "type": "number",
+    "value": "3.141592653589793238462643383279503"
+  },
+  "lineage": [],
+  "tx": "0001-01-01T00:00:00.000000Z",
+  "receipt_asof": "0001-01-01T00:00:00.000000Z",
+  "fuel_used": 1
+}

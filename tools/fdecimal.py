@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: Apache-2.0
-"""Decimal arithmetic of the formula dialect (SPEC.md 15.4), with integers only.
+"""Decimal arithmetic of the formula dialect (SPEC.md 15.9), with integers only.
 
 Every arithmetic operation computes its exact result, rounds it once to 34 significant digits
 with round-half-even, and then applies the range rule: the result, written in the canonical
@@ -596,3 +596,25 @@ def haversine(lat1, lon1, lat2, lon2):
 
 def deg_to_rad40(x):
     return wmul(x, RAD_PER_DEG)
+
+
+# ---------------------------------------------------------------------------
+# Decimal vectors (SPEC 11, kind decimal): one operation over many cases.
+
+def run_case(op, args):
+    """The canonical result of one case, or its fault code."""
+    try:
+        if op == "power":
+            return str(power(Dec.parse(args[0]), int(args[1])))
+        if op == "round":
+            return str(round_away(Dec.parse(args[0]), int(args[1])))
+        xs = [Dec.parse(a) for a in args]
+        fn = {"add": add, "sub": sub, "mul": mul, "div": div, "sqrt": sqrt, "exp": exp, "ln": ln, "pow": pow_frac,
+              "sin": sin, "cos": cos, "atan2": atan2, "haversine": haversine, "mod": mod}.get(op)
+        if fn is not None:
+            return str(fn(*xs))
+        if op == "stdev_p":
+            return str(stdev(xs, population=True))
+        return str({"sum": sum_exact, "mean": mean, "median": median, "stdev": stdev}[op](xs))
+    except ArithmeticFault as e:
+        return e.code

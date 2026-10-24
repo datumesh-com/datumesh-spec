@@ -1,0 +1,383 @@
+{
+  "id": "formula-eval/slice-sum",
+  "kind": "formula-eval",
+  "description": "sum(data.example.org/daily(*))  (with no arguments)",
+  "valid": true,
+  "world": {
+    "functions": {
+      "calc.example.net/e": {
+        "bound": "2026-01-01T00:00:00.000000Z",
+        "descriptor": {
+          "code": {
+            "body": "sum(data.example.org/daily(date: *))\n",
+            "lang": "formula"
+          },
+          "inputs": [
+            "data.example.org/daily"
+          ],
+          "signature": {
+            "args": {},
+            "order": [],
+            "returns": {
+              "type": "number",
+              "unit": "EUR"
+            }
+          }
+        }
+      },
+      "data.example.org/daily": {
+        "bound": "2026-01-01T00:00:00.000000Z",
+        "descriptor": {
+          "code": {
+            "body": "",
+            "lang": "stored"
+          },
+          "inputs": [],
+          "signature": {
+            "args": {
+              "date": {
+                "type": "date",
+                "valid": true
+              }
+            },
+            "returns": {
+              "type": "number",
+              "unit": "EUR"
+            },
+            "order": [
+              "date"
+            ]
+          }
+        }
+      }
+    },
+    "receipts": [
+      {
+        "asof": "2026-03-01T18:00:00.000000Z",
+        "cell": {
+          "args": {
+            "date": {
+              "type": "date",
+              "value": "2026-03-01"
+            }
+          },
+          "fn": "daily",
+          "fn_hash": "e18ab921761089909a83eacfd7e88b71a580da2d35610769557f035fdb2b8169",
+          "ns": "data.example.org"
+        },
+        "computed_by": "data.example.org#efb20f82a7e15e96",
+        "inputs": [],
+        "issued": "2026-03-01T18:00:00.000000Z",
+        "licence": "CC-BY-4.0",
+        "proto": "datumesh/1",
+        "publisher": "data.example.org",
+        "summary": "A recorded value of daily.",
+        "tx": "2026-03-01T18:00:00.000000Z",
+        "type": "number",
+        "valid": {
+          "date": {
+            "type": "date",
+            "value": "2026-03-01"
+          }
+        },
+        "value": "10",
+        "sig": "d246d61311ed4c5c250d8f4ae480a51cde41e9db92d8f9d8300c846640fb3ef5bc6b811d538ea968e519146e7df7d9da4928c3f2ee235829c8caa6d8c5cfee04"
+      },
+      {
+        "asof": "2026-03-02T18:00:00.000000Z",
+        "cell": {
+          "args": {
+            "date": {
+              "type": "date",
+              "value": "2026-03-02"
+            }
+          },
+          "fn": "daily",
+          "fn_hash": "e18ab921761089909a83eacfd7e88b71a580da2d35610769557f035fdb2b8169",
+          "ns": "data.example.org"
+        },
+        "computed_by": "data.example.org#efb20f82a7e15e96",
+        "inputs": [],
+        "issued": "2026-03-02T18:00:00.000000Z",
+        "licence": "CC-BY-4.0",
+        "proto": "datumesh/1",
+        "publisher": "data.example.org",
+        "summary": "A recorded value of daily.",
+        "tx": "2026-03-02T18:00:00.000000Z",
+        "type": "number",
+        "valid": {
+          "date": {
+            "type": "date",
+            "value": "2026-03-02"
+          }
+        },
+        "value": "12",
+        "sig": "23532d5968a51c937b94eac670d8a0dc28377091ac3532ab5357432a61867ca8c4538ad066ee1d77dcace579983673ae844466a22a9587075e8e355393ca300b"
+      },
+      {
+        "asof": "2026-03-03T18:00:00.000000Z",
+        "cell": {
+          "args": {
+            "date": {
+              "type": "date",
+              "value": "2026-03-03"
+            }
+          },
+          "fn": "daily",
+          "fn_hash": "e18ab921761089909a83eacfd7e88b71a580da2d35610769557f035fdb2b8169",
+          "ns": "data.example.org"
+        },
+        "computed_by": "data.example.org#efb20f82a7e15e96",
+        "inputs": [],
+        "issued": "2026-03-03T18:00:00.000000Z",
+        "licence": "CC-BY-4.0",
+        "proto": "datumesh/1",
+        "publisher": "data.example.org",
+        "summary": "A recorded value of daily.",
+        "tx": "2026-03-03T18:00:00.000000Z",
+        "type": "number",
+        "valid": {
+          "date": {
+            "type": "date",
+            "value": "2026-03-03"
+          }
+        },
+        "value": "9",
+        "sig": "d33b08d09ac9a8bc26c11c8069e6c48cb2e96de972021e90ee63f61ec879ea5673fdf11de0dead304558b52022f8d4dd649351eec1223fb63175133005a5e105"
+      },
+      {
+        "asof": "2026-03-04T18:00:00.000000Z",
+        "cell": {
+          "args": {
+            "date": {
+              "type": "date",
+              "value": "2026-03-04"
+            }
+          },
+          "fn": "daily",
+          "fn_hash": "e18ab921761089909a83eacfd7e88b71a580da2d35610769557f035fdb2b8169",
+          "ns": "data.example.org"
+        },
+        "computed_by": "data.example.org#efb20f82a7e15e96",
+        "inputs": [],
+        "issued": "2026-03-04T18:00:00.000000Z",
+        "licence": "CC-BY-4.0",
+        "proto": "datumesh/1",
+        "publisher": "data.example.org",
+        "summary": "A recorded value of daily.",
+        "tx": "2026-03-04T18:00:00.000000Z",
+        "type": "number",
+        "valid": {
+          "date": {
+            "type": "date",
+            "value": "2026-03-04"
+          }
+        },
+        "value": "15",
+        "sig": "ab4141c786b2fbd6531464c66544fd5a4bc8f0c1ba9b2542ac5fcf7d2ff1140b0261bf0122839cb9c7b78f8b16631495aed85f241c3c0cdcf0a99501834e4000"
+      },
+      {
+        "asof": "2026-03-05T18:00:00.000000Z",
+        "cell": {
+          "args": {
+            "date": {
+              "type": "date",
+              "value": "2026-03-05"
+            }
+          },
+          "fn": "daily",
+          "fn_hash": "e18ab921761089909a83eacfd7e88b71a580da2d35610769557f035fdb2b8169",
+          "ns": "data.example.org"
+        },
+        "computed_by": "data.example.org#efb20f82a7e15e96",
+        "inputs": [],
+        "issued": "2026-03-05T18:00:00.000000Z",
+        "licence": "CC-BY-4.0",
+        "proto": "datumesh/1",
+        "publisher": "data.example.org",
+        "summary": "A recorded value of daily.",
+        "tx": "2026-03-05T18:00:00.000000Z",
+        "type": "number",
+        "valid": {
+          "date": {
+            "type": "date",
+            "value": "2026-03-05"
+          }
+        },
+        "value": "11",
+        "sig": "b8deff12e6272f6677812319f602624ad5d2d39956bb42eac48b1a09cec62f2e7dbb615209a882a06c88aada7c8472c8df2adbdb6d86413cbd46a7a496c2f002"
+      },
+      {
+        "asof": "2026-03-06T18:00:00.000000Z",
+        "cell": {
+          "args": {
+            "date": {
+              "type": "date",
+              "value": "2026-03-06"
+            }
+          },
+          "fn": "daily",
+          "fn_hash": "e18ab921761089909a83eacfd7e88b71a580da2d35610769557f035fdb2b8169",
+          "ns": "data.example.org"
+        },
+        "computed_by": "data.example.org#efb20f82a7e15e96",
+        "inputs": [],
+        "issued": "2026-03-06T18:00:00.000000Z",
+        "licence": "CC-BY-4.0",
+        "proto": "datumesh/1",
+        "publisher": "data.example.org",
+        "summary": "A recorded value of daily.",
+        "tx": "2026-03-06T18:00:00.000000Z",
+        "type": "number",
+        "valid": {
+          "date": {
+            "type": "date",
+            "value": "2026-03-06"
+          }
+        },
+        "value": "13",
+        "sig": "b80c4f2c1da39bca472b00f31174a5bffc08ebcdbc4682d96b4bf7b5594fdc7a4ca2f4e1756adc3bcee76f1c25876e75e917d574fb2efed006c130c217378104"
+      },
+      {
+        "asof": "2026-03-07T18:00:00.000000Z",
+        "cell": {
+          "args": {
+            "date": {
+              "type": "date",
+              "value": "2026-03-07"
+            }
+          },
+          "fn": "daily",
+          "fn_hash": "e18ab921761089909a83eacfd7e88b71a580da2d35610769557f035fdb2b8169",
+          "ns": "data.example.org"
+        },
+        "computed_by": "data.example.org#efb20f82a7e15e96",
+        "inputs": [],
+        "issued": "2026-03-07T18:00:00.000000Z",
+        "licence": "CC-BY-4.0",
+        "proto": "datumesh/1",
+        "publisher": "data.example.org",
+        "summary": "A recorded value of daily.",
+        "tx": "2026-03-07T18:00:00.000000Z",
+        "type": "number",
+        "valid": {
+          "date": {
+            "type": "date",
+            "value": "2026-03-07"
+          }
+        },
+        "value": "14",
+        "sig": "df6290780c9a5bef4fe63e613db744fbf3b7026546fef9adffa99fa7647693f40915844562030961f64743459bef9f0fbcc732959336379915e9496716c9b308"
+      },
+      {
+        "asof": "2026-03-08T18:00:00.000000Z",
+        "cell": {
+          "args": {
+            "date": {
+              "type": "date",
+              "value": "2026-03-08"
+            }
+          },
+          "fn": "daily",
+          "fn_hash": "e18ab921761089909a83eacfd7e88b71a580da2d35610769557f035fdb2b8169",
+          "ns": "data.example.org"
+        },
+        "computed_by": "data.example.org#efb20f82a7e15e96",
+        "inputs": [],
+        "issued": "2026-03-08T18:00:00.000000Z",
+        "licence": "CC-BY-4.0",
+        "proto": "datumesh/1",
+        "publisher": "data.example.org",
+        "summary": "A recorded value of daily.",
+        "tx": "2026-03-08T18:00:00.000000Z",
+        "type": "number",
+        "valid": {
+          "date": {
+            "type": "date",
+            "value": "2026-03-08"
+          }
+        },
+        "value": "8",
+        "sig": "9f0b49cc9b8dcef07b41d80d5c061986fd235af9456a6be0f866e2491da4394cf2237d9e5276ca815a7741da7da9210fb3051a9f625f27bf76f08968c935040a"
+      },
+      {
+        "asof": "2026-03-09T18:00:00.000000Z",
+        "cell": {
+          "args": {
+            "date": {
+              "type": "date",
+              "value": "2026-03-09"
+            }
+          },
+          "fn": "daily",
+          "fn_hash": "e18ab921761089909a83eacfd7e88b71a580da2d35610769557f035fdb2b8169",
+          "ns": "data.example.org"
+        },
+        "computed_by": "data.example.org#efb20f82a7e15e96",
+        "inputs": [],
+        "issued": "2026-03-09T18:00:00.000000Z",
+        "licence": "CC-BY-4.0",
+        "proto": "datumesh/1",
+        "publisher": "data.example.org",
+        "summary": "A recorded value of daily.",
+        "tx": "2026-03-09T18:00:00.000000Z",
+        "type": "number",
+        "valid": {
+          "date": {
+            "type": "date",
+            "value": "2026-03-09"
+          }
+        },
+        "value": "16",
+        "sig": "da3c661886d26530518225f53e2ee1215b30f80783405c50f943a9e7c191c79f1977792244064c25087bf698e7a32ada757ff1f0b48bef0fc1621fa1cbf1a108"
+      },
+      {
+        "asof": "2026-03-10T18:00:00.000000Z",
+        "cell": {
+          "args": {
+            "date": {
+              "type": "date",
+              "value": "2026-03-10"
+            }
+          },
+          "fn": "daily",
+          "fn_hash": "e18ab921761089909a83eacfd7e88b71a580da2d35610769557f035fdb2b8169",
+          "ns": "data.example.org"
+        },
+        "computed_by": "data.example.org#efb20f82a7e15e96",
+        "inputs": [],
+        "issued": "2026-03-10T18:00:00.000000Z",
+        "licence": "CC-BY-4.0",
+        "proto": "datumesh/1",
+        "publisher": "data.example.org",
+        "summary": "A recorded value of daily.",
+        "tx": "2026-03-10T18:00:00.000000Z",
+        "type": "number",
+        "valid": {
+          "date": {
+            "type": "date",
+            "value": "2026-03-10"
+          }
+        },
+        "value": "10",
+        "sig": "058eb5e040d5ac7cbc5289a0f71a550bd0be5846ef4d935f5cd44da74d90aa787c10ee51d0d7d784c80906f427cd0f91470a08f41ce9604bf4104eb7cacdd20e"
+      }
+    ]
+  },
+  "cell": {
+    "args": {},
+    "fn": "calc.example.net/e"
+  },
+  "asof": "2026-06-01T00:00:00.000000Z",
+  "receipt_hash": "9672c26b10fc688095b44e8b1f3ec62da36b8c9fa7b60516010488362e761ef1",
+  "value": {
+    "type": "number",
+    "value": "118"
+  },
+  "lineage": [
+    "slice:a45784ce2a47fcaa2bdc589af888cd5acc3eeb63206f8083292f4a12e0249719:082cbb352d36ed2b726c86557f62da96459a1c113e93cbb2b83b2752daadfe33"
+  ],
+  "tx": "2026-03-10T18:00:00.000000Z",
+  "receipt_asof": "2026-03-10T18:00:00.000000Z",
+  "fuel_used": 23
+}

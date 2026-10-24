@@ -1,0 +1,213 @@
+{
+  "id": "formula/aggregate-last",
+  "kind": "formula",
+  "description": "last in key order.",
+  "valid": true,
+  "input": "last(data.example.org/daily(*))",
+  "env": {
+    "aliases": {},
+    "functions": {
+      "data.example.org/daily": {
+        "code": {
+          "body": "",
+          "lang": "stored"
+        },
+        "inputs": [],
+        "signature": {
+          "args": {
+            "date": {
+              "type": "date",
+              "valid": true
+            }
+          },
+          "returns": {
+            "type": "number",
+            "unit": "EUR"
+          },
+          "order": [
+            "date"
+          ]
+        }
+      }
+    },
+    "name": "calc.example.net/f",
+    "signature": {
+      "args": {
+        "a": {
+          "type": "number",
+          "valid": false,
+          "unit": "EUR"
+        },
+        "b": {
+          "type": "number",
+          "valid": false,
+          "unit": "EUR"
+        },
+        "c": {
+          "type": "number",
+          "valid": false,
+          "unit": "USD"
+        },
+        "n": {
+          "type": "number",
+          "valid": false,
+          "unit": "1"
+        },
+        "k": {
+          "type": "number",
+          "valid": false,
+          "unit": "1"
+        },
+        "x": {
+          "type": "number",
+          "valid": false,
+          "unit": "1"
+        },
+        "r": {
+          "type": "number",
+          "valid": false,
+          "unit": "percent"
+        },
+        "t1": {
+          "type": "number",
+          "valid": false,
+          "unit": "degC"
+        },
+        "t2": {
+          "type": "number",
+          "valid": false,
+          "unit": "degC"
+        },
+        "amount": {
+          "type": "number",
+          "valid": false,
+          "unit": {
+            "arg": "base"
+          }
+        },
+        "count": {
+          "type": "number",
+          "valid": false,
+          "unit": "count"
+        },
+        "plat": {
+          "type": "number",
+          "valid": false,
+          "unit": "deg"
+        },
+        "plon": {
+          "type": "number",
+          "valid": false,
+          "unit": "deg"
+        },
+        "dist": {
+          "type": "number",
+          "valid": false,
+          "unit": "m"
+        },
+        "secs": {
+          "type": "number",
+          "valid": false,
+          "unit": "s"
+        },
+        "s": {
+          "type": "string",
+          "valid": false
+        },
+        "name": {
+          "type": "string",
+          "valid": false
+        },
+        "base": {
+          "type": "string",
+          "valid": false
+        },
+        "quote": {
+          "type": "string",
+          "valid": false
+        },
+        "station": {
+          "type": "string",
+          "valid": false
+        },
+        "tenor": {
+          "type": "string",
+          "valid": false
+        },
+        "item": {
+          "type": "string",
+          "valid": false
+        },
+        "stations": {
+          "type": "string",
+          "valid": false
+        },
+        "p": {
+          "type": "string",
+          "valid": false
+        },
+        "d": {
+          "type": "date",
+          "valid": true
+        },
+        "d2": {
+          "type": "date",
+          "valid": true
+        },
+        "t": {
+          "type": "instant",
+          "valid": true
+        },
+        "flag": {
+          "type": "boolean",
+          "valid": false
+        }
+      },
+      "order": [
+        "a",
+        "amount",
+        "b",
+        "base",
+        "c",
+        "count",
+        "d",
+        "d2",
+        "dist",
+        "flag",
+        "item",
+        "k",
+        "n",
+        "name",
+        "p",
+        "plat",
+        "plon",
+        "quote",
+        "r",
+        "s",
+        "secs",
+        "station",
+        "stations",
+        "t",
+        "t1",
+        "t2",
+        "tenor",
+        "x"
+      ],
+      "returns": {
+        "type": "number",
+        "unit": "EUR"
+      }
+    }
+  },
+  "ast": "{\"args\":[{\"args\":{\"date\":{\"node\":\"open\"}},\"fn\":\"data.example.org/daily\",\"node\":\"read\"}],\"fn\":\"last\",\"named\":{},\"node\":\"call\"}",
+  "ast_sha256": "448bd8388a6ec1cbc92652ac53e9dd85b42fd2e6ab3fb9ed3e5ed2e5117382e9",
+  "body": "last(data.example.org/daily(date: *))\n",
+  "inputs": [
+    "data.example.org/daily"
+  ],
+  "returns": {
+    "type": "number",
+    "unit": "EUR"
+  },
+  "asof_dependent": false
+}

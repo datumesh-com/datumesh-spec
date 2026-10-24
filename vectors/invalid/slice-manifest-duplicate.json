@@ -1,0 +1,8 @@
+{
+  "id": "invalid/slice-manifest-duplicate",
+  "kind": "slice",
+  "description": "Members are a set: ascending, no duplicates.",
+  "valid": false,
+  "input": "{\n  \"slice\": {\n    \"ns\": \"data.example.org\",\n    \"fn_hash\": \"e18ab921761089909a83eacfd7e88b71a580da2d35610769557f035fdb2b8169\",\n    \"fn\": \"daily\",\n    \"args\": {\n      \"date\": {\n        \"type\": \"date\",\n        \"lo\": \"2026-03-01\",\n        \"hi\": \"2026-03-05\"\n      }\n    }\n  },\n  \"members\": [\n    \"29c1b289e7522195b362e44f54e05470b69ad20540ab60a18a05e5bf6951f13d\",\n    \"29c1b289e7522195b362e44f54e05470b69ad20540ab60a18a05e5bf6951f13d\"\n  ]\n}",
+  "error": "E_CANON_SET"
+}

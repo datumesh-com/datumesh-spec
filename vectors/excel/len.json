@@ -1,0 +1,43 @@
+{
+  "id": "excel/len",
+  "kind": "excel",
+  "description": "=LEN(\"Zürich\") is supported as len(\"Zürich\").",
+  "valid": true,
+  "excel": "=LEN(\"Zürich\")",
+  "doc": "https://support.microsoft.com/en-us/excel/functions/len-function",
+  "documentation_derived": true,
+  "status": "supported",
+  "sample": "",
+  "excel_result": {
+    "type": "number",
+    "value": "6"
+  },
+  "formula": "len(\"Zürich\")",
+  "signature": {
+    "args": {},
+    "order": [],
+    "returns": {
+      "type": "number",
+      "unit": "1"
+    }
+  },
+  "world": {
+    "functions": {},
+    "receipts": []
+  },
+  "cell": {
+    "args": {},
+    "fn": "sheet.example.net/case"
+  },
+  "asof": "2026-06-01T00:00:00.000000Z",
+  "receipt_hash": "ba753363964f1a5cf2f4b442d3c4c08954b385e7ee9a213436b99ecf5274f77c",
+  "body": "len(\"Zürich\")\n",
+  "value": {
+    "type": "number",
+    "value": "6"
+  },
+  "lineage": [],
+  "tx": "0001-01-01T00:00:00.000000Z",
+  "receipt_asof": "0001-01-01T00:00:00.000000Z",
+  "fuel_used": 2
+}

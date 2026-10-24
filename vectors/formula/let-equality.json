@@ -1,0 +1,184 @@
+{
+  "id": "formula/let-equality",
+  "kind": "formula",
+  "description": "let e = a = b binds e to the comparison.",
+  "valid": true,
+  "input": "let e = a = b in e",
+  "env": {
+    "aliases": {},
+    "functions": {},
+    "name": "calc.example.net/f",
+    "signature": {
+      "args": {
+        "a": {
+          "type": "number",
+          "valid": false,
+          "unit": "EUR"
+        },
+        "b": {
+          "type": "number",
+          "valid": false,
+          "unit": "EUR"
+        },
+        "c": {
+          "type": "number",
+          "valid": false,
+          "unit": "USD"
+        },
+        "n": {
+          "type": "number",
+          "valid": false,
+          "unit": "1"
+        },
+        "k": {
+          "type": "number",
+          "valid": false,
+          "unit": "1"
+        },
+        "x": {
+          "type": "number",
+          "valid": false,
+          "unit": "1"
+        },
+        "r": {
+          "type": "number",
+          "valid": false,
+          "unit": "percent"
+        },
+        "t1": {
+          "type": "number",
+          "valid": false,
+          "unit": "degC"
+        },
+        "t2": {
+          "type": "number",
+          "valid": false,
+          "unit": "degC"
+        },
+        "amount": {
+          "type": "number",
+          "valid": false,
+          "unit": {
+            "arg": "base"
+          }
+        },
+        "count": {
+          "type": "number",
+          "valid": false,
+          "unit": "count"
+        },
+        "plat": {
+          "type": "number",
+          "valid": false,
+          "unit": "deg"
+        },
+        "plon": {
+          "type": "number",
+          "valid": false,
+          "unit": "deg"
+        },
+        "dist": {
+          "type": "number",
+          "valid": false,
+          "unit": "m"
+        },
+        "secs": {
+          "type": "number",
+          "valid": false,
+          "unit": "s"
+        },
+        "s": {
+          "type": "string",
+          "valid": false
+        },
+        "name": {
+          "type": "string",
+          "valid": false
+        },
+        "base": {
+          "type": "string",
+          "valid": false
+        },
+        "quote": {
+          "type": "string",
+          "valid": false
+        },
+        "station": {
+          "type": "string",
+          "valid": false
+        },
+        "tenor": {
+          "type": "string",
+          "valid": false
+        },
+        "item": {
+          "type": "string",
+          "valid": false
+        },
+        "stations": {
+          "type": "string",
+          "valid": false
+        },
+        "p": {
+          "type": "string",
+          "valid": false
+        },
+        "d": {
+          "type": "date",
+          "valid": true
+        },
+        "d2": {
+          "type": "date",
+          "valid": true
+        },
+        "t": {
+          "type": "instant",
+          "valid": true
+        },
+        "flag": {
+          "type": "boolean",
+          "valid": false
+        }
+      },
+      "order": [
+        "a",
+        "amount",
+        "b",
+        "base",
+        "c",
+        "count",
+        "d",
+        "d2",
+        "dist",
+        "flag",
+        "item",
+        "k",
+        "n",
+        "name",
+        "p",
+        "plat",
+        "plon",
+        "quote",
+        "r",
+        "s",
+        "secs",
+        "station",
+        "stations",
+        "t",
+        "t1",
+        "t2",
+        "tenor",
+        "x"
+      ],
+      "returns": "boolean"
+    }
+  },
+  "ast": "{\"body\":{\"name\":\"e\",\"node\":\"var\"},\"name\":\"e\",\"node\":\"let\",\"value\":{\"args\":[{\"name\":\"a\",\"node\":\"var\"},{\"name\":\"b\",\"node\":\"var\"}],\"node\":\"op\",\"op\":\"=\"}}",
+  "ast_sha256": "4779a7ccd14d91e814c94571eb4abc2a0c13b29e37b7454a88fcbb647f201c09",
+  "body": "let e = a = b in e\n",
+  "inputs": [],
+  "returns": {
+    "type": "boolean"
+  },
+  "asof_dependent": false
+}

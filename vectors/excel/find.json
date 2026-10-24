@@ -1,0 +1,43 @@
+{
+  "id": "excel/find",
+  "kind": "excel",
+  "description": "=FIND(\"m\",\"Datumesh\") is supported as find(\"m\", \"Datumesh\").",
+  "valid": true,
+  "excel": "=FIND(\"m\",\"Datumesh\")",
+  "doc": "https://support.microsoft.com/en-us/excel/how-to-correct-a-value-error-in-find-findb-and-search-searchb-functions",
+  "documentation_derived": true,
+  "status": "supported",
+  "sample": "",
+  "excel_result": {
+    "type": "number",
+    "value": "5"
+  },
+  "formula": "find(\"m\", \"Datumesh\")",
+  "signature": {
+    "args": {},
+    "order": [],
+    "returns": {
+      "type": "number",
+      "unit": "1"
+    }
+  },
+  "world": {
+    "functions": {},
+    "receipts": []
+  },
+  "cell": {
+    "args": {},
+    "fn": "sheet.example.net/case"
+  },
+  "asof": "2026-06-01T00:00:00.000000Z",
+  "receipt_hash": "63f909bdc17c576c2842a77bad6ff8e98c7e91aef175244e1bc5a3b5e3786f2e",
+  "body": "find(\"m\", \"Datumesh\")\n",
+  "value": {
+    "type": "number",
+    "value": "5"
+  },
+  "lineage": [],
+  "tx": "0001-01-01T00:00:00.000000Z",
+  "receipt_asof": "0001-01-01T00:00:00.000000Z",
+  "fuel_used": 3
+}

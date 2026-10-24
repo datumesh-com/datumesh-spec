@@ -1,0 +1,43 @@
+{
+  "id": "excel/search",
+  "kind": "excel",
+  "description": "=SEARCH(\"MESH\",\"Datumesh\") is partial as find(lower(\"MESH\"), lower(\"Datumesh\")).",
+  "valid": true,
+  "excel": "=SEARCH(\"MESH\",\"Datumesh\")",
+  "doc": "https://support.microsoft.com/en-us/excel/functions/search-function",
+  "documentation_derived": true,
+  "status": "partial",
+  "sample": "",
+  "excel_result": {
+    "type": "number",
+    "value": "5"
+  },
+  "formula": "find(lower(\"MESH\"), lower(\"Datumesh\"))",
+  "signature": {
+    "args": {},
+    "order": [],
+    "returns": {
+      "type": "number",
+      "unit": "1"
+    }
+  },
+  "world": {
+    "functions": {},
+    "receipts": []
+  },
+  "cell": {
+    "args": {},
+    "fn": "sheet.example.net/case"
+  },
+  "asof": "2026-06-01T00:00:00.000000Z",
+  "receipt_hash": "715954cc3e191cb1bb416baab600fdc484c71d597c99976bf8cb4aa03a3e62d5",
+  "body": "find(lower(\"MESH\"), lower(\"Datumesh\"))\n",
+  "value": {
+    "type": "number",
+    "value": "5"
+  },
+  "lineage": [],
+  "tx": "0001-01-01T00:00:00.000000Z",
+  "receipt_asof": "0001-01-01T00:00:00.000000Z",
+  "fuel_used": 7
+}

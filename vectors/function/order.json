@@ -1,0 +1,9 @@
+{
+  "id": "function/order",
+  "kind": "function",
+  "description": "signature.order: every argument once, in the order positional arguments bind. Optional and hashed; absent, a descriptor is byte-identical to spec-0.3.0.",
+  "valid": true,
+  "input": "{\n  \"signature\": {\n    \"order\": [\n      \"base\",\n      \"quote\",\n      \"date\"\n    ],\n    \"returns\": {\n      \"unit\": {\n        \"per\": {\n          \"arg\": \"base\"\n        },\n        \"of\": {\n          \"arg\": \"quote\"\n        }\n      },\n      \"type\": \"number\"\n    },\n    \"args\": {\n      \"quote\": {\n        \"valid\": false,\n        \"type\": \"string\"\n      },\n      \"date\": {\n        \"valid\": true,\n        \"type\": \"date\"\n      },\n      \"base\": {\n        \"valid\": false,\n        \"type\": \"string\"\n      }\n    }\n  },\n  \"inputs\": [],\n  \"code\": {\n    \"lang\": \"stored\",\n    \"body\": \"\"\n  }\n}",
+  "canonical": "{\"code\":{\"body\":\"\",\"lang\":\"stored\"},\"inputs\":[],\"signature\":{\"args\":{\"base\":{\"type\":\"string\",\"valid\":false},\"date\":{\"type\":\"date\",\"valid\":true},\"quote\":{\"type\":\"string\",\"valid\":false}},\"order\":[\"base\",\"quote\",\"date\"],\"returns\":{\"type\":\"number\",\"unit\":{\"of\":{\"arg\":\"quote\"},\"per\":{\"arg\":\"base\"}}}}}",
+  "sha256": "f041cf0f3eabaf4a611a6f57050dac8fb1f2e2cd5d6b6526913cff0847ef88df"
+}

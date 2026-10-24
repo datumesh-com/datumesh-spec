@@ -1,0 +1,188 @@
+{
+  "id": "formula/unit-suffix-index",
+  "kind": "formula",
+  "description": "An index unit suffix.",
+  "valid": true,
+  "input": "100 index:2015=100",
+  "env": {
+    "aliases": {},
+    "functions": {},
+    "name": "calc.example.net/f",
+    "signature": {
+      "args": {
+        "a": {
+          "type": "number",
+          "valid": false,
+          "unit": "EUR"
+        },
+        "b": {
+          "type": "number",
+          "valid": false,
+          "unit": "EUR"
+        },
+        "c": {
+          "type": "number",
+          "valid": false,
+          "unit": "USD"
+        },
+        "n": {
+          "type": "number",
+          "valid": false,
+          "unit": "1"
+        },
+        "k": {
+          "type": "number",
+          "valid": false,
+          "unit": "1"
+        },
+        "x": {
+          "type": "number",
+          "valid": false,
+          "unit": "1"
+        },
+        "r": {
+          "type": "number",
+          "valid": false,
+          "unit": "percent"
+        },
+        "t1": {
+          "type": "number",
+          "valid": false,
+          "unit": "degC"
+        },
+        "t2": {
+          "type": "number",
+          "valid": false,
+          "unit": "degC"
+        },
+        "amount": {
+          "type": "number",
+          "valid": false,
+          "unit": {
+            "arg": "base"
+          }
+        },
+        "count": {
+          "type": "number",
+          "valid": false,
+          "unit": "count"
+        },
+        "plat": {
+          "type": "number",
+          "valid": false,
+          "unit": "deg"
+        },
+        "plon": {
+          "type": "number",
+          "valid": false,
+          "unit": "deg"
+        },
+        "dist": {
+          "type": "number",
+          "valid": false,
+          "unit": "m"
+        },
+        "secs": {
+          "type": "number",
+          "valid": false,
+          "unit": "s"
+        },
+        "s": {
+          "type": "string",
+          "valid": false
+        },
+        "name": {
+          "type": "string",
+          "valid": false
+        },
+        "base": {
+          "type": "string",
+          "valid": false
+        },
+        "quote": {
+          "type": "string",
+          "valid": false
+        },
+        "station": {
+          "type": "string",
+          "valid": false
+        },
+        "tenor": {
+          "type": "string",
+          "valid": false
+        },
+        "item": {
+          "type": "string",
+          "valid": false
+        },
+        "stations": {
+          "type": "string",
+          "valid": false
+        },
+        "p": {
+          "type": "string",
+          "valid": false
+        },
+        "d": {
+          "type": "date",
+          "valid": true
+        },
+        "d2": {
+          "type": "date",
+          "valid": true
+        },
+        "t": {
+          "type": "instant",
+          "valid": true
+        },
+        "flag": {
+          "type": "boolean",
+          "valid": false
+        }
+      },
+      "order": [
+        "a",
+        "amount",
+        "b",
+        "base",
+        "c",
+        "count",
+        "d",
+        "d2",
+        "dist",
+        "flag",
+        "item",
+        "k",
+        "n",
+        "name",
+        "p",
+        "plat",
+        "plon",
+        "quote",
+        "r",
+        "s",
+        "secs",
+        "station",
+        "stations",
+        "t",
+        "t1",
+        "t2",
+        "tenor",
+        "x"
+      ],
+      "returns": {
+        "type": "number",
+        "unit": "index:2015=100"
+      }
+    }
+  },
+  "ast": "{\"node\":\"num\",\"unit\":\"index:2015=100\",\"value\":\"100\"}",
+  "ast_sha256": "fdfd4e16a4bbe23ac28713b9d12390ee22f9bd0a925271f4d45461c69ad22843",
+  "body": "100 index:2015=100\n",
+  "inputs": [],
+  "returns": {
+    "type": "number",
+    "unit": "index:2015=100"
+  },
+  "asof_dependent": false
+}

@@ -1,0 +1,8 @@
+{
+  "id": "invalid/slice-no-open-argument",
+  "kind": "slice",
+  "description": "A slice object has an open or ranged argument.",
+  "valid": false,
+  "input": "{\n  \"ns\": \"data.example.org\",\n  \"fn_hash\": \"e18ab921761089909a83eacfd7e88b71a580da2d35610769557f035fdb2b8169\",\n  \"fn\": \"daily\",\n  \"args\": {\n    \"date\": {\n      \"value\": \"2026-03-01\",\n      \"type\": \"date\"\n    }\n  }\n}",
+  "error": "E_SLICE"
+}

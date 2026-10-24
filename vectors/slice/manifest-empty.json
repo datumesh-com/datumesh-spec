@@ -1,0 +1,12 @@
+{
+  "id": "slice/manifest-empty",
+  "kind": "slice",
+  "description": "An empty slice: the members hash is SHA-256 of [].",
+  "valid": true,
+  "input": "{\n  \"slice\": {\n    \"ns\": \"data.example.org\",\n    \"fn_hash\": \"e18ab921761089909a83eacfd7e88b71a580da2d35610769557f035fdb2b8169\",\n    \"fn\": \"daily\",\n    \"args\": {\n      \"date\": {\n        \"type\": \"date\",\n        \"lo\": \"2026-03-01\",\n        \"hi\": \"2026-03-05\"\n      }\n    }\n  },\n  \"members\": []\n}",
+  "canonical": "{\"members\":[],\"slice\":{\"args\":{\"date\":{\"hi\":\"2026-03-05\",\"lo\":\"2026-03-01\",\"type\":\"date\"}},\"fn\":\"daily\",\"fn_hash\":\"e18ab921761089909a83eacfd7e88b71a580da2d35610769557f035fdb2b8169\",\"ns\":\"data.example.org\"}}",
+  "sha256": "499c516bd3693c49f97dd7d817a1be9107190c28f969e6d40e4deebff13588d1",
+  "slice_id": "588dff9660b4414cf8a6db3adbe2aebb17e75951fd8c3cb4cd98d87381a87dd3",
+  "members_hash": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+  "entry": "slice:588dff9660b4414cf8a6db3adbe2aebb17e75951fd8c3cb4cd98d87381a87dd3:4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+}

@@ -1,0 +1,67 @@
+{
+  "id": "invalid/formula-eval-member-fault-is-absence",
+  "kind": "formula-eval",
+  "description": "sum(math.example.net/recip(*))  (with no arguments)",
+  "valid": false,
+  "world": {
+    "functions": {
+      "calc.example.net/e": {
+        "bound": "2026-01-01T00:00:00.000000Z",
+        "descriptor": {
+          "code": {
+            "body": "sum(math.example.net/recip(n: *))\n",
+            "lang": "formula"
+          },
+          "inputs": [
+            "math.example.net/recip"
+          ],
+          "signature": {
+            "args": {},
+            "order": [],
+            "returns": {
+              "type": "number",
+              "unit": "1"
+            }
+          }
+        }
+      },
+      "math.example.net/recip": {
+        "bound": "2026-01-01T00:00:00.000000Z",
+        "descriptor": {
+          "code": {
+            "body": "1 / n\n",
+            "lang": "formula"
+          },
+          "inputs": [],
+          "signature": {
+            "args": {
+              "n": {
+                "type": "number",
+                "valid": false,
+                "unit": "1",
+                "extent": {
+                  "hi": "3",
+                  "lo": "0"
+                }
+              }
+            },
+            "order": [
+              "n"
+            ],
+            "returns": {
+              "type": "number",
+              "unit": "1"
+            }
+          }
+        }
+      }
+    },
+    "receipts": []
+  },
+  "cell": {
+    "args": {},
+    "fn": "calc.example.net/e"
+  },
+  "asof": "2026-06-01T00:00:00.000000Z",
+  "error": "E_FORMULA_ABSENT"
+}

@@ -1,0 +1,220 @@
+{
+  "id": "formula/spatial-filter-now",
+  "kind": "formula",
+  "description": "What the point metric of 1.3b will do, already now: a slice keyed by latitude and longitude filtered by distance.",
+  "valid": true,
+  "input": "mean(filter(geo.example.org/elev(lat: *, lon: *), (v, lat, lon) -> haversine(lat, lon, plat, plon) <= 20000 m))",
+  "env": {
+    "aliases": {},
+    "functions": {
+      "geo.example.org/elev": {
+        "code": {
+          "body": "",
+          "lang": "stored"
+        },
+        "inputs": [],
+        "signature": {
+          "args": {
+            "lat": {
+              "type": "number",
+              "valid": false,
+              "unit": "deg"
+            },
+            "lon": {
+              "type": "number",
+              "valid": false,
+              "unit": "deg"
+            }
+          },
+          "returns": {
+            "type": "number",
+            "unit": "m"
+          },
+          "order": [
+            "lat",
+            "lon"
+          ]
+        }
+      }
+    },
+    "name": "calc.example.net/f",
+    "signature": {
+      "args": {
+        "a": {
+          "type": "number",
+          "valid": false,
+          "unit": "EUR"
+        },
+        "b": {
+          "type": "number",
+          "valid": false,
+          "unit": "EUR"
+        },
+        "c": {
+          "type": "number",
+          "valid": false,
+          "unit": "USD"
+        },
+        "n": {
+          "type": "number",
+          "valid": false,
+          "unit": "1"
+        },
+        "k": {
+          "type": "number",
+          "valid": false,
+          "unit": "1"
+        },
+        "x": {
+          "type": "number",
+          "valid": false,
+          "unit": "1"
+        },
+        "r": {
+          "type": "number",
+          "valid": false,
+          "unit": "percent"
+        },
+        "t1": {
+          "type": "number",
+          "valid": false,
+          "unit": "degC"
+        },
+        "t2": {
+          "type": "number",
+          "valid": false,
+          "unit": "degC"
+        },
+        "amount": {
+          "type": "number",
+          "valid": false,
+          "unit": {
+            "arg": "base"
+          }
+        },
+        "count": {
+          "type": "number",
+          "valid": false,
+          "unit": "count"
+        },
+        "plat": {
+          "type": "number",
+          "valid": false,
+          "unit": "deg"
+        },
+        "plon": {
+          "type": "number",
+          "valid": false,
+          "unit": "deg"
+        },
+        "dist": {
+          "type": "number",
+          "valid": false,
+          "unit": "m"
+        },
+        "secs": {
+          "type": "number",
+          "valid": false,
+          "unit": "s"
+        },
+        "s": {
+          "type": "string",
+          "valid": false
+        },
+        "name": {
+          "type": "string",
+          "valid": false
+        },
+        "base": {
+          "type": "string",
+          "valid": false
+        },
+        "quote": {
+          "type": "string",
+          "valid": false
+        },
+        "station": {
+          "type": "string",
+          "valid": false
+        },
+        "tenor": {
+          "type": "string",
+          "valid": false
+        },
+        "item": {
+          "type": "string",
+          "valid": false
+        },
+        "stations": {
+          "type": "string",
+          "valid": false
+        },
+        "p": {
+          "type": "string",
+          "valid": false
+        },
+        "d": {
+          "type": "date",
+          "valid": true
+        },
+        "d2": {
+          "type": "date",
+          "valid": true
+        },
+        "t": {
+          "type": "instant",
+          "valid": true
+        },
+        "flag": {
+          "type": "boolean",
+          "valid": false
+        }
+      },
+      "order": [
+        "a",
+        "amount",
+        "b",
+        "base",
+        "c",
+        "count",
+        "d",
+        "d2",
+        "dist",
+        "flag",
+        "item",
+        "k",
+        "n",
+        "name",
+        "p",
+        "plat",
+        "plon",
+        "quote",
+        "r",
+        "s",
+        "secs",
+        "station",
+        "stations",
+        "t",
+        "t1",
+        "t2",
+        "tenor",
+        "x"
+      ],
+      "returns": {
+        "type": "number",
+        "unit": "m"
+      }
+    }
+  },
+  "ast": "{\"args\":[{\"args\":[{\"args\":{\"lat\":{\"node\":\"open\"},\"lon\":{\"node\":\"open\"}},\"fn\":\"geo.example.org/elev\",\"node\":\"read\"},{\"body\":{\"args\":[{\"args\":[{\"name\":\"lat\",\"node\":\"var\"},{\"name\":\"lon\",\"node\":\"var\"},{\"name\":\"plat\",\"node\":\"var\"},{\"name\":\"plon\",\"node\":\"var\"}],\"fn\":\"haversine\",\"named\":{},\"node\":\"call\"},{\"node\":\"num\",\"unit\":\"m\",\"value\":\"20000\"}],\"node\":\"op\",\"op\":\"<=\"},\"node\":\"lambda\",\"params\":[\"v\",\"lat\",\"lon\"]}],\"fn\":\"filter\",\"named\":{},\"node\":\"call\"}],\"fn\":\"mean\",\"named\":{},\"node\":\"call\"}",
+  "ast_sha256": "6b0a4effbac568fcf458d74c41f600fa3a50e57075dcbbb5bbce08fdcbc8906a",
+  "body": "mean(filter(geo.example.org/elev(lat: *, lon: *), (v, lat, lon) -> haversine(lat, lon, plat, plon) <= 20000 m))\n",
+  "inputs": [
+    "geo.example.org/elev"
+  ],
+  "returns": {
+    "type": "number",
+    "unit": "m"
+  },
+  "asof_dependent": false
+}

@@ -1,0 +1,52 @@
+{
+  "id": "formula-eval/add-days",
+  "kind": "formula-eval",
+  "description": "add_days(d, 3)  (with d = 2026-04-01)",
+  "valid": true,
+  "world": {
+    "functions": {
+      "calc.example.net/e": {
+        "bound": "2026-01-01T00:00:00.000000Z",
+        "descriptor": {
+          "code": {
+            "body": "add_days(d, 3)\n",
+            "lang": "formula"
+          },
+          "inputs": [],
+          "signature": {
+            "args": {
+              "d": {
+                "type": "date",
+                "valid": true
+              }
+            },
+            "order": [
+              "d"
+            ],
+            "returns": "date"
+          }
+        }
+      }
+    },
+    "receipts": []
+  },
+  "cell": {
+    "args": {
+      "d": {
+        "type": "date",
+        "value": "2026-04-01"
+      }
+    },
+    "fn": "calc.example.net/e"
+  },
+  "asof": "2026-06-01T00:00:00.000000Z",
+  "receipt_hash": "d20f257282683c4ff1c3a3036ffa1e7d93a6d8ad3e2bab2309b475504bed4d0f",
+  "value": {
+    "type": "date",
+    "value": "2026-04-04"
+  },
+  "lineage": [],
+  "tx": "0001-01-01T00:00:00.000000Z",
+  "receipt_asof": "0001-01-01T00:00:00.000000Z",
+  "fuel_used": 3
+}

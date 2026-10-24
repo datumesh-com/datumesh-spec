@@ -1,0 +1,43 @@
+{
+  "id": "excel/radians",
+  "kind": "excel",
+  "description": "=ROUND(RADIANS(180),10) is partial as round(convert(180 deg, \"1\"), 10).",
+  "valid": true,
+  "excel": "=ROUND(RADIANS(180),10)",
+  "doc": "https://support.microsoft.com/en-us/excel/functions/radians-function",
+  "documentation_derived": true,
+  "status": "partial",
+  "sample": "",
+  "excel_result": {
+    "type": "number",
+    "value": "3.1415926536"
+  },
+  "formula": "round(convert(180 deg, \"1\"), 10)",
+  "signature": {
+    "args": {},
+    "order": [],
+    "returns": {
+      "type": "number",
+      "unit": "1"
+    }
+  },
+  "world": {
+    "functions": {},
+    "receipts": []
+  },
+  "cell": {
+    "args": {},
+    "fn": "sheet.example.net/case"
+  },
+  "asof": "2026-06-01T00:00:00.000000Z",
+  "receipt_hash": "669f62fff2a8c7e2a1b2c8c0f8433bec944b8ad31e75ca0437a85398f4de2a80",
+  "body": "round(convert(180 deg, \"1\"), digits: 10)\n",
+  "value": {
+    "type": "number",
+    "value": "3.1415926536"
+  },
+  "lineage": [],
+  "tx": "0001-01-01T00:00:00.000000Z",
+  "receipt_asof": "0001-01-01T00:00:00.000000Z",
+  "fuel_used": 4
+}

@@ -1,0 +1,236 @@
+{
+  "id": "formula/join",
+  "kind": "formula",
+  "description": "Implicit join on the shared open argument item.",
+  "valid": true,
+  "input": "sum(data.example.org/price(*) * data.example.org/qty(*))",
+  "env": {
+    "aliases": {},
+    "functions": {
+      "data.example.org/price": {
+        "code": {
+          "body": "",
+          "lang": "stored"
+        },
+        "inputs": [],
+        "signature": {
+          "args": {
+            "item": {
+              "type": "string",
+              "valid": false
+            }
+          },
+          "returns": {
+            "type": "number",
+            "unit": "EUR"
+          },
+          "order": [
+            "item"
+          ]
+        }
+      },
+      "data.example.org/qty": {
+        "code": {
+          "body": "",
+          "lang": "stored"
+        },
+        "inputs": [],
+        "signature": {
+          "args": {
+            "item": {
+              "type": "string",
+              "valid": false
+            }
+          },
+          "returns": {
+            "type": "number",
+            "unit": "1"
+          },
+          "order": [
+            "item"
+          ]
+        }
+      }
+    },
+    "name": "calc.example.net/f",
+    "signature": {
+      "args": {
+        "a": {
+          "type": "number",
+          "valid": false,
+          "unit": "EUR"
+        },
+        "b": {
+          "type": "number",
+          "valid": false,
+          "unit": "EUR"
+        },
+        "c": {
+          "type": "number",
+          "valid": false,
+          "unit": "USD"
+        },
+        "n": {
+          "type": "number",
+          "valid": false,
+          "unit": "1"
+        },
+        "k": {
+          "type": "number",
+          "valid": false,
+          "unit": "1"
+        },
+        "x": {
+          "type": "number",
+          "valid": false,
+          "unit": "1"
+        },
+        "r": {
+          "type": "number",
+          "valid": false,
+          "unit": "percent"
+        },
+        "t1": {
+          "type": "number",
+          "valid": false,
+          "unit": "degC"
+        },
+        "t2": {
+          "type": "number",
+          "valid": false,
+          "unit": "degC"
+        },
+        "amount": {
+          "type": "number",
+          "valid": false,
+          "unit": {
+            "arg": "base"
+          }
+        },
+        "count": {
+          "type": "number",
+          "valid": false,
+          "unit": "count"
+        },
+        "plat": {
+          "type": "number",
+          "valid": false,
+          "unit": "deg"
+        },
+        "plon": {
+          "type": "number",
+          "valid": false,
+          "unit": "deg"
+        },
+        "dist": {
+          "type": "number",
+          "valid": false,
+          "unit": "m"
+        },
+        "secs": {
+          "type": "number",
+          "valid": false,
+          "unit": "s"
+        },
+        "s": {
+          "type": "string",
+          "valid": false
+        },
+        "name": {
+          "type": "string",
+          "valid": false
+        },
+        "base": {
+          "type": "string",
+          "valid": false
+        },
+        "quote": {
+          "type": "string",
+          "valid": false
+        },
+        "station": {
+          "type": "string",
+          "valid": false
+        },
+        "tenor": {
+          "type": "string",
+          "valid": false
+        },
+        "item": {
+          "type": "string",
+          "valid": false
+        },
+        "stations": {
+          "type": "string",
+          "valid": false
+        },
+        "p": {
+          "type": "string",
+          "valid": false
+        },
+        "d": {
+          "type": "date",
+          "valid": true
+        },
+        "d2": {
+          "type": "date",
+          "valid": true
+        },
+        "t": {
+          "type": "instant",
+          "valid": true
+        },
+        "flag": {
+          "type": "boolean",
+          "valid": false
+        }
+      },
+      "order": [
+        "a",
+        "amount",
+        "b",
+        "base",
+        "c",
+        "count",
+        "d",
+        "d2",
+        "dist",
+        "flag",
+        "item",
+        "k",
+        "n",
+        "name",
+        "p",
+        "plat",
+        "plon",
+        "quote",
+        "r",
+        "s",
+        "secs",
+        "station",
+        "stations",
+        "t",
+        "t1",
+        "t2",
+        "tenor",
+        "x"
+      ],
+      "returns": {
+        "type": "number",
+        "unit": "EUR"
+      }
+    }
+  },
+  "ast": "{\"args\":[{\"args\":[{\"args\":{\"item\":{\"node\":\"open\"}},\"fn\":\"data.example.org/price\",\"node\":\"read\"},{\"args\":{\"item\":{\"node\":\"open\"}},\"fn\":\"data.example.org/qty\",\"node\":\"read\"}],\"node\":\"op\",\"op\":\"*\"}],\"fn\":\"sum\",\"named\":{},\"node\":\"call\"}",
+  "ast_sha256": "3e859bb713f875a3a0dbf6f42df791cf128eea75a97457e425c4a918023b0b66",
+  "body": "sum(data.example.org/price(item: *) * data.example.org/qty(item: *))\n",
+  "inputs": [
+    "data.example.org/price",
+    "data.example.org/qty"
+  ],
+  "returns": {
+    "type": "number",
+    "unit": "EUR"
+  },
+  "asof_dependent": false
+}

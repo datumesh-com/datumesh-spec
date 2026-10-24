@@ -1,0 +1,56 @@
+{
+  "id": "formula-eval/abs",
+  "kind": "formula-eval",
+  "description": "abs(a)  (with a = -4.2)",
+  "valid": true,
+  "world": {
+    "functions": {
+      "calc.example.net/e": {
+        "bound": "2026-01-01T00:00:00.000000Z",
+        "descriptor": {
+          "code": {
+            "body": "abs(a)\n",
+            "lang": "formula"
+          },
+          "inputs": [],
+          "signature": {
+            "args": {
+              "a": {
+                "type": "number",
+                "valid": false,
+                "unit": "EUR"
+              }
+            },
+            "order": [
+              "a"
+            ],
+            "returns": {
+              "type": "number",
+              "unit": "EUR"
+            }
+          }
+        }
+      }
+    },
+    "receipts": []
+  },
+  "cell": {
+    "args": {
+      "a": {
+        "type": "number",
+        "value": "-4.2"
+      }
+    },
+    "fn": "calc.example.net/e"
+  },
+  "asof": "2026-06-01T00:00:00.000000Z",
+  "receipt_hash": "61d8725153f2ac187f21601b3e35e1033fa7f75560542e4ee6e68186e8a49c19",
+  "value": {
+    "type": "number",
+    "value": "4.2"
+  },
+  "lineage": [],
+  "tx": "0001-01-01T00:00:00.000000Z",
+  "receipt_asof": "0001-01-01T00:00:00.000000Z",
+  "fuel_used": 2
+}

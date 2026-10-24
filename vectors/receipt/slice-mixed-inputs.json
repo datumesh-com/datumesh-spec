@@ -1,0 +1,131 @@
+{
+  "id": "receipt/slice-mixed-inputs",
+  "kind": "receipt",
+  "description": "A plain receipt hash and a slice entry: hashes sort before slice entries.",
+  "valid": true,
+  "input": "{\n  \"sig\": \"54166521a6da894d51ef56461d7636e9df215ba9cafd2e6e2454f30ffb5c89717726f63bfca2e60c7df290b29182242497eff4dee54540de014909c023cc7308\",\n  \"value\": \"120.75\",\n  \"valid\": {},\n  \"type\": \"number\",\n  \"tx\": \"2026-04-01T09:00:00.000000Z\",\n  \"summary\": \"Computed by the Datumesh formula reference evaluator.\",\n  \"publisher\": \"calc.example.net\",\n  \"proto\": \"datumesh/1\",\n  \"licence\": \"CC0-1.0\",\n  \"issued\": \"2026-04-01T09:00:00.000000Z\",\n  \"inputs\": [\n    \"ef91287e83b714ea7fd1de7fecef88d0ece8cbde6f31aceb4030da4fa5d0c748\",\n    \"slice:a45784ce2a47fcaa2bdc589af888cd5acc3eeb63206f8083292f4a12e0249719:082cbb352d36ed2b726c86557f62da96459a1c113e93cbb2b83b2752daadfe33\"\n  ],\n  \"computed_by\": \"mesh.example.net#cd42547c321bfc08\",\n  \"cell\": {\n    \"ns\": \"calc.example.net\",\n    \"fn_hash\": \"534a80c32acfbe519d14fdd28c180bb7e4a7a948b273b1572f135fdee22e3137\",\n    \"fn\": \"e\",\n    \"args\": {}\n  },\n  \"asof\": \"2026-04-01T09:00:00.000000Z\"\n}",
+  "keypair": {
+    "seed": "9345ff06f5e4ab63b6f40048c12368f88370bf2402984bf6bf47fa11cfdf399d",
+    "public": "e6d9d1c7634ea284e533a84e5a2f35978a31fcbcae18bf490b790b516e4b8fb1",
+    "key_id": "cd42547c321bfc08"
+  },
+  "keys": {
+    "calc.example.net": {
+      "https": {
+        "status": 200,
+        "body": "{\n  \"host\": \"calc.example.net\",\n  \"keys\": [\n    {\n      \"alg\": \"ed25519\",\n      \"id\": \"a06403c25203d202\",\n      \"public\": \"d0def49fb2866f7377684bd565c04d2d7bd7bc7151d9ee46ee7580f649cca5aa\",\n      \"valid_from\": \"2020-01-01T00:00:00.000000Z\"\n    }\n  ],\n  \"proto\": \"datumesh/1\"\n}"
+      }
+    },
+    "calendars.example.org": {
+      "https": {
+        "status": 200,
+        "body": "{\n  \"host\": \"calendars.example.org\",\n  \"keys\": [\n    {\n      \"alg\": \"ed25519\",\n      \"id\": \"d36465cb16755445\",\n      \"public\": \"41f67e3cdcd30f73cc3937f85e7d713db43ae39b4f2444035975a07c52090bea\",\n      \"valid_from\": \"2020-01-01T00:00:00.000000Z\"\n    }\n  ],\n  \"proto\": \"datumesh/1\"\n}"
+      }
+    },
+    "curve.example.net": {
+      "https": {
+        "status": 200,
+        "body": "{\n  \"host\": \"curve.example.net\",\n  \"keys\": [\n    {\n      \"alg\": \"ed25519\",\n      \"id\": \"9a72762ed570f43a\",\n      \"public\": \"161e75b308d0db529cb44dc5eb59bca0b4ad76c5d67a7909800e0ff8a9e9625f\",\n      \"valid_from\": \"2020-01-01T00:00:00.000000Z\"\n    }\n  ],\n  \"proto\": \"datumesh/1\"\n}"
+      }
+    },
+    "data.example.org": {
+      "https": {
+        "status": 200,
+        "body": "{\n  \"host\": \"data.example.org\",\n  \"keys\": [\n    {\n      \"alg\": \"ed25519\",\n      \"id\": \"efb20f82a7e15e96\",\n      \"public\": \"ffca8bfde74858ed9d7d9c20d53daff82728a4af926a5ca1bad0c248bc747cd9\",\n      \"valid_from\": \"2020-01-01T00:00:00.000000Z\"\n    }\n  ],\n  \"proto\": \"datumesh/1\"\n}"
+      }
+    },
+    "fz.example.org": {
+      "https": {
+        "status": 200,
+        "body": "{\n  \"host\": \"fz.example.org\",\n  \"keys\": [\n    {\n      \"alg\": \"ed25519\",\n      \"id\": \"5f049a6861968d9b\",\n      \"public\": \"f2ee57fef42d2af587d26f27627b13ce01366a0d6d68be4f069fe84ec5d548a0\",\n      \"valid_from\": \"2020-01-01T00:00:00.000000Z\"\n    }\n  ],\n  \"proto\": \"datumesh/1\"\n}"
+      }
+    },
+    "geo.example.org": {
+      "https": {
+        "status": 200,
+        "body": "{\n  \"host\": \"geo.example.org\",\n  \"keys\": [\n    {\n      \"alg\": \"ed25519\",\n      \"id\": \"01a1eda486e56105\",\n      \"public\": \"b2261195634b4614e0158d8f4bf13a95cd9f415e8eb780dcee351ecbe29099db\",\n      \"valid_from\": \"2020-01-01T00:00:00.000000Z\"\n    }\n  ],\n  \"proto\": \"datumesh/1\"\n}"
+      }
+    },
+    "math.example.net": {
+      "https": {
+        "status": 200,
+        "body": "{\n  \"host\": \"math.example.net\",\n  \"keys\": [\n    {\n      \"alg\": \"ed25519\",\n      \"id\": \"72fdbeceffb7847a\",\n      \"public\": \"6f6e15d329f97d2fb061178ee79b980f7ccbc56dd7ec538e4b4ec0af5a2bbe9c\",\n      \"valid_from\": \"2020-01-01T00:00:00.000000Z\"\n    }\n  ],\n  \"proto\": \"datumesh/1\"\n}"
+      }
+    },
+    "mesh.example.net": {
+      "https": {
+        "status": 200,
+        "body": "{\n  \"host\": \"mesh.example.net\",\n  \"keys\": [\n    {\n      \"alg\": \"ed25519\",\n      \"id\": \"cd42547c321bfc08\",\n      \"public\": \"e6d9d1c7634ea284e533a84e5a2f35978a31fcbcae18bf490b790b516e4b8fb1\",\n      \"valid_from\": \"2020-01-01T00:00:00.000000Z\"\n    }\n  ],\n  \"proto\": \"datumesh/1\"\n}"
+      }
+    },
+    "rates.example.org": {
+      "https": {
+        "status": 200,
+        "body": "{\n  \"host\": \"rates.example.org\",\n  \"keys\": [\n    {\n      \"alg\": \"ed25519\",\n      \"id\": \"69d6132b3eb2db9a\",\n      \"public\": \"ca06cece014796c408978413db8b131aeba2014d56da69e12611c937a8ad76e7\",\n      \"valid_from\": \"2020-01-01T00:00:00.000000Z\"\n    }\n  ],\n  \"proto\": \"datumesh/1\"\n}"
+      }
+    },
+    "sheet.example.org": {
+      "https": {
+        "status": 200,
+        "body": "{\n  \"host\": \"sheet.example.org\",\n  \"keys\": [\n    {\n      \"alg\": \"ed25519\",\n      \"id\": \"206a7d600aae48b2\",\n      \"public\": \"f9431ab9865f692b20608223b603c7146d63fd725a4e389ad056d76f4c9b7853\",\n      \"valid_from\": \"2020-01-01T00:00:00.000000Z\"\n    }\n  ],\n  \"proto\": \"datumesh/1\"\n}"
+      }
+    },
+    "shop.example.net": {
+      "https": {
+        "status": 200,
+        "body": "{\n  \"host\": \"shop.example.net\",\n  \"keys\": [\n    {\n      \"alg\": \"ed25519\",\n      \"id\": \"24fe7dc93d01d22c\",\n      \"public\": \"50c32417716582ba2261bb4f4a87087e83a4af5fbb6039eb5c8f58a9899e13fe\",\n      \"valid_from\": \"2020-01-01T00:00:00.000000Z\"\n    }\n  ],\n  \"proto\": \"datumesh/1\"\n}"
+      }
+    },
+    "weather.example.org": {
+      "https": {
+        "status": 200,
+        "body": "{\n  \"host\": \"weather.example.org\",\n  \"keys\": [\n    {\n      \"alg\": \"ed25519\",\n      \"id\": \"060678a6fa418e5d\",\n      \"public\": \"cd4b82119344ac55c534a917e3cb71813f7414436ee17b354bf9c5065ef73991\",\n      \"valid_from\": \"2020-01-01T00:00:00.000000Z\"\n    }\n  ],\n  \"proto\": \"datumesh/1\"\n}"
+      }
+    }
+  },
+  "recompute": {
+    "descriptor": {
+      "code": {
+        "body": "sum(data.example.org/daily(date: *)) + data.example.org/price(item: \"bolt\")\n",
+        "lang": "formula"
+      },
+      "inputs": [
+        "data.example.org/daily",
+        "data.example.org/price"
+      ],
+      "signature": {
+        "args": {},
+        "order": [],
+        "returns": {
+          "type": "number",
+          "unit": "EUR"
+        }
+      }
+    },
+    "inputs": {
+      "098eb045556f5c8e8cb40d06b002b3d57d7f1b225e462fef01dae0941ca06863": "{\"asof\": \"2026-03-05T18:00:00.000000Z\", \"cell\": {\"args\": {\"date\": {\"type\": \"date\", \"value\": \"2026-03-05\"}}, \"fn\": \"daily\", \"fn_hash\": \"e18ab921761089909a83eacfd7e88b71a580da2d35610769557f035fdb2b8169\", \"ns\": \"data.example.org\"}, \"computed_by\": \"data.example.org#efb20f82a7e15e96\", \"inputs\": [], \"issued\": \"2026-03-05T18:00:00.000000Z\", \"licence\": \"CC-BY-4.0\", \"proto\": \"datumesh/1\", \"publisher\": \"data.example.org\", \"summary\": \"A recorded value of daily.\", \"tx\": \"2026-03-05T18:00:00.000000Z\", \"type\": \"number\", \"valid\": {\"date\": {\"type\": \"date\", \"value\": \"2026-03-05\"}}, \"value\": \"11\", \"sig\": \"b8deff12e6272f6677812319f602624ad5d2d39956bb42eac48b1a09cec62f2e7dbb615209a882a06c88aada7c8472c8df2adbdb6d86413cbd46a7a496c2f002\"}",
+      "10182fdc5e9820adbc185adad9cadd9cca4d647e84281cb7cc81d361c8dd5a7b": "{\"asof\": \"2026-03-01T18:00:00.000000Z\", \"cell\": {\"args\": {\"date\": {\"type\": \"date\", \"value\": \"2026-03-01\"}}, \"fn\": \"daily\", \"fn_hash\": \"e18ab921761089909a83eacfd7e88b71a580da2d35610769557f035fdb2b8169\", \"ns\": \"data.example.org\"}, \"computed_by\": \"data.example.org#efb20f82a7e15e96\", \"inputs\": [], \"issued\": \"2026-03-01T18:00:00.000000Z\", \"licence\": \"CC-BY-4.0\", \"proto\": \"datumesh/1\", \"publisher\": \"data.example.org\", \"summary\": \"A recorded value of daily.\", \"tx\": \"2026-03-01T18:00:00.000000Z\", \"type\": \"number\", \"valid\": {\"date\": {\"type\": \"date\", \"value\": \"2026-03-01\"}}, \"value\": \"10\", \"sig\": \"d246d61311ed4c5c250d8f4ae480a51cde41e9db92d8f9d8300c846640fb3ef5bc6b811d538ea968e519146e7df7d9da4928c3f2ee235829c8caa6d8c5cfee04\"}",
+      "2e876ea1d31ba6d7f00c6afa42a93b510edfdab21bc1272bcc6b294d409f6597": "{\"asof\": \"2026-03-04T18:00:00.000000Z\", \"cell\": {\"args\": {\"date\": {\"type\": \"date\", \"value\": \"2026-03-04\"}}, \"fn\": \"daily\", \"fn_hash\": \"e18ab921761089909a83eacfd7e88b71a580da2d35610769557f035fdb2b8169\", \"ns\": \"data.example.org\"}, \"computed_by\": \"data.example.org#efb20f82a7e15e96\", \"inputs\": [], \"issued\": \"2026-03-04T18:00:00.000000Z\", \"licence\": \"CC-BY-4.0\", \"proto\": \"datumesh/1\", \"publisher\": \"data.example.org\", \"summary\": \"A recorded value of daily.\", \"tx\": \"2026-03-04T18:00:00.000000Z\", \"type\": \"number\", \"valid\": {\"date\": {\"type\": \"date\", \"value\": \"2026-03-04\"}}, \"value\": \"15\", \"sig\": \"ab4141c786b2fbd6531464c66544fd5a4bc8f0c1ba9b2542ac5fcf7d2ff1140b0261bf0122839cb9c7b78f8b16631495aed85f241c3c0cdcf0a99501834e4000\"}",
+      "2f084bf67a4c4fddb74dfc0bad7327f2dacb61f19c7999c23c04900913e9051b": "{\"asof\": \"2026-03-07T18:00:00.000000Z\", \"cell\": {\"args\": {\"date\": {\"type\": \"date\", \"value\": \"2026-03-07\"}}, \"fn\": \"daily\", \"fn_hash\": \"e18ab921761089909a83eacfd7e88b71a580da2d35610769557f035fdb2b8169\", \"ns\": \"data.example.org\"}, \"computed_by\": \"data.example.org#efb20f82a7e15e96\", \"inputs\": [], \"issued\": \"2026-03-07T18:00:00.000000Z\", \"licence\": \"CC-BY-4.0\", \"proto\": \"datumesh/1\", \"publisher\": \"data.example.org\", \"summary\": \"A recorded value of daily.\", \"tx\": \"2026-03-07T18:00:00.000000Z\", \"type\": \"number\", \"valid\": {\"date\": {\"type\": \"date\", \"value\": \"2026-03-07\"}}, \"value\": \"14\", \"sig\": \"df6290780c9a5bef4fe63e613db744fbf3b7026546fef9adffa99fa7647693f40915844562030961f64743459bef9f0fbcc732959336379915e9496716c9b308\"}",
+      "2f5f9d1f1cd4dfb3569f7c1256c54a46399733de1de70619eda7c9cfa1ba2dd0": "{\"asof\": \"2026-04-01T09:00:00.000000Z\", \"cell\": {\"args\": {}, \"fn\": \"e\", \"fn_hash\": \"534a80c32acfbe519d14fdd28c180bb7e4a7a948b273b1572f135fdee22e3137\", \"ns\": \"calc.example.net\"}, \"computed_by\": \"mesh.example.net#cd42547c321bfc08\", \"inputs\": [\"ef91287e83b714ea7fd1de7fecef88d0ece8cbde6f31aceb4030da4fa5d0c748\", \"slice:a45784ce2a47fcaa2bdc589af888cd5acc3eeb63206f8083292f4a12e0249719:082cbb352d36ed2b726c86557f62da96459a1c113e93cbb2b83b2752daadfe33\"], \"issued\": \"2026-04-01T09:00:00.000000Z\", \"licence\": \"CC0-1.0\", \"proto\": \"datumesh/1\", \"publisher\": \"calc.example.net\", \"summary\": \"Computed by the Datumesh formula reference evaluator.\", \"tx\": \"2026-04-01T09:00:00.000000Z\", \"type\": \"number\", \"valid\": {}, \"value\": \"120.75\", \"sig\": \"54166521a6da894d51ef56461d7636e9df215ba9cafd2e6e2454f30ffb5c89717726f63bfca2e60c7df290b29182242497eff4dee54540de014909c023cc7308\"}",
+      "42443900c128dc30ae1fe8328b61069f7c0191851437378cb0dbf81a578eca4e": "{\"asof\": \"2026-03-02T18:00:00.000000Z\", \"cell\": {\"args\": {\"date\": {\"type\": \"date\", \"value\": \"2026-03-02\"}}, \"fn\": \"daily\", \"fn_hash\": \"e18ab921761089909a83eacfd7e88b71a580da2d35610769557f035fdb2b8169\", \"ns\": \"data.example.org\"}, \"computed_by\": \"data.example.org#efb20f82a7e15e96\", \"inputs\": [], \"issued\": \"2026-03-02T18:00:00.000000Z\", \"licence\": \"CC-BY-4.0\", \"proto\": \"datumesh/1\", \"publisher\": \"data.example.org\", \"summary\": \"A recorded value of daily.\", \"tx\": \"2026-03-02T18:00:00.000000Z\", \"type\": \"number\", \"valid\": {\"date\": {\"type\": \"date\", \"value\": \"2026-03-02\"}}, \"value\": \"12\", \"sig\": \"23532d5968a51c937b94eac670d8a0dc28377091ac3532ab5357432a61867ca8c4538ad066ee1d77dcace579983673ae844466a22a9587075e8e355393ca300b\"}",
+      "4ba98e2721af83efe835910736e6d8a3db12e7b4828ef6c6fe06be07e6171a34": "{\"asof\": \"2026-03-08T18:00:00.000000Z\", \"cell\": {\"args\": {\"date\": {\"type\": \"date\", \"value\": \"2026-03-08\"}}, \"fn\": \"daily\", \"fn_hash\": \"e18ab921761089909a83eacfd7e88b71a580da2d35610769557f035fdb2b8169\", \"ns\": \"data.example.org\"}, \"computed_by\": \"data.example.org#efb20f82a7e15e96\", \"inputs\": [], \"issued\": \"2026-03-08T18:00:00.000000Z\", \"licence\": \"CC-BY-4.0\", \"proto\": \"datumesh/1\", \"publisher\": \"data.example.org\", \"summary\": \"A recorded value of daily.\", \"tx\": \"2026-03-08T18:00:00.000000Z\", \"type\": \"number\", \"valid\": {\"date\": {\"type\": \"date\", \"value\": \"2026-03-08\"}}, \"value\": \"8\", \"sig\": \"9f0b49cc9b8dcef07b41d80d5c061986fd235af9456a6be0f866e2491da4394cf2237d9e5276ca815a7741da7da9210fb3051a9f625f27bf76f08968c935040a\"}",
+      "5a435b8e60bb24dfae734315d72f5773283ca5e9e5c64e703d8ac9fd371bcd9a": "{\"asof\": \"2026-03-03T18:00:00.000000Z\", \"cell\": {\"args\": {\"date\": {\"type\": \"date\", \"value\": \"2026-03-03\"}}, \"fn\": \"daily\", \"fn_hash\": \"e18ab921761089909a83eacfd7e88b71a580da2d35610769557f035fdb2b8169\", \"ns\": \"data.example.org\"}, \"computed_by\": \"data.example.org#efb20f82a7e15e96\", \"inputs\": [], \"issued\": \"2026-03-03T18:00:00.000000Z\", \"licence\": \"CC-BY-4.0\", \"proto\": \"datumesh/1\", \"publisher\": \"data.example.org\", \"summary\": \"A recorded value of daily.\", \"tx\": \"2026-03-03T18:00:00.000000Z\", \"type\": \"number\", \"valid\": {\"date\": {\"type\": \"date\", \"value\": \"2026-03-03\"}}, \"value\": \"9\", \"sig\": \"d33b08d09ac9a8bc26c11c8069e6c48cb2e96de972021e90ee63f61ec879ea5673fdf11de0dead304558b52022f8d4dd649351eec1223fb63175133005a5e105\"}",
+      "7b11959c821d1ebe2d3c797e0756e401f659836f214b59ed6d8f4dd0f2ef34ab": "{\"asof\": \"2026-03-10T18:00:00.000000Z\", \"cell\": {\"args\": {\"date\": {\"type\": \"date\", \"value\": \"2026-03-10\"}}, \"fn\": \"daily\", \"fn_hash\": \"e18ab921761089909a83eacfd7e88b71a580da2d35610769557f035fdb2b8169\", \"ns\": \"data.example.org\"}, \"computed_by\": \"data.example.org#efb20f82a7e15e96\", \"inputs\": [], \"issued\": \"2026-03-10T18:00:00.000000Z\", \"licence\": \"CC-BY-4.0\", \"proto\": \"datumesh/1\", \"publisher\": \"data.example.org\", \"summary\": \"A recorded value of daily.\", \"tx\": \"2026-03-10T18:00:00.000000Z\", \"type\": \"number\", \"valid\": {\"date\": {\"type\": \"date\", \"value\": \"2026-03-10\"}}, \"value\": \"10\", \"sig\": \"058eb5e040d5ac7cbc5289a0f71a550bd0be5846ef4d935f5cd44da74d90aa787c10ee51d0d7d784c80906f427cd0f91470a08f41ce9604bf4104eb7cacdd20e\"}",
+      "b0e2def23cd22a0cb81520747eb0faa50c9a09aac9c855179e5a3f467ca74c64": "{\"asof\": \"2026-03-09T18:00:00.000000Z\", \"cell\": {\"args\": {\"date\": {\"type\": \"date\", \"value\": \"2026-03-09\"}}, \"fn\": \"daily\", \"fn_hash\": \"e18ab921761089909a83eacfd7e88b71a580da2d35610769557f035fdb2b8169\", \"ns\": \"data.example.org\"}, \"computed_by\": \"data.example.org#efb20f82a7e15e96\", \"inputs\": [], \"issued\": \"2026-03-09T18:00:00.000000Z\", \"licence\": \"CC-BY-4.0\", \"proto\": \"datumesh/1\", \"publisher\": \"data.example.org\", \"summary\": \"A recorded value of daily.\", \"tx\": \"2026-03-09T18:00:00.000000Z\", \"type\": \"number\", \"valid\": {\"date\": {\"type\": \"date\", \"value\": \"2026-03-09\"}}, \"value\": \"16\", \"sig\": \"da3c661886d26530518225f53e2ee1215b30f80783405c50f943a9e7c191c79f1977792244064c25087bf698e7a32ada757ff1f0b48bef0fc1621fa1cbf1a108\"}",
+      "b7c6809b2280b4415becac4b2bb8eb7a5ea8e87a303eccd29885913fbd7d95af": "{\"asof\": \"2026-03-06T18:00:00.000000Z\", \"cell\": {\"args\": {\"date\": {\"type\": \"date\", \"value\": \"2026-03-06\"}}, \"fn\": \"daily\", \"fn_hash\": \"e18ab921761089909a83eacfd7e88b71a580da2d35610769557f035fdb2b8169\", \"ns\": \"data.example.org\"}, \"computed_by\": \"data.example.org#efb20f82a7e15e96\", \"inputs\": [], \"issued\": \"2026-03-06T18:00:00.000000Z\", \"licence\": \"CC-BY-4.0\", \"proto\": \"datumesh/1\", \"publisher\": \"data.example.org\", \"summary\": \"A recorded value of daily.\", \"tx\": \"2026-03-06T18:00:00.000000Z\", \"type\": \"number\", \"valid\": {\"date\": {\"type\": \"date\", \"value\": \"2026-03-06\"}}, \"value\": \"13\", \"sig\": \"b80c4f2c1da39bca472b00f31174a5bffc08ebcdbc4682d96b4bf7b5594fdc7a4ca2f4e1756adc3bcee76f1c25876e75e917d574fb2efed006c130c217378104\"}",
+      "ef91287e83b714ea7fd1de7fecef88d0ece8cbde6f31aceb4030da4fa5d0c748": "{\"asof\": \"2026-04-01T09:00:00.000000Z\", \"cell\": {\"args\": {\"item\": {\"type\": \"string\", \"value\": \"bolt\"}}, \"fn\": \"price\", \"fn_hash\": \"4193e310f5c949998b3f339d2ad56567286ebd0828504b3f31a2c671e99c71a7\", \"ns\": \"data.example.org\"}, \"computed_by\": \"data.example.org#efb20f82a7e15e96\", \"inputs\": [], \"issued\": \"2026-04-01T09:00:00.000000Z\", \"licence\": \"CC-BY-4.0\", \"proto\": \"datumesh/1\", \"publisher\": \"data.example.org\", \"summary\": \"A recorded value of price.\", \"tx\": \"2026-04-01T09:00:00.000000Z\", \"type\": \"number\", \"valid\": {}, \"value\": \"2.75\", \"sig\": \"dde164dd43ebbb94a2c7216273681c2e06ab2490fe064c4506653b9c75a6c74df224b06ec651f9591904391de2a6003645c08f45014c23c6b5cba8ed91ee7e08\"}"
+    },
+    "manifests": {
+      "slice:a45784ce2a47fcaa2bdc589af888cd5acc3eeb63206f8083292f4a12e0249719:082cbb352d36ed2b726c86557f62da96459a1c113e93cbb2b83b2752daadfe33": "{\"members\": [\"098eb045556f5c8e8cb40d06b002b3d57d7f1b225e462fef01dae0941ca06863\", \"10182fdc5e9820adbc185adad9cadd9cca4d647e84281cb7cc81d361c8dd5a7b\", \"2e876ea1d31ba6d7f00c6afa42a93b510edfdab21bc1272bcc6b294d409f6597\", \"2f084bf67a4c4fddb74dfc0bad7327f2dacb61f19c7999c23c04900913e9051b\", \"42443900c128dc30ae1fe8328b61069f7c0191851437378cb0dbf81a578eca4e\", \"4ba98e2721af83efe835910736e6d8a3db12e7b4828ef6c6fe06be07e6171a34\", \"5a435b8e60bb24dfae734315d72f5773283ca5e9e5c64e703d8ac9fd371bcd9a\", \"7b11959c821d1ebe2d3c797e0756e401f659836f214b59ed6d8f4dd0f2ef34ab\", \"b0e2def23cd22a0cb81520747eb0faa50c9a09aac9c855179e5a3f467ca74c64\", \"b7c6809b2280b4415becac4b2bb8eb7a5ea8e87a303eccd29885913fbd7d95af\"], \"slice\": {\"args\": {\"date\": \"*\"}, \"fn\": \"daily\", \"fn_hash\": \"e18ab921761089909a83eacfd7e88b71a580da2d35610769557f035fdb2b8169\", \"ns\": \"data.example.org\"}}"
+    },
+    "value": {
+      "type": "number",
+      "value": "120.75"
+    }
+  },
+  "canonical": "{\"asof\":\"2026-04-01T09:00:00.000000Z\",\"cell\":{\"args\":{},\"fn\":\"e\",\"fn_hash\":\"534a80c32acfbe519d14fdd28c180bb7e4a7a948b273b1572f135fdee22e3137\",\"ns\":\"calc.example.net\"},\"computed_by\":\"mesh.example.net#cd42547c321bfc08\",\"inputs\":[\"ef91287e83b714ea7fd1de7fecef88d0ece8cbde6f31aceb4030da4fa5d0c748\",\"slice:a45784ce2a47fcaa2bdc589af888cd5acc3eeb63206f8083292f4a12e0249719:082cbb352d36ed2b726c86557f62da96459a1c113e93cbb2b83b2752daadfe33\"],\"issued\":\"2026-04-01T09:00:00.000000Z\",\"licence\":\"CC0-1.0\",\"proto\":\"datumesh/1\",\"publisher\":\"calc.example.net\",\"summary\":\"Computed by the Datumesh formula reference evaluator.\",\"tx\":\"2026-04-01T09:00:00.000000Z\",\"type\":\"number\",\"valid\":{},\"value\":\"120.75\"}",
+  "sha256": "2f5f9d1f1cd4dfb3569f7c1256c54a46399733de1de70619eda7c9cfa1ba2dd0",
+  "sig": "54166521a6da894d51ef56461d7636e9df215ba9cafd2e6e2454f30ffb5c89717726f63bfca2e60c7df290b29182242497eff4dee54540de014909c023cc7308",
+  "level": "recomputed"
+}

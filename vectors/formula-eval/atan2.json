@@ -1,0 +1,66 @@
+{
+  "id": "formula-eval/atan2",
+  "kind": "formula-eval",
+  "description": "atan2(y, x)  (with x = 1, y = 1)",
+  "valid": true,
+  "world": {
+    "functions": {
+      "calc.example.net/e": {
+        "bound": "2026-01-01T00:00:00.000000Z",
+        "descriptor": {
+          "code": {
+            "body": "atan2(y, x)\n",
+            "lang": "formula"
+          },
+          "inputs": [],
+          "signature": {
+            "args": {
+              "x": {
+                "type": "number",
+                "valid": false,
+                "unit": "1"
+              },
+              "y": {
+                "type": "number",
+                "valid": false,
+                "unit": "1"
+              }
+            },
+            "order": [
+              "x",
+              "y"
+            ],
+            "returns": {
+              "type": "number",
+              "unit": "1"
+            }
+          }
+        }
+      }
+    },
+    "receipts": []
+  },
+  "cell": {
+    "args": {
+      "x": {
+        "type": "number",
+        "value": "1"
+      },
+      "y": {
+        "type": "number",
+        "value": "1"
+      }
+    },
+    "fn": "calc.example.net/e"
+  },
+  "asof": "2026-06-01T00:00:00.000000Z",
+  "receipt_hash": "d645eb067f11cfd2be87cebd59c6b1d55a84b98dddd99db968c1e76d9f43e2aa",
+  "value": {
+    "type": "number",
+    "value": "0.7853981633974483096156608458198757"
+  },
+  "lineage": [],
+  "tx": "0001-01-01T00:00:00.000000Z",
+  "receipt_asof": "0001-01-01T00:00:00.000000Z",
+  "fuel_used": 63
+}

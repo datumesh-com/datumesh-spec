@@ -1,0 +1,43 @@
+{
+  "id": "excel/year",
+  "kind": "excel",
+  "description": "=YEAR(DATE(2024,3,15)) is supported as year(2024-03-15).",
+  "valid": true,
+  "excel": "=YEAR(DATE(2024,3,15))",
+  "doc": "https://support.microsoft.com/en-us/excel/functions/year-function",
+  "documentation_derived": true,
+  "status": "supported",
+  "sample": "",
+  "excel_result": {
+    "type": "number",
+    "value": "2024"
+  },
+  "formula": "year(2024-03-15)",
+  "signature": {
+    "args": {},
+    "order": [],
+    "returns": {
+      "type": "number",
+      "unit": "1"
+    }
+  },
+  "world": {
+    "functions": {},
+    "receipts": []
+  },
+  "cell": {
+    "args": {},
+    "fn": "sheet.example.net/case"
+  },
+  "asof": "2026-06-01T00:00:00.000000Z",
+  "receipt_hash": "675ce360758a5aef01ad7f2c5ef9c20512e3be6c345a8f9a14d5a87a33eeb189",
+  "body": "year(2024-03-15)\n",
+  "value": {
+    "type": "number",
+    "value": "2024"
+  },
+  "lineage": [],
+  "tx": "0001-01-01T00:00:00.000000Z",
+  "receipt_asof": "0001-01-01T00:00:00.000000Z",
+  "fuel_used": 2
+}

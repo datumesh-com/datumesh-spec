@@ -1,0 +1,189 @@
+{
+  "id": "formula-eval/versions-first",
+  "kind": "formula-eval",
+  "description": "first(versions(data.example.org/price(s), 2026-01-01T00:00:00.000000Z, 2026-05-01T00:00:00.000000Z))  (with s = bolt)",
+  "valid": true,
+  "world": {
+    "functions": {
+      "calc.example.net/e": {
+        "bound": "2026-01-01T00:00:00.000000Z",
+        "descriptor": {
+          "code": {
+            "body": "first(versions(data.example.org/price(item: s), 2026-01-01T00:00:00.000000Z, 2026-05-01T00:00:00.000000Z))\n",
+            "lang": "formula"
+          },
+          "inputs": [
+            "data.example.org/price"
+          ],
+          "signature": {
+            "args": {
+              "s": {
+                "type": "string",
+                "valid": false
+              }
+            },
+            "order": [
+              "s"
+            ],
+            "returns": {
+              "type": "number",
+              "unit": "EUR"
+            }
+          }
+        }
+      },
+      "data.example.org/price": {
+        "bound": "2026-01-01T00:00:00.000000Z",
+        "descriptor": {
+          "code": {
+            "body": "",
+            "lang": "stored"
+          },
+          "inputs": [],
+          "signature": {
+            "args": {
+              "item": {
+                "type": "string",
+                "valid": false
+              }
+            },
+            "returns": {
+              "type": "number",
+              "unit": "EUR"
+            },
+            "order": [
+              "item"
+            ]
+          }
+        }
+      }
+    },
+    "receipts": [
+      {
+        "asof": "2026-02-01T09:00:00.000000Z",
+        "cell": {
+          "args": {
+            "item": {
+              "type": "string",
+              "value": "bolt"
+            }
+          },
+          "fn": "price",
+          "fn_hash": "4193e310f5c949998b3f339d2ad56567286ebd0828504b3f31a2c671e99c71a7",
+          "ns": "data.example.org"
+        },
+        "computed_by": "data.example.org#efb20f82a7e15e96",
+        "inputs": [],
+        "issued": "2026-02-01T09:00:00.000000Z",
+        "licence": "CC-BY-4.0",
+        "proto": "datumesh/1",
+        "publisher": "data.example.org",
+        "summary": "A recorded value of price.",
+        "tx": "2026-02-01T09:00:00.000000Z",
+        "type": "number",
+        "valid": {},
+        "value": "2.5",
+        "sig": "ad55a6870176b3f32f1e882ecd46dddd180ec90785a3fea77bb7ec7c8d2868cab855f8dec851e691e5c595f8cc1742034cb40ecf9581773f969e55d16ec91d00"
+      },
+      {
+        "asof": "2026-02-01T09:00:00.000000Z",
+        "cell": {
+          "args": {
+            "item": {
+              "type": "string",
+              "value": "nut"
+            }
+          },
+          "fn": "price",
+          "fn_hash": "4193e310f5c949998b3f339d2ad56567286ebd0828504b3f31a2c671e99c71a7",
+          "ns": "data.example.org"
+        },
+        "computed_by": "data.example.org#efb20f82a7e15e96",
+        "inputs": [],
+        "issued": "2026-02-01T09:00:00.000000Z",
+        "licence": "CC-BY-4.0",
+        "proto": "datumesh/1",
+        "publisher": "data.example.org",
+        "summary": "A recorded value of price.",
+        "tx": "2026-02-01T09:00:00.000000Z",
+        "type": "number",
+        "valid": {},
+        "value": "0.25",
+        "sig": "32a7d2018fdb0c9a5ea582cf406a73d3457f85a1906f1ef0ddd6c45d7a603d6f64c66367987e79c74a3e591ca83e890790b3463aefe30607c7efb8006a10230d"
+      },
+      {
+        "asof": "2026-02-01T09:00:00.000000Z",
+        "cell": {
+          "args": {
+            "item": {
+              "type": "string",
+              "value": "washer"
+            }
+          },
+          "fn": "price",
+          "fn_hash": "4193e310f5c949998b3f339d2ad56567286ebd0828504b3f31a2c671e99c71a7",
+          "ns": "data.example.org"
+        },
+        "computed_by": "data.example.org#efb20f82a7e15e96",
+        "inputs": [],
+        "issued": "2026-02-01T09:00:00.000000Z",
+        "licence": "CC-BY-4.0",
+        "proto": "datumesh/1",
+        "publisher": "data.example.org",
+        "summary": "A recorded value of price.",
+        "tx": "2026-02-01T09:00:00.000000Z",
+        "type": "number",
+        "valid": {},
+        "value": "0.1",
+        "sig": "11faac60ebc31675c579758fc119a0e5d96bf77a5429056db67c1ef4ed2d0b6ace6be13d1f375d64a9616095346664db15fefe550a6af4d02ba0702b5427e601"
+      },
+      {
+        "asof": "2026-04-01T09:00:00.000000Z",
+        "cell": {
+          "args": {
+            "item": {
+              "type": "string",
+              "value": "bolt"
+            }
+          },
+          "fn": "price",
+          "fn_hash": "4193e310f5c949998b3f339d2ad56567286ebd0828504b3f31a2c671e99c71a7",
+          "ns": "data.example.org"
+        },
+        "computed_by": "data.example.org#efb20f82a7e15e96",
+        "inputs": [],
+        "issued": "2026-04-01T09:00:00.000000Z",
+        "licence": "CC-BY-4.0",
+        "proto": "datumesh/1",
+        "publisher": "data.example.org",
+        "summary": "A recorded value of price.",
+        "tx": "2026-04-01T09:00:00.000000Z",
+        "type": "number",
+        "valid": {},
+        "value": "2.75",
+        "sig": "dde164dd43ebbb94a2c7216273681c2e06ab2490fe064c4506653b9c75a6c74df224b06ec651f9591904391de2a6003645c08f45014c23c6b5cba8ed91ee7e08"
+      }
+    ]
+  },
+  "cell": {
+    "args": {
+      "s": {
+        "type": "string",
+        "value": "bolt"
+      }
+    },
+    "fn": "calc.example.net/e"
+  },
+  "asof": "2026-06-01T00:00:00.000000Z",
+  "receipt_hash": "0ff3e7e4dfd5cc8c716d6f5b95a9d6dfaef4965730f975fa267ccb6a6d24702c",
+  "value": {
+    "type": "number",
+    "value": "2.5"
+  },
+  "lineage": [
+    "slice:0afced7269ccc814c8d5ad0b581a1735bb5c7dd1ba9fd1317b0ca10dab231df7:84e1215edd279419b4c5d32b5bbfa1e85cff58c814d322bd9d15d3c0f6a0afac"
+  ],
+  "tx": "2026-04-01T09:00:00.000000Z",
+  "receipt_asof": "2026-05-01T00:00:00.000000Z",
+  "fuel_used": 10
+}

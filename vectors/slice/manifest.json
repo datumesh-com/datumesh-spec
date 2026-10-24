@@ -1,0 +1,12 @@
+{
+  "id": "slice/manifest",
+  "kind": "slice",
+  "description": "A manifest: the slice object and the sorted member receipt hashes; the entry is slice:<slice id>:<members hash>.",
+  "valid": true,
+  "input": "{\n  \"slice\": {\n    \"ns\": \"data.example.org\",\n    \"fn_hash\": \"e18ab921761089909a83eacfd7e88b71a580da2d35610769557f035fdb2b8169\",\n    \"fn\": \"daily\",\n    \"args\": {\n      \"date\": {\n        \"type\": \"date\",\n        \"lo\": \"2026-03-01\",\n        \"hi\": \"2026-03-05\"\n      }\n    }\n  },\n  \"members\": [\n    \"29c1b289e7522195b362e44f54e05470b69ad20540ab60a18a05e5bf6951f13d\",\n    \"ca0df2c95aa144c1d0ff2ff3c8f967fdc1de9ef0c4120b3726416701b519d619\",\n    \"e4223ed20d7ea5740a326e2b268ca6db91d041cf5194f577e393a8ba3b85d8e9\"\n  ]\n}",
+  "canonical": "{\"members\":[\"29c1b289e7522195b362e44f54e05470b69ad20540ab60a18a05e5bf6951f13d\",\"ca0df2c95aa144c1d0ff2ff3c8f967fdc1de9ef0c4120b3726416701b519d619\",\"e4223ed20d7ea5740a326e2b268ca6db91d041cf5194f577e393a8ba3b85d8e9\"],\"slice\":{\"args\":{\"date\":{\"hi\":\"2026-03-05\",\"lo\":\"2026-03-01\",\"type\":\"date\"}},\"fn\":\"daily\",\"fn_hash\":\"e18ab921761089909a83eacfd7e88b71a580da2d35610769557f035fdb2b8169\",\"ns\":\"data.example.org\"}}",
+  "sha256": "78beb2d581f3735c8a6e54d3d7d62168b1ec8fc482024667ddddbdddba967e06",
+  "slice_id": "588dff9660b4414cf8a6db3adbe2aebb17e75951fd8c3cb4cd98d87381a87dd3",
+  "members_hash": "be5610a9c18f8db7747a41bffeab3b70fb3b54c859d4a82c76709685955f74c1",
+  "entry": "slice:588dff9660b4414cf8a6db3adbe2aebb17e75951fd8c3cb4cd98d87381a87dd3:be5610a9c18f8db7747a41bffeab3b70fb3b54c859d4a82c76709685955f74c1"
+}

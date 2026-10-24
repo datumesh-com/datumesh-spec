@@ -1,0 +1,40 @@
+{
+  "id": "excel/mid",
+  "kind": "excel",
+  "description": "=MID(\"Datumesh\",3,4) is supported as substr(\"Datumesh\", 3, 4).",
+  "valid": true,
+  "excel": "=MID(\"Datumesh\",3,4)",
+  "doc": "https://support.microsoft.com/en-us/excel/functions/mid-function",
+  "documentation_derived": true,
+  "status": "supported",
+  "sample": "",
+  "excel_result": {
+    "type": "string",
+    "value": "tume"
+  },
+  "formula": "substr(\"Datumesh\", 3, 4)",
+  "signature": {
+    "args": {},
+    "order": [],
+    "returns": "string"
+  },
+  "world": {
+    "functions": {},
+    "receipts": []
+  },
+  "cell": {
+    "args": {},
+    "fn": "sheet.example.net/case"
+  },
+  "asof": "2026-06-01T00:00:00.000000Z",
+  "receipt_hash": "f8e9049964c398b967ab489b977e2f83f7b2734924f329496b59bc33240c49d2",
+  "body": "substr(\"Datumesh\", 3, 4)\n",
+  "value": {
+    "type": "string",
+    "value": "tume"
+  },
+  "lineage": [],
+  "tx": "0001-01-01T00:00:00.000000Z",
+  "receipt_asof": "0001-01-01T00:00:00.000000Z",
+  "fuel_used": 4
+}

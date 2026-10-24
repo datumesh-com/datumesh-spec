@@ -13,7 +13,7 @@
   "properties": {
     "id": {
       "type": "string",
-      "pattern": "^[a-z0-9]+/[a-z0-9-]+$"
+      "pattern": "^[a-z0-9-]+/[a-z0-9-]+$"
     },
     "kind": {
       "enum": [
@@ -27,7 +27,12 @@
         "keys",
         "receipt",
         "unit",
-        "envelope"
+        "envelope",
+        "slice",
+        "formula",
+        "formula-eval",
+        "excel",
+        "decimal"
       ]
     },
     "description": {
@@ -80,7 +85,8 @@
       "description": "The host keys are resolved for; a DNS name except in invalid vectors that test that rule."
     },
     "env": {
-      "type": "object"
+      "type": "object",
+      "description": "A key environment (keys vectors), or a formula vector's environment: name, signature, functions, aliases."
     },
     "keypair": {
       "type": "object",
@@ -115,14 +121,46 @@
       ]
     },
     "recompute": {
-      "type": "object"
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "descriptor": {},
+        "value": {
+          "type": "object"
+        },
+        "inputs": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          },
+          "description": "Receipt hash to receipt JSON text. Entries are always strings (RS-29)."
+        },
+        "manifests": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          },
+          "description": "spec-0.4.0: slice entry to manifest JSON text."
+        },
+        "lineage": {
+          "type": "array",
+          "items": {
+            "$ref": "defs.schema.json#/$defs/inputEntry"
+          },
+          "description": "spec-0.4.0: the inputs entries the evaluation read (for E_INPUT_SUPERSEDED)."
+        }
+      }
     },
     "blob_hex": {
       "type": "string",
       "pattern": "^([0-9a-f]{2})*$"
     },
     "status": {
-      "type": "integer"
+      "description": "An HTTP status, or for an excel vector its status in the table.",
+      "type": [
+        "integer",
+        "string"
+      ]
     },
     "unit": {
       "type": [
@@ -162,8 +200,195 @@
       "type": "boolean"
     },
     "code": {
-      "description": "A code reported with success (SPEC.md 11): only E_EVAL_UNAVAILABLE, on a valid receipt vector at level signed.",
-      "const": "E_EVAL_UNAVAILABLE"
+      "description": "A code reported with success (SPEC.md 11), on a valid receipt vector at level signed: E_EVAL_UNAVAILABLE, or E_INPUT_SUPERSEDED (spec-0.4.0).",
+      "enum": [
+        "E_EVAL_UNAVAILABLE",
+        "E_INPUT_SUPERSEDED"
+      ]
+    },
+    "token": {
+      "type": "string",
+      "description": "For E_FORMULA_FORBIDDEN: the forbidden name as written."
+    },
+    "slice_id": {
+      "$ref": "defs.schema.json#/$defs/hex64"
+    },
+    "members_hash": {
+      "$ref": "defs.schema.json#/$defs/hex64"
+    },
+    "entry": {
+      "$ref": "defs.schema.json#/$defs/sliceEntry"
+    },
+    "ast": {
+      "type": "string"
+    },
+    "ast_sha256": {
+      "$ref": "defs.schema.json#/$defs/hex64"
+    },
+    "body": {
+      "type": "string"
+    },
+    "inputs": {
+      "type": "array",
+      "items": {
+        "$ref": "defs.schema.json#/$defs/functionName"
+      },
+      "description": "For formula vectors: the derived inputs."
+    },
+    "returns": {
+      "type": "object"
+    },
+    "asof_dependent": {
+      "type": "boolean"
+    },
+    "value": {
+      "$ref": "defs.schema.json#/$defs/scalar"
+    },
+    "lineage": {
+      "type": "array",
+      "items": {
+        "$ref": "defs.schema.json#/$defs/inputEntry"
+      }
+    },
+    "tx": {
+      "$ref": "defs.schema.json#/$defs/instant"
+    },
+    "receipt_asof": {
+      "$ref": "defs.schema.json#/$defs/instant"
+    },
+    "fuel_used": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "fuel": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "world": {
+      "type": "object",
+      "required": [
+        "functions",
+        "receipts"
+      ],
+      "properties": {
+        "functions": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "object",
+            "required": [
+              "bound",
+              "descriptor"
+            ],
+            "properties": {
+              "bound": {
+                "$ref": "defs.schema.json#/$defs/instant"
+              },
+              "descriptor": {
+                "$ref": "function.schema.json"
+              }
+            }
+          }
+        },
+        "receipts": {
+          "type": "array",
+          "items": {
+            "$ref": "receipt.schema.json"
+          }
+        },
+        "max_depth": {
+          "type": "integer",
+          "minimum": 1
+        }
+      }
+    },
+    "cell": {
+      "type": "object",
+      "required": [
+        "args",
+        "fn"
+      ],
+      "properties": {
+        "fn": {
+          "$ref": "defs.schema.json#/$defs/functionName"
+        },
+        "args": {
+          "$ref": "defs.schema.json#/$defs/args"
+        }
+      }
+    },
+    "asof": {
+      "$ref": "defs.schema.json#/$defs/instant"
+    },
+    "excel": {
+      "type": "string"
+    },
+    "doc": {
+      "type": "string",
+      "pattern": "^https://support\\.microsoft\\.com/"
+    },
+    "documentation_derived": {
+      "const": true
+    },
+    "sample": {
+      "type": "string"
+    },
+    "excel_result": {
+      "$ref": "defs.schema.json#/$defs/scalar"
+    },
+    "formula": {
+      "type": "string"
+    },
+    "op": {
+      "enum": [
+        "add",
+        "sub",
+        "mul",
+        "div",
+        "power",
+        "sqrt",
+        "exp",
+        "ln",
+        "pow",
+        "sin",
+        "cos",
+        "atan2",
+        "haversine",
+        "sum",
+        "mean",
+        "median",
+        "stdev",
+        "stdev_p",
+        "round",
+        "mod"
+      ]
+    },
+    "cases": {
+      "type": "array",
+      "items": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        }
+      }
+    },
+    "results": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "mpdecimal": {
+      "type": "array",
+      "items": {
+        "type": [
+          "string",
+          "null"
+        ]
+      }
+    },
+    "hard_cases": {
+      "type": "integer",
+      "minimum": 0
     }
   },
   "oneOf": [
@@ -180,8 +405,27 @@
     {
       "properties": {
         "kind": {
-          "const": "keys"
+          "enum": [
+            "keys",
+            "formula-eval",
+            "excel",
+            "decimal"
+          ]
         }
+      },
+      "not": {
+        "anyOf": [
+          {
+            "required": [
+              "input"
+            ]
+          },
+          {
+            "required": [
+              "input_hex"
+            ]
+          }
+        ]
       }
     }
   ],

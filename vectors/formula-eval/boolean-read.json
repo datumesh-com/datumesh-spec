@@ -1,0 +1,105 @@
+{
+  "id": "formula-eval/boolean-read",
+  "kind": "formula-eval",
+  "description": "data.example.org/active(s) and true  (with s = acme)",
+  "valid": true,
+  "world": {
+    "functions": {
+      "calc.example.net/e": {
+        "bound": "2026-01-01T00:00:00.000000Z",
+        "descriptor": {
+          "code": {
+            "body": "data.example.org/active(company: s) and true\n",
+            "lang": "formula"
+          },
+          "inputs": [
+            "data.example.org/active"
+          ],
+          "signature": {
+            "args": {
+              "s": {
+                "type": "string",
+                "valid": false
+              }
+            },
+            "order": [
+              "s"
+            ],
+            "returns": "boolean"
+          }
+        }
+      },
+      "data.example.org/active": {
+        "bound": "2026-01-01T00:00:00.000000Z",
+        "descriptor": {
+          "code": {
+            "body": "",
+            "lang": "stored"
+          },
+          "inputs": [],
+          "signature": {
+            "args": {
+              "company": {
+                "type": "string",
+                "valid": false
+              }
+            },
+            "returns": "boolean",
+            "order": [
+              "company"
+            ]
+          }
+        }
+      }
+    },
+    "receipts": [
+      {
+        "asof": "2026-01-10T00:00:00.000000Z",
+        "cell": {
+          "args": {
+            "company": {
+              "type": "string",
+              "value": "acme"
+            }
+          },
+          "fn": "active",
+          "fn_hash": "681ab89ec1f17d0f452766d429cfd4fe6ec82be428f566453be34eb0caefcb5a",
+          "ns": "data.example.org"
+        },
+        "computed_by": "data.example.org#efb20f82a7e15e96",
+        "inputs": [],
+        "issued": "2026-01-10T00:00:00.000000Z",
+        "licence": "CC-BY-4.0",
+        "proto": "datumesh/1",
+        "publisher": "data.example.org",
+        "summary": "A recorded value of active.",
+        "tx": "2026-01-10T00:00:00.000000Z",
+        "type": "boolean",
+        "valid": {},
+        "value": true,
+        "sig": "ca48757ba860fedba56a08a76d01f51859eaf6cf7728aa4ddbe6c8a4616e52c7830628da33fb714f8fa7978885f8d6d221b910b29deb0585ec5865014e74ea05"
+      }
+    ]
+  },
+  "cell": {
+    "args": {
+      "s": {
+        "type": "string",
+        "value": "acme"
+      }
+    },
+    "fn": "calc.example.net/e"
+  },
+  "asof": "2026-06-01T00:00:00.000000Z",
+  "receipt_hash": "bad1949e68a47ec3023b06baad3318cad57c875935963f8dcd412fae6ca38b69",
+  "value": {
+    "type": "boolean",
+    "value": true
+  },
+  "lineage": [
+    "75b80a12ac51ae91903d330ff27e3a8184f592b5bb54f640788f7dc7d584e4fc"
+  ],
+  "tx": "2026-01-10T00:00:00.000000Z",
+  "receipt_asof": "2026-01-10T00:00:00.000000Z",
+  "fuel_used": 5
+}

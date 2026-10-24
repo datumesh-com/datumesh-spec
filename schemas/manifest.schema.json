@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://datumesh.com/schemas/1/manifest.schema.json",
+  "title": "Datumesh slice manifest",
+  "description": "A slice's members (SPEC.md 15.13), fetched by its entry.",
+  "type": "object",
+  "required": [
+    "members",
+    "slice"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "members": {
+      "type": "array",
+      "uniqueItems": true,
+      "maxItems": 1048576,
+      "items": {
+        "$ref": "defs.schema.json#/$defs/hex64"
+      }
+    },
+    "slice": {
+      "$ref": "slice.schema.json"
+    }
+  }
+}

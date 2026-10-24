@@ -1,0 +1,40 @@
+{
+  "id": "excel/fixed",
+  "kind": "excel",
+  "description": "=FIXED(1234.567,1,TRUE) is supported as fixed(1234.567, 1).",
+  "valid": true,
+  "excel": "=FIXED(1234.567,1,TRUE)",
+  "doc": "https://support.microsoft.com/en-us/excel/functions/fixed-function",
+  "documentation_derived": true,
+  "status": "supported",
+  "sample": "",
+  "excel_result": {
+    "type": "string",
+    "value": "1234.6"
+  },
+  "formula": "fixed(1234.567, 1)",
+  "signature": {
+    "args": {},
+    "order": [],
+    "returns": "string"
+  },
+  "world": {
+    "functions": {},
+    "receipts": []
+  },
+  "cell": {
+    "args": {},
+    "fn": "sheet.example.net/case"
+  },
+  "asof": "2026-06-01T00:00:00.000000Z",
+  "receipt_hash": "bf5117fefdc893fc49c02ebdad88801c97f508ac0c9081e3ad4bca6d78f2163e",
+  "body": "fixed(1234.567, 1)\n",
+  "value": {
+    "type": "string",
+    "value": "1234.6"
+  },
+  "lineage": [],
+  "tx": "0001-01-01T00:00:00.000000Z",
+  "receipt_asof": "0001-01-01T00:00:00.000000Z",
+  "fuel_used": 3
+}

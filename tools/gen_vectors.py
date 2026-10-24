@@ -24,7 +24,10 @@ ROOT = canon.ROOT
 OUT = ROOT / "vectors"
 VECTORS = []
 OUTPUT_FIELDS = ("object", "canonical", "sha256", "https", "key_id", "key_ids", "sig", "level", "blob_checked",
-                 "code", "unit", "outcome", "trust", "receipt_hash")
+                 "code", "unit", "outcome", "trust", "receipt_hash",
+                 # spec-0.4.0 (SPEC 11): slices, the formula dialect, decimal cases
+                 "slice_id", "members_hash", "entry", "ast", "ast_sha256", "body", "inputs", "returns", "asof_dependent",
+                 "value", "lineage", "tx", "receipt_asof", "fuel_used", "results")
 
 
 # Vectors from spec-0.1.1 whose bytes changed in spec-0.2.0, and why. tests/test_migration.py
@@ -1210,6 +1213,12 @@ add("scalar/blob-media-type-long-subtype", "scalar", "The 128-character limit is
     "126 characters is allowed, within RFC 6838's 127 per name (SPEC 3.7).", text(BL(f"{H}:17:a/" + "x" * 126)))
 add("invalid/scalar-blob-media-type-long-subtype", "scalar", "A subtype of 127 characters makes the media type 129 "
     "characters long.", text(BL(f"{H}:17:a/" + "x" * 127)), "E_CANON_BLOB")
+
+
+# spec-0.4.0: the formula dialect and slice-as-lineage (tools/gen_formula.py).
+import gen_formula  # noqa: E402
+
+gen_formula.add_all(add, text)
 
 
 def main():

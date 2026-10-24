@@ -1,0 +1,40 @@
+{
+  "id": "excel/trim",
+  "kind": "excel",
+  "description": "=TRIM(\"  a   b  \") is supported as trim(\"  a   b  \").",
+  "valid": true,
+  "excel": "=TRIM(\"  a   b  \")",
+  "doc": "https://support.microsoft.com/en-us/excel/functions/trim-function",
+  "documentation_derived": true,
+  "status": "supported",
+  "sample": "",
+  "excel_result": {
+    "type": "string",
+    "value": "a b"
+  },
+  "formula": "trim(\"  a   b  \")",
+  "signature": {
+    "args": {},
+    "order": [],
+    "returns": "string"
+  },
+  "world": {
+    "functions": {},
+    "receipts": []
+  },
+  "cell": {
+    "args": {},
+    "fn": "sheet.example.net/case"
+  },
+  "asof": "2026-06-01T00:00:00.000000Z",
+  "receipt_hash": "170fb034092f2e4b2988f4eb07849333784edb3a67523adae5af5282bbc8b79c",
+  "body": "trim(\"  a   b  \")\n",
+  "value": {
+    "type": "string",
+    "value": "a b"
+  },
+  "lineage": [],
+  "tx": "0001-01-01T00:00:00.000000Z",
+  "receipt_asof": "0001-01-01T00:00:00.000000Z",
+  "fuel_used": 3
+}

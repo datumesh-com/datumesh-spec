@@ -1,0 +1,52 @@
+{
+  "id": "formula-eval/add-months-clamp",
+  "kind": "formula-eval",
+  "description": "add_months(d, 1)  (with d = 2024-01-31)",
+  "valid": true,
+  "world": {
+    "functions": {
+      "calc.example.net/e": {
+        "bound": "2026-01-01T00:00:00.000000Z",
+        "descriptor": {
+          "code": {
+            "body": "add_months(d, 1)\n",
+            "lang": "formula"
+          },
+          "inputs": [],
+          "signature": {
+            "args": {
+              "d": {
+                "type": "date",
+                "valid": true
+              }
+            },
+            "order": [
+              "d"
+            ],
+            "returns": "date"
+          }
+        }
+      }
+    },
+    "receipts": []
+  },
+  "cell": {
+    "args": {
+      "d": {
+        "type": "date",
+        "value": "2024-01-31"
+      }
+    },
+    "fn": "calc.example.net/e"
+  },
+  "asof": "2026-06-01T00:00:00.000000Z",
+  "receipt_hash": "c5e938362b1a9286f8832842fad902f48eb02aaec42f9f380e43b40b302a1afa",
+  "value": {
+    "type": "date",
+    "value": "2024-02-29"
+  },
+  "lineage": [],
+  "tx": "0001-01-01T00:00:00.000000Z",
+  "receipt_asof": "0001-01-01T00:00:00.000000Z",
+  "fuel_used": 3
+}

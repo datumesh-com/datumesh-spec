@@ -1,0 +1,541 @@
+{
+  "id": "excel/max",
+  "kind": "excel",
+  "description": "=MAX(A1:A5) is supported as max(sheet.example.org/a(*)). A1:A5 = 10, 20, 30, 40, 50; B1:B5 = 1, 2, 3, 4, 5.",
+  "valid": true,
+  "excel": "=MAX(A1:A5)",
+  "doc": "https://support.microsoft.com/en-us/excel/functions/max-function",
+  "documentation_derived": true,
+  "status": "supported",
+  "sample": "A1:A5 = 10, 20, 30, 40, 50; B1:B5 = 1, 2, 3, 4, 5.",
+  "excel_result": {
+    "type": "number",
+    "value": "50"
+  },
+  "formula": "max(sheet.example.org/a(*))",
+  "signature": {
+    "args": {},
+    "order": [],
+    "returns": {
+      "type": "number",
+      "unit": "1"
+    }
+  },
+  "world": {
+    "functions": {
+      "sheet.example.org/a": {
+        "bound": "2026-01-01T00:00:00.000000Z",
+        "descriptor": {
+          "code": {
+            "body": "",
+            "lang": "stored"
+          },
+          "inputs": [],
+          "signature": {
+            "args": {
+              "row": {
+                "type": "number",
+                "valid": false,
+                "unit": "1"
+              }
+            },
+            "returns": {
+              "type": "number",
+              "unit": "1"
+            },
+            "order": [
+              "row"
+            ]
+          }
+        }
+      }
+    },
+    "receipts": [
+      {
+        "asof": "2026-02-01T00:00:00.000000Z",
+        "cell": {
+          "args": {
+            "row": {
+              "type": "number",
+              "value": "1"
+            }
+          },
+          "fn": "a",
+          "fn_hash": "6473291de8dbd1d4b5c2a600359ebfbf6cabb7f75e43f2b00a027ddffd624662",
+          "ns": "sheet.example.org"
+        },
+        "computed_by": "sheet.example.org#206a7d600aae48b2",
+        "inputs": [],
+        "issued": "2026-02-01T00:00:00.000000Z",
+        "licence": "CC-BY-4.0",
+        "proto": "datumesh/1",
+        "publisher": "sheet.example.org",
+        "summary": "A recorded value of a.",
+        "tx": "2026-02-01T00:00:00.000000Z",
+        "type": "number",
+        "valid": {},
+        "value": "10",
+        "sig": "4b899512a414fa1f5823024fd627774b57dc802b8c95d4dea63369ca03f45b62d9de141a6494dab744dc7ff3c4579d320a22812b103f0d18651e62c3623f4505"
+      },
+      {
+        "asof": "2026-02-01T00:00:00.000000Z",
+        "cell": {
+          "args": {
+            "row": {
+              "type": "number",
+              "value": "1"
+            }
+          },
+          "fn": "b",
+          "fn_hash": "6473291de8dbd1d4b5c2a600359ebfbf6cabb7f75e43f2b00a027ddffd624662",
+          "ns": "sheet.example.org"
+        },
+        "computed_by": "sheet.example.org#206a7d600aae48b2",
+        "inputs": [],
+        "issued": "2026-02-01T00:00:00.000000Z",
+        "licence": "CC-BY-4.0",
+        "proto": "datumesh/1",
+        "publisher": "sheet.example.org",
+        "summary": "A recorded value of b.",
+        "tx": "2026-02-01T00:00:00.000000Z",
+        "type": "number",
+        "valid": {},
+        "value": "1",
+        "sig": "5ef401765043a5f1001fdfe8719e4016ed26f14b4108c261da55da5cc83529b43be24a50e29253916d8afe41734ba5f123ee52bbaabbf96a024d84bd93cc2306"
+      },
+      {
+        "asof": "2026-02-01T00:00:00.000000Z",
+        "cell": {
+          "args": {
+            "row": {
+              "type": "number",
+              "value": "2"
+            }
+          },
+          "fn": "a",
+          "fn_hash": "6473291de8dbd1d4b5c2a600359ebfbf6cabb7f75e43f2b00a027ddffd624662",
+          "ns": "sheet.example.org"
+        },
+        "computed_by": "sheet.example.org#206a7d600aae48b2",
+        "inputs": [],
+        "issued": "2026-02-01T00:00:00.000000Z",
+        "licence": "CC-BY-4.0",
+        "proto": "datumesh/1",
+        "publisher": "sheet.example.org",
+        "summary": "A recorded value of a.",
+        "tx": "2026-02-01T00:00:00.000000Z",
+        "type": "number",
+        "valid": {},
+        "value": "20",
+        "sig": "535092d73c38908582a720243d0367e43d6a635768a9926f02737290dfba7c9f812cee7311aef7326deb2256ba804fa98c19d6fddc28e7df3470b77f7efe7903"
+      },
+      {
+        "asof": "2026-02-01T00:00:00.000000Z",
+        "cell": {
+          "args": {
+            "row": {
+              "type": "number",
+              "value": "2"
+            }
+          },
+          "fn": "b",
+          "fn_hash": "6473291de8dbd1d4b5c2a600359ebfbf6cabb7f75e43f2b00a027ddffd624662",
+          "ns": "sheet.example.org"
+        },
+        "computed_by": "sheet.example.org#206a7d600aae48b2",
+        "inputs": [],
+        "issued": "2026-02-01T00:00:00.000000Z",
+        "licence": "CC-BY-4.0",
+        "proto": "datumesh/1",
+        "publisher": "sheet.example.org",
+        "summary": "A recorded value of b.",
+        "tx": "2026-02-01T00:00:00.000000Z",
+        "type": "number",
+        "valid": {},
+        "value": "2",
+        "sig": "1529aa85e656ae4587670b550cdd155cf9c270416d62f4bf7e505d109826ce5df9c8311736ccb2362d8b2946cd9b0ef78ccfc73fb2e38743ffdee936c2186c04"
+      },
+      {
+        "asof": "2026-02-01T00:00:00.000000Z",
+        "cell": {
+          "args": {
+            "row": {
+              "type": "number",
+              "value": "3"
+            }
+          },
+          "fn": "a",
+          "fn_hash": "6473291de8dbd1d4b5c2a600359ebfbf6cabb7f75e43f2b00a027ddffd624662",
+          "ns": "sheet.example.org"
+        },
+        "computed_by": "sheet.example.org#206a7d600aae48b2",
+        "inputs": [],
+        "issued": "2026-02-01T00:00:00.000000Z",
+        "licence": "CC-BY-4.0",
+        "proto": "datumesh/1",
+        "publisher": "sheet.example.org",
+        "summary": "A recorded value of a.",
+        "tx": "2026-02-01T00:00:00.000000Z",
+        "type": "number",
+        "valid": {},
+        "value": "30",
+        "sig": "09b21addda8d154c413192bf82026c8ad4ff3416975e3c09b4e03fb44b403bcd367064158cf4b1e1de3f79d059e9f127a108de2249e1f4c21376015b348dcb03"
+      },
+      {
+        "asof": "2026-02-01T00:00:00.000000Z",
+        "cell": {
+          "args": {
+            "row": {
+              "type": "number",
+              "value": "3"
+            }
+          },
+          "fn": "b",
+          "fn_hash": "6473291de8dbd1d4b5c2a600359ebfbf6cabb7f75e43f2b00a027ddffd624662",
+          "ns": "sheet.example.org"
+        },
+        "computed_by": "sheet.example.org#206a7d600aae48b2",
+        "inputs": [],
+        "issued": "2026-02-01T00:00:00.000000Z",
+        "licence": "CC-BY-4.0",
+        "proto": "datumesh/1",
+        "publisher": "sheet.example.org",
+        "summary": "A recorded value of b.",
+        "tx": "2026-02-01T00:00:00.000000Z",
+        "type": "number",
+        "valid": {},
+        "value": "3",
+        "sig": "bda5843680f25cd88a6d805948c43ad45886629fb1b80f0e569e01360798d24df7cd4cd4b84ee7cd8094be2563bc09de6f387afc51319e903884753a7185c002"
+      },
+      {
+        "asof": "2026-02-01T00:00:00.000000Z",
+        "cell": {
+          "args": {
+            "row": {
+              "type": "number",
+              "value": "4"
+            }
+          },
+          "fn": "a",
+          "fn_hash": "6473291de8dbd1d4b5c2a600359ebfbf6cabb7f75e43f2b00a027ddffd624662",
+          "ns": "sheet.example.org"
+        },
+        "computed_by": "sheet.example.org#206a7d600aae48b2",
+        "inputs": [],
+        "issued": "2026-02-01T00:00:00.000000Z",
+        "licence": "CC-BY-4.0",
+        "proto": "datumesh/1",
+        "publisher": "sheet.example.org",
+        "summary": "A recorded value of a.",
+        "tx": "2026-02-01T00:00:00.000000Z",
+        "type": "number",
+        "valid": {},
+        "value": "40",
+        "sig": "c1ff7c653775603a28e215d37390696929c65a3a28233f4f8a8adb6844a4ae2651fbc0b09c6727d214805da594aca31a4b5c269221360d66537a09c30812eb0b"
+      },
+      {
+        "asof": "2026-02-01T00:00:00.000000Z",
+        "cell": {
+          "args": {
+            "row": {
+              "type": "number",
+              "value": "4"
+            }
+          },
+          "fn": "b",
+          "fn_hash": "6473291de8dbd1d4b5c2a600359ebfbf6cabb7f75e43f2b00a027ddffd624662",
+          "ns": "sheet.example.org"
+        },
+        "computed_by": "sheet.example.org#206a7d600aae48b2",
+        "inputs": [],
+        "issued": "2026-02-01T00:00:00.000000Z",
+        "licence": "CC-BY-4.0",
+        "proto": "datumesh/1",
+        "publisher": "sheet.example.org",
+        "summary": "A recorded value of b.",
+        "tx": "2026-02-01T00:00:00.000000Z",
+        "type": "number",
+        "valid": {},
+        "value": "4",
+        "sig": "3e09948c0238cd5f744937ad5a88c38de8b161ae9c2a8731f6d12c0121cef4c5e4e93580cdd48329285cd5e213ba3284f6d04f112a4c0d8c2bbcfe68351f5d05"
+      },
+      {
+        "asof": "2026-02-01T00:00:00.000000Z",
+        "cell": {
+          "args": {
+            "row": {
+              "type": "number",
+              "value": "5"
+            }
+          },
+          "fn": "a",
+          "fn_hash": "6473291de8dbd1d4b5c2a600359ebfbf6cabb7f75e43f2b00a027ddffd624662",
+          "ns": "sheet.example.org"
+        },
+        "computed_by": "sheet.example.org#206a7d600aae48b2",
+        "inputs": [],
+        "issued": "2026-02-01T00:00:00.000000Z",
+        "licence": "CC-BY-4.0",
+        "proto": "datumesh/1",
+        "publisher": "sheet.example.org",
+        "summary": "A recorded value of a.",
+        "tx": "2026-02-01T00:00:00.000000Z",
+        "type": "number",
+        "valid": {},
+        "value": "50",
+        "sig": "9ad14b21e34c7b159d603c1a3f4bf6f27c9c6edd2dca33a33d7e6a89e5016f5316f574d091e4b4db2ea6613dc918419a94ceb15da39ebdafad9d3a23629d6601"
+      },
+      {
+        "asof": "2026-02-01T00:00:00.000000Z",
+        "cell": {
+          "args": {
+            "row": {
+              "type": "number",
+              "value": "5"
+            }
+          },
+          "fn": "b",
+          "fn_hash": "6473291de8dbd1d4b5c2a600359ebfbf6cabb7f75e43f2b00a027ddffd624662",
+          "ns": "sheet.example.org"
+        },
+        "computed_by": "sheet.example.org#206a7d600aae48b2",
+        "inputs": [],
+        "issued": "2026-02-01T00:00:00.000000Z",
+        "licence": "CC-BY-4.0",
+        "proto": "datumesh/1",
+        "publisher": "sheet.example.org",
+        "summary": "A recorded value of b.",
+        "tx": "2026-02-01T00:00:00.000000Z",
+        "type": "number",
+        "valid": {},
+        "value": "5",
+        "sig": "bbb4aa9fd1fbb2df31789bc920f597c0003912c7fe90b2e30e20af5e91f0d1fd568925946604ac8fce4196047deaad2ffc8e1cf9d4b4c549d46be89fa340b002"
+      },
+      {
+        "asof": "2026-02-01T00:00:00.000000Z",
+        "cell": {
+          "args": {
+            "row": {
+              "type": "number",
+              "value": "1"
+            }
+          },
+          "fn": "s",
+          "fn_hash": "6473291de8dbd1d4b5c2a600359ebfbf6cabb7f75e43f2b00a027ddffd624662",
+          "ns": "sheet.example.org"
+        },
+        "computed_by": "sheet.example.org#206a7d600aae48b2",
+        "inputs": [],
+        "issued": "2026-02-01T00:00:00.000000Z",
+        "licence": "CC-BY-4.0",
+        "proto": "datumesh/1",
+        "publisher": "sheet.example.org",
+        "summary": "A recorded value of s.",
+        "tx": "2026-02-01T00:00:00.000000Z",
+        "type": "number",
+        "valid": {},
+        "value": "2",
+        "sig": "64cc8983427b5c72dd62e9439dbf3d005b54a298e9d9cd73f26f3d5d6addf493fe39b8df13e0f2cc5098372c00949bc83f553ba6db42066478ab9279ef45e306"
+      },
+      {
+        "asof": "2026-02-01T00:00:00.000000Z",
+        "cell": {
+          "args": {
+            "row": {
+              "type": "number",
+              "value": "2"
+            }
+          },
+          "fn": "s",
+          "fn_hash": "6473291de8dbd1d4b5c2a600359ebfbf6cabb7f75e43f2b00a027ddffd624662",
+          "ns": "sheet.example.org"
+        },
+        "computed_by": "sheet.example.org#206a7d600aae48b2",
+        "inputs": [],
+        "issued": "2026-02-01T00:00:00.000000Z",
+        "licence": "CC-BY-4.0",
+        "proto": "datumesh/1",
+        "publisher": "sheet.example.org",
+        "summary": "A recorded value of s.",
+        "tx": "2026-02-01T00:00:00.000000Z",
+        "type": "number",
+        "valid": {},
+        "value": "4",
+        "sig": "8ac287005a7f4b57b9926b7bf2fe2edb90025b912f2f0fd594982a29f848d1b79196940d8885effc0ddfef983c198d5c350c27613b8866f7078a9ad008e14a01"
+      },
+      {
+        "asof": "2026-02-01T00:00:00.000000Z",
+        "cell": {
+          "args": {
+            "row": {
+              "type": "number",
+              "value": "3"
+            }
+          },
+          "fn": "s",
+          "fn_hash": "6473291de8dbd1d4b5c2a600359ebfbf6cabb7f75e43f2b00a027ddffd624662",
+          "ns": "sheet.example.org"
+        },
+        "computed_by": "sheet.example.org#206a7d600aae48b2",
+        "inputs": [],
+        "issued": "2026-02-01T00:00:00.000000Z",
+        "licence": "CC-BY-4.0",
+        "proto": "datumesh/1",
+        "publisher": "sheet.example.org",
+        "summary": "A recorded value of s.",
+        "tx": "2026-02-01T00:00:00.000000Z",
+        "type": "number",
+        "valid": {},
+        "value": "4",
+        "sig": "abf59b57dde8f8f49c78d152021f1e50337bd2ad5fd8cbac8b030d59f14c414a11fd37c5f489bb020c0b0471d1d06fc77ed56573dbc93fd9867a0cbdedb76a0c"
+      },
+      {
+        "asof": "2026-02-01T00:00:00.000000Z",
+        "cell": {
+          "args": {
+            "row": {
+              "type": "number",
+              "value": "4"
+            }
+          },
+          "fn": "s",
+          "fn_hash": "6473291de8dbd1d4b5c2a600359ebfbf6cabb7f75e43f2b00a027ddffd624662",
+          "ns": "sheet.example.org"
+        },
+        "computed_by": "sheet.example.org#206a7d600aae48b2",
+        "inputs": [],
+        "issued": "2026-02-01T00:00:00.000000Z",
+        "licence": "CC-BY-4.0",
+        "proto": "datumesh/1",
+        "publisher": "sheet.example.org",
+        "summary": "A recorded value of s.",
+        "tx": "2026-02-01T00:00:00.000000Z",
+        "type": "number",
+        "valid": {},
+        "value": "4",
+        "sig": "a3fa96e6f831cc2b2ad9a855f89fdac781d2b20d246ac21e69b868c00064216d887593d54dff5a48e4e72e40bd44e5f2caa205a4b1a7cbb841c957f6212d1102"
+      },
+      {
+        "asof": "2026-02-01T00:00:00.000000Z",
+        "cell": {
+          "args": {
+            "row": {
+              "type": "number",
+              "value": "5"
+            }
+          },
+          "fn": "s",
+          "fn_hash": "6473291de8dbd1d4b5c2a600359ebfbf6cabb7f75e43f2b00a027ddffd624662",
+          "ns": "sheet.example.org"
+        },
+        "computed_by": "sheet.example.org#206a7d600aae48b2",
+        "inputs": [],
+        "issued": "2026-02-01T00:00:00.000000Z",
+        "licence": "CC-BY-4.0",
+        "proto": "datumesh/1",
+        "publisher": "sheet.example.org",
+        "summary": "A recorded value of s.",
+        "tx": "2026-02-01T00:00:00.000000Z",
+        "type": "number",
+        "valid": {},
+        "value": "5",
+        "sig": "ce521b901c3de1ba7024dce17d5970cd3eb0e5cae1c444d05cc4baa39fc37ad5c5494d7b8d7bcc3d7aac6e5e0b6ef85c6d3b4d8379128eef3e6fc28732928605"
+      },
+      {
+        "asof": "2026-02-01T00:00:00.000000Z",
+        "cell": {
+          "args": {
+            "row": {
+              "type": "number",
+              "value": "6"
+            }
+          },
+          "fn": "s",
+          "fn_hash": "6473291de8dbd1d4b5c2a600359ebfbf6cabb7f75e43f2b00a027ddffd624662",
+          "ns": "sheet.example.org"
+        },
+        "computed_by": "sheet.example.org#206a7d600aae48b2",
+        "inputs": [],
+        "issued": "2026-02-01T00:00:00.000000Z",
+        "licence": "CC-BY-4.0",
+        "proto": "datumesh/1",
+        "publisher": "sheet.example.org",
+        "summary": "A recorded value of s.",
+        "tx": "2026-02-01T00:00:00.000000Z",
+        "type": "number",
+        "valid": {},
+        "value": "5",
+        "sig": "71662ac4342bd2b393eddc4be8713113794957c4fbaec49166a9e4458e8d7a7455b261ea320b5290342f26786b8aed4f94205064b4759714afa4700436343806"
+      },
+      {
+        "asof": "2026-02-01T00:00:00.000000Z",
+        "cell": {
+          "args": {
+            "row": {
+              "type": "number",
+              "value": "7"
+            }
+          },
+          "fn": "s",
+          "fn_hash": "6473291de8dbd1d4b5c2a600359ebfbf6cabb7f75e43f2b00a027ddffd624662",
+          "ns": "sheet.example.org"
+        },
+        "computed_by": "sheet.example.org#206a7d600aae48b2",
+        "inputs": [],
+        "issued": "2026-02-01T00:00:00.000000Z",
+        "licence": "CC-BY-4.0",
+        "proto": "datumesh/1",
+        "publisher": "sheet.example.org",
+        "summary": "A recorded value of s.",
+        "tx": "2026-02-01T00:00:00.000000Z",
+        "type": "number",
+        "valid": {},
+        "value": "7",
+        "sig": "d03258602953a8d87337f7935458dc450b9cbe2bc1f0d322d4665ccabf106ad04ddb112535d1bf8bf660a964925c9abdca926cfd9cd3585e6fcbe669c3648308"
+      },
+      {
+        "asof": "2026-02-01T00:00:00.000000Z",
+        "cell": {
+          "args": {
+            "row": {
+              "type": "number",
+              "value": "8"
+            }
+          },
+          "fn": "s",
+          "fn_hash": "6473291de8dbd1d4b5c2a600359ebfbf6cabb7f75e43f2b00a027ddffd624662",
+          "ns": "sheet.example.org"
+        },
+        "computed_by": "sheet.example.org#206a7d600aae48b2",
+        "inputs": [],
+        "issued": "2026-02-01T00:00:00.000000Z",
+        "licence": "CC-BY-4.0",
+        "proto": "datumesh/1",
+        "publisher": "sheet.example.org",
+        "summary": "A recorded value of s.",
+        "tx": "2026-02-01T00:00:00.000000Z",
+        "type": "number",
+        "valid": {},
+        "value": "9",
+        "sig": "c3052037065b903baf64132ca1e73b080d9127d3fb4cbf1ab74d5a333cac5945adfcdcc9db5cd0706e6afb63a1a8b2e222a7fd75890f57a47a4b001d0ada5207"
+      }
+    ]
+  },
+  "cell": {
+    "args": {},
+    "fn": "sheet.example.net/case"
+  },
+  "asof": "2026-06-01T00:00:00.000000Z",
+  "receipt_hash": "c29cc0e7f5b4f48e4187dcd00a2779d1ed3c58657ec499389a4197423c05f6a1",
+  "body": "max(sheet.example.org/a(row: *))\n",
+  "value": {
+    "type": "number",
+    "value": "50"
+  },
+  "lineage": [
+    "slice:00c2e3b090ec83113b7162067852910f5da48c8873977ac9288554088ee82aa8:cc55523630192ed631d1a923bf0b4b37bc634ac412d70a27089409c39541080b"
+  ],
+  "tx": "2026-02-01T00:00:00.000000Z",
+  "receipt_asof": "2026-02-01T00:00:00.000000Z",
+  "fuel_used": 13
+}

@@ -1,0 +1,66 @@
+{
+  "id": "invalid/formula-eval-depth",
+  "kind": "formula-eval",
+  "description": "math.example.net/chain(60)  (with no arguments)",
+  "valid": false,
+  "world": {
+    "functions": {
+      "calc.example.net/e": {
+        "bound": "2026-01-01T00:00:00.000000Z",
+        "descriptor": {
+          "code": {
+            "body": "math.example.net/chain(n: 60)\n",
+            "lang": "formula"
+          },
+          "inputs": [
+            "math.example.net/chain"
+          ],
+          "signature": {
+            "args": {},
+            "order": [],
+            "returns": {
+              "type": "number",
+              "unit": "1"
+            }
+          }
+        }
+      },
+      "math.example.net/chain": {
+        "bound": "2026-01-01T00:00:00.000000Z",
+        "descriptor": {
+          "code": {
+            "body": "if n = 0 then 0 else math.example.net/chain(n: n - 1) + 1\n",
+            "lang": "formula"
+          },
+          "inputs": [
+            "math.example.net/chain"
+          ],
+          "signature": {
+            "args": {
+              "n": {
+                "type": "number",
+                "valid": false,
+                "unit": "1"
+              }
+            },
+            "order": [
+              "n"
+            ],
+            "returns": {
+              "type": "number",
+              "unit": "1"
+            }
+          }
+        }
+      }
+    },
+    "receipts": [],
+    "max_depth": 20
+  },
+  "cell": {
+    "args": {},
+    "fn": "calc.example.net/e"
+  },
+  "asof": "2026-06-01T00:00:00.000000Z",
+  "error": "E_FORMULA_DEPTH"
+}

@@ -1,0 +1,40 @@
+{
+  "id": "excel/upper",
+  "kind": "excel",
+  "description": "=UPPER(\"Zürich\") is supported as upper(\"Zürich\").",
+  "valid": true,
+  "excel": "=UPPER(\"Zürich\")",
+  "doc": "https://support.microsoft.com/en-us/excel/functions/upper-function",
+  "documentation_derived": true,
+  "status": "supported",
+  "sample": "",
+  "excel_result": {
+    "type": "string",
+    "value": "ZÜRICH"
+  },
+  "formula": "upper(\"Zürich\")",
+  "signature": {
+    "args": {},
+    "order": [],
+    "returns": "string"
+  },
+  "world": {
+    "functions": {},
+    "receipts": []
+  },
+  "cell": {
+    "args": {},
+    "fn": "sheet.example.net/case"
+  },
+  "asof": "2026-06-01T00:00:00.000000Z",
+  "receipt_hash": "4d937afc198282c6c8251e187c32e67af67fd967f23ccfb3770ae8a72bddd909",
+  "body": "upper(\"Zürich\")\n",
+  "value": {
+    "type": "string",
+    "value": "ZÜRICH"
+  },
+  "lineage": [],
+  "tx": "0001-01-01T00:00:00.000000Z",
+  "receipt_asof": "0001-01-01T00:00:00.000000Z",
+  "fuel_used": 3
+}

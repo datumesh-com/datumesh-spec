@@ -1,0 +1,9 @@
+{
+  "id": "function/extent-range",
+  "kind": "function",
+  "description": "Extent ranges for date and integer number arguments.",
+  "valid": true,
+  "input": "{\n  \"signature\": {\n    \"order\": [\n      \"date\",\n      \"tenor\"\n    ],\n    \"returns\": {\n      \"unit\": \"1\",\n      \"type\": \"number\"\n    },\n    \"args\": {\n      \"date\": {\n        \"extent\": {\n          \"lo\": \"2026-01-01\",\n          \"hi\": \"2026-12-31\"\n        },\n        \"valid\": true,\n        \"type\": \"date\"\n      },\n      \"tenor\": {\n        \"extent\": {\n          \"lo\": \"1\",\n          \"hi\": \"10\"\n        },\n        \"unit\": \"1\",\n        \"valid\": false,\n        \"type\": \"number\"\n      }\n    }\n  },\n  \"inputs\": [],\n  \"code\": {\n    \"lang\": \"stored\",\n    \"body\": \"\"\n  }\n}",
+  "canonical": "{\"code\":{\"body\":\"\",\"lang\":\"stored\"},\"inputs\":[],\"signature\":{\"args\":{\"date\":{\"extent\":{\"hi\":\"2026-12-31\",\"lo\":\"2026-01-01\"},\"type\":\"date\",\"valid\":true},\"tenor\":{\"extent\":{\"hi\":\"10\",\"lo\":\"1\"},\"type\":\"number\",\"unit\":\"1\",\"valid\":false}},\"order\":[\"date\",\"tenor\"],\"returns\":{\"type\":\"number\",\"unit\":\"1\"}}}",
+  "sha256": "ec4726041e002cb7c4227faf1202b09704718df04fd69c7f1192994b9a65b387"
+}

@@ -1,0 +1,119 @@
+{
+  "id": "receipt/slice-empty",
+  "kind": "receipt",
+  "description": "An empty slice is still one entry; with no input receipt, tx is unconstrained (here 0001-01-01, the engine's convention) and asof is the binding start.",
+  "valid": true,
+  "input": "{\n  \"sig\": \"4c9005a913408bf321c7da0c500c60d67c9f0a90c280a651fc7af42f72d883d58f127da245c6e00c4bbe5f435c6f40b19803be2bd651a00be6c48bfbf79da30c\",\n  \"value\": \"0\",\n  \"valid\": {},\n  \"type\": \"number\",\n  \"tx\": \"0001-01-01T00:00:00.000000Z\",\n  \"summary\": \"Computed by the Datumesh formula reference evaluator.\",\n  \"publisher\": \"calc.example.net\",\n  \"proto\": \"datumesh/1\",\n  \"licence\": \"CC0-1.0\",\n  \"issued\": \"2026-01-01T00:00:00.000000Z\",\n  \"inputs\": [\n    \"slice:4be37e37b86a383408e1433724e9eba881502c184ab5bd36afebfb66c059aaf5:4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945\"\n  ],\n  \"computed_by\": \"mesh.example.net#cd42547c321bfc08\",\n  \"cell\": {\n    \"ns\": \"calc.example.net\",\n    \"fn_hash\": \"b868ecca33a87a01178debb76aab8949f57e0b550c49270ab96e8775e17b60a7\",\n    \"fn\": \"e\",\n    \"args\": {}\n  },\n  \"asof\": \"2026-01-01T00:00:00.000000Z\"\n}",
+  "keypair": {
+    "seed": "9345ff06f5e4ab63b6f40048c12368f88370bf2402984bf6bf47fa11cfdf399d",
+    "public": "e6d9d1c7634ea284e533a84e5a2f35978a31fcbcae18bf490b790b516e4b8fb1",
+    "key_id": "cd42547c321bfc08"
+  },
+  "keys": {
+    "calc.example.net": {
+      "https": {
+        "status": 200,
+        "body": "{\n  \"host\": \"calc.example.net\",\n  \"keys\": [\n    {\n      \"alg\": \"ed25519\",\n      \"id\": \"a06403c25203d202\",\n      \"public\": \"d0def49fb2866f7377684bd565c04d2d7bd7bc7151d9ee46ee7580f649cca5aa\",\n      \"valid_from\": \"2020-01-01T00:00:00.000000Z\"\n    }\n  ],\n  \"proto\": \"datumesh/1\"\n}"
+      }
+    },
+    "calendars.example.org": {
+      "https": {
+        "status": 200,
+        "body": "{\n  \"host\": \"calendars.example.org\",\n  \"keys\": [\n    {\n      \"alg\": \"ed25519\",\n      \"id\": \"d36465cb16755445\",\n      \"public\": \"41f67e3cdcd30f73cc3937f85e7d713db43ae39b4f2444035975a07c52090bea\",\n      \"valid_from\": \"2020-01-01T00:00:00.000000Z\"\n    }\n  ],\n  \"proto\": \"datumesh/1\"\n}"
+      }
+    },
+    "curve.example.net": {
+      "https": {
+        "status": 200,
+        "body": "{\n  \"host\": \"curve.example.net\",\n  \"keys\": [\n    {\n      \"alg\": \"ed25519\",\n      \"id\": \"9a72762ed570f43a\",\n      \"public\": \"161e75b308d0db529cb44dc5eb59bca0b4ad76c5d67a7909800e0ff8a9e9625f\",\n      \"valid_from\": \"2020-01-01T00:00:00.000000Z\"\n    }\n  ],\n  \"proto\": \"datumesh/1\"\n}"
+      }
+    },
+    "data.example.org": {
+      "https": {
+        "status": 200,
+        "body": "{\n  \"host\": \"data.example.org\",\n  \"keys\": [\n    {\n      \"alg\": \"ed25519\",\n      \"id\": \"efb20f82a7e15e96\",\n      \"public\": \"ffca8bfde74858ed9d7d9c20d53daff82728a4af926a5ca1bad0c248bc747cd9\",\n      \"valid_from\": \"2020-01-01T00:00:00.000000Z\"\n    }\n  ],\n  \"proto\": \"datumesh/1\"\n}"
+      }
+    },
+    "fz.example.org": {
+      "https": {
+        "status": 200,
+        "body": "{\n  \"host\": \"fz.example.org\",\n  \"keys\": [\n    {\n      \"alg\": \"ed25519\",\n      \"id\": \"5f049a6861968d9b\",\n      \"public\": \"f2ee57fef42d2af587d26f27627b13ce01366a0d6d68be4f069fe84ec5d548a0\",\n      \"valid_from\": \"2020-01-01T00:00:00.000000Z\"\n    }\n  ],\n  \"proto\": \"datumesh/1\"\n}"
+      }
+    },
+    "geo.example.org": {
+      "https": {
+        "status": 200,
+        "body": "{\n  \"host\": \"geo.example.org\",\n  \"keys\": [\n    {\n      \"alg\": \"ed25519\",\n      \"id\": \"01a1eda486e56105\",\n      \"public\": \"b2261195634b4614e0158d8f4bf13a95cd9f415e8eb780dcee351ecbe29099db\",\n      \"valid_from\": \"2020-01-01T00:00:00.000000Z\"\n    }\n  ],\n  \"proto\": \"datumesh/1\"\n}"
+      }
+    },
+    "math.example.net": {
+      "https": {
+        "status": 200,
+        "body": "{\n  \"host\": \"math.example.net\",\n  \"keys\": [\n    {\n      \"alg\": \"ed25519\",\n      \"id\": \"72fdbeceffb7847a\",\n      \"public\": \"6f6e15d329f97d2fb061178ee79b980f7ccbc56dd7ec538e4b4ec0af5a2bbe9c\",\n      \"valid_from\": \"2020-01-01T00:00:00.000000Z\"\n    }\n  ],\n  \"proto\": \"datumesh/1\"\n}"
+      }
+    },
+    "mesh.example.net": {
+      "https": {
+        "status": 200,
+        "body": "{\n  \"host\": \"mesh.example.net\",\n  \"keys\": [\n    {\n      \"alg\": \"ed25519\",\n      \"id\": \"cd42547c321bfc08\",\n      \"public\": \"e6d9d1c7634ea284e533a84e5a2f35978a31fcbcae18bf490b790b516e4b8fb1\",\n      \"valid_from\": \"2020-01-01T00:00:00.000000Z\"\n    }\n  ],\n  \"proto\": \"datumesh/1\"\n}"
+      }
+    },
+    "rates.example.org": {
+      "https": {
+        "status": 200,
+        "body": "{\n  \"host\": \"rates.example.org\",\n  \"keys\": [\n    {\n      \"alg\": \"ed25519\",\n      \"id\": \"69d6132b3eb2db9a\",\n      \"public\": \"ca06cece014796c408978413db8b131aeba2014d56da69e12611c937a8ad76e7\",\n      \"valid_from\": \"2020-01-01T00:00:00.000000Z\"\n    }\n  ],\n  \"proto\": \"datumesh/1\"\n}"
+      }
+    },
+    "sheet.example.org": {
+      "https": {
+        "status": 200,
+        "body": "{\n  \"host\": \"sheet.example.org\",\n  \"keys\": [\n    {\n      \"alg\": \"ed25519\",\n      \"id\": \"206a7d600aae48b2\",\n      \"public\": \"f9431ab9865f692b20608223b603c7146d63fd725a4e389ad056d76f4c9b7853\",\n      \"valid_from\": \"2020-01-01T00:00:00.000000Z\"\n    }\n  ],\n  \"proto\": \"datumesh/1\"\n}"
+      }
+    },
+    "shop.example.net": {
+      "https": {
+        "status": 200,
+        "body": "{\n  \"host\": \"shop.example.net\",\n  \"keys\": [\n    {\n      \"alg\": \"ed25519\",\n      \"id\": \"24fe7dc93d01d22c\",\n      \"public\": \"50c32417716582ba2261bb4f4a87087e83a4af5fbb6039eb5c8f58a9899e13fe\",\n      \"valid_from\": \"2020-01-01T00:00:00.000000Z\"\n    }\n  ],\n  \"proto\": \"datumesh/1\"\n}"
+      }
+    },
+    "weather.example.org": {
+      "https": {
+        "status": 200,
+        "body": "{\n  \"host\": \"weather.example.org\",\n  \"keys\": [\n    {\n      \"alg\": \"ed25519\",\n      \"id\": \"060678a6fa418e5d\",\n      \"public\": \"cd4b82119344ac55c534a917e3cb71813f7414436ee17b354bf9c5065ef73991\",\n      \"valid_from\": \"2020-01-01T00:00:00.000000Z\"\n    }\n  ],\n  \"proto\": \"datumesh/1\"\n}"
+      }
+    }
+  },
+  "recompute": {
+    "descriptor": {
+      "code": {
+        "body": "sum(data.example.org/daily(date: [2027-01-01..2027-01-31]))\n",
+        "lang": "formula"
+      },
+      "inputs": [
+        "data.example.org/daily"
+      ],
+      "signature": {
+        "args": {},
+        "order": [],
+        "returns": {
+          "type": "number",
+          "unit": "EUR"
+        }
+      }
+    },
+    "inputs": {
+      "3133e4f0d827686846cdea2d8b2aecd00d26f456a4dfd3804ea98b569ccc970f": "{\"asof\": \"2026-01-01T00:00:00.000000Z\", \"cell\": {\"args\": {}, \"fn\": \"e\", \"fn_hash\": \"b868ecca33a87a01178debb76aab8949f57e0b550c49270ab96e8775e17b60a7\", \"ns\": \"calc.example.net\"}, \"computed_by\": \"mesh.example.net#cd42547c321bfc08\", \"inputs\": [\"slice:4be37e37b86a383408e1433724e9eba881502c184ab5bd36afebfb66c059aaf5:4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945\"], \"issued\": \"2026-01-01T00:00:00.000000Z\", \"licence\": \"CC0-1.0\", \"proto\": \"datumesh/1\", \"publisher\": \"calc.example.net\", \"summary\": \"Computed by the Datumesh formula reference evaluator.\", \"tx\": \"0001-01-01T00:00:00.000000Z\", \"type\": \"number\", \"valid\": {}, \"value\": \"0\", \"sig\": \"4c9005a913408bf321c7da0c500c60d67c9f0a90c280a651fc7af42f72d883d58f127da245c6e00c4bbe5f435c6f40b19803be2bd651a00be6c48bfbf79da30c\"}"
+    },
+    "manifests": {
+      "slice:4be37e37b86a383408e1433724e9eba881502c184ab5bd36afebfb66c059aaf5:4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945": "{\"members\": [], \"slice\": {\"args\": {\"date\": {\"hi\": \"2027-01-31\", \"lo\": \"2027-01-01\", \"type\": \"date\"}}, \"fn\": \"daily\", \"fn_hash\": \"e18ab921761089909a83eacfd7e88b71a580da2d35610769557f035fdb2b8169\", \"ns\": \"data.example.org\"}}"
+    },
+    "value": {
+      "type": "number",
+      "value": "0"
+    }
+  },
+  "canonical": "{\"asof\":\"2026-01-01T00:00:00.000000Z\",\"cell\":{\"args\":{},\"fn\":\"e\",\"fn_hash\":\"b868ecca33a87a01178debb76aab8949f57e0b550c49270ab96e8775e17b60a7\",\"ns\":\"calc.example.net\"},\"computed_by\":\"mesh.example.net#cd42547c321bfc08\",\"inputs\":[\"slice:4be37e37b86a383408e1433724e9eba881502c184ab5bd36afebfb66c059aaf5:4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945\"],\"issued\":\"2026-01-01T00:00:00.000000Z\",\"licence\":\"CC0-1.0\",\"proto\":\"datumesh/1\",\"publisher\":\"calc.example.net\",\"summary\":\"Computed by the Datumesh formula reference evaluator.\",\"tx\":\"0001-01-01T00:00:00.000000Z\",\"type\":\"number\",\"valid\":{},\"value\":\"0\"}",
+  "sha256": "3133e4f0d827686846cdea2d8b2aecd00d26f456a4dfd3804ea98b569ccc970f",
+  "sig": "4c9005a913408bf321c7da0c500c60d67c9f0a90c280a651fc7af42f72d883d58f127da245c6e00c4bbe5f435c6f40b19803be2bd651a00be6c48bfbf79da30c",
+  "level": "recomputed"
+}

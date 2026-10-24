@@ -1,0 +1,56 @@
+{
+  "id": "formula-eval/convert-percent",
+  "kind": "formula-eval",
+  "description": "convert(r, \"1\")  (with r = 5)",
+  "valid": true,
+  "world": {
+    "functions": {
+      "calc.example.net/e": {
+        "bound": "2026-01-01T00:00:00.000000Z",
+        "descriptor": {
+          "code": {
+            "body": "convert(r, \"1\")\n",
+            "lang": "formula"
+          },
+          "inputs": [],
+          "signature": {
+            "args": {
+              "r": {
+                "type": "number",
+                "valid": false,
+                "unit": "percent"
+              }
+            },
+            "order": [
+              "r"
+            ],
+            "returns": {
+              "type": "number",
+              "unit": "1"
+            }
+          }
+        }
+      }
+    },
+    "receipts": []
+  },
+  "cell": {
+    "args": {
+      "r": {
+        "type": "number",
+        "value": "5"
+      }
+    },
+    "fn": "calc.example.net/e"
+  },
+  "asof": "2026-06-01T00:00:00.000000Z",
+  "receipt_hash": "e4fff99d8af008644f977b73dc8784be7955d0ef09b14e26542d4d3100ae1f3e",
+  "value": {
+    "type": "number",
+    "value": "0.05"
+  },
+  "lineage": [],
+  "tx": "0001-01-01T00:00:00.000000Z",
+  "receipt_asof": "0001-01-01T00:00:00.000000Z",
+  "fuel_used": 2
+}

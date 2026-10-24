@@ -1,0 +1,253 @@
+{
+  "id": "excel/averageif",
+  "kind": "excel",
+  "description": "=AVERAGEIF(A2:A6,\"bolt\",C2:C6) is partial as mean(sheet.example.org/sales(row: *, item: \"bolt\", region: *)). Sales table in A2:C6: item, region, amount = (bolt, north, 10), (nut, south, 20), (bolt, south, 30), (washer, north, 40), (nut, north, 50).",
+  "valid": true,
+  "excel": "=AVERAGEIF(A2:A6,\"bolt\",C2:C6)",
+  "doc": "https://support.microsoft.com/en-us/excel/functions/averageif-function",
+  "documentation_derived": true,
+  "status": "partial",
+  "sample": "Sales table in A2:C6: item, region, amount = (bolt, north, 10), (nut, south, 20), (bolt, south, 30), (washer, north, 40), (nut, north, 50).",
+  "excel_result": {
+    "type": "number",
+    "value": "20"
+  },
+  "formula": "mean(sheet.example.org/sales(row: *, item: \"bolt\", region: *))",
+  "signature": {
+    "args": {},
+    "order": [],
+    "returns": {
+      "type": "number",
+      "unit": "1"
+    }
+  },
+  "world": {
+    "functions": {
+      "sheet.example.org/sales": {
+        "bound": "2026-01-01T00:00:00.000000Z",
+        "descriptor": {
+          "code": {
+            "body": "",
+            "lang": "stored"
+          },
+          "inputs": [],
+          "signature": {
+            "args": {
+              "item": {
+                "type": "string",
+                "valid": false
+              },
+              "region": {
+                "type": "string",
+                "valid": false
+              },
+              "row": {
+                "type": "number",
+                "valid": false,
+                "unit": "1"
+              }
+            },
+            "returns": {
+              "type": "number",
+              "unit": "1"
+            },
+            "order": [
+              "row",
+              "item",
+              "region"
+            ]
+          }
+        }
+      }
+    },
+    "receipts": [
+      {
+        "asof": "2026-02-01T00:00:00.000000Z",
+        "cell": {
+          "args": {
+            "item": {
+              "type": "string",
+              "value": "bolt"
+            },
+            "region": {
+              "type": "string",
+              "value": "north"
+            },
+            "row": {
+              "type": "number",
+              "value": "1"
+            }
+          },
+          "fn": "sales",
+          "fn_hash": "2d4fb74a8dc4bccecfe96ff17e9f5e4671eba849994d014576903b32b07af290",
+          "ns": "sheet.example.org"
+        },
+        "computed_by": "sheet.example.org#206a7d600aae48b2",
+        "inputs": [],
+        "issued": "2026-02-01T00:00:00.000000Z",
+        "licence": "CC-BY-4.0",
+        "proto": "datumesh/1",
+        "publisher": "sheet.example.org",
+        "summary": "A recorded value of sales.",
+        "tx": "2026-02-01T00:00:00.000000Z",
+        "type": "number",
+        "valid": {},
+        "value": "10",
+        "sig": "c3345630759e6d717e332f8b8f551647f165618b7ff69fa2549d366a03d7486be2562081e533c096b240c3f2f5047044f5b3b4478770a188af97b5b6dab6370c"
+      },
+      {
+        "asof": "2026-02-01T00:00:00.000000Z",
+        "cell": {
+          "args": {
+            "item": {
+              "type": "string",
+              "value": "nut"
+            },
+            "region": {
+              "type": "string",
+              "value": "south"
+            },
+            "row": {
+              "type": "number",
+              "value": "2"
+            }
+          },
+          "fn": "sales",
+          "fn_hash": "2d4fb74a8dc4bccecfe96ff17e9f5e4671eba849994d014576903b32b07af290",
+          "ns": "sheet.example.org"
+        },
+        "computed_by": "sheet.example.org#206a7d600aae48b2",
+        "inputs": [],
+        "issued": "2026-02-01T00:00:00.000000Z",
+        "licence": "CC-BY-4.0",
+        "proto": "datumesh/1",
+        "publisher": "sheet.example.org",
+        "summary": "A recorded value of sales.",
+        "tx": "2026-02-01T00:00:00.000000Z",
+        "type": "number",
+        "valid": {},
+        "value": "20",
+        "sig": "3c88383a4fb29e8083727d14d5e93fb4397e4b4b507af5aa763198e46ec766e7bb6eedac5f880d342783faedeef9e36d699b9c7a64e0f390726fc8ae0dd12e0e"
+      },
+      {
+        "asof": "2026-02-01T00:00:00.000000Z",
+        "cell": {
+          "args": {
+            "item": {
+              "type": "string",
+              "value": "bolt"
+            },
+            "region": {
+              "type": "string",
+              "value": "south"
+            },
+            "row": {
+              "type": "number",
+              "value": "3"
+            }
+          },
+          "fn": "sales",
+          "fn_hash": "2d4fb74a8dc4bccecfe96ff17e9f5e4671eba849994d014576903b32b07af290",
+          "ns": "sheet.example.org"
+        },
+        "computed_by": "sheet.example.org#206a7d600aae48b2",
+        "inputs": [],
+        "issued": "2026-02-01T00:00:00.000000Z",
+        "licence": "CC-BY-4.0",
+        "proto": "datumesh/1",
+        "publisher": "sheet.example.org",
+        "summary": "A recorded value of sales.",
+        "tx": "2026-02-01T00:00:00.000000Z",
+        "type": "number",
+        "valid": {},
+        "value": "30",
+        "sig": "a29c13889f48fca542cddb9c2dbb976e076f846f9cc64ab6a587248e5081e4196475324c0a0dd2b292304c8cf3273ad500496e3a304e7c8e9d263d39e5a6aa07"
+      },
+      {
+        "asof": "2026-02-01T00:00:00.000000Z",
+        "cell": {
+          "args": {
+            "item": {
+              "type": "string",
+              "value": "washer"
+            },
+            "region": {
+              "type": "string",
+              "value": "north"
+            },
+            "row": {
+              "type": "number",
+              "value": "4"
+            }
+          },
+          "fn": "sales",
+          "fn_hash": "2d4fb74a8dc4bccecfe96ff17e9f5e4671eba849994d014576903b32b07af290",
+          "ns": "sheet.example.org"
+        },
+        "computed_by": "sheet.example.org#206a7d600aae48b2",
+        "inputs": [],
+        "issued": "2026-02-01T00:00:00.000000Z",
+        "licence": "CC-BY-4.0",
+        "proto": "datumesh/1",
+        "publisher": "sheet.example.org",
+        "summary": "A recorded value of sales.",
+        "tx": "2026-02-01T00:00:00.000000Z",
+        "type": "number",
+        "valid": {},
+        "value": "40",
+        "sig": "580196ec0e10d795911c96e8660abc3cad81da667427dc1cff45eb5ae8176427f87fd1b3f303a5785dfd9b8867e0c5090e37187d98761f8f147ec25c83cfcb0b"
+      },
+      {
+        "asof": "2026-02-01T00:00:00.000000Z",
+        "cell": {
+          "args": {
+            "item": {
+              "type": "string",
+              "value": "nut"
+            },
+            "region": {
+              "type": "string",
+              "value": "north"
+            },
+            "row": {
+              "type": "number",
+              "value": "5"
+            }
+          },
+          "fn": "sales",
+          "fn_hash": "2d4fb74a8dc4bccecfe96ff17e9f5e4671eba849994d014576903b32b07af290",
+          "ns": "sheet.example.org"
+        },
+        "computed_by": "sheet.example.org#206a7d600aae48b2",
+        "inputs": [],
+        "issued": "2026-02-01T00:00:00.000000Z",
+        "licence": "CC-BY-4.0",
+        "proto": "datumesh/1",
+        "publisher": "sheet.example.org",
+        "summary": "A recorded value of sales.",
+        "tx": "2026-02-01T00:00:00.000000Z",
+        "type": "number",
+        "valid": {},
+        "value": "50",
+        "sig": "da03d19fa05a9d6b7dd9955a575c04961af9a5a7c41f17a836f29775f6b021fff046fb20d4295402cb2b3fd52186558f94be49376d99d84fb0db33d7b33b5802"
+      }
+    ]
+  },
+  "cell": {
+    "args": {},
+    "fn": "sheet.example.net/case"
+  },
+  "asof": "2026-06-01T00:00:00.000000Z",
+  "receipt_hash": "5a3becc76c5c07e9dc9cc0f5b8bb5032fec64d9e546d65ce9fc4e39ca53a905b",
+  "body": "mean(sheet.example.org/sales(item: \"bolt\", region: *, row: *))\n",
+  "value": {
+    "type": "number",
+    "value": "20"
+  },
+  "lineage": [
+    "slice:cb33704ca8c11bf5af6334d25bf3f1d25e93a2fb63c1b8238c2fffaeb9864222:cec767c47ae0aee49a7cc9e1005ab5dbb009f8ebdabf714b3cbe5be91ff72106"
+  ],
+  "tx": "2026-02-01T00:00:00.000000Z",
+  "receipt_asof": "2026-02-01T00:00:00.000000Z",
+  "fuel_used": 8
+}

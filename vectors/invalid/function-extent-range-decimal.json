@@ -1,0 +1,8 @@
+{
+  "id": "invalid/function-extent-range-decimal",
+  "kind": "function",
+  "description": "Number ranges have integer ends.",
+  "valid": false,
+  "input": "{\n  \"signature\": {\n    \"order\": [\n      \"base\",\n      \"quote\",\n      \"date\",\n      \"n\"\n    ],\n    \"returns\": {\n      \"unit\": {\n        \"per\": {\n          \"arg\": \"base\"\n        },\n        \"of\": {\n          \"arg\": \"quote\"\n        }\n      },\n      \"type\": \"number\"\n    },\n    \"args\": {\n      \"n\": {\n        \"extent\": {\n          \"lo\": \"1\",\n          \"hi\": \"2.5\"\n        },\n        \"unit\": \"1\",\n        \"valid\": false,\n        \"type\": \"number\"\n      },\n      \"quote\": {\n        \"valid\": false,\n        \"type\": \"string\"\n      },\n      \"date\": {\n        \"valid\": true,\n        \"type\": \"date\"\n      },\n      \"base\": {\n        \"valid\": false,\n        \"type\": \"string\"\n      }\n    }\n  },\n  \"inputs\": [],\n  \"code\": {\n    \"lang\": \"stored\",\n    \"body\": \"\"\n  }\n}",
+  "error": "E_CANON_NUMBER"
+}

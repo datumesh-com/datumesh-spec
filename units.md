@@ -1,6 +1,6 @@
 # Datumesh units
 
-Status: part of `spec-0.3.0` (unchanged since `spec-0.2.0`), normative. SPEC.md section 7.1 says where units appear; this document says which units exist.
+Status: part of `spec-0.4.0`, normative. SPEC.md section 7.1 says where units appear; this document says which units exist.
 
 A function declares the unit of every number it takes or returns. The unit lives in the function's signature, so the function hash commits to it and every receipt inherits it through `cell.fn_hash`. A receipt never carries a unit itself.
 
@@ -69,6 +69,7 @@ The seven SI base units, plus the other units listed here, written with their st
 m kg s A K mol cd
 degC m/s W kWh
 mm cm km/h hPa W/m2
+min h d km deg
 ```
 
 | Unit | Quantity |
@@ -89,6 +90,16 @@ mm cm km/h hPa W/m2
 | `km/h` | kilometre per hour, as one fixed symbol |
 | `hPa` | hectopascal |
 | `W/m2` | watt per square metre, as one fixed symbol (ASCII `2`, not `²`) |
+| `min` | minute (60 s) |
+| `h` | hour (3600 s) |
+| `d` | day (86400 s); also the unit of a difference between two dates |
+| `km` | kilometre |
+| `deg` | degree of angle, π/180 radians; radians are dimensionless (`1`) |
+
+`min`, `h`, `d`, `km` and `deg` were added in `spec-0.4.0` for the formula dialect (SPEC.md 15):
+durations for instant arithmetic and lookup bounds, distances, and angles for the trigonometric
+functions and `haversine`. A day is
+86400 seconds: instants have no leap seconds (SPEC.md 3.3).
 
 `mm` and `m` are different units, not two spellings of one: a value in `mm` is written in millimetres. Choose the unit the source publishes in.
 
@@ -163,4 +174,6 @@ Dates, such as incorporation dates, are values of type `date` and have no unit.
 
 ## 5. Changes
 
+- `spec-0.4.0`: `min`, `h`, `d`, `km` and `deg` added. No other change; no hash changes, since a unit is
+  part of a hash only in a descriptor that uses it.
 - `spec-0.2.0`: first version, including `mm`, `cm`, `km/h`, `hPa`, `W/m2` and `permille` for the seed sources.

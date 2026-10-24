@@ -1,0 +1,39 @@
+{
+  "id": "formula/self-reference",
+  "kind": "formula",
+  "description": "A function reads itself with other arguments (fib).",
+  "valid": true,
+  "input": "if x < 2 then x else calc.example.net/f(x: x - 1) + calc.example.net/f(x: x - 2)",
+  "env": {
+    "aliases": {},
+    "functions": {},
+    "name": "calc.example.net/f",
+    "signature": {
+      "args": {
+        "x": {
+          "type": "number",
+          "valid": false,
+          "unit": "1"
+        }
+      },
+      "order": [
+        "x"
+      ],
+      "returns": {
+        "type": "number",
+        "unit": "1"
+      }
+    }
+  },
+  "ast": "{\"cond\":{\"args\":[{\"name\":\"x\",\"node\":\"var\"},{\"node\":\"num\",\"value\":\"2\"}],\"node\":\"op\",\"op\":\"<\"},\"else\":{\"args\":[{\"args\":{\"x\":{\"args\":[{\"name\":\"x\",\"node\":\"var\"},{\"node\":\"num\",\"value\":\"1\"}],\"node\":\"op\",\"op\":\"-\"}},\"fn\":\"calc.example.net/f\",\"node\":\"read\"},{\"args\":{\"x\":{\"args\":[{\"name\":\"x\",\"node\":\"var\"},{\"node\":\"num\",\"value\":\"2\"}],\"node\":\"op\",\"op\":\"-\"}},\"fn\":\"calc.example.net/f\",\"node\":\"read\"}],\"node\":\"op\",\"op\":\"+\"},\"node\":\"if\",\"then\":{\"name\":\"x\",\"node\":\"var\"}}",
+  "ast_sha256": "c2619257161765e083e6f40052f0ad110c8aa2f6fc9509d4b8d7474ad3c0cb47",
+  "body": "if x < 2 then x else calc.example.net/f(x: x - 1) + calc.example.net/f(x: x - 2)\n",
+  "inputs": [
+    "calc.example.net/f"
+  ],
+  "returns": {
+    "type": "number",
+    "unit": "1"
+  },
+  "asof_dependent": false
+}

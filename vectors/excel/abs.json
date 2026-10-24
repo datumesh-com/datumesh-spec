@@ -1,0 +1,43 @@
+{
+  "id": "excel/abs",
+  "kind": "excel",
+  "description": "=ABS(-4.2) is supported as abs(-4.2).",
+  "valid": true,
+  "excel": "=ABS(-4.2)",
+  "doc": "https://support.microsoft.com/en-us/excel/functions/abs-function",
+  "documentation_derived": true,
+  "status": "supported",
+  "sample": "",
+  "excel_result": {
+    "type": "number",
+    "value": "4.2"
+  },
+  "formula": "abs(-4.2)",
+  "signature": {
+    "args": {},
+    "order": [],
+    "returns": {
+      "type": "number",
+      "unit": "1"
+    }
+  },
+  "world": {
+    "functions": {},
+    "receipts": []
+  },
+  "cell": {
+    "args": {},
+    "fn": "sheet.example.net/case"
+  },
+  "asof": "2026-06-01T00:00:00.000000Z",
+  "receipt_hash": "672b0a36546000add151921f2ed81b444ec5b2de36783a163b27a76a8d5ff4fe",
+  "body": "abs(-4.2)\n",
+  "value": {
+    "type": "number",
+    "value": "4.2"
+  },
+  "lineage": [],
+  "tx": "0001-01-01T00:00:00.000000Z",
+  "receipt_asof": "0001-01-01T00:00:00.000000Z",
+  "fuel_used": 3
+}

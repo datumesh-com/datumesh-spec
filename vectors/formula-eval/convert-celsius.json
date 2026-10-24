@@ -1,0 +1,56 @@
+{
+  "id": "formula-eval/convert-celsius",
+  "kind": "formula-eval",
+  "description": "convert(t, \"K\")  (with t = 20)",
+  "valid": true,
+  "world": {
+    "functions": {
+      "calc.example.net/e": {
+        "bound": "2026-01-01T00:00:00.000000Z",
+        "descriptor": {
+          "code": {
+            "body": "convert(t, \"K\")\n",
+            "lang": "formula"
+          },
+          "inputs": [],
+          "signature": {
+            "args": {
+              "t": {
+                "type": "number",
+                "valid": false,
+                "unit": "degC"
+              }
+            },
+            "order": [
+              "t"
+            ],
+            "returns": {
+              "type": "number",
+              "unit": "K"
+            }
+          }
+        }
+      }
+    },
+    "receipts": []
+  },
+  "cell": {
+    "args": {
+      "t": {
+        "type": "number",
+        "value": "20"
+      }
+    },
+    "fn": "calc.example.net/e"
+  },
+  "asof": "2026-06-01T00:00:00.000000Z",
+  "receipt_hash": "dd1da4828018d2267aaabc490bbdd86f239d7c0418123e88b26c5cd14262aaef",
+  "value": {
+    "type": "number",
+    "value": "293.15"
+  },
+  "lineage": [],
+  "tx": "0001-01-01T00:00:00.000000Z",
+  "receipt_asof": "0001-01-01T00:00:00.000000Z",
+  "fuel_used": 2
+}

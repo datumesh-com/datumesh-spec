@@ -1,0 +1,10 @@
+{
+  "id": "slice/range",
+  "kind": "slice",
+  "description": "A bounded slice: a range object {hi, lo, type}, inclusive.",
+  "valid": true,
+  "input": "{\n  \"ns\": \"data.example.org\",\n  \"fn_hash\": \"e18ab921761089909a83eacfd7e88b71a580da2d35610769557f035fdb2b8169\",\n  \"fn\": \"daily\",\n  \"args\": {\n    \"date\": {\n      \"type\": \"date\",\n      \"lo\": \"2026-03-01\",\n      \"hi\": \"2026-03-05\"\n    }\n  }\n}",
+  "canonical": "{\"args\":{\"date\":{\"hi\":\"2026-03-05\",\"lo\":\"2026-03-01\",\"type\":\"date\"}},\"fn\":\"daily\",\"fn_hash\":\"e18ab921761089909a83eacfd7e88b71a580da2d35610769557f035fdb2b8169\",\"ns\":\"data.example.org\"}",
+  "sha256": "588dff9660b4414cf8a6db3adbe2aebb17e75951fd8c3cb4cd98d87381a87dd3",
+  "slice_id": "588dff9660b4414cf8a6db3adbe2aebb17e75951fd8c3cb4cd98d87381a87dd3"
+}

@@ -1,0 +1,218 @@
+{
+  "id": "formula/lookup-latest-bound",
+  "kind": "formula",
+  "description": "latest with a staleness bound: asof-dependent.",
+  "valid": true,
+  "input": "latest(weather.example.org/temp(station, *), 1 h)",
+  "env": {
+    "aliases": {},
+    "functions": {
+      "weather.example.org/temp": {
+        "code": {
+          "body": "",
+          "lang": "stored"
+        },
+        "inputs": [],
+        "signature": {
+          "args": {
+            "station": {
+              "type": "string",
+              "valid": false
+            },
+            "t": {
+              "type": "instant",
+              "valid": true
+            }
+          },
+          "returns": {
+            "type": "number",
+            "unit": "degC"
+          },
+          "order": [
+            "station",
+            "t"
+          ]
+        }
+      }
+    },
+    "name": "calc.example.net/f",
+    "signature": {
+      "args": {
+        "a": {
+          "type": "number",
+          "valid": false,
+          "unit": "EUR"
+        },
+        "b": {
+          "type": "number",
+          "valid": false,
+          "unit": "EUR"
+        },
+        "c": {
+          "type": "number",
+          "valid": false,
+          "unit": "USD"
+        },
+        "n": {
+          "type": "number",
+          "valid": false,
+          "unit": "1"
+        },
+        "k": {
+          "type": "number",
+          "valid": false,
+          "unit": "1"
+        },
+        "x": {
+          "type": "number",
+          "valid": false,
+          "unit": "1"
+        },
+        "r": {
+          "type": "number",
+          "valid": false,
+          "unit": "percent"
+        },
+        "t1": {
+          "type": "number",
+          "valid": false,
+          "unit": "degC"
+        },
+        "t2": {
+          "type": "number",
+          "valid": false,
+          "unit": "degC"
+        },
+        "amount": {
+          "type": "number",
+          "valid": false,
+          "unit": {
+            "arg": "base"
+          }
+        },
+        "count": {
+          "type": "number",
+          "valid": false,
+          "unit": "count"
+        },
+        "plat": {
+          "type": "number",
+          "valid": false,
+          "unit": "deg"
+        },
+        "plon": {
+          "type": "number",
+          "valid": false,
+          "unit": "deg"
+        },
+        "dist": {
+          "type": "number",
+          "valid": false,
+          "unit": "m"
+        },
+        "secs": {
+          "type": "number",
+          "valid": false,
+          "unit": "s"
+        },
+        "s": {
+          "type": "string",
+          "valid": false
+        },
+        "name": {
+          "type": "string",
+          "valid": false
+        },
+        "base": {
+          "type": "string",
+          "valid": false
+        },
+        "quote": {
+          "type": "string",
+          "valid": false
+        },
+        "station": {
+          "type": "string",
+          "valid": false
+        },
+        "tenor": {
+          "type": "string",
+          "valid": false
+        },
+        "item": {
+          "type": "string",
+          "valid": false
+        },
+        "stations": {
+          "type": "string",
+          "valid": false
+        },
+        "p": {
+          "type": "string",
+          "valid": false
+        },
+        "d": {
+          "type": "date",
+          "valid": true
+        },
+        "d2": {
+          "type": "date",
+          "valid": true
+        },
+        "t": {
+          "type": "instant",
+          "valid": true
+        },
+        "flag": {
+          "type": "boolean",
+          "valid": false
+        }
+      },
+      "order": [
+        "a",
+        "amount",
+        "b",
+        "base",
+        "c",
+        "count",
+        "d",
+        "d2",
+        "dist",
+        "flag",
+        "item",
+        "k",
+        "n",
+        "name",
+        "p",
+        "plat",
+        "plon",
+        "quote",
+        "r",
+        "s",
+        "secs",
+        "station",
+        "stations",
+        "t",
+        "t1",
+        "t2",
+        "tenor",
+        "x"
+      ],
+      "returns": {
+        "type": "number",
+        "unit": "degC"
+      }
+    }
+  },
+  "ast": "{\"args\":[{\"args\":{\"station\":{\"name\":\"station\",\"node\":\"var\"},\"t\":{\"node\":\"open\"}},\"fn\":\"weather.example.org/temp\",\"node\":\"read\"}],\"fn\":\"latest\",\"named\":{\"bound\":{\"node\":\"num\",\"unit\":\"h\",\"value\":\"1\"}},\"node\":\"call\"}",
+  "ast_sha256": "e62e75d198a3424088cad2de54133ca302fe15b7b433c142d31016ac03cca8a2",
+  "body": "latest(weather.example.org/temp(station: station, t: *), bound: 1 h)\n",
+  "inputs": [
+    "weather.example.org/temp"
+  ],
+  "returns": {
+    "type": "number",
+    "unit": "degC"
+  },
+  "asof_dependent": true
+}

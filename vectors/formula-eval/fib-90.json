@@ -1,0 +1,88 @@
+{
+  "id": "formula-eval/fib-90",
+  "kind": "formula-eval",
+  "description": "math.example.net/fib(n)  (with n = 90)",
+  "valid": true,
+  "world": {
+    "functions": {
+      "calc.example.net/e": {
+        "bound": "2026-01-01T00:00:00.000000Z",
+        "descriptor": {
+          "code": {
+            "body": "math.example.net/fib(n: n)\n",
+            "lang": "formula"
+          },
+          "inputs": [
+            "math.example.net/fib"
+          ],
+          "signature": {
+            "args": {
+              "n": {
+                "type": "number",
+                "valid": false,
+                "unit": "1"
+              }
+            },
+            "order": [
+              "n"
+            ],
+            "returns": {
+              "type": "number",
+              "unit": "1"
+            }
+          }
+        }
+      },
+      "math.example.net/fib": {
+        "bound": "2026-01-01T00:00:00.000000Z",
+        "descriptor": {
+          "code": {
+            "body": "if n < 2 then n else math.example.net/fib(n: n - 1) + math.example.net/fib(n: n - 2)\n",
+            "lang": "formula"
+          },
+          "inputs": [
+            "math.example.net/fib"
+          ],
+          "signature": {
+            "args": {
+              "n": {
+                "type": "number",
+                "valid": false,
+                "unit": "1"
+              }
+            },
+            "order": [
+              "n"
+            ],
+            "returns": {
+              "type": "number",
+              "unit": "1"
+            }
+          }
+        }
+      }
+    },
+    "receipts": []
+  },
+  "cell": {
+    "args": {
+      "n": {
+        "type": "number",
+        "value": "90"
+      }
+    },
+    "fn": "calc.example.net/e"
+  },
+  "asof": "2026-06-01T00:00:00.000000Z",
+  "receipt_hash": "02638ee59f428873edc691477d0de4c6d918f910e97daad557d86b214d29d37d",
+  "value": {
+    "type": "number",
+    "value": "2880067194370816120"
+  },
+  "lineage": [
+    "8d83c2866e73145ab861a0bfbb6e1419f5371669e3a52537f42559fdc7e9552a"
+  ],
+  "tx": "0001-01-01T00:00:00.000000Z",
+  "receipt_asof": "2026-01-01T00:00:00.000000Z",
+  "fuel_used": 1348
+}

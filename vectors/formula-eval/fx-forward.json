@@ -1,0 +1,298 @@
+{
+  "id": "formula-eval/fx-forward",
+  "kind": "formula-eval",
+  "description": "rates.example.org/fx_rate(base, quote, d) * (1 + rates.example.org/rate(quote, \"1M\")) / (1 + rates.example.org/rate(base, \"1M\"))  (with base = EUR, quote = USD, d = 2026-03-02)",
+  "valid": true,
+  "world": {
+    "functions": {
+      "calc.example.net/e": {
+        "bound": "2026-01-01T00:00:00.000000Z",
+        "descriptor": {
+          "code": {
+            "body": "rates.example.org/fx_rate(base: base, date: d, quote: quote) * (1 + rates.example.org/rate(currency: quote, tenor: \"1M\")) / (1 + rates.example.org/rate(currency: base, tenor: \"1M\"))\n",
+            "lang": "formula"
+          },
+          "inputs": [
+            "rates.example.org/fx_rate",
+            "rates.example.org/rate"
+          ],
+          "signature": {
+            "args": {
+              "base": {
+                "type": "string",
+                "valid": false
+              },
+              "quote": {
+                "type": "string",
+                "valid": false
+              },
+              "d": {
+                "type": "date",
+                "valid": true
+              }
+            },
+            "order": [
+              "base",
+              "quote",
+              "d"
+            ],
+            "returns": {
+              "type": "number",
+              "unit": {
+                "of": {
+                  "arg": "quote"
+                },
+                "per": {
+                  "arg": "base"
+                }
+              }
+            }
+          }
+        }
+      },
+      "rates.example.org/fx_rate": {
+        "bound": "2026-01-01T00:00:00.000000Z",
+        "descriptor": {
+          "code": {
+            "body": "",
+            "lang": "stored"
+          },
+          "inputs": [],
+          "signature": {
+            "args": {
+              "base": {
+                "type": "string",
+                "valid": false
+              },
+              "date": {
+                "type": "date",
+                "valid": true
+              },
+              "quote": {
+                "type": "string",
+                "valid": false
+              }
+            },
+            "returns": {
+              "type": "number",
+              "unit": {
+                "of": {
+                  "arg": "quote"
+                },
+                "per": {
+                  "arg": "base"
+                }
+              }
+            },
+            "order": [
+              "base",
+              "quote",
+              "date"
+            ]
+          }
+        }
+      },
+      "rates.example.org/rate": {
+        "bound": "2026-01-01T00:00:00.000000Z",
+        "descriptor": {
+          "code": {
+            "body": "",
+            "lang": "stored"
+          },
+          "inputs": [],
+          "signature": {
+            "args": {
+              "currency": {
+                "type": "string",
+                "valid": false
+              },
+              "tenor": {
+                "type": "string",
+                "valid": false
+              }
+            },
+            "returns": {
+              "type": "number",
+              "unit": "1"
+            },
+            "order": [
+              "currency",
+              "tenor"
+            ]
+          }
+        }
+      }
+    },
+    "receipts": [
+      {
+        "asof": "2026-03-02T16:00:00.000000Z",
+        "cell": {
+          "args": {
+            "base": {
+              "type": "string",
+              "value": "EUR"
+            },
+            "date": {
+              "type": "date",
+              "value": "2026-03-02"
+            },
+            "quote": {
+              "type": "string",
+              "value": "USD"
+            }
+          },
+          "fn": "fx_rate",
+          "fn_hash": "f041cf0f3eabaf4a611a6f57050dac8fb1f2e2cd5d6b6526913cff0847ef88df",
+          "ns": "rates.example.org"
+        },
+        "computed_by": "rates.example.org#69d6132b3eb2db9a",
+        "inputs": [],
+        "issued": "2026-03-02T16:00:00.000000Z",
+        "licence": "CC-BY-4.0",
+        "proto": "datumesh/1",
+        "publisher": "rates.example.org",
+        "summary": "A recorded value of fx_rate.",
+        "tx": "2026-03-02T16:00:00.000000Z",
+        "type": "number",
+        "valid": {
+          "date": {
+            "type": "date",
+            "value": "2026-03-02"
+          }
+        },
+        "value": "1.0812",
+        "sig": "b1260deea4c13be8c601431270399a0a4e42697a1df836e2a442596170101f7ba2cfaa47d6a88675c1b1a7e964e0ac592f037ef1d12f57c2f9b0597fb559b104"
+      },
+      {
+        "asof": "2026-03-02T16:00:00.000000Z",
+        "cell": {
+          "args": {
+            "base": {
+              "type": "string",
+              "value": "EUR"
+            },
+            "date": {
+              "type": "date",
+              "value": "2026-03-02"
+            },
+            "quote": {
+              "type": "string",
+              "value": "GBP"
+            }
+          },
+          "fn": "fx_rate",
+          "fn_hash": "f041cf0f3eabaf4a611a6f57050dac8fb1f2e2cd5d6b6526913cff0847ef88df",
+          "ns": "rates.example.org"
+        },
+        "computed_by": "rates.example.org#69d6132b3eb2db9a",
+        "inputs": [],
+        "issued": "2026-03-02T16:00:00.000000Z",
+        "licence": "CC-BY-4.0",
+        "proto": "datumesh/1",
+        "publisher": "rates.example.org",
+        "summary": "A recorded value of fx_rate.",
+        "tx": "2026-03-02T16:00:00.000000Z",
+        "type": "number",
+        "valid": {
+          "date": {
+            "type": "date",
+            "value": "2026-03-02"
+          }
+        },
+        "value": "0.8556",
+        "sig": "7b2027ad3bfa5c7b1b2e81fb2787ff49f17b08d4df4f9562057fee4fa10ca1f1b10dd1184a3113342a3c545986a6440019e7856c1af07916e69e9e9b890e3407"
+      },
+      {
+        "asof": "2026-03-02T16:00:00.000000Z",
+        "cell": {
+          "args": {
+            "currency": {
+              "type": "string",
+              "value": "EUR"
+            },
+            "tenor": {
+              "type": "string",
+              "value": "1M"
+            }
+          },
+          "fn": "rate",
+          "fn_hash": "9c8c0ef8566e8c22b4d8f2bd03a11e961c7ded891aed4582bdc1ec4ee89f1cb1",
+          "ns": "rates.example.org"
+        },
+        "computed_by": "rates.example.org#69d6132b3eb2db9a",
+        "inputs": [],
+        "issued": "2026-03-02T16:00:00.000000Z",
+        "licence": "CC-BY-4.0",
+        "proto": "datumesh/1",
+        "publisher": "rates.example.org",
+        "summary": "A recorded value of rate.",
+        "tx": "2026-03-02T16:00:00.000000Z",
+        "type": "number",
+        "valid": {},
+        "value": "0.0185",
+        "sig": "2a8b9b25a07fc31b903f34001f9b7af141c668622b2b9a71d80acbbae264d014a5dc641e4ca696edb30f12a41d175f11797cb5662f5c297523b1d008b75e7201"
+      },
+      {
+        "asof": "2026-03-02T16:00:00.000000Z",
+        "cell": {
+          "args": {
+            "currency": {
+              "type": "string",
+              "value": "USD"
+            },
+            "tenor": {
+              "type": "string",
+              "value": "1M"
+            }
+          },
+          "fn": "rate",
+          "fn_hash": "9c8c0ef8566e8c22b4d8f2bd03a11e961c7ded891aed4582bdc1ec4ee89f1cb1",
+          "ns": "rates.example.org"
+        },
+        "computed_by": "rates.example.org#69d6132b3eb2db9a",
+        "inputs": [],
+        "issued": "2026-03-02T16:00:00.000000Z",
+        "licence": "CC-BY-4.0",
+        "proto": "datumesh/1",
+        "publisher": "rates.example.org",
+        "summary": "A recorded value of rate.",
+        "tx": "2026-03-02T16:00:00.000000Z",
+        "type": "number",
+        "valid": {},
+        "value": "0.0425",
+        "sig": "545837eac39353b9d378a26e1dac22334e30f586ec892c2841108e97f8d8ede3b724ee52352bbbf59c3eb926573b7a6ae6c11ea622e873f6769009f351cb2a04"
+      }
+    ]
+  },
+  "cell": {
+    "args": {
+      "base": {
+        "type": "string",
+        "value": "EUR"
+      },
+      "quote": {
+        "type": "string",
+        "value": "USD"
+      },
+      "d": {
+        "type": "date",
+        "value": "2026-03-02"
+      }
+    },
+    "fn": "calc.example.net/e"
+  },
+  "asof": "2026-06-01T00:00:00.000000Z",
+  "receipt_hash": "da3c0847cd2a1cb71c1b67fd32ab621540498e43e6a162a4c9f6b7d55b241af1",
+  "value": {
+    "type": "number",
+    "value": "1.106677466863033873343151693667158"
+  },
+  "lineage": [
+    "2178f7ebb774dcc8879728df8ec474ea21753d67edf3115d72b14c8ffa77b41c",
+    "3de629c59e93738b6c0ac0541cea83065f3eb26e1ca22b7597944403238f6840",
+    "42a2b9978ca555f116e4aa0dace52ec3a6d1080b40d550aafe56c22e250ccaa1"
+  ],
+  "tx": "2026-03-02T16:00:00.000000Z",
+  "receipt_asof": "2026-03-02T16:00:00.000000Z",
+  "fuel_used": 19
+}

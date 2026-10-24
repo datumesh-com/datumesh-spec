@@ -1,0 +1,10 @@
+{
+  "id": "slice/range-number",
+  "kind": "slice",
+  "description": "A number range.",
+  "valid": true,
+  "input": "{\n  \"ns\": \"data.example.org\",\n  \"fn_hash\": \"f6e604b03d95ce22a58763d68ba60547ca5a315d34227f14747aa9da36912f9b\",\n  \"fn\": \"sized\",\n  \"args\": {\n    \"size\": {\n      \"type\": \"number\",\n      \"lo\": \"1.5\",\n      \"hi\": \"2\"\n    }\n  }\n}",
+  "canonical": "{\"args\":{\"size\":{\"hi\":\"2\",\"lo\":\"1.5\",\"type\":\"number\"}},\"fn\":\"sized\",\"fn_hash\":\"f6e604b03d95ce22a58763d68ba60547ca5a315d34227f14747aa9da36912f9b\",\"ns\":\"data.example.org\"}",
+  "sha256": "f0cae252347a43175aa28aeadf6bb996d31c41134aff07e8dedd1821e1f0ca78",
+  "slice_id": "f0cae252347a43175aa28aeadf6bb996d31c41134aff07e8dedd1821e1f0ca78"
+}

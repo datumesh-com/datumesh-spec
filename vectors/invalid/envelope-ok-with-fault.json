@@ -1,0 +1,13 @@
+{
+  "id": "invalid/envelope-ok-with-fault",
+  "kind": "envelope",
+  "description": "fault belongs to not_covered only.",
+  "valid": false,
+  "input": "{\"fault\": \"E_FORMULA_DIV_ZERO\", \"outcome\": \"unlicensed\"}",
+  "status": 403,
+  "keys": {},
+  "request": {
+    "cell_id": "f3d317bcf19ebe4e2fdd4a1978ecbe904a33abd3398c48e6d9b8e79e13209a14"
+  },
+  "error": "E_ENVELOPE"
+}

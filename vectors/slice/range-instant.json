@@ -1,0 +1,10 @@
+{
+  "id": "slice/range-instant",
+  "kind": "slice",
+  "description": "An instant range, as a bounded lookup records it.",
+  "valid": true,
+  "input": "{\n  \"ns\": \"weather.example.org\",\n  \"fn_hash\": \"dde08ce4ae70eb8bb08cea18e3cad37b53a74efa186c4bd25db8d423f202f5c1\",\n  \"fn\": \"temp\",\n  \"args\": {\n    \"t\": {\n      \"type\": \"instant\",\n      \"lo\": \"2026-03-01T09:55:00.000000Z\",\n      \"hi\": \"2026-03-01T10:05:00.000000Z\"\n    },\n    \"station\": {\n      \"value\": \"kew\",\n      \"type\": \"string\"\n    }\n  }\n}",
+  "canonical": "{\"args\":{\"station\":{\"type\":\"string\",\"value\":\"kew\"},\"t\":{\"hi\":\"2026-03-01T10:05:00.000000Z\",\"lo\":\"2026-03-01T09:55:00.000000Z\",\"type\":\"instant\"}},\"fn\":\"temp\",\"fn_hash\":\"dde08ce4ae70eb8bb08cea18e3cad37b53a74efa186c4bd25db8d423f202f5c1\",\"ns\":\"weather.example.org\"}",
+  "sha256": "6e18a38e2a6abd4bd78ae3d1028c6d3610132f7404da5ffec85dd841d2fb07dd",
+  "slice_id": "6e18a38e2a6abd4bd78ae3d1028c6d3610132f7404da5ffec85dd841d2fb07dd"
+}

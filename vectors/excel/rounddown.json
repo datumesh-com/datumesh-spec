@@ -1,0 +1,43 @@
+{
+  "id": "excel/rounddown",
+  "kind": "excel",
+  "description": "=ROUNDDOWN(-3.7,0) is supported as round_down(-3.7).",
+  "valid": true,
+  "excel": "=ROUNDDOWN(-3.7,0)",
+  "doc": "https://support.microsoft.com/en-us/excel/functions/rounddown-function",
+  "documentation_derived": true,
+  "status": "supported",
+  "sample": "",
+  "excel_result": {
+    "type": "number",
+    "value": "-3"
+  },
+  "formula": "round_down(-3.7)",
+  "signature": {
+    "args": {},
+    "order": [],
+    "returns": {
+      "type": "number",
+      "unit": "1"
+    }
+  },
+  "world": {
+    "functions": {},
+    "receipts": []
+  },
+  "cell": {
+    "args": {},
+    "fn": "sheet.example.net/case"
+  },
+  "asof": "2026-06-01T00:00:00.000000Z",
+  "receipt_hash": "84ec2233e8d38ff2ba40a8b45858dccb4586fcda5fcce27ed78fc656c2c96e6e",
+  "body": "round_down(-3.7)\n",
+  "value": {
+    "type": "number",
+    "value": "-3"
+  },
+  "lineage": [],
+  "tx": "0001-01-01T00:00:00.000000Z",
+  "receipt_asof": "0001-01-01T00:00:00.000000Z",
+  "fuel_used": 3
+}

@@ -1,0 +1,29 @@
+{
+  "id": "invalid/formula-keyword-argument",
+  "kind": "formula",
+  "description": "A formula's argument cannot be a keyword.",
+  "valid": false,
+  "input": "1",
+  "env": {
+    "aliases": {},
+    "functions": {},
+    "name": "calc.example.net/f",
+    "signature": {
+      "args": {
+        "in": {
+          "type": "number",
+          "valid": false,
+          "unit": "1"
+        }
+      },
+      "order": [
+        "in"
+      ],
+      "returns": {
+        "type": "number",
+        "unit": "1"
+      }
+    }
+  },
+  "error": "E_FORMULA_RESERVED"
+}

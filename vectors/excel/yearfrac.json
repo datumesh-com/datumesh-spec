@@ -1,0 +1,43 @@
+{
+  "id": "excel/yearfrac",
+  "kind": "excel",
+  "description": "=YEARFRAC(DATE(2024,1,1),DATE(2024,7,1),0) is partial as year_fraction(2024-01-01, 2024-07-01, \"30/360_us\"). Basis 0 (US 30/360).",
+  "valid": true,
+  "excel": "=YEARFRAC(DATE(2024,1,1),DATE(2024,7,1),0)",
+  "doc": "https://support.microsoft.com/en-us/excel/functions/yearfrac-function",
+  "documentation_derived": true,
+  "status": "partial",
+  "sample": "Basis 0 (US 30/360).",
+  "excel_result": {
+    "type": "number",
+    "value": "0.5"
+  },
+  "formula": "year_fraction(2024-01-01, 2024-07-01, \"30/360_us\")",
+  "signature": {
+    "args": {},
+    "order": [],
+    "returns": {
+      "type": "number",
+      "unit": "1"
+    }
+  },
+  "world": {
+    "functions": {},
+    "receipts": []
+  },
+  "cell": {
+    "args": {},
+    "fn": "sheet.example.net/case"
+  },
+  "asof": "2026-06-01T00:00:00.000000Z",
+  "receipt_hash": "05e4a0cdcdf02f5e2689dd19a5ce04f8450de56e398fd7fdcc17578195bab54b",
+  "body": "year_fraction(2024-01-01, 2024-07-01, \"30/360_us\")\n",
+  "value": {
+    "type": "number",
+    "value": "0.5"
+  },
+  "lineage": [],
+  "tx": "0001-01-01T00:00:00.000000Z",
+  "receipt_asof": "0001-01-01T00:00:00.000000Z",
+  "fuel_used": 3
+}

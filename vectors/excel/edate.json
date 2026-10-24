@@ -1,0 +1,40 @@
+{
+  "id": "excel/edate",
+  "kind": "excel",
+  "description": "=EDATE(DATE(2024,1,31),1) is supported as add_months(2024-01-31, 1).",
+  "valid": true,
+  "excel": "=EDATE(DATE(2024,1,31),1)",
+  "doc": "https://support.microsoft.com/en-us/excel/functions/edate-function",
+  "documentation_derived": true,
+  "status": "supported",
+  "sample": "",
+  "excel_result": {
+    "type": "date",
+    "value": "2024-02-29"
+  },
+  "formula": "add_months(2024-01-31, 1)",
+  "signature": {
+    "args": {},
+    "order": [],
+    "returns": "date"
+  },
+  "world": {
+    "functions": {},
+    "receipts": []
+  },
+  "cell": {
+    "args": {},
+    "fn": "sheet.example.net/case"
+  },
+  "asof": "2026-06-01T00:00:00.000000Z",
+  "receipt_hash": "e20428fcb523e7dfac13e7717bda0ea2c131c7f612f1fd957d77e2b34b6b933d",
+  "body": "add_months(2024-01-31, 1)\n",
+  "value": {
+    "type": "date",
+    "value": "2024-02-29"
+  },
+  "lineage": [],
+  "tx": "0001-01-01T00:00:00.000000Z",
+  "receipt_asof": "0001-01-01T00:00:00.000000Z",
+  "fuel_used": 3
+}

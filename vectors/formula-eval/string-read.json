@@ -1,0 +1,207 @@
+{
+  "id": "formula-eval/string-read",
+  "kind": "formula-eval",
+  "description": "data.example.org/name(s) & \" (\" & text(year(data.example.org/incorporated(s))) & \")\"  (with s = acme)",
+  "valid": true,
+  "world": {
+    "functions": {
+      "calc.example.net/e": {
+        "bound": "2026-01-01T00:00:00.000000Z",
+        "descriptor": {
+          "code": {
+            "body": "data.example.org/name(company: s) & \" (\" & text(year(data.example.org/incorporated(company: s))) & \")\"\n",
+            "lang": "formula"
+          },
+          "inputs": [
+            "data.example.org/incorporated",
+            "data.example.org/name"
+          ],
+          "signature": {
+            "args": {
+              "s": {
+                "type": "string",
+                "valid": false
+              }
+            },
+            "order": [
+              "s"
+            ],
+            "returns": "string"
+          }
+        }
+      },
+      "data.example.org/incorporated": {
+        "bound": "2026-01-01T00:00:00.000000Z",
+        "descriptor": {
+          "code": {
+            "body": "",
+            "lang": "stored"
+          },
+          "inputs": [],
+          "signature": {
+            "args": {
+              "company": {
+                "type": "string",
+                "valid": false
+              }
+            },
+            "returns": "date",
+            "order": [
+              "company"
+            ]
+          }
+        }
+      },
+      "data.example.org/name": {
+        "bound": "2026-01-01T00:00:00.000000Z",
+        "descriptor": {
+          "code": {
+            "body": "",
+            "lang": "stored"
+          },
+          "inputs": [],
+          "signature": {
+            "args": {
+              "company": {
+                "type": "string",
+                "valid": false
+              }
+            },
+            "returns": "string",
+            "order": [
+              "company"
+            ]
+          }
+        }
+      }
+    },
+    "receipts": [
+      {
+        "asof": "2026-01-10T00:00:00.000000Z",
+        "cell": {
+          "args": {
+            "company": {
+              "type": "string",
+              "value": "acme"
+            }
+          },
+          "fn": "name",
+          "fn_hash": "2afac00402e42feac03417ce4cc331d1458a4b16586a73c436107db265eca670",
+          "ns": "data.example.org"
+        },
+        "computed_by": "data.example.org#efb20f82a7e15e96",
+        "inputs": [],
+        "issued": "2026-01-10T00:00:00.000000Z",
+        "licence": "CC-BY-4.0",
+        "proto": "datumesh/1",
+        "publisher": "data.example.org",
+        "summary": "A recorded value of name.",
+        "tx": "2026-01-10T00:00:00.000000Z",
+        "type": "string",
+        "valid": {},
+        "value": "Acme Ltd",
+        "sig": "bfebf5e0dc8dfa4c603ce02c1d7c421585d3b9aae7cf39c592ea7ae4e8bf2bf935e7ad5397c5ffa230a9b78cd1f56a1077a737245713f6b4c3f6ed7dba9ca60b"
+      },
+      {
+        "asof": "2026-01-10T00:00:00.000000Z",
+        "cell": {
+          "args": {
+            "company": {
+              "type": "string",
+              "value": "acme"
+            }
+          },
+          "fn": "incorporated",
+          "fn_hash": "1775769febfc52bd269de5e0e335f87b9948f846b88d4f62ec2e39e052165bf9",
+          "ns": "data.example.org"
+        },
+        "computed_by": "data.example.org#efb20f82a7e15e96",
+        "inputs": [],
+        "issued": "2026-01-10T00:00:00.000000Z",
+        "licence": "CC-BY-4.0",
+        "proto": "datumesh/1",
+        "publisher": "data.example.org",
+        "summary": "A recorded value of incorporated.",
+        "tx": "2026-01-10T00:00:00.000000Z",
+        "type": "date",
+        "valid": {},
+        "value": "1999-05-17",
+        "sig": "5e79473343947744873135d981f60a2e98053a66ba248796fecde00b4dc54e699d5d99b9825cf65513777cbe666452369b1cebe2edb3a0238e6faa24f42f1107"
+      },
+      {
+        "asof": "2026-01-10T00:00:00.000000Z",
+        "cell": {
+          "args": {
+            "company": {
+              "type": "string",
+              "value": "globex"
+            }
+          },
+          "fn": "name",
+          "fn_hash": "2afac00402e42feac03417ce4cc331d1458a4b16586a73c436107db265eca670",
+          "ns": "data.example.org"
+        },
+        "computed_by": "data.example.org#efb20f82a7e15e96",
+        "inputs": [],
+        "issued": "2026-01-10T00:00:00.000000Z",
+        "licence": "CC-BY-4.0",
+        "proto": "datumesh/1",
+        "publisher": "data.example.org",
+        "summary": "A recorded value of name.",
+        "tx": "2026-01-10T00:00:00.000000Z",
+        "type": "string",
+        "valid": {},
+        "value": "Globex Corp",
+        "sig": "a618347582cfaa67112936c9aebfafb59b7cd75263ff8ef5f240814d95b532967fcde9ac68aaa08c13511ffb592494ab740863e6843c990343c3eaed4f972c07"
+      },
+      {
+        "asof": "2026-01-10T00:00:00.000000Z",
+        "cell": {
+          "args": {
+            "company": {
+              "type": "string",
+              "value": "globex"
+            }
+          },
+          "fn": "incorporated",
+          "fn_hash": "1775769febfc52bd269de5e0e335f87b9948f846b88d4f62ec2e39e052165bf9",
+          "ns": "data.example.org"
+        },
+        "computed_by": "data.example.org#efb20f82a7e15e96",
+        "inputs": [],
+        "issued": "2026-01-10T00:00:00.000000Z",
+        "licence": "CC-BY-4.0",
+        "proto": "datumesh/1",
+        "publisher": "data.example.org",
+        "summary": "A recorded value of incorporated.",
+        "tx": "2026-01-10T00:00:00.000000Z",
+        "type": "date",
+        "valid": {},
+        "value": "2004-11-30",
+        "sig": "1f543227f234d2e3956103586ec0691d7b440a16af6e6bf14eee51163877647be53fbd836a95a96c3d186b0f2b2406870b4b191994475bfbd086d8a895dbd50e"
+      }
+    ]
+  },
+  "cell": {
+    "args": {
+      "s": {
+        "type": "string",
+        "value": "acme"
+      }
+    },
+    "fn": "calc.example.net/e"
+  },
+  "asof": "2026-06-01T00:00:00.000000Z",
+  "receipt_hash": "4234094829a6ef6fd57ca6ae99554865e906aabb8b06e278e1dcfb2950f12f77",
+  "value": {
+    "type": "string",
+    "value": "Acme Ltd (1999)"
+  },
+  "lineage": [
+    "e0cd3e7983179c37b47f33bf2580a7efa3fca5c47761e343cc34c4191f0444e7",
+    "e79f0def1d824e2c5406ab5d225a5f208e824b20409759b007e167997d9fb858"
+  ],
+  "tx": "2026-01-10T00:00:00.000000Z",
+  "receipt_asof": "2026-01-10T00:00:00.000000Z",
+  "fuel_used": 13
+}

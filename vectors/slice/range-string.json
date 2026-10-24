@@ -1,0 +1,10 @@
+{
+  "id": "slice/range-string",
+  "kind": "slice",
+  "description": "A string range (code point order).",
+  "valid": true,
+  "input": "{\n  \"ns\": \"data.example.org\",\n  \"fn_hash\": \"2afac00402e42feac03417ce4cc331d1458a4b16586a73c436107db265eca670\",\n  \"fn\": \"name\",\n  \"args\": {\n    \"company\": {\n      \"type\": \"string\",\n      \"lo\": \"a\",\n      \"hi\": \"m\"\n    }\n  }\n}",
+  "canonical": "{\"args\":{\"company\":{\"hi\":\"m\",\"lo\":\"a\",\"type\":\"string\"}},\"fn\":\"name\",\"fn_hash\":\"2afac00402e42feac03417ce4cc331d1458a4b16586a73c436107db265eca670\",\"ns\":\"data.example.org\"}",
+  "sha256": "6bf78be8e5d021bde62b75190346d0fccad7ccf0f5d27dcd93d9754335b62a68",
+  "slice_id": "6bf78be8e5d021bde62b75190346d0fccad7ccf0f5d27dcd93d9754335b62a68"
+}

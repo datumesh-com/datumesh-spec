@@ -1,0 +1,40 @@
+{
+  "id": "formula-eval/asof-value",
+  "kind": "formula-eval",
+  "description": "asof()  (with no arguments)",
+  "valid": true,
+  "world": {
+    "functions": {
+      "calc.example.net/e": {
+        "bound": "2026-01-01T00:00:00.000000Z",
+        "descriptor": {
+          "code": {
+            "body": "asof()\n",
+            "lang": "formula"
+          },
+          "inputs": [],
+          "signature": {
+            "args": {},
+            "order": [],
+            "returns": "instant"
+          }
+        }
+      }
+    },
+    "receipts": []
+  },
+  "cell": {
+    "args": {},
+    "fn": "calc.example.net/e"
+  },
+  "asof": "2026-03-01T10:09:00.000000Z",
+  "receipt_hash": "a9b62fcc7fbd5b3a3f0bd55bcb0a29f1ce0202c061a11549607ead4bc368c979",
+  "value": {
+    "type": "instant",
+    "value": "2026-03-01T10:09:00.000000Z"
+  },
+  "lineage": [],
+  "tx": "0001-01-01T00:00:00.000000Z",
+  "receipt_asof": "2026-03-01T10:09:00.000000Z",
+  "fuel_used": 1
+}

@@ -28,7 +28,7 @@
     },
     "string": {
       "type": "string",
-      "pattern": "^[^\u0000-\u001f\u007f-\u009f]*$",
+      "pattern": "^[^\u0000-\u001f-]*$",
       "maxLength": 1024
     },
     "type": {
@@ -636,13 +636,18 @@
             "cd",
             "cm",
             "count",
+            "d",
+            "deg",
             "degC",
+            "h",
             "hPa",
             "kWh",
             "kg",
+            "km",
             "km/h",
             "m",
             "m/s",
+            "min",
             "mm",
             "mol",
             "percent",
@@ -709,6 +714,48 @@
           }
         }
       ]
+    },
+    "sliceEntry": {
+      "description": "A slice-as-lineage entry (SPEC.md 15.13): slice:<slice id>:<members hash>.",
+      "type": "string",
+      "pattern": "^slice:[0-9a-f]{64}:[0-9a-f]{64}$"
+    },
+    "inputEntry": {
+      "description": "An inputs entry: a receipt hash or a slice entry.",
+      "anyOf": [
+        {
+          "$ref": "#/$defs/hex64"
+        },
+        {
+          "$ref": "#/$defs/sliceEntry"
+        }
+      ]
+    },
+    "rangeObject": {
+      "description": "A range in a slice object (SPEC.md 15.13): inclusive ends in the type's lexical form.",
+      "type": "object",
+      "required": [
+        "hi",
+        "lo",
+        "type"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "hi": {
+          "type": "string"
+        },
+        "lo": {
+          "type": "string"
+        },
+        "type": {
+          "enum": [
+            "date",
+            "instant",
+            "number",
+            "string"
+          ]
+        }
+      }
     }
   }
 }

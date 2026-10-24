@@ -76,8 +76,10 @@ ERROR_CODES = (
     "E_INPUT_UNAVAILABLE",
     "E_INPUT_INVALID",
     "E_INPUT_UNDECLARED",
+    "E_SLICE_MEMBER",
     "E_VALUE_MISMATCH",
     "E_EVAL_UNAVAILABLE",
+    "E_INPUT_SUPERSEDED",
     "E_BLOB_MISMATCH",
     "E_ENVELOPE",
 )
@@ -95,6 +97,8 @@ LIMITS = {
     "licence_spdx": 64,  # characters
     "licence_url": 512,  # characters
     "keys": 64,  # keys in one key publication
+    "extent": 4096,  # values in an argument's extent
+    "members": 1048576,  # members in a slice manifest
 }
 
 TYPES = ("blob", "boolean", "date", "instant", "number", "string")
@@ -572,6 +576,18 @@ def check_key_ref(text, path):
     check_hex(kid, 16, path)
 
 
+_SLICE_ENTRY = re.compile(r"slice:[0-9a-f]{64}:[0-9a-f]{64}")
+
+
+def check_input_entry(entry, path):
+    """An inputs entry (SPEC 8.1, 15.13): a receipt hash, or slice:<slice id>:<members hash>."""
+    if entry.startswith("slice:"):
+        if not _SLICE_ENTRY.fullmatch(entry):
+            fail("E_CANON_HEX", "a slice entry is slice:<64 hex>:<64 hex>", path)
+        return
+    check_hex(entry, 64, path)
+
+
 def check_set(items, path):
     """A JSON array used as a set: ascending code point order, no duplicates."""
     for a, b in zip(items, items[1:]):
@@ -645,17 +661,29 @@ def shape_function(desc, path="$"):
 
 
 def shape_signature(sig, path):
-    _shape_object(sig, ("args", "returns"), (), path)
+    _shape_object(sig, ("args", "returns"), ("order",), path)
     if not isinstance(sig["args"], dict):
         fail("E_SCHEMA", "expected an object", f"{path}.args")
     for name, decl in sig["args"].items():
         p = f"{path}.args.{name}"
-        _shape_object(decl, ("type", "valid"), ("unit",), p)
+        _shape_object(decl, ("type", "valid"), ("extent", "unit"), p)
         _shape_str(decl, "type", p)
         if "unit" in decl:
             shape_unit(decl["unit"], f"{p}.unit")
         if not isinstance(decl["valid"], bool):
             fail("E_SCHEMA", "valid must be a boolean", f"{p}.valid")
+        if "extent" in decl:
+            ext = decl["extent"]
+            if isinstance(ext, list):
+                if not all(isinstance(v, str) for v in ext):
+                    fail("E_SCHEMA", "an extent array holds lexical values as strings", f"{p}.extent")
+            else:
+                _shape_object(ext, ("hi", "lo"), (), f"{p}.extent")
+                _shape_str(ext, "hi", f"{p}.extent")
+                _shape_str(ext, "lo", f"{p}.extent")
+    if "order" in sig:
+        if not isinstance(sig["order"], list) or not all(isinstance(n, str) for n in sig["order"]):
+            fail("E_SCHEMA", "order is an array of argument names", f"{path}.order")
     returns = sig["returns"]
     if isinstance(returns, dict):
         _shape_object(returns, ("type",), ("unit",), f"{path}.returns")
@@ -772,6 +800,12 @@ def check_function(desc, path="$"):
             fail("E_CANON_UNIT", "only number arguments have a unit", f"{p}.unit")
         if decl["valid"] and decl["type"] not in VALID_TIME_TYPES:
             fail("E_CANON_TYPE", "a valid-time argument must be a date, instant or string", p)
+        if "extent" in decl:
+            check_extent(decl, f"{p}.extent")
+    if "order" in desc["signature"]:
+        order = desc["signature"]["order"]
+        if len(order) != len(set(order)) or set(order) != set(args):
+            fail("E_CANON_SET", "order lists every argument exactly once", f"{path}.signature.order")
     p = f"{path}.signature.returns"
     returns = desc["signature"]["returns"]
     if isinstance(returns, str):
@@ -786,6 +820,40 @@ def check_function(desc, path="$"):
             fail("E_CANON_UNIT", "a number return declares its unit", p)
         check_unit(returns["unit"], args, f"{p}.unit")
     return desc
+
+
+def type_key(type_, lexical):
+    """The order of a type's values (SPEC 15.13): numbers numerically, the others by code point."""
+    if type_ == "number":
+        whole, _, frac = lexical.lstrip("-").partition(".")
+        from fractions import Fraction
+        value = Fraction(int(whole + frac), 10 ** len(frac))
+        return -value if lexical.startswith("-") else value
+    return lexical
+
+
+def check_extent(decl, path):
+    """An argument's declared extent (SPEC 7): its values, or a date or integer range."""
+    type_, ext = decl["type"], decl["extent"]
+    if type_ in ("boolean", "blob"):
+        fail("E_CANON_TYPE", f"a {type_} argument has no extent", path)
+    if isinstance(ext, list):
+        for i, v in enumerate(ext):
+            check_lexical(type_, v, f"{path}[{i}]")
+        for a, b in zip(ext, ext[1:]):
+            if not type_key(type_, a) < type_key(type_, b):
+                fail("E_CANON_SET", "extent values are strictly ascending in their type's order", path)
+        if len(ext) > LIMITS["extent"]:
+            fail("E_CANON_LIMIT", f"more than {LIMITS['extent']} extent values", path)
+        return
+    if type_ not in ("date", "number"):
+        fail("E_CANON_TYPE", "an extent range is for date and number arguments", path)
+    for end in ("hi", "lo"):
+        check_lexical(type_, ext[end], f"{path}.{end}")
+        if type_ == "number" and "." in ext[end]:
+            fail("E_CANON_NUMBER", "an extent range over numbers has integer ends", f"{path}.{end}")
+    if type_key(type_, ext["lo"]) > type_key(type_, ext["hi"]):
+        fail("E_CANON_SET", "an extent range has lo <= hi", path)
 
 
 def returns_type(desc):
@@ -863,7 +931,7 @@ def check_receipt_form(r, path="$"):
     check_cell(r["cell"], f"{path}.cell")
     check_key_ref(r["computed_by"], f"{path}.computed_by")
     for i, h in enumerate(r["inputs"]):
-        check_hex(h, 64, f"{path}.inputs[{i}]")
+        check_input_entry(h, f"{path}.inputs[{i}]")
     check_set(r["inputs"], f"{path}.inputs")
     if len(r["inputs"]) > LIMITS["inputs"]:
         fail("E_CANON_LIMIT", "too many inputs", f"{path}.inputs")
@@ -897,6 +965,138 @@ def check_receipt_form(r, path="$"):
     if not r["tx"] <= r["asof"] <= r["issued"]:
         fail("E_TIME_ORDER", "requires tx <= asof <= issued", path)
     return r
+
+
+# ---------------------------------------------------------------------------
+# Slice objects and manifests (SPEC 15.13): slice-as-lineage.
+
+RANGE_TYPES = ("date", "instant", "number", "string")
+
+
+def _is_version_slice(obj):
+    return isinstance(obj, dict) and set(obj) == {"cell", "from", "to"}
+
+
+def shape_slice(obj, path="$"):
+    if _is_version_slice(obj):
+        shape_cell(obj["cell"], f"{path}.cell")
+        _shape_str(obj, "from", path)
+        _shape_str(obj, "to", path)
+        return
+    _shape_object(obj, ("args", "fn", "fn_hash", "ns"), (), path)
+    if not isinstance(obj["args"], dict):
+        fail("E_SCHEMA", "expected an object", f"{path}.args")
+    for name, value in obj["args"].items():
+        p = f"{path}.args.{name}"
+        if value == SLICE:
+            continue
+        if isinstance(value, dict) and set(value) == {"hi", "lo", "type"}:
+            for key in ("hi", "lo", "type"):
+                _shape_str(value, key, p)
+            continue
+        shape_scalar(value, p)
+    for key in ("fn", "fn_hash", "ns"):
+        _shape_str(obj, key, path)
+
+
+def check_slice(obj, path="$"):
+    """A slice object: a cell with open (*) or ranged arguments, or a version slice."""
+    shape_slice(obj, path)
+    if _is_version_slice(obj):
+        check_cell(obj["cell"], f"{path}.cell")
+        for name in keys_in_order(obj["cell"]["args"]):
+            if obj["cell"]["args"][name] == SLICE:
+                fail("E_SLICE", "a version slice is of one cell", f"{path}.cell.args.{name}")
+        check_instant(obj["from"], f"{path}.from")
+        check_instant(obj["to"], f"{path}.to")
+        return obj
+    args = obj["args"]
+    if len(args) > LIMITS["args"]:
+        fail("E_CANON_LIMIT", f"more than {LIMITS['args']} arguments", f"{path}.args")
+    open_args = 0
+    for name in keys_in_order(args):
+        p = f"{path}.args.{name}"
+        check_arg_name(name, p)
+        value = args[name]
+        if value == SLICE:
+            open_args += 1
+        elif "lo" in value:
+            open_args += 1
+            check_type_name(value["type"], f"{p}.type")
+            if value["type"] not in RANGE_TYPES:
+                fail("E_CANON_TYPE", f"a {value['type']} argument has no range", f"{p}.type")
+            check_lexical(value["type"], value["hi"], f"{p}.hi")
+            check_lexical(value["type"], value["lo"], f"{p}.lo")
+        else:
+            check_scalar(value, p)
+    check_name(obj["fn"], f"{path}.fn")
+    check_hex(obj["fn_hash"], 64, f"{path}.fn_hash")
+    check_namespace(obj["ns"], f"{path}.ns")
+    check_function_name(obj["ns"] + "/" + obj["fn"], path)
+    if not open_args:
+        fail("E_SLICE", "a slice object has an open or ranged argument", f"{path}.args")
+    return obj
+
+
+def shape_manifest(m, path="$"):
+    _shape_object(m, ("members", "slice"), (), path)
+    if not isinstance(m["members"], list) or not all(isinstance(h, str) for h in m["members"]):
+        fail("E_SCHEMA", "members is an array of receipt hashes", f"{path}.members")
+    shape_slice(m["slice"], f"{path}.slice")
+
+
+def check_manifest(m, path="$"):
+    """A slice manifest {members, slice} (SPEC 15.13)."""
+    shape_manifest(m, path)
+    for i, h in enumerate(m["members"]):
+        check_hex(h, 64, f"{path}.members[{i}]")
+    check_set(m["members"], f"{path}.members")
+    if len(m["members"]) > LIMITS["members"]:
+        fail("E_CANON_LIMIT", f"more than {LIMITS['members']} members", f"{path}.members")
+    check_slice(m["slice"], f"{path}.slice")
+    return m
+
+
+def slice_id(obj):
+    return sha256_hex(jcs(obj))
+
+
+def members_hash(members):
+    return sha256_hex(jcs(list(members)))
+
+
+def slice_entry(obj, members):
+    return f"slice:{slice_id(obj)}:{members_hash(sorted(members, key=_utf16_key))}"
+
+
+def slice_function(obj):
+    cell = obj["cell"] if _is_version_slice(obj) else obj
+    return cell["ns"] + "/" + cell["fn"]
+
+
+def is_slice_member(obj, receipt):
+    """Whether a receipt's cell belongs to a slice object (10.1 step 7.5); for a version slice,
+    the same cell with tx in [from, to]."""
+    cell = receipt["cell"]
+    if _is_version_slice(obj):
+        return cell == obj["cell"] and obj["from"] <= receipt["tx"] <= obj["to"]
+    if (cell["ns"], cell["fn"], cell["fn_hash"]) != (obj["ns"], obj["fn"], obj["fn_hash"]):
+        return False
+    if set(cell["args"]) != set(obj["args"]):
+        return False
+    for name, pattern in obj["args"].items():
+        value = cell["args"][name]
+        if pattern == SLICE:
+            continue
+        if "lo" in pattern:
+            if value["type"] != pattern["type"]:
+                return False
+            t = pattern["type"]
+            if not type_key(t, pattern["lo"]) <= type_key(t, value["value"]) <= type_key(t, pattern["hi"]):
+                return False
+        elif value != pattern:
+            return False
+    return True
 
 
 def receipt_payload(r):
@@ -1181,7 +1381,10 @@ def verify_receipt(data, keyenv, recompute=None, blob=None):
         fail("E_SIGNATURE", "Ed25519 verification failed", "$.sig")
     result = {"hash": receipt_hash(r), "key": r["computed_by"], "level": "signed"}
     if recompute is not None:  # step 7
-        if _recompute(r, recompute, keyenv):
+        outcome = _recompute(r, recompute, keyenv)
+        if outcome == "superseded":  # step 7.6: an input was superseded; not a failure
+            result["code"] = "E_INPUT_SUPERSEDED"
+        elif outcome:
             result["level"] = "recomputed"
         else:  # step 7.6 could not run: not a failure
             result["code"] = "E_EVAL_UNAVAILABLE"
@@ -1219,6 +1422,9 @@ def _recompute(r, recompute, keyenv):
     supplied = recompute.get("inputs", {})
     input_tx = []
     for h in r["inputs"]:
+        if h.startswith("slice:"):
+            input_tx.extend(_check_slice_input(r, h, desc, recompute, keyenv))
+            continue
         if h not in supplied:
             fail("E_INPUT_UNAVAILABLE", f"input receipt {h} not available", "$.inputs")
         try:
@@ -1238,8 +1444,75 @@ def _recompute(r, recompute, keyenv):
     if "value" not in recompute:  # step 7.6: the function cannot be evaluated
         return False
     if recompute["value"] != {"type": r["type"], "value": r["value"]}:
+        if "lineage" in recompute and _superseded(r, recompute, keyenv):
+            return "superseded"  # historical, not wrong (step 7.6, D62)
         fail("E_VALUE_MISMATCH", "recomputed value differs from the receipt", "$.value")
     return True
+
+
+def _check_slice_input(r, entry, desc, recompute, keyenv):
+    """Step 7.5 for a slice entry: the manifest, then every member. Returns the members' tx."""
+    _, sid, mh = entry.split(":")
+    manifests = recompute.get("manifests", {})
+    if entry not in manifests:
+        fail("E_INPUT_UNAVAILABLE", f"no manifest for {entry}", "$.inputs")
+    text = manifests[entry]
+    m = parse_json(text.encode("utf-8") if isinstance(text, str) else text)
+    check_manifest(m, "$.manifest")
+    if slice_id(m["slice"]) != sid or members_hash(m["members"]) != mh:
+        fail("E_INPUT_UNAVAILABLE", "the manifest offered does not hash to the entry", "$.inputs")
+    if slice_function(m["slice"]) not in desc["inputs"]:
+        fail("E_INPUT_UNDECLARED", f"the slice {entry} is of an undeclared function", "$.inputs")
+    supplied = recompute.get("inputs", {})
+    version = _is_version_slice(m["slice"])
+    seen, txs = set(), []
+    for h in m["members"]:
+        if h not in supplied:
+            fail("E_INPUT_UNAVAILABLE", f"member receipt {h} not available", "$.inputs")
+        try:
+            verify_receipt(supplied[h], keyenv)
+            ir = parse_json(supplied[h])
+        except DatumeshError as e:
+            fail("E_INPUT_INVALID", f"member {h}: {e}", "$.inputs")
+        if receipt_hash(ir) != h:
+            fail("E_INPUT_UNAVAILABLE", f"supplied receipt does not hash to {h}", "$.inputs")
+        cid = sha256_hex(jcs(ir["cell"]))
+        if not is_slice_member(m["slice"], ir) or (not version and cid in seen):
+            fail("E_SLICE_MEMBER", f"member {h} does not belong to the slice once", "$.inputs")
+        seen.add(cid)
+        if not ir["asof"] <= r["asof"]:
+            fail("E_TIME_ORDER", "a member receipt's asof is after the receipt's asof", "$.inputs")
+        txs.append(ir["tx"])
+    return txs
+
+
+def _superseded(r, recompute, keyenv):
+    """Whether the evaluation's lineage replaces an input by a later version of the same cell, or
+    a slice entry by the same slice with other members (step 7.6)."""
+    lineage = recompute["lineage"]
+    supplied = recompute.get("inputs", {})
+    listed = set(r["inputs"])
+    new = [e for e in lineage if e not in listed]
+    for e in r["inputs"]:
+        if e in lineage:
+            continue
+        if e.startswith("slice:"):
+            sid = e.split(":")[1]
+            if any(n.startswith(f"slice:{sid}:") for n in new):
+                return True
+            continue
+        old = parse_json(supplied[e].encode("utf-8") if isinstance(supplied[e], str) else supplied[e])
+        for n in new:
+            if n.startswith("slice:") or n not in supplied:
+                continue
+            try:
+                verify_receipt(supplied[n], keyenv)
+            except DatumeshError:
+                continue
+            nr = parse_json(supplied[n].encode("utf-8") if isinstance(supplied[n], str) else supplied[n])
+            if receipt_hash(nr) == n and nr["cell"] == old["cell"] and nr["tx"] > old["tx"]:
+                return True
+    return False
 
 
 # ---------------------------------------------------------------------------
@@ -1249,7 +1522,7 @@ def _recompute(r, recompute, keyenv):
 ENVELOPE_MEMBERS = {  # outcome -> (required, optional)
     "ok": (("outcome", "receipt", "trust"), ("reason", "superseded_by")),
     "stale": (("age_seconds", "outcome", "receipt", "trust"), ("reason", "superseded_by")),
-    "not_covered": (("outcome",), ()),
+    "not_covered": (("outcome",), ("fault",)),
     "unlicensed": (("outcome",), ()),
     "payment_required": (("outcome", "quote"), ()),
     "rate_limited": (("outcome", "retry_after_seconds"), ()),
@@ -1269,6 +1542,9 @@ URI_CODES = (
 )
 _INTEGER = re.compile(r"0|[1-9][0-9]*")
 TRUST = ("primary", "verified", "unverified")
+# The faults a not_covered envelope may carry (SPEC 5.5, 15.11): a computed cell with no value.
+FORMULA_FAULTS = ("E_FORMULA_DIV_ZERO", "E_FORMULA_DOMAIN", "E_FORMULA_RANGE", "E_FORMULA_EMPTY",
+                  "E_FORMULA_ABSENT", "E_FORMULA_FUTURE")
 
 
 def _seconds(value):
@@ -1317,6 +1593,8 @@ def _check_envelope_members(env):
     if "superseded_by" in env:
         _shape_str(env, "superseded_by", "$")
         check_hex(env["superseded_by"], 64, "$.superseded_by")
+    if "fault" in env and env["fault"] not in FORMULA_FAULTS:
+        fail("E_ENVELOPE", "fault is a formula evaluation fault code (SPEC 15.11)", "$.fault")
     if "trust" in env and env["trust"] not in TRUST:
         fail("E_ENVELOPE", f"trust is one of {', '.join(TRUST)}", "$.trust")
 
@@ -1397,6 +1675,23 @@ def run_vector(vec):
             return {"unit": resolved_unit(obj["descriptor"], obj["cell"])}
         if kind == "envelope":
             return check_envelope(vec["status"], vector_input(vec), vec["keys"], vec["request"])
+        if kind == "slice":
+            obj = parse_json(vector_input(vec))
+            if isinstance(obj, dict) and "members" in obj:
+                check_manifest(obj)
+                canonical = jcs(obj)
+                return {"canonical": canonical.decode(), "sha256": sha256_hex(canonical),
+                        "slice_id": slice_id(obj["slice"]), "members_hash": members_hash(obj["members"]),
+                        "entry": slice_entry(obj["slice"], obj["members"])}
+            check_slice(obj)
+            canonical = jcs(obj)
+            return {"canonical": canonical.decode(), "sha256": sha256_hex(canonical), "slice_id": slice_id(obj)}
+        if kind == "decimal":
+            import fdecimal  # the dialect's decimal arithmetic (SPEC 15.9)
+            return {"results": [fdecimal.run_case(vec["op"], case) for case in vec["cases"]]}
+        if kind in ("formula", "formula-eval", "excel"):
+            import formula  # the dialect's reference implementation (SPEC 15)
+            return formula.run_vector(vec)
         if kind == "receipt":
             blob = bytes.fromhex(vec["blob_hex"]) if "blob_hex" in vec else None
             result = verify_receipt(vector_input(vec), vec["keys"], vec.get("recompute"), blob)
@@ -1419,7 +1714,9 @@ def run_vector(vec):
 
 
 OUTPUT_FIELDS = ("canonical", "sha256", "object", "uri", "https", "key_id", "key_ids", "sig", "level",
-                 "blob_checked", "code", "unit", "outcome", "trust", "receipt_hash")
+                 "blob_checked", "code", "unit", "outcome", "trust", "receipt_hash",
+                 "slice_id", "members_hash", "entry", "ast", "ast_sha256", "body", "inputs", "returns",
+                 "asof_dependent", "value", "lineage", "tx", "receipt_asof", "fuel_used", "results")
 
 
 def check_vector(vec):
@@ -1444,6 +1741,8 @@ def check_vector(vec):
     else:
         if got.get("error") != vec["error"]:
             problems.append(f"expected {vec['error']}, got {got.get('detail', 'success')}")
+        elif "token" in vec and got.get("token") != vec["token"]:
+            problems.append(f"token: expected {vec['token']!r}, got {got.get('token')!r}")
     return problems
 
 

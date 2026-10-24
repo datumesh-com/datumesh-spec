@@ -1,0 +1,75 @@
+{
+  "id": "formula-eval/member-fault-caught",
+  "kind": "formula-eval",
+  "description": "otherwise(sum(math.example.net/recip(*)), 0)  (with no arguments)",
+  "valid": true,
+  "world": {
+    "functions": {
+      "calc.example.net/e": {
+        "bound": "2026-01-01T00:00:00.000000Z",
+        "descriptor": {
+          "code": {
+            "body": "otherwise(sum(math.example.net/recip(n: *)), 0)\n",
+            "lang": "formula"
+          },
+          "inputs": [
+            "math.example.net/recip"
+          ],
+          "signature": {
+            "args": {},
+            "order": [],
+            "returns": {
+              "type": "number",
+              "unit": "1"
+            }
+          }
+        }
+      },
+      "math.example.net/recip": {
+        "bound": "2026-01-01T00:00:00.000000Z",
+        "descriptor": {
+          "code": {
+            "body": "1 / n\n",
+            "lang": "formula"
+          },
+          "inputs": [],
+          "signature": {
+            "args": {
+              "n": {
+                "type": "number",
+                "valid": false,
+                "unit": "1",
+                "extent": {
+                  "hi": "3",
+                  "lo": "0"
+                }
+              }
+            },
+            "order": [
+              "n"
+            ],
+            "returns": {
+              "type": "number",
+              "unit": "1"
+            }
+          }
+        }
+      }
+    },
+    "receipts": []
+  },
+  "cell": {
+    "args": {},
+    "fn": "calc.example.net/e"
+  },
+  "asof": "2026-06-01T00:00:00.000000Z",
+  "receipt_hash": "80c16163a39fcfbd251b152a10bbc31a0bdd4b605c7485d0ad2415201dcc5ec1",
+  "value": {
+    "type": "number",
+    "value": "0"
+  },
+  "lineage": [],
+  "tx": "0001-01-01T00:00:00.000000Z",
+  "receipt_asof": "2026-01-01T00:00:00.000000Z",
+  "fuel_used": 7
+}

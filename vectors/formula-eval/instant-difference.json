@@ -1,0 +1,55 @@
+{
+  "id": "formula-eval/instant-difference",
+  "kind": "formula-eval",
+  "description": "t - 2026-03-01T00:00:00.000000Z  (with t = 2026-03-01T10:00:00.250000Z)",
+  "valid": true,
+  "world": {
+    "functions": {
+      "calc.example.net/e": {
+        "bound": "2026-01-01T00:00:00.000000Z",
+        "descriptor": {
+          "code": {
+            "body": "t - 2026-03-01T00:00:00.000000Z\n",
+            "lang": "formula"
+          },
+          "inputs": [],
+          "signature": {
+            "args": {
+              "t": {
+                "type": "instant",
+                "valid": true
+              }
+            },
+            "order": [
+              "t"
+            ],
+            "returns": {
+              "type": "number",
+              "unit": "s"
+            }
+          }
+        }
+      }
+    },
+    "receipts": []
+  },
+  "cell": {
+    "args": {
+      "t": {
+        "type": "instant",
+        "value": "2026-03-01T10:00:00.250000Z"
+      }
+    },
+    "fn": "calc.example.net/e"
+  },
+  "asof": "2026-06-01T00:00:00.000000Z",
+  "receipt_hash": "f2a34941f51dbdb5eccc72d291f7cd7bbd178eb63670fde3a92655544b22bd53",
+  "value": {
+    "type": "number",
+    "value": "36000.25"
+  },
+  "lineage": [],
+  "tx": "0001-01-01T00:00:00.000000Z",
+  "receipt_asof": "0001-01-01T00:00:00.000000Z",
+  "fuel_used": 3
+}

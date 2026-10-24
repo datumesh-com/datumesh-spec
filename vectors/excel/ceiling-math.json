@@ -1,0 +1,43 @@
+{
+  "id": "excel/ceiling-math",
+  "kind": "excel",
+  "description": "=CEILING.MATH(-3.5) is supported as ceiling(-3.5).",
+  "valid": true,
+  "excel": "=CEILING.MATH(-3.5)",
+  "doc": "https://support.microsoft.com/en-us/excel/functions/ceiling-math-function",
+  "documentation_derived": true,
+  "status": "supported",
+  "sample": "",
+  "excel_result": {
+    "type": "number",
+    "value": "-3"
+  },
+  "formula": "ceiling(-3.5)",
+  "signature": {
+    "args": {},
+    "order": [],
+    "returns": {
+      "type": "number",
+      "unit": "1"
+    }
+  },
+  "world": {
+    "functions": {},
+    "receipts": []
+  },
+  "cell": {
+    "args": {},
+    "fn": "sheet.example.net/case"
+  },
+  "asof": "2026-06-01T00:00:00.000000Z",
+  "receipt_hash": "7714f6caa88ab3f480a1e9d4e44bc02b0b63323a7055cea7f42fffe97bd45166",
+  "body": "ceiling(-3.5)\n",
+  "value": {
+    "type": "number",
+    "value": "-3"
+  },
+  "lineage": [],
+  "tx": "0001-01-01T00:00:00.000000Z",
+  "receipt_asof": "0001-01-01T00:00:00.000000Z",
+  "fuel_used": 3
+}

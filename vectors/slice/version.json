@@ -1,0 +1,10 @@
+{
+  "id": "slice/version",
+  "kind": "slice",
+  "description": "A version slice: one cell's versions with tx in [from, to].",
+  "valid": true,
+  "input": "{\n  \"to\": \"2026-05-01T00:00:00.000000Z\",\n  \"from\": \"2026-01-01T00:00:00.000000Z\",\n  \"cell\": {\n    \"ns\": \"data.example.org\",\n    \"fn_hash\": \"4193e310f5c949998b3f339d2ad56567286ebd0828504b3f31a2c671e99c71a7\",\n    \"fn\": \"price\",\n    \"args\": {\n      \"item\": {\n        \"value\": \"bolt\",\n        \"type\": \"string\"\n      }\n    }\n  }\n}",
+  "canonical": "{\"cell\":{\"args\":{\"item\":{\"type\":\"string\",\"value\":\"bolt\"}},\"fn\":\"price\",\"fn_hash\":\"4193e310f5c949998b3f339d2ad56567286ebd0828504b3f31a2c671e99c71a7\",\"ns\":\"data.example.org\"},\"from\":\"2026-01-01T00:00:00.000000Z\",\"to\":\"2026-05-01T00:00:00.000000Z\"}",
+  "sha256": "0afced7269ccc814c8d5ad0b581a1735bb5c7dd1ba9fd1317b0ca10dab231df7",
+  "slice_id": "0afced7269ccc814c8d5ad0b581a1735bb5c7dd1ba9fd1317b0ca10dab231df7"
+}

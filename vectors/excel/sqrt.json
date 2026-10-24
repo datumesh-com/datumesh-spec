@@ -1,0 +1,43 @@
+{
+  "id": "excel/sqrt",
+  "kind": "excel",
+  "description": "=SQRT(16) is supported as sqrt(16).",
+  "valid": true,
+  "excel": "=SQRT(16)",
+  "doc": "https://support.microsoft.com/en-us/excel/functions/sqrt-function",
+  "documentation_derived": true,
+  "status": "supported",
+  "sample": "",
+  "excel_result": {
+    "type": "number",
+    "value": "4"
+  },
+  "formula": "sqrt(16)",
+  "signature": {
+    "args": {},
+    "order": [],
+    "returns": {
+      "type": "number",
+      "unit": "1"
+    }
+  },
+  "world": {
+    "functions": {},
+    "receipts": []
+  },
+  "cell": {
+    "args": {},
+    "fn": "sheet.example.net/case"
+  },
+  "asof": "2026-06-01T00:00:00.000000Z",
+  "receipt_hash": "dad136e5752f13c4e7742fe10de0e0a95fba51c21693561f25f3f1acd497bce4",
+  "body": "sqrt(16)\n",
+  "value": {
+    "type": "number",
+    "value": "4"
+  },
+  "lineage": [],
+  "tx": "0001-01-01T00:00:00.000000Z",
+  "receipt_asof": "0001-01-01T00:00:00.000000Z",
+  "fuel_used": 12
+}

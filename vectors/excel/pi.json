@@ -1,0 +1,43 @@
+{
+  "id": "excel/pi",
+  "kind": "excel",
+  "description": "=ROUND(PI(),14) is supported as round(pi(), 14).",
+  "valid": true,
+  "excel": "=ROUND(PI(),14)",
+  "doc": "https://support.microsoft.com/en-us/excel/functions/pi-function",
+  "documentation_derived": true,
+  "status": "supported",
+  "sample": "",
+  "excel_result": {
+    "type": "number",
+    "value": "3.14159265358979"
+  },
+  "formula": "round(pi(), 14)",
+  "signature": {
+    "args": {},
+    "order": [],
+    "returns": {
+      "type": "number",
+      "unit": "1"
+    }
+  },
+  "world": {
+    "functions": {},
+    "receipts": []
+  },
+  "cell": {
+    "args": {},
+    "fn": "sheet.example.net/case"
+  },
+  "asof": "2026-06-01T00:00:00.000000Z",
+  "receipt_hash": "b6b9b30ed8c6dffee513c41cc8353b74b392b29977f9c64aa1114ff2bbf0c004",
+  "body": "round(pi(), digits: 14)\n",
+  "value": {
+    "type": "number",
+    "value": "3.14159265358979"
+  },
+  "lineage": [],
+  "tx": "0001-01-01T00:00:00.000000Z",
+  "receipt_asof": "0001-01-01T00:00:00.000000Z",
+  "fuel_used": 3
+}

@@ -1,0 +1,8 @@
+{
+  "id": "invalid/function-extent-boolean",
+  "kind": "function",
+  "description": "A boolean has no extent.",
+  "valid": false,
+  "input": "{\n  \"signature\": {\n    \"order\": [\n      \"base\",\n      \"quote\",\n      \"date\",\n      \"f\"\n    ],\n    \"returns\": {\n      \"unit\": {\n        \"per\": {\n          \"arg\": \"base\"\n        },\n        \"of\": {\n          \"arg\": \"quote\"\n        }\n      },\n      \"type\": \"number\"\n    },\n    \"args\": {\n      \"f\": {\n        \"extent\": [\n          \"false\",\n          \"true\"\n        ],\n        \"valid\": false,\n        \"type\": \"boolean\"\n      },\n      \"quote\": {\n        \"valid\": false,\n        \"type\": \"string\"\n      },\n      \"date\": {\n        \"valid\": true,\n        \"type\": \"date\"\n      },\n      \"base\": {\n        \"valid\": false,\n        \"type\": \"string\"\n      }\n    }\n  },\n  \"inputs\": [],\n  \"code\": {\n    \"lang\": \"stored\",\n    \"body\": \"\"\n  }\n}",
+  "error": "E_CANON_TYPE"
+}

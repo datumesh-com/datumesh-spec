@@ -1,0 +1,367 @@
+{
+  "id": "formula-eval/curve-slice",
+  "kind": "formula-eval",
+  "description": "sum(curve.example.net/df([1..10]))  (with no arguments)",
+  "valid": true,
+  "world": {
+    "functions": {
+      "calc.example.net/e": {
+        "bound": "2026-01-01T00:00:00.000000Z",
+        "descriptor": {
+          "code": {
+            "body": "sum(curve.example.net/df(tenor: [1..10]))\n",
+            "lang": "formula"
+          },
+          "inputs": [
+            "curve.example.net/df"
+          ],
+          "signature": {
+            "args": {},
+            "order": [],
+            "returns": {
+              "type": "number",
+              "unit": "1"
+            }
+          }
+        }
+      },
+      "curve.example.net/df": {
+        "bound": "2026-01-01T00:00:00.000000Z",
+        "descriptor": {
+          "code": {
+            "body": "if tenor = 1 then 1 / (1 + curve.example.net/par_rate(tenor: tenor)) else (1 - curve.example.net/par_rate(tenor: tenor) * sum(curve.example.net/df(tenor: [1..tenor - 1]))) / (1 + curve.example.net/par_rate(tenor: tenor))\n",
+            "lang": "formula"
+          },
+          "inputs": [
+            "curve.example.net/df",
+            "curve.example.net/par_rate"
+          ],
+          "signature": {
+            "args": {
+              "tenor": {
+                "type": "number",
+                "valid": false,
+                "unit": "1",
+                "extent": {
+                  "hi": "10",
+                  "lo": "1"
+                }
+              }
+            },
+            "order": [
+              "tenor"
+            ],
+            "returns": {
+              "type": "number",
+              "unit": "1"
+            }
+          }
+        }
+      },
+      "curve.example.net/par_rate": {
+        "bound": "2026-01-01T00:00:00.000000Z",
+        "descriptor": {
+          "code": {
+            "body": "",
+            "lang": "stored"
+          },
+          "inputs": [],
+          "signature": {
+            "args": {
+              "tenor": {
+                "type": "number",
+                "valid": false,
+                "unit": "1"
+              }
+            },
+            "returns": {
+              "type": "number",
+              "unit": "1"
+            },
+            "order": [
+              "tenor"
+            ]
+          }
+        }
+      }
+    },
+    "receipts": [
+      {
+        "asof": "2026-02-01T08:00:00.000000Z",
+        "cell": {
+          "args": {
+            "tenor": {
+              "type": "number",
+              "value": "1"
+            }
+          },
+          "fn": "par_rate",
+          "fn_hash": "6b4aa6383814be4a917cfc4f260cf978997f376707169a468d16f901ef2bc90e",
+          "ns": "curve.example.net"
+        },
+        "computed_by": "curve.example.net#9a72762ed570f43a",
+        "inputs": [],
+        "issued": "2026-02-01T08:00:00.000000Z",
+        "licence": "CC-BY-4.0",
+        "proto": "datumesh/1",
+        "publisher": "curve.example.net",
+        "summary": "A recorded value of par_rate.",
+        "tx": "2026-02-01T08:00:00.000000Z",
+        "type": "number",
+        "valid": {},
+        "value": "0.0125",
+        "sig": "d025578bde93a293e8fa38040622eb79ddc072348c6549ef07597484d769b0da7bd2b460a6403185086cce1e563b3f1076dbe17c5a7ec52e0d23d302eb690508"
+      },
+      {
+        "asof": "2026-02-01T08:00:00.000000Z",
+        "cell": {
+          "args": {
+            "tenor": {
+              "type": "number",
+              "value": "2"
+            }
+          },
+          "fn": "par_rate",
+          "fn_hash": "6b4aa6383814be4a917cfc4f260cf978997f376707169a468d16f901ef2bc90e",
+          "ns": "curve.example.net"
+        },
+        "computed_by": "curve.example.net#9a72762ed570f43a",
+        "inputs": [],
+        "issued": "2026-02-01T08:00:00.000000Z",
+        "licence": "CC-BY-4.0",
+        "proto": "datumesh/1",
+        "publisher": "curve.example.net",
+        "summary": "A recorded value of par_rate.",
+        "tx": "2026-02-01T08:00:00.000000Z",
+        "type": "number",
+        "valid": {},
+        "value": "0.015",
+        "sig": "375e240f65efbcb9177a1dbca43a62099aa53b048a3f5f66ffdd58425e0b60748524d743cffb0d4a204aac74e2eb3539b9408e3a2d08539decbd88c4c7240108"
+      },
+      {
+        "asof": "2026-02-01T08:00:00.000000Z",
+        "cell": {
+          "args": {
+            "tenor": {
+              "type": "number",
+              "value": "3"
+            }
+          },
+          "fn": "par_rate",
+          "fn_hash": "6b4aa6383814be4a917cfc4f260cf978997f376707169a468d16f901ef2bc90e",
+          "ns": "curve.example.net"
+        },
+        "computed_by": "curve.example.net#9a72762ed570f43a",
+        "inputs": [],
+        "issued": "2026-02-01T08:00:00.000000Z",
+        "licence": "CC-BY-4.0",
+        "proto": "datumesh/1",
+        "publisher": "curve.example.net",
+        "summary": "A recorded value of par_rate.",
+        "tx": "2026-02-01T08:00:00.000000Z",
+        "type": "number",
+        "valid": {},
+        "value": "0.0175",
+        "sig": "9975f52864e22bc3c3f5d49a5adc7f75dfde0d1d7ad5657a7926871b233e2c378d66f3b444635e222bf090e0751f37137e890c76ffc64fe4c84b9bc74b153305"
+      },
+      {
+        "asof": "2026-02-01T08:00:00.000000Z",
+        "cell": {
+          "args": {
+            "tenor": {
+              "type": "number",
+              "value": "4"
+            }
+          },
+          "fn": "par_rate",
+          "fn_hash": "6b4aa6383814be4a917cfc4f260cf978997f376707169a468d16f901ef2bc90e",
+          "ns": "curve.example.net"
+        },
+        "computed_by": "curve.example.net#9a72762ed570f43a",
+        "inputs": [],
+        "issued": "2026-02-01T08:00:00.000000Z",
+        "licence": "CC-BY-4.0",
+        "proto": "datumesh/1",
+        "publisher": "curve.example.net",
+        "summary": "A recorded value of par_rate.",
+        "tx": "2026-02-01T08:00:00.000000Z",
+        "type": "number",
+        "valid": {},
+        "value": "0.02",
+        "sig": "5554a66cbaceb2f03bddf2fdedbd5ad171a4947ac864ba23cc51313a271c2753f76c2780820e2cb136cc90ecde2ea8d1d1daea7ec5ed4e5651bc96eda8c24d0d"
+      },
+      {
+        "asof": "2026-02-01T08:00:00.000000Z",
+        "cell": {
+          "args": {
+            "tenor": {
+              "type": "number",
+              "value": "5"
+            }
+          },
+          "fn": "par_rate",
+          "fn_hash": "6b4aa6383814be4a917cfc4f260cf978997f376707169a468d16f901ef2bc90e",
+          "ns": "curve.example.net"
+        },
+        "computed_by": "curve.example.net#9a72762ed570f43a",
+        "inputs": [],
+        "issued": "2026-02-01T08:00:00.000000Z",
+        "licence": "CC-BY-4.0",
+        "proto": "datumesh/1",
+        "publisher": "curve.example.net",
+        "summary": "A recorded value of par_rate.",
+        "tx": "2026-02-01T08:00:00.000000Z",
+        "type": "number",
+        "valid": {},
+        "value": "0.0225",
+        "sig": "ae5c8f75757bf529e3a5126a7293de32cb42a5805eeb7b3ff54326cf376d990c7574f5c18faeb2e9d01d65158213dea423e64ee3efa911952e15512517729300"
+      },
+      {
+        "asof": "2026-02-01T08:00:00.000000Z",
+        "cell": {
+          "args": {
+            "tenor": {
+              "type": "number",
+              "value": "6"
+            }
+          },
+          "fn": "par_rate",
+          "fn_hash": "6b4aa6383814be4a917cfc4f260cf978997f376707169a468d16f901ef2bc90e",
+          "ns": "curve.example.net"
+        },
+        "computed_by": "curve.example.net#9a72762ed570f43a",
+        "inputs": [],
+        "issued": "2026-02-01T08:00:00.000000Z",
+        "licence": "CC-BY-4.0",
+        "proto": "datumesh/1",
+        "publisher": "curve.example.net",
+        "summary": "A recorded value of par_rate.",
+        "tx": "2026-02-01T08:00:00.000000Z",
+        "type": "number",
+        "valid": {},
+        "value": "0.025",
+        "sig": "1304fddcad663f74f625371980a7207d2d8e16bd302eadc808b4f30bab3270afdab663a0f6741d5b9c3e47b9fb6cfcfeca58c084d320bb8bf56ffd9f91cbcf01"
+      },
+      {
+        "asof": "2026-02-01T08:00:00.000000Z",
+        "cell": {
+          "args": {
+            "tenor": {
+              "type": "number",
+              "value": "7"
+            }
+          },
+          "fn": "par_rate",
+          "fn_hash": "6b4aa6383814be4a917cfc4f260cf978997f376707169a468d16f901ef2bc90e",
+          "ns": "curve.example.net"
+        },
+        "computed_by": "curve.example.net#9a72762ed570f43a",
+        "inputs": [],
+        "issued": "2026-02-01T08:00:00.000000Z",
+        "licence": "CC-BY-4.0",
+        "proto": "datumesh/1",
+        "publisher": "curve.example.net",
+        "summary": "A recorded value of par_rate.",
+        "tx": "2026-02-01T08:00:00.000000Z",
+        "type": "number",
+        "valid": {},
+        "value": "0.0275",
+        "sig": "a4349fae330aa6b44f673b181d7b4cd794f0049227d8949dcb4e0a50f942dc3bdac63ec8dba76a35cee4d621cc24648602a442f9f478eb8cb63fc1f23422aa0b"
+      },
+      {
+        "asof": "2026-02-01T08:00:00.000000Z",
+        "cell": {
+          "args": {
+            "tenor": {
+              "type": "number",
+              "value": "8"
+            }
+          },
+          "fn": "par_rate",
+          "fn_hash": "6b4aa6383814be4a917cfc4f260cf978997f376707169a468d16f901ef2bc90e",
+          "ns": "curve.example.net"
+        },
+        "computed_by": "curve.example.net#9a72762ed570f43a",
+        "inputs": [],
+        "issued": "2026-02-01T08:00:00.000000Z",
+        "licence": "CC-BY-4.0",
+        "proto": "datumesh/1",
+        "publisher": "curve.example.net",
+        "summary": "A recorded value of par_rate.",
+        "tx": "2026-02-01T08:00:00.000000Z",
+        "type": "number",
+        "valid": {},
+        "value": "0.03",
+        "sig": "17ca8bb2aab75918d9905f9dcdc960b3db63aca64ac633904e28fddb64cc466f38e0d9bdff69a1c5ebfc6de84ccf84c7e20cef52d70017de97296d769c5b0c0c"
+      },
+      {
+        "asof": "2026-02-01T08:00:00.000000Z",
+        "cell": {
+          "args": {
+            "tenor": {
+              "type": "number",
+              "value": "9"
+            }
+          },
+          "fn": "par_rate",
+          "fn_hash": "6b4aa6383814be4a917cfc4f260cf978997f376707169a468d16f901ef2bc90e",
+          "ns": "curve.example.net"
+        },
+        "computed_by": "curve.example.net#9a72762ed570f43a",
+        "inputs": [],
+        "issued": "2026-02-01T08:00:00.000000Z",
+        "licence": "CC-BY-4.0",
+        "proto": "datumesh/1",
+        "publisher": "curve.example.net",
+        "summary": "A recorded value of par_rate.",
+        "tx": "2026-02-01T08:00:00.000000Z",
+        "type": "number",
+        "valid": {},
+        "value": "0.0325",
+        "sig": "2a638b73b6c29fefb21d54237a76be5c8b6232569ed9f67bd1b587d192fbfa9ed86d438d7057d63706a0378dc89e9106dd41e142aa8df9f60b7077cd1b99ad03"
+      },
+      {
+        "asof": "2026-02-01T08:00:00.000000Z",
+        "cell": {
+          "args": {
+            "tenor": {
+              "type": "number",
+              "value": "10"
+            }
+          },
+          "fn": "par_rate",
+          "fn_hash": "6b4aa6383814be4a917cfc4f260cf978997f376707169a468d16f901ef2bc90e",
+          "ns": "curve.example.net"
+        },
+        "computed_by": "curve.example.net#9a72762ed570f43a",
+        "inputs": [],
+        "issued": "2026-02-01T08:00:00.000000Z",
+        "licence": "CC-BY-4.0",
+        "proto": "datumesh/1",
+        "publisher": "curve.example.net",
+        "summary": "A recorded value of par_rate.",
+        "tx": "2026-02-01T08:00:00.000000Z",
+        "type": "number",
+        "valid": {},
+        "value": "0.035",
+        "sig": "bcc823e8e5cc9522ecf7289edcf8d2f2cdc5bbb602ab1f93e41937204037b01f6bdfcc7fc725abbeed54d46a24e864fdd583d77eef0d10833db3b89dd561760d"
+      }
+    ]
+  },
+  "cell": {
+    "args": {},
+    "fn": "calc.example.net/e"
+  },
+  "asof": "2026-06-01T00:00:00.000000Z",
+  "receipt_hash": "6afe0b6c74576acd37e42023fcfbfc477090e5359f1e257d0782fab08d8d32c4",
+  "value": {
+    "type": "number",
+    "value": "8.632805850279919197477106049001928"
+  },
+  "lineage": [
+    "slice:48cfc356734695d511e9f541e2315ecbc9084c383056bc016926188d4ab3f75d:f8bbb64b649ac4c9b45fbc6a38e1f501d05f51d5fb882bac7b08692e5931d4e1"
+  ],
+  "tx": "2026-02-01T08:00:00.000000Z",
+  "receipt_asof": "2026-02-01T08:00:00.000000Z",
+  "fuel_used": 333
+}

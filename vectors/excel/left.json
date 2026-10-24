@@ -1,0 +1,40 @@
+{
+  "id": "excel/left",
+  "kind": "excel",
+  "description": "=LEFT(\"Datumesh\",5) is supported as substr(\"Datumesh\", 1, 5).",
+  "valid": true,
+  "excel": "=LEFT(\"Datumesh\",5)",
+  "doc": "https://support.microsoft.com/en-us/excel/functions/left-function",
+  "documentation_derived": true,
+  "status": "supported",
+  "sample": "",
+  "excel_result": {
+    "type": "string",
+    "value": "Datum"
+  },
+  "formula": "substr(\"Datumesh\", 1, 5)",
+  "signature": {
+    "args": {},
+    "order": [],
+    "returns": "string"
+  },
+  "world": {
+    "functions": {},
+    "receipts": []
+  },
+  "cell": {
+    "args": {},
+    "fn": "sheet.example.net/case"
+  },
+  "asof": "2026-06-01T00:00:00.000000Z",
+  "receipt_hash": "f844920e3c9f8ba0606e9ef2a09426f9597893a647b7a171572dfbb23bfa97bc",
+  "body": "substr(\"Datumesh\", 1, 5)\n",
+  "value": {
+    "type": "string",
+    "value": "Datum"
+  },
+  "lineage": [],
+  "tx": "0001-01-01T00:00:00.000000Z",
+  "receipt_asof": "0001-01-01T00:00:00.000000Z",
+  "fuel_used": 4
+}

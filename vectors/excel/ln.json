@@ -1,0 +1,43 @@
+{
+  "id": "excel/ln",
+  "kind": "excel",
+  "description": "=ROUND(LN(10),10) is supported as round(ln(10), 10).",
+  "valid": true,
+  "excel": "=ROUND(LN(10),10)",
+  "doc": "https://support.microsoft.com/en-us/excel/functions/ln-function",
+  "documentation_derived": true,
+  "status": "supported",
+  "sample": "",
+  "excel_result": {
+    "type": "number",
+    "value": "2.302585093"
+  },
+  "formula": "round(ln(10), 10)",
+  "signature": {
+    "args": {},
+    "order": [],
+    "returns": {
+      "type": "number",
+      "unit": "1"
+    }
+  },
+  "world": {
+    "functions": {},
+    "receipts": []
+  },
+  "cell": {
+    "args": {},
+    "fn": "sheet.example.net/case"
+  },
+  "asof": "2026-06-01T00:00:00.000000Z",
+  "receipt_hash": "33ff00be332e518f125e5dabd62d477ba253503d60ad7b2f42edeb1a780dd237",
+  "body": "round(ln(10), digits: 10)\n",
+  "value": {
+    "type": "number",
+    "value": "2.302585093"
+  },
+  "lineage": [],
+  "tx": "0001-01-01T00:00:00.000000Z",
+  "receipt_asof": "0001-01-01T00:00:00.000000Z",
+  "fuel_used": 84
+}

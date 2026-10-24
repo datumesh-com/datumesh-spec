@@ -1,0 +1,55 @@
+{
+  "id": "formula-eval/date-parts",
+  "kind": "formula-eval",
+  "description": "year(d) * 10000 + month(d) * 100 + day(d) + weekday(d) / 10  (with d = 2024-03-15)",
+  "valid": true,
+  "world": {
+    "functions": {
+      "calc.example.net/e": {
+        "bound": "2026-01-01T00:00:00.000000Z",
+        "descriptor": {
+          "code": {
+            "body": "year(d) * 10000 + month(d) * 100 + day(d) + weekday(d) / 10\n",
+            "lang": "formula"
+          },
+          "inputs": [],
+          "signature": {
+            "args": {
+              "d": {
+                "type": "date",
+                "valid": true
+              }
+            },
+            "order": [
+              "d"
+            ],
+            "returns": {
+              "type": "number",
+              "unit": "1"
+            }
+          }
+        }
+      }
+    },
+    "receipts": []
+  },
+  "cell": {
+    "args": {
+      "d": {
+        "type": "date",
+        "value": "2024-03-15"
+      }
+    },
+    "fn": "calc.example.net/e"
+  },
+  "asof": "2026-06-01T00:00:00.000000Z",
+  "receipt_hash": "64543724d3e720b5354ae38dc8d6be0adf79560b29978a46cdd7b87f21a084ea",
+  "value": {
+    "type": "number",
+    "value": "20240315.5"
+  },
+  "lineage": [],
+  "tx": "0001-01-01T00:00:00.000000Z",
+  "receipt_asof": "0001-01-01T00:00:00.000000Z",
+  "fuel_used": 17
+}
