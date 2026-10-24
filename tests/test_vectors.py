@@ -96,20 +96,27 @@ class Coverage(unittest.TestCase):
             self.assertEqual(vec["_file"], f"vectors/{vec['id']}.json")
 
     def test_every_error_code_has_a_vector(self):
-        # E_EVAL_UNAVAILABLE is not a failure: it appears as the code of valid receipt vectors.
-        used = {v["error"] for v in VECTORS if not v["valid"]} | {v["code"] for v in VECTORS if "code" in v}
+        # E_EVAL_UNAVAILABLE and E_INPUT_SUPERSEDED are not failures: they appear as the code of
+        # valid receipt vectors. Formula codes (SPEC 15.11) are not verification codes; the formula
+        # tests cover them.
+        used = {v["error"] for v in VECTORS if not v["valid"] and not v["error"].startswith("E_FORMULA_")} | \
+            {v["code"] for v in VECTORS if "code" in v}
         self.assertEqual(set(canon.ERROR_CODES) - used, set())
         self.assertEqual(used - set(canon.ERROR_CODES), set())
 
     def test_code_only_on_valid_receipts_at_level_signed(self):
-        """spec-0.3.0, SPEC 11: a valid receipt vector may carry code E_EVAL_UNAVAILABLE, at level signed."""
+        """SPEC 11: a valid receipt vector may carry code E_EVAL_UNAVAILABLE (spec-0.3.0: no value to
+        compare) or E_INPUT_SUPERSEDED (spec-0.4.0: a value and a lineage), at level signed."""
         with_code = [v for v in VECTORS if "code" in v]
         self.assertGreaterEqual(len(with_code), 3)
         for vec in with_code:
             with self.subTest(vec["id"]):
-                self.assertEqual((vec["kind"], vec["valid"], vec["level"], vec["code"]),
-                                 ("receipt", True, "signed", "E_EVAL_UNAVAILABLE"))
-                self.assertNotIn("value", vec["recompute"])
+                self.assertEqual((vec["kind"], vec["valid"], vec["level"]), ("receipt", True, "signed"))
+                self.assertIn(vec["code"], ("E_EVAL_UNAVAILABLE", "E_INPUT_SUPERSEDED"))
+                if vec["code"] == "E_EVAL_UNAVAILABLE":
+                    self.assertNotIn("value", vec["recompute"])
+                else:
+                    self.assertIn("lineage", vec["recompute"])
         for vec in VECTORS:
             if vec["kind"] == "receipt" and vec["valid"] and "recompute" in vec and "value" not in vec["recompute"]:
                 with self.subTest(vec["id"]):
@@ -160,7 +167,7 @@ class SpecConsistency(unittest.TestCase):
 
     def test_error_table_matches_tool(self):
         table = re.findall(r"^\| `(E_[A-Z_]+)` \|", self.SPEC, re.M)
-        self.assertEqual(tuple(table), canon.ERROR_CODES)
+        self.assertEqual(tuple(c for c in table if not c.startswith("E_FORMULA_")), canon.ERROR_CODES)
 
     def test_limits_table_matches_tool(self):
         for name, value in canon.LIMITS.items():
@@ -176,6 +183,10 @@ SCHEMA_EXPRESSIBLE = {
 }
 SCHEMA_FOR_KIND = {"scalar": "scalar", "cell": "cell", "ref": "cell-ref", "function": "function", "receipt": "receipt",
                    "envelope": "envelope"}
+
+
+def slice_schema(doc):
+    return "manifest" if isinstance(doc, dict) and "members" in doc else "slice"
 
 
 class Schemas(unittest.TestCase):
@@ -195,6 +206,9 @@ class Schemas(unittest.TestCase):
                     validator("keydoc").validate(json.loads(body))
             if vec["valid"] and vec["kind"] == "uri":
                 validator("cell-ref").validate(vec["object"])
+            if vec["valid"] and vec["kind"] == "slice":
+                doc = canon.parse_json(vec["input"])
+                validator(slice_schema(doc)).validate(doc)
 
     def test_schema_rejects_expressible_invalid_vectors(self):
         checked = 0
@@ -202,6 +216,8 @@ class Schemas(unittest.TestCase):
             if vec["valid"] or vec["kind"] not in SCHEMA_FOR_KIND or vec["error"] not in SCHEMA_EXPRESSIBLE:
                 continue
             if "blob_hex" in vec:  # E_SCHEMA from step 7.7 is about the content, not the receipt's shape
+                continue
+            if vec["id"] == "invalid/receipt-slice-manifest-schema":  # the manifest's shape, not the receipt's
                 continue
             try:
                 doc = canon.parse_json(canon.vector_input(vec))

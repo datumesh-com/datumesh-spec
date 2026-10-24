@@ -394,5 +394,31 @@ class Rules(unittest.TestCase):
         self.assertEqual(str(fdecimal.mod(P("5.5"), P("2"))), "1.5")
 
 
+class DecimalVectors(unittest.TestCase):
+    """The decimal vectors (kind decimal): every operation's cases to the last digit, for other
+    implementations; for sqrt, exp, ln and pow, hard_cases counts where the normative algorithm
+    differs from mpdecimal's correctly rounded result (the algorithm wins)."""
+
+    def test_vectors(self):
+        from helpers import canon
+        vectors = [v for v in canon.load_vectors() if v["kind"] == "decimal"]
+        self.assertEqual({v["op"] for v in vectors}, {"add", "sub", "mul", "div", "power", "sqrt", "exp", "ln", "pow",
+                                                      "sin", "cos", "atan2", "haversine", "sum", "mean", "median",
+                                                      "stdev", "stdev_p", "round", "mod"})
+        hard = {}
+        for vec in vectors:
+            with self.subTest(vec["id"]):
+                self.assertEqual(canon.check_vector(vec), [])
+                self.assertGreaterEqual(len(vec["cases"]), 300)
+                if "mpdecimal" in vec:
+                    count = sum(1 for a, b in zip(vec["results"], vec["mpdecimal"])
+                                if b is not None and not a.startswith("E_") and a != b)
+                    self.assertEqual(count, vec["hard_cases"])
+                    hard[vec["op"]] = count
+        self.assertEqual(hard["sqrt"], 1)  # the constructed hard case, and no other
+        print("\nhard cases in the decimal vectors: " + ", ".join(f"{k} {v}" for k, v in sorted(hard.items())),
+              file=__import__("sys").stderr)
+
+
 if __name__ == "__main__":
     unittest.main()
