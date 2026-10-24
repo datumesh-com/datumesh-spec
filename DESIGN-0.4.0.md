@@ -82,6 +82,23 @@ anything is `E_FORMULA_UNIT_OFFSET` (5.4 had an exception for a bare `1`, which 
 and `not_covered`'s new member is named `fault`, not `error`, so that `error` keeps one meaning
 across outcomes (3.5).
 
+Implementation notes from phase 2 (deviations from the memo, each small):
+
+- `interpolate`'s method is optional and defaults to `"linear"`, so that the decision log's composed
+  example `interpolate(latest(temp(within(stations, p, 20km), *)), p)` resolves as written (it then
+  fails the check with `E_FORMULA_UNSUPPORTED`, the key-set argument being 1.3b).
+- Formula codes gained four evaluation codes the memo did not list separately: `E_FORMULA_NOT_COVERED`
+  (a single-cell read with no value), `E_FORMULA_CYCLE`, `E_FORMULA_DEPTH`, and the evaluation side
+  of `E_FORMULA_BUDGET`.
+- A slice over a stored function matches cells by function name as well as hash: two names may share
+  one descriptor (found by the Excel vectors).
+- The fuzzed printer round trip found that `[b..x.y/z(1)]` was lexed as a malformed host; `..` now
+  ends any name candidate.
+- The Microsoft FIND article redirected to a retired page on 2026-10-24; the FIND vector cites
+  Microsoft's FIND/SEARCH troubleshooting page instead.
+- `scan` costs one unit of fuel per member, as the table says (the first implementation charged the
+  running prefix).
+
 ---
 
 ## Phase 1 memo (as reviewed, amended where marked)
@@ -555,6 +572,8 @@ outside the canonical form could never be returned.
 
 ### 4.2 Operations
 
+*(Amended after review: `sqrt`, `exp`, `ln`, non-integer powers and trigonometry follow the 40-digit algorithms of decision 7 at the top, and SPEC 15.9.3; where this table says "correctly rounded" for `sqrt`, or excludes non-integer powers and transcendental functions, decision 7 replaces it.)*
+
 | Operation | Definition |
 |---|---|
 | `+` `-` `*` | exact, then rounded once |
@@ -577,6 +596,8 @@ sequence of correctly rounded steps, which is what determinism needs. Non-intege
 required of every evaluator for them yet (they are listed as unsupported in the Excel table).
 
 ### 4.3 Reference
+
+*(Amended after review: the transcendental functions are compared with mpdecimal or 90-digit series and their hard cases counted; see decision 7.)*
 
 The Python reference evaluator implements this with integers (coefficient and exponent) and its
 own rounding, which is the algorithm a Rust implementation will follow (34 digits fit in a
@@ -1149,6 +1170,8 @@ the new version and gives another value. The receipt is historical, not wrong.
 ---
 
 ## 12. Excel compatibility table
+
+*(Amended after review: SQRT, EXP, LN, POWER, SIN, COS, ATAN2 and PI are supported, LOG, LOG10, TAN, ASIN, ACOS, ATAN, DEGREES and RADIANS partial; FIXED is added as supported. SPEC 15.14 is the table as released, with a documentation page per vector.)*
 
 A new SPEC section (or an appendix, normative for the "supported" column): one row per Excel
 function with columns **Excel**, **Status** (`supported`, `partial`, `not supported`),

@@ -1,14 +1,14 @@
 # Datumesh protocol, version 1
 
-Status: draft, revision `spec-0.3.0`. Identifier in data: `datumesh/1`. Changes are listed in section 14.
+Status: draft, revision `spec-0.4.0`. Identifier in data: `datumesh/1`. Changes are listed in section 14.
 
-Datumesh is an open protocol for addressable, verifiable data cells: a name, a resolver, a signed answer, and a lineage you can follow. This document defines how a cell is named (the cell URI), how it is written as canonical bytes, what a signed answer (a receipt) contains, what a mesh returns around it (the response envelope), how keys are published, and how a verifier checks a receipt. The units a function may declare are listed in `units.md`, which is part of this specification. Storage formats, wire protocols, resolvers and the engine are out of scope.
+Datumesh is an open protocol for addressable, verifiable data cells: a name, a resolver, a signed answer, and a lineage you can follow. This document defines how a cell is named (the cell URI), how it is written as canonical bytes, what a signed answer (a receipt) contains, what a mesh returns around it (the response envelope), how keys are published, and how a verifier checks a receipt, including receipts whose lineage cites whole slices of cells. Section 15 defines the formula dialect, the default language of computed functions. The units a function may declare are listed in `units.md`, which is part of this specification. Storage formats, wire protocols, resolvers and the engine are out of scope.
 
 The key words MUST, MUST NOT, SHOULD and MAY are to be read as in RFC 2119 and RFC 8174.
 
 Everything hashed or signed under these rules is hashed or signed forever. The rules are therefore strict: **where an input could be read two ways, it is rejected, not normalised.** A verifier never guesses.
 
-The executable form of this document is `tools/canon.py`; the vectors under `vectors/` are normative examples. If the prose and the vectors disagree, that is a bug in this document to be reported, not a choice for implementers.
+The executable form of this document is `tools/canon.py`, with `tools/formula.py` and `tools/fdecimal.py` for section 15; the vectors under `vectors/` are normative examples. If the prose and the vectors disagree, that is a bug in this document to be reported, not a choice for implementers.
 
 ## Contents
 
@@ -26,6 +26,7 @@ The executable form of this document is `tools/canon.py`; the vectors under `vec
 12. Security considerations
 13. Decisions and rationale
 14. Changes
+15. The formula dialect
 - Appendix A: collected ABNF
 
 ## 1. Terms
@@ -34,7 +35,8 @@ The executable form of this document is `tools/canon.py`; the vectors under `vec
 - **Function**: a name within a namespace, together with a descriptor (section 7) that fixes its signature and code. Its fully qualified name is `<namespace>/<function>`, Go-module style, e.g. `ecb.europa.eu/fx_rate`.
 - **Function hash**: SHA-256 of the canonical descriptor. A name resolves to a current function hash; cells and receipts pin the hash.
 - **Cell**: a function applied to a complete tuple of typed scalar arguments. A cell has at most one value at any transaction time.
-- **Slice**: a function applied to a tuple in which one or more arguments are left open. A slice denotes a set of cells. It can be named and canonicalised but never has a receipt.
+- **Slice**: a function applied to a tuple in which one or more arguments are left open, or bounded by a range. A slice denotes a set of cells. It can be named and canonicalised but never has a receipt. A computed receipt can cite a slice it read as one input entry (15.13).
+- **Slice entry**: the `inputs` entry `slice:<slice id>:<members hash>` for a slice read (8.1, 15.13). Its **manifest** lists the members' receipt hashes.
 - **Valid time**: the time a value is about (a rate *for* 15 March). It is carried by ordinary arguments that the function declares as valid-time arguments.
 - **Transaction time**: the time the system knew a value. Every call has an `asof` transaction time (default: now). Every receipt carries `asof` (as of when it answers), `tx` (when the value it gives was recorded) and `issued` (when it was signed).
 - **Receipt**: a signed statement of one cell's value as of one transaction time, with its lineage.
@@ -42,6 +44,7 @@ The executable form of this document is `tools/canon.py`; the vectors under `vec
 - **Unit**: what a number means, such as `EUR` or `degC`. A function declares the unit of every number argument and number return (7.1). Values and receipts never carry units.
 - **Blob**: a scalar whose value names content by its hash, byte length and media type (3.7). The content itself travels out of band.
 - **Envelope**: the JSON body a mesh returns around a receipt (5.5). It is the mesh's statement, unsigned; the receipt inside is the signer's.
+- **Formula**: the default language of computed functions, `code.lang = "formula"` (section 15).
 - **Alias**: a short local name such as `ecb/fx_rate`. Aliases are a resolver convenience. They never appear in anything hashed, signed, or written as a cell URI.
 
 ## 2. Names
@@ -181,7 +184,7 @@ A JSON object with exactly the members `type` and `value`. `value` is a JSON str
 
 ### 4.2 Argument map
 
-A JSON object from argument names to typed scalars. A typed scalar may be replaced by the **slice marker**, the JSON string `"*"`, meaning the argument is open. The order of members is irrelevant on input, and JCS fixes it for hashing. Duplicate names are duplicate JSON members (`E_PARSE_DUPLICATE_KEY`).
+A JSON object from argument names to typed scalars. A typed scalar may be replaced by the **slice marker**, the JSON string `"*"`, meaning the argument is open. In a slice object only (4.4), it may also be replaced by a **range object** `{"hi": <lexical>, "lo": <lexical>, "type": <date, instant, number or string>}`: the argument bounded, both ends inclusive. The order of members is irrelevant on input, and JCS fixes it for hashing. Duplicate names are duplicate JSON members (`E_PARSE_DUPLICATE_KEY`).
 
 ### 4.3 Cell reference
 
@@ -212,6 +215,8 @@ A cell reference with `asof` removed and `fn_hash` added after resolution:
 
 The **cell id** is SHA-256 of the cell's canonical bytes. A cell object may contain slice markers; it then denotes a slice, and its id may be used as a cache key. A receipt's cell MUST NOT contain slice markers (`E_SLICE`).
 
+A **slice object** is a cell object with at least one argument written as the slice marker or as a range object (`E_SLICE` otherwise), or a **version slice** `{"cell": <cell without markers>, "from": <instant>, "to": <instant>}`: the cell's versions with `tx` in `[from, to]`. Its **slice id** is SHA-256 of its canonical bytes; for an unbounded slice it is the cell id above. Range ends follow the lexical rules of their type; a range with `lo` after `hi` is empty, not an error. A slice object is checked in JCS order like a cell; booleans and blobs have no ranges (`E_CANON_TYPE`). Slice objects appear in manifests (15.13), never in a receipt's `cell`; they have no cell URI in this revision.
+
 A cell binds every argument its function declares, and no others. Arguments are never optional: an open argument is written as a slice explicitly.
 
 ### 4.5 Limits
@@ -229,6 +234,8 @@ A cell binds every argument its function declares, and no others. Arguments are 
 | `licence_spdx` | 64 | characters in an SPDX licence identifier |
 | `licence_url` | 512 | characters in a licence URL |
 | `keys` | 64 | keys in one key publication |
+| `extent` | 4096 | values in an argument's extent (7) |
+| `members` | 1048576 | member receipt hashes in a slice manifest (15.13) |
 
 Exceeding a limit fails with `E_CANON_LIMIT`, except `keys`: a key document with more than 64 keys is rejected whole, with `E_KEY_DOC` (9.2). DNS's own limits (63-character labels, 253-character names) are part of the DNS grammar and fail with `E_CANON_NAME`.
 
@@ -315,7 +322,7 @@ The envelope is an object whose `outcome` decides which other members it has. A 
 |---|---|---|---|---|
 | `ok` | 200 | `receipt`, `trust` | `superseded_by`, `reason` | The receipt is for the requested cell, its `asof` is at or before the requested `asof`, and the mesh asserts that it is the cell's latest version known as of the requested `asof`. |
 | `stale` | 200 | `receipt`, `trust`, `age_seconds` | `superseded_by`, `reason` | As `ok`, except that the mesh cannot assert that the receipt is current: it could not get a current answer and serves the last receipt it knows. |
-| `not_covered` | 404 | none | none | The mesh has no receipt for this cell: it does not serve the function, or the cell has no value. |
+| `not_covered` | 404 | none | `fault` | The mesh has no receipt for this cell: it does not serve the function, or the cell has no value. With `fault`, the cell is a computed cell whose evaluation faulted (15.12): it has no value, deterministically, and this is not missing data. |
 | `unlicensed` | 403 | none | none | The requester may not receive this cell. |
 | `payment_required` | 402 | `quote` | none | The cell is available for the quoted price. |
 | `rate_limited` | 429 | `retry_after_seconds` | none | Too many requests. The mesh SHOULD also send the `Retry-After` header with the same value. |
@@ -337,7 +344,8 @@ Members:
 - `reason`: a non-empty string saying why the receipt was superseded, typically a correction. It follows the string rules (3.5) with the `summary` limit, and is only present with `superseded_by`.
 - `quote`: an object with exactly `amount`, a number in the form of 3.1 (128 characters at most) greater than zero; `currency`, any currency code listed in `units.md`, withdrawn codes included; and `authorise`, where the requester can pay, an `https://` URL by the licence URL rule (`https://` followed by printable ASCII, at most 512 characters).
 - `retry_after_seconds`: a non-negative integer.
-- `error`: what failed. For `bad_request`, one of the codes `parse` can raise (5.4): `E_PARSE_URI`, `E_CANON_NAME`, `E_CANON_ARG_NAME`, `E_CANON_ARG_DUPLICATE`, `E_CANON_ARG_ORDER`, `E_CANON_PERCENT`, `E_CANON_TYPE`, `E_CANON_NUMBER`, `E_CANON_DATE`, `E_CANON_INSTANT`, `E_CANON_STRING`, `E_CANON_BLOB`, `E_CANON_LIMIT`, `E_ARG_UNKNOWN`, `E_ARG_MISSING`. For `error`, any code in 10.2 except `E_ENVELOPE`, which is a client's code, e.g. `E_INPUT_UNAVAILABLE`, or `E_EVAL_UNAVAILABLE` when the mesh could not evaluate the cell's function.
+- `fault`: one of the formula evaluation faults `E_FORMULA_DIV_ZERO`, `E_FORMULA_DOMAIN`, `E_FORMULA_RANGE`, `E_FORMULA_EMPTY`, `E_FORMULA_ABSENT`, `E_FORMULA_FUTURE` (15.11). Running out of fuel, a cycle and too deep an evaluation are not faults: they are the mesh's failures, an `error` with `E_EVAL_UNAVAILABLE`.
+- `error`: what failed. For `bad_request`, one of the codes `parse` can raise (5.4): `E_PARSE_URI`, `E_CANON_NAME`, `E_CANON_ARG_NAME`, `E_CANON_ARG_DUPLICATE`, `E_CANON_ARG_ORDER`, `E_CANON_PERCENT`, `E_CANON_TYPE`, `E_CANON_NUMBER`, `E_CANON_DATE`, `E_CANON_INSTANT`, `E_CANON_STRING`, `E_CANON_BLOB`, `E_CANON_LIMIT`, `E_ARG_UNKNOWN`, `E_ARG_MISSING`. For `error`, any code in 10.2 except `E_ENVELOPE` (a client's code), for example `E_INPUT_UNAVAILABLE`, or `E_EVAL_UNAVAILABLE` when the mesh could not evaluate the cell's function.
 
 **Integer members.** `age_seconds` and `retry_after_seconds` are JSON numbers written `0` or `[1-9][0-9]*`: no fraction, no exponent, no sign, and at most 2^53 - 1. So `30.0`, `3e1` and `-0` are `E_ENVELOPE`. They are the only JSON numbers in this specification, which is possible because envelopes are never hashed.
 
@@ -355,7 +363,9 @@ A receipt states a cell's value as of its own `asof`, and that value stands unti
 - `ok`: the receipt is the cell's latest version known as of the requested `asof` (as of now, when none was requested);
 - `stale`: the mesh cannot assert that. It serves the last receipt it knows, and `age_seconds` says how long ago it last confirmed it as current.
 
-On the wire, the two are always told apart: by `outcome`, and by `age_seconds`, which `stale` requires and `ok` forbids. A client checks the same binding for both (step 5): the cell, and an `asof` at or before the one requested. It cannot check either assertion. Whether an `ok` receipt is in fact the latest version, and how old a `stale` one is, are the mesh's claims (12); a client that doubts them asks another mesh.
+On the wire, the two are always told apart: by `outcome`, and by `age_seconds`, which `stale` requires and `ok` forbids.
+
+A receipt of an **asof-dependent** function (one whose body reads `asof()`, 15.12) states a value as of its own `asof` only: its value may change with the asof alone. A mesh MUST NOT serve such a receipt as `ok` for a requested `asof` other than its own; it evaluates again, or answers `stale`. A client cannot check this without the descriptor, so step 5 is unchanged. A client checks the same binding for both (step 5): the cell, and an `asof` at or before the one requested. It cannot check either assertion. Whether an `ok` receipt is in fact the latest version, and how old a `stale` one is, are the mesh's claims (12); a client that doubts them asks another mesh.
 
 Step 5 needs the request, which the envelope does not contain. A client MUST perform it; a library takes the requested cell id and `asof` as inputs. A malformed request description, meaning a `cell_id` that is not 64 lowercase hex digits or an `asof` that is not an instant, is the caller's error. It is not an `E_*` code: libraries report it the way their language reports a misused function. For outcomes without a receipt there is nothing to bind. Without it, a mesh could answer with a valid receipt for a different cell.
 
@@ -417,9 +427,12 @@ A function descriptor has exactly three members: the function's signature, its c
 
 - `signature.args` maps each argument name to its declaration: `{"type", "valid"}`, or `{"type", "unit", "valid"}` when the type is `number`. `valid: true` marks a valid-time argument, which must be a `date`, `instant` or `string` (`E_CANON_TYPE`). A period such as `2024-Q1` is a `string` valid-time argument whose format the function documents. At most 32 arguments.
 - `signature.returns` is the value type: a type name, or `{"type": "number", "unit": …}` when the type is `number`.
+- `signature.order` (optional, since `spec-0.4.0`) is an array listing every argument name exactly once: the order in which positional arguments of a formula read bind (15.5), and in 1.3b the order of a class's key tuple. A list that misses an argument, repeats one or names one that is not declared is `E_CANON_SET`; anything but an array of strings is `E_SCHEMA`. Formula descriptors always carry it (`E_FORMULA_ORDER`).
+- An argument declaration may have `extent` (optional, since `spec-0.4.0`): the cells a slice over a computed function enumerates (15.13). It is an array of lexical values of the argument's type, strictly ascending in the type's order (numbers numerically, dates and instants chronologically, strings by code point; `E_CANON_SET`), each in its lexical form (that type's code), at most 4096 (`E_CANON_LIMIT`); or, for `date` and `number` arguments, a range `{"hi", "lo"}` with integer ends for numbers (`E_CANON_NUMBER`) and `lo <= hi` (`E_CANON_SET`). A range on another type, and any extent of a boolean or blob, is `E_CANON_TYPE`; any other shape is `E_SCHEMA`.
+- **Both are optional, and absent they change nothing**: a descriptor without them is byte-identical to its `spec-0.3.0` form, with the same hash. A verifier library of `spec-0.3.0` rejects a descriptor that has either (`E_SCHEMA`); verifiers of `spec-0.4.0` MUST accept them.
 - Units are required on numbers and allowed nowhere else. Each of these fails with `E_CANON_UNIT`: a `number` argument without `unit`; `unit` on any other argument; `returns` written as the bare name `"number"`; a `returns` object whose type is not `number`, or that has no `unit`; and a unit that is not valid by 7.1. A declaration or `returns` object with a missing `type` or any other member is `E_SCHEMA`.
-- **Check order.** A descriptor's structure (`E_SCHEMA`), unit shapes included, is checked over the whole descriptor before any canonical-form rule. Then `code`, `inputs`, each argument in JCS order of names, and `returns`. Within an argument declaration: `type` (`E_CANON_TYPE`), then `unit`, then `valid`. For `returns`: the type name (`E_CANON_TYPE`), then that an object's type is `number` and that a bare name is not `number`, then the presence of `unit`, then the unit itself (all `E_CANON_UNIT`).
-- `code.lang` is a name identifying the language of `code.body`. `stored` means the function is a table of recorded values; by convention its body is empty and it declares no inputs. This convention is not enforced. Other languages are defined by later steps. Until then, a body is an opaque text that the evaluator for `lang` interprets.
+- **Check order.** A descriptor's structure (`E_SCHEMA`), unit, `order` and `extent` shapes included, is checked over the whole descriptor before any canonical-form rule. Then `code`, `inputs`, each argument in JCS order of names, `order`, and `returns`. Within an argument declaration: `type` (`E_CANON_TYPE`), then `unit`, then `valid`, then `extent` (its values in order, then their order, then their count). For `returns`: the type name (`E_CANON_TYPE`), then that an object's type is `number` and that a bare name is not `number`, then the presence of `unit`, then the unit itself (all `E_CANON_UNIT`).
+- `code.lang` is a name identifying the language of `code.body`. `stored` means the function is a table of recorded values; by convention its body is empty and it declares no inputs. This convention is not enforced. `formula` is defined in section 15: its body is the printed canonical AST and its `inputs` are derived from it. Other languages are defined by later steps; until then, a body is an opaque text that the evaluator for `lang` interprets.
 - `code.body` follows the string rules (3.5), except that TAB and LF are allowed, and its limit is 1 MiB. Line endings are LF.
 - `inputs` is the set of fully qualified function names whose cells this function may read. It is an array in ascending order with no duplicates (`E_CANON_SET`). Aliases are not names (`E_CANON_NAME`).
 
@@ -462,7 +475,7 @@ A receipt is a JSON object with exactly these members (`E_SCHEMA` for any missin
 | `issued` | instant | When this receipt was signed. |
 | `publisher` | namespace | The namespace that owns the function. Equals `cell.ns`. |
 | `computed_by` | key reference | `<host>#<key id>` of the key that signed this receipt. |
-| `inputs` | array of receipt hashes | Receipts of the input cells read to compute `value`, ascending, no duplicates. Empty for stored cells. |
+| `inputs` | array of input entries | What was read to compute `value`: a receipt hash for each input cell, and since `spec-0.4.0` a slice entry `slice:<slice id>:<members hash>` for each slice (15.13); ascending, no duplicates. Empty for stored cells. |
 | `licence` | string | An SPDX licence identifier (`CC-BY-4.0`) or an `https://` URL, by the grammar below. |
 | `summary` | string | One human sentence saying what the value is. Non-empty. String rules apply. |
 | `sig` | 128 lowercase hex digits | Ed25519 signature (8.3). |
@@ -504,11 +517,11 @@ Example (`vectors/receipt/stored-number.json`):
 ### 8.2 Time
 
 - `tx <= asof <= issued` always holds (`E_TIME_ORDER`).
-- For a computed cell, every input receipt has an `asof` at or before the receipt's `asof` (`E_TIME_ORDER`), and `tx` is the latest `tx` among its input receipts, i.e. the moment the computed value became knowable. Input receipts need not share an `asof`: a stored receipt is signed by its publisher at its own `asof`, and nobody else can re-sign it, so inputs published at different times keep different `asof`s.
-- By signing, `computed_by` asserts that each input receipt was the latest version of its cell as of the receipt's `asof`. Recomputation (10.1 step 7) checks that the value follows deterministically from exactly those inputs, which `inputs` pins by hash. It does not check that they were current: that is the signer's statement, like the value itself.
+- For a computed cell, every input receipt (slice members included) has an `asof` at or before the receipt's `asof` (`E_TIME_ORDER`), and, when there is at least one input receipt, `tx` is the latest `tx` among them, i.e. the moment the computed value became knowable. A receipt whose only inputs are empty slices, or that read nothing, has no input receipt and no `tx` constraint. Input receipts need not share an `asof`: a stored receipt is signed by its publisher at its own `asof`, and nobody else can re-sign it, so inputs published at different times keep different `asof`s.
+- By signing, `computed_by` asserts that each input receipt was the latest version of its cell as of the receipt's `asof`, except an input read at an explicit transaction time `T` (`asof(c, T)`, 15.13), which it asserts answered as of `T`; and that each slice entry's members were exactly the slice's members as of the receipt's `asof`. That a stored slice is complete is the signer's statement, like currency: a verifier checks that every listed member belongs to the slice, not that none is missing. Recomputation (10.1 step 7) checks that the value follows deterministically from exactly those inputs, which `inputs` pins by hash. It does not check that they were current: that is the signer's statement, like the value itself.
 - **Choosing `asof`** (D33). Two rules, one for each kind of issuer:
   1. A publisher of a stored receipt SHOULD set `asof = tx`.
-  2. An issuer of a computed receipt SHOULD set `asof` to the latest `asof` among its input receipts. When every input follows rule 1, this equals the latest input `tx`, so `asof = tx`.
+  2. An issuer of a computed receipt SHOULD set `asof` to the latest of: the `asof`s of its input receipts, slice members included; the start of every name binding it relied on (the function names read, transitively, its own name included when it reads itself; the requested cell's own name excluded, since its receipt pins the hash); every `T` of an `asof(c, T)` read and every `to` of a `versions` read. Where an input was kept across a change of its own inputs (early cutoff), its `asof` counts from where its value is known again. For an asof-dependent function (15.12) it SHOULD instead be the evaluation asof. When every input follows rule 1 and no binding or explicit time is later, this equals the latest input `tx`, so `asof = tx`. A function that reads nothing and is not asof-dependent has `tx = asof = 0001-01-01T00:00:00.000000Z`.
 
   Rule 2 always satisfies the rule on input `asof`s above, and it is determined by the inputs alone, so each version of a computed cell has exactly one canonical receipt: immutable, cacheable, and served as `ok` for every later requested `asof` until the next version (5.5). That holds even when an input's `asof` is later than its `tx`, as in `receipt/stored-number`. Both rules are SHOULD only: verification does not check them.
 - `issued` exists because `asof` can be in the past. A receipt answering "as of 2020", signed today, must be checked against the key valid today, not the key valid in 2020.
@@ -524,7 +537,7 @@ The signed bytes are exactly the hashed bytes. A receipt hash therefore identifi
 
 ### 8.4 Lineage
 
-`inputs` lists receipt hashes. Each input receipt must be a cell of a function named in the descriptor's `inputs` (`E_INPUT_UNDECLARED`). Following `inputs` recursively gives the full lineage of a value down to stored cells.
+`inputs` lists receipt hashes and slice entries. Each input receipt must be a cell of a function named in the descriptor's `inputs` (`E_INPUT_UNDECLARED`); so must each slice's function, and each member of a slice must belong to it (`E_SLICE_MEMBER`). Following `inputs` recursively, through manifests, gives the full lineage of a value down to stored cells. A slice entry is one entry for the 4,096 limit whatever its member count.
 
 ## 9. Keys
 
@@ -589,7 +602,7 @@ A verifier runs these steps in order and stops at the first failure, reporting i
 
 1. **Parse** the bytes as strict JSON (6.1).
 2. **Structure.** Check the receipt has exactly the members of 8.1 with the right JSON types, `proto` is `datumesh/1`, `cell` has exactly `args`, `fn`, `fn_hash`, `ns`, and every argument is a typed scalar or the slice marker. Failure: `E_SCHEMA`.
-3. **Canonical form.** Check every member against its lexical rules: names, hex, instants, typed scalars (blobs included), licence, the summary, `inputs` ascending and unique, and limits. `value` is checked against `type`.
+3. **Canonical form.** Check every member against its lexical rules: names, hex, instants, typed scalars (blobs included), licence, the summary, `inputs` ascending and unique, and limits. Each `inputs` entry is 64 lowercase hex digits or a slice entry: `slice:`, 64 lowercase hex digits, `:`, 64 lowercase hex digits (135 characters); anything else is `E_CANON_HEX`. `value` is checked against `type`.
 4. **Consistency.** These checks run in the order listed, not in JCS order:
    - No slice markers in `cell.args` or `valid` (`E_SLICE`).
    - `publisher` equals `cell.ns` (`E_PUBLISHER_MISMATCH`).
@@ -606,7 +619,7 @@ A verifier runs these steps in order and stops at the first failure, reporting i
 7. **Recomputation** (optional; makes the receipt **fully verified**):
    1. Obtain the descriptor for `cell.fn_hash` (`E_FN_UNAVAILABLE` when none is obtained). First check that it hashes to `cell.fn_hash` (`E_FN_HASH_MISMATCH`), before anything else about it. Then check that it is canonical (sections 6-7, units included), reporting a failure with the code canonicalising it on its own would give.
 
-      What is obtained is a JSON value, and its hash is SHA-256 of that value's canonical bytes. A verifier that obtains the descriptor as bytes parses them strictly first (6.1), reporting a parse failure with its code. Only obtaining nothing is unavailability: a JSON `null`, or any other value that is not the descriptor, is a descriptor offered, and fails the hash check (`E_FN_HASH_MISMATCH`), as there is no null value (3.6).
+      What is obtained is a JSON value, and its hash is SHA-256 of that value's canonical bytes. A verifier that obtains the descriptor as bytes parses them strictly first (6.1), reporting a parse failure with its code. An implementation whose interface also takes text in place of a parsed value says which it takes; text is then the obtained bytes. Only obtaining nothing is unavailability: a JSON `null`, or any other value that is not the descriptor, is a descriptor offered, and fails the hash check (`E_FN_HASH_MISMATCH`), as there is no null value (3.6).
    2. `cell.args` names exactly the declared arguments, each with its declared type: first any undeclared argument (`E_ARG_UNKNOWN`), then any unbound declared argument (`E_ARG_MISSING`), then any type mismatch (`E_ARG_TYPE`), each in JCS order of names.
    3. `valid` holds exactly the declared valid-time arguments (`E_VALID_MISMATCH`).
    4. `type` equals the declared return type: `signature.returns`, or its `type` member when it is an object (`E_RETURN_TYPE`).
@@ -617,19 +630,29 @@ A verifier runs these steps in order and stops at the first failure, reporting i
       - check it is a cell of a declared input function (`E_INPUT_UNDECLARED`);
       - check its `asof` is at or before the receipt's `asof` (`E_TIME_ORDER`).
 
-      If there are inputs, `tx` must equal the latest input `tx` (`E_TIME_ORDER`).
+      For each slice entry, in its place in `inputs` (since `spec-0.4.0`):
+      - obtain the manifest offered for the entry (`E_INPUT_UNAVAILABLE` if none); parse it strictly and check its structure, `{"members", "slice"}` (`E_SCHEMA`), and canonical form: members 64 lowercase hex digits each, ascending and unique (`E_CANON_SET`), at most 1,048,576, and the slice object (4.4), with the codes those rules give;
+      - check that the slice object hashes to the entry's slice id and the members array to its members hash (`E_INPUT_UNAVAILABLE`, as for a receipt with another hash);
+      - check that the slice's function (`ns/fn`, or the version slice's cell's) is a declared input function (`E_INPUT_UNDECLARED`);
+      - for each member hash, in order: obtain the receipt (`E_INPUT_UNAVAILABLE`); verify it through step 6 (`E_INPUT_INVALID`); check its hash (`E_INPUT_UNAVAILABLE`); check that its cell belongs to the slice: the same `ns`, `fn` and `fn_hash`, the same argument names, bound arguments equal, ranged arguments of the range's type and within it, any value for an open argument; for a version slice, the same cell with a `tx` in `[from, to]`; and that no two members of a membership slice are one cell (`E_SLICE_MEMBER`); check its `asof` is at or before the receipt's (`E_TIME_ORDER`).
+
+      If there is at least one input receipt, slice members included, `tx` must equal the latest of their `tx`s (`E_TIME_ORDER`).
    6. Evaluate the function (for `stored`: look the value up as of `asof`). The result's `type` and `value` must equal the receipt's lexically (`E_VALUE_MISMATCH`).
 
-      If the verifier cannot evaluate the function (it has no runtime for the descriptor's `lang`, an evaluation budget is exceeded, or its evaluator cannot obtain the inputs it needs), recomputation stops here with `E_EVAL_UNAVAILABLE`. This is not a verification failure, and it is distinct from `E_FN_UNAVAILABLE` (no descriptor, 7.1) and `E_VALUE_MISMATCH` (evaluated, and different). The result is success at level `signed`, with the code reported alongside it (at path `$.value`, where an implementation reports paths): the receipt is still signature-valid, and the caller learns that recomputation did not happen and why. It is reported only after 7.1-7.5 have passed; a failure there is reported instead.
+      **A superseded input** (since `spec-0.4.0`). When the value differs and the evaluation's lineage is available (the `inputs` entries the evaluation read, with the receipts and manifests of those not listed), the verifier checks whether an entry of the receipt's `inputs` was replaced in that lineage by a receipt of the same cell with a later `tx` (signature-valid through step 6), or by an entry for the same slice id with another members hash. If so, the result is success at level `signed` with `E_INPUT_SUPERSEDED` reported (at path `$.inputs`): an input was superseded at a `tx` earlier than the receipt's own, typically by a backdated correction or a late member, so the receipt is historical, not wrong. Otherwise, and when no lineage is available, it is `E_VALUE_MISMATCH`. Step 7.7 runs after it as after `E_EVAL_UNAVAILABLE`.
+
+      If the verifier cannot evaluate the function (it has no runtime for the descriptor's `lang`, an evaluation budget is exceeded, or its evaluator cannot obtain the inputs it needs), recomputation stops here with `E_EVAL_UNAVAILABLE`. A verifier that does not attempt step 7 reports no code. This is not a verification failure, and it is distinct from `E_FN_UNAVAILABLE` (no descriptor, 7.1) and `E_VALUE_MISMATCH` (evaluated, and different). The result is success at level `signed`, with the code reported alongside it (at path `$.value`, where an implementation reports paths): the receipt is still signature-valid, and the caller learns that recomputation did not happen and why. It is reported only after 7.1-7.5 have passed; a failure there is reported instead.
    7. **Blob content.** If content is supplied: `type` must be `blob` (`E_SCHEMA` otherwise), and the content must have exactly `length` bytes and a SHA-256 equal to the blob's hash (`E_BLOB_MISMATCH`). This sub-step needs no descriptor and no inputs. It runs last: after 7.6 when recomputing, otherwise directly after step 6. It also runs after 7.6 ended with `E_EVAL_UNAVAILABLE`: if it passes, the code is still reported; if it fails, its failure replaces the code as an ordinary failure. Content of blob arguments is checked the same way by whoever retrieves it.
 
-   A receipt that passes 7.1-7.6 is at level `recomputed`; otherwise it stays `signed`. Step 7.7 does not change the level: passing it is reported separately, as `blob_checked`.
+   A receipt that passes 7.1-7.6 is at level `recomputed`; otherwise it stays `signed`.
+
+   **What verifier libraries of `spec-0.4.0` must do.** At level `signed`: accept slice entries in step 3 (their form, their place in the ascending order, one entry each for the limit), and nothing else changes, so every result of `spec-0.3.0` stands. In descriptors (7.1): accept `signature.order` and argument `extent`, with their canonical-form checks. At level `recomputed`: the manifest and member checks of step 7.5, the `tx` rule over input receipts and members, and `E_INPUT_SUPERSEDED` in 7.6 when a lineage is offered. A resolver supplies descriptors, receipts by hash (members included), manifests by entry and the evaluation (with its lineage, when it has one). A verifier needs no formula evaluator to do any of this: evaluation comes from the resolver, as for every language. The unit list of `units.md` gains `min`, `h`, `d`, `km` and `deg`. Step 7.7 does not change the level: passing it is reported separately, as `blob_checked`.
 
 Signature-valid means the holder of key `computed_by` stated this value. Whether to trust that party is policy, outside this specification.
 
 ### 10.2 Error codes
 
-The four failure classes a verifier distinguishes are: bad canonical form (parse, schema and canon codes), unknown or unusable key (key codes), bad signature, and value mismatch on recomputation (the remaining codes). One code, `E_EVAL_UNAVAILABLE`, is not a failure: it is reported with success (10.1 step 7.6).
+The four failure classes a verifier distinguishes are: bad canonical form (parse, schema and canon codes), unknown or unusable key (key codes), bad signature, and value mismatch on recomputation (the remaining codes). Two codes, `E_EVAL_UNAVAILABLE` and `E_INPUT_SUPERSEDED`, are not failures: they are reported with success at level `signed` (10.1 step 7.6). The formula codes of section 15.11 are not verification codes.
 
 | Code | Step | Meaning |
 |---|---|---|
@@ -649,11 +672,11 @@ The four failure classes a verifier distinguishes are: bad canonical form (parse
 | `E_CANON_INSTANT` | 3 | Instant not `YYYY-MM-DDTHH:MM:SS.ffffffZ`, not a real time, or a leap second. |
 | `E_CANON_STRING` | 3 | Control, unassigned or surrogate code point, not NFC, or empty summary. |
 | `E_CANON_BLOB` | 3 | Blob not `<sha256>:<length>:<media type>` as in 3.7. |
-| `E_CANON_HEX` | 3 | Hash, key id or signature not lowercase hex of the right length. |
+| `E_CANON_HEX` | 3 | Hash, key id, signature or slice entry not lowercase hex of the right length. |
 | `E_CANON_LICENCE` | 3 | Licence neither an SPDX identifier nor an `https://` URL. |
-| `E_CANON_SET` | 3 | `inputs` not strictly ascending. |
+| `E_CANON_SET` | 3 | `inputs`, an extent or manifest members not strictly ascending; `order` not every argument exactly once. |
 | `E_CANON_LIMIT` | 3 | A limit from 4.5 exceeded. |
-| `E_SLICE` | 4, unit | A slice marker in a receipt, or in an argument a unit refers to. |
+| `E_SLICE` | 4, unit | A slice marker in a receipt, or in an argument a unit refers to; a slice object without an open or ranged argument. |
 | `E_PUBLISHER_MISMATCH` | 4 | `publisher` differs from `cell.ns`. |
 | `E_VALID_MISMATCH` | 4, 7 | `valid` does not echo exactly the valid-time arguments. |
 | `E_TIME_ORDER` | 4, 7 | `tx <= asof <= issued` fails, an input receipt's `asof` is after the receipt's, or computed `tx` is not the latest input `tx`. |
@@ -670,9 +693,11 @@ The four failure classes a verifier distinguishes are: bad canonical form (parse
 | `E_RETURN_TYPE` | 7 | `type` differs from the declared return type. |
 | `E_INPUT_UNAVAILABLE` | 7 | An input receipt cannot be found, or the one found has another hash. |
 | `E_INPUT_INVALID` | 7 | An input receipt is not signature-valid. |
-| `E_INPUT_UNDECLARED` | 7 | An input receipt is a cell of a function not in the descriptor's `inputs`. |
+| `E_INPUT_UNDECLARED` | 7 | An input receipt, or a slice, is of a function not in the descriptor's `inputs`. |
+| `E_SLICE_MEMBER` | 7 | A member receipt does not belong to its slice, or two members of a membership slice are one cell. |
 | `E_VALUE_MISMATCH` | 7 | Recomputation gives a different type or value. |
 | `E_EVAL_UNAVAILABLE` | 7 | The verifier could not evaluate the function (7.6). Not a failure: reported with success at level `signed`. |
+| `E_INPUT_SUPERSEDED` | 7 | Recomputation read a later version of an input cell, or other members of an input slice (7.6): the receipt is historical, not wrong. Not a failure: reported with success at level `signed`. |
 | `E_BLOB_MISMATCH` | 7 | Blob content has another length or hash than the blob states. |
 | `E_ENVELOPE` | envelope | A response envelope breaks a rule of 5.5, its HTTP status does not match its outcome, or its receipt does not answer the request. |
 
@@ -692,21 +717,28 @@ The four failure classes a verifier distinguishes are: bad canonical form (parse
 | `receipt` | `input`: receipt JSON text; `keypair` (`seed`, `public`, `key_id`); `keys`: an `env` per host; optional `recompute`; optional `blob_hex`: content for step 7.7 | `canonical` (the signed payload), `sha256` (receipt hash), `sig`, `level` (`signed` or `recomputed`); `blob_checked` (true) when `blob_hex` is given; `code` (`E_EVAL_UNAVAILABLE`) when `recompute` has no `value` |
 | `unit` | `input`: JSON text of an object with exactly `cell` and `descriptor` (any other shape is `E_SCHEMA`) | `unit`: the resolved unit of the cell's value (7.1), or null when the function does not return a number |
 | `envelope` | `input`: the response body; `status`: the HTTP status; `keys`: an `env` per host; `request`: `{"cell_id", "asof"?}` for step 5 | `outcome`, and when there is a receipt, `trust` and `receipt_hash` |
+| `slice` | `input`: JSON text of a slice object (4.4) or a manifest (15.13) | `canonical`, `sha256`, `slice_id`; for a manifest also `members_hash` and `entry` |
+| `formula` | `input`: a formula source; `env`: `{"name", "signature", "functions": {name: descriptor}, "aliases": {alias: name}}` | `ast` (the canonical AST's JCS text), `ast_sha256`, `body`, `inputs` (the derived set), `returns` (type and unit), `asof_dependent`; an invalid vector has `error`, and `token` for `E_FORMULA_FORBIDDEN` |
+| `formula-eval` | `world`: `{"functions": {name: {"descriptor", "bound"}}, "receipts": [stored receipts], "max_depth"?}`; `cell`: `{"fn", "args"}`; `asof`; `fuel`? | `value`, `lineage` (the receipt's `inputs`), `tx`, `receipt_asof`, `fuel_used`, `receipt_hash`; an invalid vector has the evaluation code as `error` |
+| `excel` | `excel` (the Excel formula), `doc` (the Microsoft page it follows), `documentation_derived` (true), `status`, `sample`, `excel_result`, `formula`, `signature`, `world`, `cell`, `asof` | as `formula-eval`, and `body`; `value` equals `excel_result` |
+| `decimal` | `op`; `cases`: an array of argument arrays (canonical numbers; for `power` and `round` an integer second argument) | `results`: each case's canonical result or fault code, to the last digit; for `sqrt`, `exp`, `ln` and `pow` also `mpdecimal` (Python decimal's correctly rounded result, or null on a fault) and `hard_cases` (how many differ from the algorithm) |
 
 `canonical` is the canonical byte string as UTF-8 text. It may contain U+2028 and U+2029, which some JSON-lines tools treat as line breaks. `key_ids` are in document order. Receipt vectors built by hand (the Ed25519 strictness vectors) have no `keypair`, because their keys have no seed.
 
-A `recompute` object stands in for what step 7 obtains. It has three members:
+A `recompute` object stands in for what step 7 obtains. It has these members:
 - `descriptor`: the descriptor offered for `cell.fn_hash`, as a JSON value; when absent, the descriptor is unavailable (`E_FN_UNAVAILABLE`). It is never text to parse: a JSON string here is a string value offered as the descriptor, even when it holds a descriptor's text, and like `null` it does not hash to `fn_hash` (`E_FN_HASH_MISMATCH`, 10.1 step 7.1). Only an absent member means unavailable;
-- `inputs`: a map from receipt hash to the input receipt's JSON text; a hash with no entry is unavailable;
+- `inputs`: a map from receipt hash to the input receipt's JSON text (slice members included); a hash with no entry is unavailable. Entries are always JSON strings; an entry that is not a string is a malformed vector;
+- `manifests` (since `spec-0.4.0`): a map from slice entry to the manifest's JSON text; an entry with none is unavailable;
+- `lineage` (since `spec-0.4.0`): the `inputs` entries the evaluation read, for 7.6's supersession check; absent, no check is made;
 - `value`: the typed scalar that evaluating the function gave, compared in 7.6. When absent, evaluation is unavailable: once 7.1-7.5 pass, the result is success at level `signed` with `E_EVAL_UNAVAILABLE` reported, and such a valid vector has `level: "signed"` and `code: "E_EVAL_UNAVAILABLE"`.
 
-In an `env`, `status` is an integer HTTP status or the string `"error"`. Only the integer 200 is a retrieved document: any other value, including the string `"200"`, and an `https` object without `status`, is a failed retrieval (`E_KEY_UNAVAILABLE`, 9.3), as the vectors `invalid/keys-status-string` and `invalid/keys-status-missing` show.
+In an `env`, `status` is an integer HTTP status written without fraction or exponent, or the string `"error"`. Only the integer 200 is a retrieved document: any other value, including the string `"200"`, and an `https` object without `status`, is a failed retrieval (`E_KEY_UNAVAILABLE`, 9.3), as the vectors `invalid/keys-status-string` and `invalid/keys-status-missing` show.
 
-A failed verification reports only its code. Whether a library also returns the receipt hash when it could compute one is the library's choice, and vectors do not record it. Inputs are deliberately not canonical: member order is reversed, and there is whitespace and escaping. A valid receipt vector's expected verification result is success at `level`, with `code` when given (a library reports no code otherwise); an invalid one's is `error`. `code` is the only output that names a code on success, and it is never `error`'s. Keypairs come from fixed seeds and Ed25519 is deterministic, so `tools/gen_vectors.py` reproduces every file byte for byte.
+A failed verification reports only its code. Whether a library also returns the receipt hash when it could compute one is the library's choice, and vectors do not record it. Inputs are deliberately not canonical: member order is reversed, and there is whitespace and escaping. A valid receipt vector's expected verification result is success at `level`, with `code` when given (`E_EVAL_UNAVAILABLE`, or `E_INPUT_SUPERSEDED` when `recompute` has a `value` and a `lineage`; a library reports no code otherwise); an invalid one's is `error`. A runner whose interface reads a string as JSON text passes a vector's `descriptor` as its JSON serialisation. `code` is the only output that names a code on success, and it is never `error`'s. Keypairs come from fixed seeds and Ed25519 is deterministic, so `tools/gen_vectors.py` reproduces every file byte for byte.
 
 The `env` for a host is `{"https": {"status": 200, "body": "<text>"}}` for a retrieved document, or `{"https": {"status": <other status>}}` or `{"https": {"status": "error"}}` for a failed retrieval. A host absent from `keys` behaves as `{"https": {"status": "error"}}`.
 
-The vectors use reserved example domains (`example.org`, `example.net`, `.example`) for everything signed.
+The vectors use reserved example domains (`example.org`, `example.net`, `.example`) for everything signed. `tools/gen_vectors.py` (with `tools/gen_formula.py` for the kinds of `spec-0.4.0`) reproduces every file byte for byte.
 
 ## 12. Security considerations
 
@@ -757,45 +789,60 @@ Every choice this specification makes where its brief left room, with the main a
 | D30 | One code, `E_ENVELOPE`, for every envelope rule | A code per envelope rule | An envelope is not hashed or signed, so a client needs to know only that the mesh's statement is malformed. Receipt failures inside it keep their own codes. |
 | D31 | A client binds an envelope's receipt to its request: the same cell id, and, when an `asof` was asked for, a receipt `asof` at or before it, for `ok` and `stale` alike. `ok` asserts the receipt is the cell's latest version known as of the requested `asof`; `stale` does not, and carries `age_seconds` (revised in `spec-0.3.0`) | Until `spec-0.2.1`: an equal `asof` for `ok`, at or before for `stale`. Also: trust the mesh to answer the question asked | Without the binding, a mesh can answer any request with any valid receipt. It needs nothing in the receipt or the envelope, only what the client already knows. An equal `asof` forced a newly signed receipt for every distinct `asof` requested, so no receipt was reusable, and a publisher's own receipt could never be `ok` for an explicit `asof`. A receipt's value stands until the next version, so one receipt answers every later `asof` up to it. What `ok` adds over `stale` is the mesh's assertion of currency, which a client could not check under the old rule either (it could check only the equal `asof`, which says nothing about later versions). |
 | D32 | Malformed requests are `bad_request` (HTTP 400) carrying a URI parse code; `error` (5xx) is for the mesh's own failures | One `error` outcome for both | A client should not retry its own mistake, and should know which part of the URI to fix. |
-| D33 | A publisher of a stored receipt SHOULD set `asof = tx`. An issuer of a computed receipt SHOULD set `asof` to the latest `asof` among its input receipts, which equals the latest input `tx` (so `asof = tx`) when every input follows the first rule (8.2) | Let an input's `asof` exceed the receipt's `asof` as long as its `tx` does not, which would make `asof = tx` always possible | The second rule always satisfies D17 and depends on the inputs alone, so each version of a computed cell has exactly one canonical receipt, immutable and cacheable, even when an input's `asof` is later than its `tx` (as in `receipt/stored-number`). The alternative was rejected because a computed receipt could then cite an input its signer had not yet seen as of the receipt's `asof`. Both rules are SHOULD only: verification does not check them, and no vector's result depends on them. |
+| D33 | A publisher of a stored receipt SHOULD set `asof = tx`. An issuer of a computed receipt SHOULD set `asof` to the latest of its input receipts' `asof`s, the start of every name binding it relied on, and every explicit transaction time it read; for an asof-dependent function, the evaluation asof (8.2; revised in `spec-0.4.0`) | Input `asof`s only (`spec-0.3.0`); let an input's `asof` exceed the receipt's | Each version of a computed cell has one canonical receipt, immutable and cacheable, that recomputes at its own `asof`: a binding that began later, or a time read explicitly, would otherwise make the receipt untrue as of its `asof`. The `spec-0.3.0` rule was incomplete, not wrong. Both rules are SHOULD only: verification does not check them. |
 | D34 | A verifier that cannot evaluate a function reports `E_EVAL_UNAVAILABLE` with success at level `signed` (10.1 step 7.6) | Fail the receipt, with `E_FN_UNAVAILABLE` or `E_VALUE_MISMATCH`; or say nothing | Neither existing code says what happened: the descriptor was found, and nothing was compared. Failing would turn a signature-valid receipt invalid for a reason that is the verifier's, not the receipt's. Saying nothing would hide that recomputation did not happen. |
 | D35 | A null descriptor, or one given as a value that is not the descriptor, is a descriptor offered and fails the hash check; only obtaining nothing is `E_FN_UNAVAILABLE` (10.1 step 7.1) | Treat `null` as absent | There is no null value (3.6): absence is expressed by absence. Reading `null` as "none" would give one input two meanings depending on the implementation. |
-
-## Appendix A: collected ABNF
-
-```
-; RFC 5234 core rules: ALPHA, DIGIT. lower = %x61-7A.
-cell-uri      = "cell://" namespace "/" name [ "?" query ]
-query         = params [ "&" asof-param ] / asof-param
-params        = param *( "&" param )
-param         = name "=" arg-value
-asof-param    = "asof=" instant
-arg-value     = "*" / *( literal / pct-encoded )
-literal       = ALPHA / DIGIT / "-" / "." / "_" / "~" / ":"
-pct-encoded   = "%" UPHEX UPHEX
-UPHEX         = DIGIT / %x41-46
-
-namespace     = dns-name *( "/" name )
-function-name = namespace "/" name
-dns-name      = label 1*( "." label )            ; <= 253 chars, last label not all digits
-label         = ( lower / DIGIT ) [ *61( lower / DIGIT / "-" ) ( lower / DIGIT ) ]
-name          = lower *( lower / DIGIT ) *( "_" 1*( lower / DIGIT ) )   ; <= 64 chars
-key-ref       = dns-name "#" 16HEXLOW
-
-number        = [ "-" ] ( "0" / %x31-39 *DIGIT ) [ "." *DIGIT %x31-39 ]   ; not "-0", <= 128 chars
-date          = 4DIGIT "-" 2DIGIT "-" 2DIGIT                               ; a real day, 0001..9999
-instant       = date "T" 2DIGIT ":" 2DIGIT ":" 2DIGIT "." 6DIGIT "Z"     ; seconds 00-59
-HEXLOW        = DIGIT / %x61-66
-
-blob          = 64HEXLOW ":" ( "0" / %x31-39 *DIGIT ) ":" media-type     ; length <= 2^53 - 1
-media-type    = restricted-name "/" restricted-name                       ; <= 128 chars
-restricted-name = ( lower / DIGIT ) *( lower / DIGIT / "!" / "#" / "$" / "&" / "-" / "^" / "_" / "." / "+" )
-
-index-unit    = "index:" 4DIGIT [ "-" 2DIGIT [ "-" 2DIGIT ] ] "=" number   ; units.md 2.4, value > 0, <= 64 chars
-
-```
+| D36 | `lang = "formula"`: a body is one expression; the grammar is a PEG with longest-match tokens | A general language; an LR grammar with precedence declarations | The brief; a PEG cannot be ambiguous, and the ordered choices only separate valid from invalid readings |
+| D37 | Qualified names are one token beginning with a DNS name (so with a dot); aliases need `@` | Bare aliases resolved by scope | `x/f(y)` stays a division; meaning never depends on what is in scope |
+| D38 | Built-ins and keywords case-insensitive, printed lowercase | Lowercase only | Excel users write `SUM`; the stored body is the printed form, so hashed data has one spelling |
+| D39 | `-a^b`, `a^b^c` and comparison chains are rejected | Follow Excel (or mathematics) | The two traditions disagree; rejecting is the spec's rule for two readings |
+| D40 | Bare ISO dates and canonical instants are literals | `date("…")` or a sigil | Matches the URI and the decision log; only a subtraction nobody writes without spaces is lost |
+| D41 | Number literals must be canonical (3.1) | Accept `1.50`, `1e3` and normalise | One spelling in source and body |
+| D42 | The function hash covers the printed canonical AST as `code.body`; a non-canonical body is rejected; the AST hash is a test artefact | Hash the AST JSON as the body | The body stays readable; one AST, one body, one hash |
+| D44 | `inputs` is derived from the body and must equal the derived set | Declared by the author | The brief |
+| D45 | Decimal: exact then round half-even to 34 digits per operation; every intermediate within the 128-character canonical form; no negative zero | decimal128's exponent range for intermediates | Fewer behaviours to reproduce; nothing outside the canonical form could be returned anyway |
+| D46 | Integer exponents exact then rounded once; `sqrt`, `exp`, `ln`, non-integer `^`, `sin`, `cos`, `atan2` by named 40-digit algorithms with fixed term counts, then half-even to 34; the algorithm wins over correct rounding; `stdev` uses `SQRT-T40` | Integer exponents only and correctly rounded `sqrt` (the memo); correctly rounded results for everything | Correct rounding of transcendental functions has no bounded algorithm every evaluator can match; a fixed algorithm is deterministic and testable to the last digit |
+| D47 | Units as atom-exponent maps over `units.md` symbols and argument references; listed composite symbols are atoms | A unit grammar (UCUM) | D25 stands; the algebra exists only at define time |
+| D48 | Bare literals take their context's unit in `+ - <` and are dimensionless in `* /`, except against scaled ratios | Bare literals always `1` | `amount > 0` must work; `1 + r_percent` must not |
+| D49 | `degC` is affine | An ordinary unit | `units.md` says it is a temperature, not a difference |
+| D50 | Extent is an optional per-argument `extent` member; stored functions' extent is their recorded cells | A signature- or descriptor-level member; extents from another function | No existing hash changes; the descriptor keeps three members; function-defined extents wait for classes |
+| D51 | An open or non-enumerable range argument over a non-stored function without an extent is refused at define time | Refuse at run time | The brief; stored histories are limited by fuel instead (decision log) |
+| D52 | Members are ordered by key tuple, open arguments in name order | Source order | Independent of how the read was written |
+| D53 | A slice entry is `slice:<slice id>:<members hash>`; the slice id is the id of the slice object (4.4 with range objects); the members hash is over the sorted member receipt hashes | No separators; an object entry; a Merkle root | Sorts after plain hashes, self-describing, one string; Merkle can come later as another prefix |
+| D54 | Manifests `{members, slice}` fetched by entry | Members inline in the receipt | Keeps receipts small; that is the point |
+| D55 | New code `E_SLICE_MEMBER` for a member outside its slice | Reuse `E_INPUT_UNDECLARED` | A different lie, which a reader should be able to tell apart |
+| D56 | Lookups take the metric from the argument type, work along one dimension per group, and a bound narrows the recorded slice | A separate "group by"; read whole slices | Real-time aggregates at a cadence become one bounded slice per cell |
+| D57 | No cell reads inside lambdas; slices join on equal open argument names | Per-member reads | Per-member reads would bring back the 4,096-entry problem |
+| D58 | Evaluation faults give no value: `not_covered`, with the fault code in the envelope's optional `fault` member; `otherwise` catches only slice-proved absence | Excel-style error values; catch everything; an `error` envelope | There is no null; only slice absence is in the lineage; a fault is a property of the cell, not a failure of the mesh, but must not look like missing data |
+| D59 | `asof()` is the evaluation asof; an asof-dependent receipt's `asof` is the evaluation asof, and it is not reused for other asofs | Forbid `asof()`; choose `asof` from inputs | The receipt must recompute at its own `asof` |
+| D60 | `first_known`, `last_corrected`, `superseded` deferred to the standard library | Built-ins now | Expressible over `versions`; built-ins are hard to change |
+| D61 | Calendars are slices; weekends a parameter | A built-in holiday table | Data is cells: lineage, versions, licences |
+| D62 | `E_INPUT_SUPERSEDED` (7.6) is success at level `signed` with the code, raised when the resolver's lineage replaces an input by a later version of the same cell or slice | A failure; a bare `E_VALUE_MISMATCH` | The receipt is historical, not wrong (D34's reasoning) |
+| D63 | Normative fuel table | Implementation-defined fuel | Two evaluators exhaust a budget at the same point; vectors can state fuel |
+| D64 | Positional arguments bind by an optional, hashed `signature.order` listing every argument once; formula descriptors always carry it; positional before labelled; a positional read of a function without `order` is refused at define time; the canonical AST is labelled | Ascending name order; a required `order`, which would change every descriptor and receipt hash; positional arguments only for one-argument functions, or labels only | Authors and readers expect the declared order; optional means no existing hash changes; classes (1.3b) reuse it for key tuples |
+| D65 | `haversine` on a 6371008.8 m sphere, to the millimetre; `ellipsoidal_distance` reserved | Ellipsoidal (Vincenty, Karney) now | The user's decision: one simple, fully specified metric first |
+| D66 | Radians are dimensionless; `deg` is a listed unit; `sin`/`cos` accept both | A `rad` unit | SI treats the radian as dimensionless; `atan2(…) * r` then stays a length |
+| D67 | Argument reduction uses 60-digit constants with an exact product | 40-digit constants throughout | A 40-digit pi loses up to six digits of `sin` near large multiples of pi; the reduction is one exact step |
 
 ## 14. Changes
+
+### spec-0.4.0
+
+The formula dialect and slice-as-lineage (step 1.3). **No hash of any receipt whose inputs are single cells changes, nor of any descriptor without `order` or `extent`**: receipts gain no member, `inputs` gains an entry form used only by receipts that read slices, descriptors gain two optional members, and `formula` is a new language. Every `spec-0.3.0` vector file and example is byte-identical, and every expected result is unchanged. `tests/test_migration_0_4_0.py` checks this against the `spec-0.3.0` files in git, recomputes every receipt hash with the `spec-0.3.0` and the new tool, and runs both tools side by side on fuzzed receipts with single-cell inputs and fuzzed descriptors without `order` or `extent`. `proto` is still `datumesh/1`.
+
+- **The formula dialect (section 15).** `code.lang = "formula"`: grammar (15.2-15.4, Appendix A), resolution and the canonical AST (15.5), the printed body (15.6), built-ins (15.7), types (15.8), decimal arithmetic and the transcendental algorithms (15.9), units, angles and haversine (15.10), codes (15.11), evaluation, faults and fuel (15.12), slices (15.13), the Excel table (15.14) and the forms reserved for classes (15.15).
+- **Slice-as-lineage (4.4, 8.1, 8.4, 10.1 steps 3 and 7.5, 15.13).** A slice read is one `inputs` entry `slice:<slice id>:<members hash>`; the manifest lists its members. New code `E_SLICE_MEMBER`.
+- **Descriptors (7).** Optional `signature.order` (positional arguments bind by it) and argument `extent` (the cells of a slice over a computed function). Absent, a descriptor is unchanged; verifiers of `spec-0.3.0` reject a descriptor with either.
+- **The three items from step 1.2b.**
+  - 8.2's SHOULD for computed issuers now includes the start of every name binding relied on, explicit transaction times read, and the evaluation asof of asof-dependent functions (D33 revised).
+  - `E_INPUT_SUPERSEDED` (10.1 step 7.6, 10.2, D62): a recomputation that read a later version of an input, or other members of a slice, is success at level `signed` with the code: the receipt is historical, not wrong.
+  - The wording gaps: a descriptor given as text (7.1, the Python library's DEF-40 and the JavaScript library's note 36); no code when step 7 is not attempted (7.6, DEF-41); an `env` status written without fraction or exponent (11, JavaScript 37); `recompute.inputs` entries are always strings (11, RS-29); the `error` member's wording (5.5, RS-30).
+- **Envelopes (5.5).** `not_covered` gains the optional member `fault`, a formula evaluation fault; no existing envelope's result changes. A mesh MUST NOT serve an asof-dependent receipt as `ok` for another asof.
+- **Units (`units.md`).** `min`, `h`, `d`, `km` and `deg` added.
+- **Limits (4.5).** `extent` (4096) and `members` (1048576).
+- **Reference tools.** `tools/formula.py` (lexer, PEG parser, resolver, checker, printer, evaluator with lineage and fuel) and `tools/fdecimal.py` (integer decimal arithmetic and the 40-digit algorithms), standard library only; `tools/canon.py` gains slice entries, manifests, `order`, `extent`, `E_SLICE_MEMBER`, `E_INPUT_SUPERSEDED`, the envelope `fault` and the new vector kinds; `tools/gen_formula.py` generates the new vectors.
+- **Schemas.** `slice.schema.json` and `manifest.schema.json`; receipt `inputs` entries, descriptor `order` and `extent`, the envelope `fault`, and the new vector kinds and members.
+- **Vectors.** 613 new, 978 in all: 293 `formula` (172 valid, 121 invalid), 155 `formula-eval` (121, 34), 78 `excel`, 20 `decimal` (300 or more cases each), 18 `slice` (11, 7), 30 slice-lineage `receipt` (13, 17), 16 `function` with `order` and `extent` (4, 12), 3 `envelope` with `fault` (1, 2).
 
 ### spec-0.3.0
 
@@ -913,3 +960,518 @@ Every invalid vector built from these descriptors, cells and receipts changed it
 
 The receipt format, canonical encoding and all hashes are unchanged: every receipt valid under `spec-0.1` that names a key published over HTTPS is valid under `spec-0.1.1`, with the same hash.
 
+## 15. The formula dialect
+
+`code.lang = "formula"` is the default language for computed functions: an Excel-compatible expression language over cells. It is not a general language. Its executable form is `tools/formula.py` (with `tools/fdecimal.py` for numbers); the vectors of kinds `formula`, `formula-eval`, `excel` and `decimal` are normative examples (section 11).
+
+### 15.1 Purity and scope
+
+A body is one expression. Its only values are the function's arguments, literals and cell reads. There is no I/O, no clock, no randomness, no mutable state, no loop, no accumulator and no cursor; iteration is only over slices, through aggregates, lookups and scans. `asof()` is the evaluation asof (15.12), a constant within an evaluation. A function may read itself with other arguments (recursion is only through cell reads, never inside a body); a cell that reappears on the evaluation stack is a cycle. A function returns a scalar; slices are values inside a body only.
+
+**Inputs are derived, never declared.** A formula descriptor's `inputs` is exactly the set of fully qualified function names its body reads (15.5). A callee is always a lexical name, never a value, so the set is determined statically; a body that would need a dynamically constructed name fails at parse (`E_FORMULA_DYNAMIC_NAME`, `E_FORMULA_FORBIDDEN`).
+
+### 15.2 Lexical rules
+
+Tokens are recognised by **longest match**, trying these classes in order at each position. Whitespace between tokens is SP, HTAB or LF; CR and any other character outside a token are `E_FORMULA_SYNTAX`. Whitespace is never allowed inside a token. The whole body is lexed before it is parsed.
+
+| # | Token | Form | Notes |
+|---|---|---|---|
+| L1 | instant | `date "T" 2DIGIT ":" 2DIGIT ":" 2DIGIT "." 6DIGIT "Z"` | Only the canonical form (3.3). Anything shaped `YYYY-MM-DDT…` that is not a canonical, real instant is `E_FORMULA_INSTANT`. |
+| L2 | date | `4DIGIT "-" 2DIGIT "-" 2DIGIT` | Always a date, never a subtraction. Not a real day, or followed by a word character: `E_FORMULA_DATE`. |
+| L3 | qualified name | `dns-name 1*( "/" name )` | A DNS name (2.1), so it contains a dot and its last label is not all digits; the last segment is the function (2.3). A run that looks like one but breaks 2.1-2.3 is `E_FORMULA_NAME`. |
+| L4 | alias | `"@" name *( "/" name )` | A short name, replaced at define time by the resolver's alias map. |
+| L5 | number | `( "0" / %x31-39 *DIGIT ) [ "." 1*DIGIT ]`, canonical (3.1) | Non-negative; a leading `-` is the unary operator. A non-canonical run (`1.50`, `01`, `1.`, `.5`, `1e5`, over 128 characters) is `E_FORMULA_NUMBER`. `1..2` is `1`, `..`, `2`. |
+| L6 | unit suffix | after a number, optional SP or HTAB, the **longest unit literal of `units.md`** (index units included) not followed by a word character | `10 m/s` is ten metres per second; `10 m / s` divides ten metres by `s`. A following word that is a keyword is not a suffix. Any other word is `E_FORMULA_UNIT`, except digits directly followed by `D`, `M` or `Y` (`1M`, `10Y`), which are reserved for period keys (`E_FORMULA_RESERVED`, 15.15). The unit `1` is never a suffix. |
+| L7 | string | `DQUOTE *( string-char / 2DQUOTE ) DQUOTE` | A doubled quote is a quote; there are no other escapes. The content follows 3.5 (assigned, NFC, no controls) and the 1024-byte limit: `E_FORMULA_STRING`. |
+| L8 | word | `ALPHA *( ALPHA / DIGIT / "_" )` | Classified in 15.2.1. |
+| L9 | punctuation | `..` `->` `<>` `<=` `>=` `(` `)` `[` `]` `,` `:` `*` `+` `-` `/` `^` `&` `=` `<` `>` `.` | `==` and `!=` are `E_FORMULA_SYNTAX` (write `=`, `<>`). A lone `.` is reserved for methods (15.15). |
+
+#### 15.2.1 Words
+
+Keywords and built-in names are **case-insensitive** and printed in lowercase; everything else is case-sensitive.
+
+1. Keywords: `if then else let in and or not true false`.
+2. Reserved: `this`, `super` (classes, 1.3b): `E_FORMULA_RESERVED` anywhere.
+3. Forbidden function names, when followed by `(`: `now today rand randbetween randarray indirect offset info cell clock time random sleep fetch http eval`: `E_FORMULA_FORBIDDEN`, reporting the token as written. Without `(` such a word is an ordinary name.
+4. A word followed by `(` is a built-in (15.7), `ellipsoidal_distance` (reserved: `E_FORMULA_UNSUPPORTED`), or `E_FORMULA_UNKNOWN_FUNCTION`. User functions are always written qualified or as an `@alias`.
+5. A word not followed by `(` is a variable: an argument, a `let` name or a lambda parameter. It must be a name (2.2; `E_FORMULA_NAME`); a word with a capital letter is reserved for key literals (`E_FORMULA_RESERVED`, 15.15).
+
+A formula function cannot have an argument named after a keyword or reserved word (`E_FORMULA_RESERVED`); `asof` cannot be an argument name at all (2.4). A label (`name:`) may be any name, so other functions' arguments called `in` or `if` can still be passed.
+
+### 15.3 Grammar
+
+The grammar is a PEG: alternatives are tried in order and the first that matches wins. It is given in ABNF notation in Appendix A; this section restates its structure.
+
+- A body is an expression. `expr = or-expr / if-expr / let-expr`.
+- `if c then a else b` and `let x = v in b` extend as far right as possible; `else` is mandatory. They appear only where a whole expression is expected: the body, a parenthesised expression, an argument, a branch, a `let` value or body, a lambda body. As an operand they need parentheses (`E_FORMULA_PLACEMENT`).
+- Excel's `if(c, a, b)`, `and(a, b, …)` and `or(a, b, …)` are accepted as calls and resolve to the keyword forms. A body that starts `if (` is the function form exactly when the first parenthesised expression is followed by `,`.
+- A read is a qualified name or alias followed by `(` and arguments; each argument is an expression, `*` (an open argument, when followed by `,` or `)`), or a range `[lo..hi]` with expression ends. A qualified name not followed by `(` is `E_FORMULA_SYNTAX`: there are no function values.
+- A built-in call takes expressions; the second argument of `map` and `filter` is a lambda, `x -> e` or `(x, k1, …) -> e`. A lambda anywhere else, and `*` or a range outside a read, are `E_FORMULA_PLACEMENT`.
+- Positional arguments come before labelled ones (`E_FORMULA_ARG_ORDER`); a label appears once (`E_FORMULA_ARG_DUPLICATE`).
+- `(e)(x)`, `"a.org/f"(x)` and `f(x)(y)` are `E_FORMULA_DYNAMIC_NAME`; `).` and `x.y` are reserved for methods (`E_FORMULA_RESERVED`).
+- Nesting deeper than 256, or more than 65,536 nodes, is `E_FORMULA_LIMIT`.
+
+### 15.4 Precedence and ambiguity
+
+From tightest to loosest:
+
+| Level | Construct | Associativity |
+|---|---|---|
+| 1 | literals, reads, calls, `( )` (a unit suffix is part of its number) | — |
+| 2 | `.` method (reserved, 15.15) | — |
+| 3 | `^` | none: `a^b^c` is `E_FORMULA_AMBIGUOUS` |
+| 4 | unary `-` | prefix; `-a^b` is `E_FORMULA_AMBIGUOUS`; no unary `+` |
+| 5 | `*` `/` | left |
+| 6 | `+` `-` | left |
+| 7 | `&` | left |
+| 8 | `=` `<>` `<` `<=` `>` `>=` | none: `a < b < c` is `E_FORMULA_CHAIN` |
+| 9 | `not` | prefix |
+| 10 | `and` | left |
+| 11 | `or` | left |
+| 12 | `if`, `let`, `->` | extend to the right |
+
+The tree is binary at every level; with rounding (15.9), `+` and `*` are not associative, so its shape is part of the meaning. A unary minus is allowed in an exponent (`2^-1`).
+
+Where two readings are plausible, the rule settles it or the input is rejected:
+
+- **Division against `ns/fn`.** A qualified name begins with a DNS name, which contains a dot; a variable never does. `x/f(y)` with `x` an argument is a division. Short names need `@`.
+- **Hyphenated hosts.** `a-b.org/f(x)` is the call of `a-b.org/f` (longest match); `a - b.org/f(x)`, with spaces, subtracts.
+- **Units.** `10 m/s` against `10 m / s` (15.2 L6); `5 x` is `E_FORMULA_UNIT`, not a product.
+- **Ranges.** `[1..2]`, `[1.5..2]`; `[1...2]` is `E_FORMULA_NUMBER`.
+- **Powers.** Excel reads `-2^2` as 4 and `2^3^2` as 64, mathematics as -4 and 512: both rejected. Write `(-2)^2`, `-(2^2)`, `(2^3)^2` or `2^(3^2)`.
+- **Dates.** `2024-10-15` is a date; `2024 - 10 - 15` subtracts.
+- **Comparisons** do not chain; write `and`.
+
+The printer (15.6) puts spaces round every binary operator, so no printed body contains a whitespace-sensitive form.
+
+### 15.5 Resolution and the canonical AST
+
+Resolution turns the parse tree into the **canonical AST**, a JSON value. It runs in source order, after parsing and before checking:
+
+- aliases become fully qualified names (`E_FORMULA_ALIAS`); a qualified name must have a binding at define time (`E_FORMULA_UNRESOLVED`), the function being defined included;
+- keywords and built-in names become lowercase; `if(c, a, b)` becomes an `if` node and `and(a, b, c)` becomes `(a and b) and c`;
+- **positional read arguments bind by the callee's `signature.order`** (7) and become labelled. A positional argument in a read of a function whose signature has no `order` is `E_FORMULA_POSITIONAL`; more positional arguments than `order` lists is `E_FORMULA_ARITY`; then labels are checked against the callee's arguments (`E_FORMULA_ARG_DUPLICATE`, `E_FORMULA_ARG_UNKNOWN`, then `E_FORMULA_ARG_MISSING` in JCS order of names);
+- built-in arguments bind to their parameters (15.7): required parameters positional, optional ones labelled;
+- nothing else changes: no constant folding, no reordering.
+
+Nodes are objects discriminated by `node`: `num` (`value`, the canonical lexical form, and optionally `unit`), `str`, `bool`, `date`, `instant`, `var` (`name`), `op` (`op`: a binary operator, `neg` or `not`; `args`), `if` (`cond`, `then`, `else`), `let` (`name`, `value`, `body`), `read` (`fn`; `args`: an object from argument name to an expression, `{"node": "open"}` or `{"node": "range", "hi", "lo"}`), `call` (`fn`, `args`, `named`), `lambda` (`params`, `body`), `agg` (`name`: the aggregate of `scan` and `window`) and `key` (`name`: the dimension named by `along`). The AST contains no JSON numbers.
+
+The **canonical AST hash** is SHA-256 of the AST's JCS bytes. It is in no protocol object; grammar vectors pin it.
+
+### 15.6 The printer and `code.body`
+
+A formula descriptor's `code.body` is the **printed canonical AST** followed by one LF: single spaces round every binary operator and `->`, keywords spaced, `name: value` labels in reads (ascending), built-ins with required arguments positional and optional ones labelled, a unit suffix after one space, strings with doubled quotes, and the fewest parentheses the precedence table allows plus those the rejected forms require. A formula descriptor whose body is not the print of its AST is not canonical (`E_FORMULA_NOT_CANONICAL`); one whose `inputs` differs from the derived set is `E_FORMULA_INPUTS`; one whose signature has no `order` is `E_FORMULA_ORDER`. So each formula has one body and one function hash.
+
+For every canonical AST, parse(print(ast)) = ast, without an environment: a printed body has only full names and labelled reads.
+
+### 15.7 Built-ins
+
+Arguments in brackets are optional and labelled when given. An aggregate takes one slice or one or more scalars of one type.
+
+| Built-in | Result |
+|---|---|
+| `sum(s)` | Exact sum, rounded once; 0 on an empty slice. Not of `degC`. |
+| `count(s)` | Member count, unit `count`. |
+| `mean(s)` | Exact sum divided by the count, rounded once. |
+| `min(s)`, `max(s)` | Least or greatest value (numbers, dates, instants, strings). |
+| `first(s)`, `last(s)` | The first or last member in key order (15.13). |
+| `median(s)` | The middle value; for an even count, the two middle values' exact sum halved, rounded once. |
+| `stdev(s)`, `stdev_p(s)` | Sample and population standard deviation (15.9.2); of `degC`, in `K`. |
+| `at(s, key, [along])` | The member at `key`. |
+| `latest(s, [bound], [along])` | The last member along the dimension; with a bound, none if older than `asof() - bound` (asof-dependent). |
+| `last_before(s, x, [bound], [along])` | The member with the greatest key at or before `x`. |
+| `first_after(s, x, [bound], [along])` | The member with the least key at or after `x`. |
+| `nearest(s, x, [bound], [along])` | The member nearest to `x`; on a tie, the earlier key. |
+| `within(s, x, bound, [along])` | The slice of members within `bound` of `x`. |
+| `interpolate(s, x, [method], [bound], [along])` | `"linear"` (default) or `"step"`; no extrapolation; `"spline"` is `E_FORMULA_UNSUPPORTED`. |
+| `map(s, x -> e)` | Same keys, values `e`. Further lambda parameters name open arguments and bind to their key values. |
+| `filter(s, x -> p)` | The members for which `p` is true. |
+| `scan(s, aggregate, [along])` | The running aggregate along the dimension, per group. |
+| `window(s, n, aggregate, [along])` | The aggregate of the trailing `n` members; members with fewer than `n - 1` predecessors omitted. |
+| `otherwise(x, fallback)` | `x`, or `fallback` when `x` is `E_FORMULA_EMPTY` or `E_FORMULA_ABSENT`. |
+| `asof()` | The evaluation asof (asof-dependent). |
+| `asof(cell, T)` | The value of the cell's version answering as of `T` (a transaction-time read). |
+| `versions(cell, from, to)` | The slice of the cell's versions with `tx` in `[from, to]`, keyed by `tx`. |
+| `abs(x)`, `floor(x)`, `ceiling(x)` | Exact. |
+| `round(x, [digits])`, `round_up(x, [digits])`, `round_down(x, [digits])` | Excel's ROUND (half away from zero), ROUNDUP, ROUNDDOWN. |
+| `mod(x, divisor)` | Excel's MOD: the sign of the divisor. |
+| `sqrt(x)` | SQRT-T40 (15.9.3). |
+| `exp(x)`, `ln(x)` | EXP-T48, LN-ATANH80; dimensionless. |
+| `sin(x)`, `cos(x)` | TRIG-T24; `x` in radians (dimensionless) or `deg`. |
+| `atan2(y, x)` | ATAN2-T32, in radians. Excel's ATAN2 takes `(x, y)`. |
+| `pi()` | The 40-digit pi rounded to 34. |
+| `haversine(lat1, lon1, lat2, lon2)` | HAVERSINE (15.10): metres, to the millimetre. |
+| `convert(x, unit)` | Between units of one group by an exact factor (15.10). |
+| `if(condition, then, else)`, `and(a, b, …)`, `or(a, b, …)` | Excel's forms of the keywords. |
+| `date(year, month, day)` | A date; not a real day: `E_FORMULA_DOMAIN`. |
+| `year(d)`, `month(d)`, `day(d)`, `weekday(d)` | `weekday` is ISO: Monday 1. |
+| `end_of_month(d)` | The month's last day. |
+| `add_days(date, n, [calendar], [weekend])` | Calendar days; with a calendar or weekend, business days (Excel's WORKDAY). |
+| `add_months(date, n, [calendar], [roll], [weekend])` | Excel's EDATE; with a calendar or roll, rolled to a business day (`"following"`, `"modified_following"`, `"preceding"`). |
+| `business_days(from, to, [calendar], [weekend])` | Excel's NETWORKDAYS: both ends inclusive, negative when reversed. |
+| `year_fraction(from, to, convention)` | `"act/360"`, `"act/365f"`, `"act/act_isda"`, `"30/360"`, `"30e/360"`, `"30/360_us"`; the order of the dates does not matter. |
+| `is_holiday(date, calendar)` | Whether the date is a member of the calendar slice. |
+| `date_of(instant)`, `instant(date)` | The UTC date; midnight UTC. |
+| `len(text)` | Code points. |
+| `upper(text)`, `lower(text)` | Unicode 15.1 full case mappings, locale-free. |
+| `trim(text)` | Excel's TRIM: U+0020 trimmed at both ends and collapsed inside. |
+| `concat(a, b, …)` | Joined; the same as `&`. |
+| `substr(text, start, length)` | Excel's MID: 1-based, in code points. |
+| `find(needle, text, [start])` | 1-based position, case-sensitive; 0 when not found. |
+| `text(x)` | The canonical lexical form of any scalar. |
+| `fixed(x, digits)` | Excel's FIXED without separators. |
+
+A calendar is a slice with one open date argument; a date is a holiday when it is a member. `weekend` is `"sat-sun"` (default), `"fri-sat"`, `"sun"` or `"none"`. Enumeration arguments (`method`, `convention`, `roll`, `weekend`, the unit of `convert`, the aggregate of `scan` and `window`) are literals from their lists (`E_FORMULA_ENUM`). Every string result is normalised to NFC with Unicode 15.1 data (a computed value, not an input) and is at most 1024 bytes (`E_FORMULA_RANGE`).
+
+### 15.8 Types and checking
+
+The types are the six scalars and **slices** `slice<T, keys>`: members, each a key tuple over the open arguments and a value of type `T`. A slice is never an argument, a branch of `if`, or a function's result (`E_FORMULA_SLICE_VALUE`). There are no implicit conversions (`E_FORMULA_TYPE`): `"a" & 1` is an error, `"a" & text(1)` is not. Blobs can be compared with `=` and `<>`, passed and returned.
+
+**At define time** the checker walks the canonical AST depth first, left to right (a read's arguments in ascending label order), and reports the first failure: names in scope (`E_FORMULA_UNKNOWN_NAME`, `E_FORMULA_SHADOW`), built-in arity, argument types and units against the callee's signature, every node's type and unit (15.10), lambdas (`E_FORMULA_LAMBDA_PARAM`, and `E_FORMULA_LAMBDA_READ`: no cell reads inside a lambda; join instead), extents (15.13), joins (`E_FORMULA_JOIN`), lookups (`E_FORMULA_METRIC`, `E_FORMULA_ALONG`), transaction-time reads (`E_FORMULA_TX_ARG`), and finally the return type and unit against `signature.returns` (`E_FORMULA_RETURN_TYPE`, `E_FORMULA_RETURN_UNIT`).
+
+**At evaluation** the remaining failures are faults (15.12), absences and the evaluator's own limits. A callee name rebound since define time is checked again, with the same codes.
+
+### 15.9 Numbers
+
+#### 15.9.1 The rule
+
+Every operation computes its exact result, rounds it once to **34 significant digits, half-even**, then applies the **range rule**: the result in canonical form (3.1) has at most 128 characters, or the operation fails with `E_FORMULA_RANGE`. The rule applies to every intermediate, not only to the returned value. There is no exponent form, no infinity, no NaN and no negative zero (a zero result is `0`). No float appears anywhere.
+
+The reference library for tests is Python's `decimal` in `Context(prec=34, rounding=ROUND_HALF_EVEN, Emin=-6143, Emax=6144, clamp=0)` with `InvalidOperation`, `DivisionByZero` and `Overflow` trapped, plus the range rule. Because every operand satisfies the range rule, no operation reaches those exponent limits.
+
+#### 15.9.2 Operations
+
+| Operation | Definition |
+|---|---|
+| `+` `-` `*` | Exact, rounded once. |
+| `/` | The exact quotient rounded once; a zero divisor is `E_FORMULA_DIV_ZERO`. |
+| comparison | Exact. |
+| `x ^ n`, `n` an integer | `abs(n) <= 1024` (`E_FORMULA_DOMAIN`). The exact power rounded once; for `n < 0`, 1 divided by the exact power, rounded once; `x^0` is 1; `0` to a negative power is `E_FORMULA_DIV_ZERO`. |
+| `x ^ y`, `y` not an integer | POW-EXPLN (15.9.3). |
+| `sum`, `mean`, `median` | As in 15.7: exact sums, one rounding. |
+| `stdev`, `stdev_p` | `m` = mean; `ss` = the exact sum of the exact squares `(x_i - m)^2`, rounded once; `v = ss / (n - 1)` (or `/ n`), rounded once; the result SQRT-T40 of `v`. `stdev` needs two members, `stdev_p` one (`E_FORMULA_EMPTY`). |
+| `round`, `round_up`, `round_down`, `floor`, `ceiling`, `mod` | Exact, then the range rule. |
+
+#### 15.9.3 Transcendental algorithms
+
+`sqrt`, `exp`, `ln`, non-integer powers, `sin`, `cos`, `atan2` and `haversine` are defined by the named algorithms below. **Every step is at a working precision of 40 significant digits, half-even**; the 40-digit result is then rounded half-even to 34 and the range rule applied. The algorithm is normative: where its result differs from the correctly rounded value (a hard case near a rounding boundary), **the algorithm wins**. Python's `decimal` (mpdecimal) is the reference implementation for `sqrt`, `exp`, `ln` and powers; the vectors of kind `decimal` record its correctly rounded results beside the algorithm's and count the hard cases.
+
+Constants, each the true value rounded half-even to the digits shown:
+
+```
+PI         = 3.141592653589793238462643383279502884197
+HALF_PI    = 1.570796326794896619231321691639751442099
+LN10       = 2.302585092994045684017991454684364207601
+HALF_PI_60 = 1.57079632679489661923132169163975144209858469968755291048747
+LN10_60    = 2.30258509299404568401799145468436420760110148862877297603333
+RAD_PER_DEG = PI / 180, divided at 40 digits
+```
+
+The 60-digit constants are used only in argument reduction, where `x - n * C` is computed with the product exact and the difference rounded once to 40 digits.
+
+- **SQRT-T40.** The exact square root truncated to 40 significant digits (an integer square root of the scaled coefficient), then half-even to 34. A negative argument is `E_FORMULA_DOMAIN`. Truncation makes a tie at digit 35 possible where the exact root is above it; half-even then keeps the even neighbour.
+- **EXP-T48.** `abs(x) <= 300` (`E_FORMULA_RANGE` beyond). `n` = `x / LN10` rounded half-even to an integer; `r = x - n * LN10_60`; `S = sum of t_k` for `k = 0..47`, with `t_0 = 1` and `t_k = (t_(k-1) * r) / k`, each product and quotient rounded to 40, each addition rounded to 40; the result is `S * 10^n`.
+- **LN-ATANH80.** `x > 0` (`E_FORMULA_DOMAIN`). `x = m * 10^k` with `1 <= m < 10`; when `m * m >= 10` (decided exactly), `m` is divided by 10 and `k` increased by 1. `z = (m - 1) / (m + 1)`; `ln m = 2 * sum of z^(2j+1) / (2j+1)` for `j = 0..79`, the powers by repeated multiplication with `z * z`; `ln x = ln m + k * LN10`.
+- **POW-EXPLN.** For a non-integer `y`: `x > 0`: EXP-T48 of `y * LN-ATANH80(x)`, both at 40 digits before the final rounding; `x = 0` and `y > 0`: 0; `x = 0` and `y < 0`: `E_FORMULA_DIV_ZERO`; `x < 0`: `E_FORMULA_DOMAIN`.
+- **TRIG-T24.** `abs(x) <= 1000000` radians (`E_FORMULA_DOMAIN`). `k` = `x / HALF_PI` rounded half-even to an integer; `r = x - k * HALF_PI_60`; `sin r = sum of (-1)^j r^(2j+1) / (2j+1)!` and `cos r = sum of (-1)^j r^(2j) / (2j)!` for `j = 0..23`, each term from the previous by `* r^2 / ((2j)(2j+1))` (or `/ ((2j-1)(2j))`); by `k mod 4`: `(sin x, cos x)` is `(sin r, cos r)`, `(cos r, -sin r)`, `(-sin r, -cos r)`, `(-cos r, sin r)`.
+- **ATAN2-T32.** `atan2(0, 0)` is `E_FORMULA_DOMAIN`. `a = abs(y)`, `b = abs(x)`; `t = a / b`, or `b / a` when `a > b`; twice `t = t / (1 + SQRT40(1 + t * t))`, where SQRT40 is the 40-digit truncation of SQRT-T40; `A = 4 * sum of (-1)^j t^(2j+1) / (2j+1)` for `j = 0..31`; `HALF_PI - A` when `a > b`; then `PI` minus that when `x < 0`; negated when `y < 0`.
+
+A term below a tenth of a unit in the 40th digit of the partial sum cannot change the sum, and every later term is smaller; an implementation may stop there, and the result is exactly that of the full term count.
+
+The tests run 10,000 random cases per function against mpdecimal (`sqrt`, `exp`, `ln`, powers) and against 90-digit series (`sin`, `cos`, `atan2`); a difference larger than one unit in the 34th digit fails, and the number of hard cases is reported. A hard case is constructed for `sqrt` (`decimal/sqrt` holds it).
+
+### 15.10 Units, angles and distance
+
+The checker gives every number a unit: a map from atoms to non-zero integer exponents. An atom is a literal unit of `units.md` (indivisible: `kWh`, `m/s` and `W/m2` are atoms) or `arg:<name>`, the value of a string argument of the function being defined. A declared unit maps in directly: a literal to its atom, `{"arg": "q"}` to `arg:q`, a rate `{"of": X, "per": Y}` to `X^1 Y^-1`. A read's unit is the callee's declared unit with its argument references replaced by the units of the expressions bound to them: a string literal that is a listed unit, a string argument of the caller, or a `let` name bound to one of those; anything else is `E_FORMULA_UNIT_UNKNOWN`. When the reference is to an open argument the slice's unit varies by member, and the slice can only be counted or filtered.
+
+- `*` and `/` add and subtract exponents; `^` with an integer literal multiplies them, and a unit-bearing base with any other exponent is `E_FORMULA_EXPONENT`; `sqrt` halves even exponents.
+- `+`, `-`, comparison, the branches of `if`, the variadic aggregates and `otherwise` need equal units (`E_FORMULA_UNIT_MISMATCH`). A read argument with a declared unit must receive it; the body's unit must equal the declared return unit (`E_FORMULA_RETURN_UNIT`).
+- **Bare literals.** A number without a suffix is dimensionless in `*`, `/` and `^`, and takes its context's unit in `+`, `-`, comparison, `if`, `otherwise`, arguments and the return: `amount > 0`, `price + 10`. Against `percent`, `permille` or `bp` only `0` is accepted: `1 + r` with `r` in percent is an error (write `1 + r / 100 percent` or `convert(r, "1")`). A value declared in `1` is the identity in `*` and `/` but needs `1` on the other side of `+`.
+- **Offset units.** `degC - degC` is `K`; `degC ± K` is `degC`; a bare literal added to `degC` is in `K`; comparisons of `degC` are allowed. `degC + degC`, `degC * x`, `degC / x` and `sum` over `degC` are `E_FORMULA_UNIT_OFFSET`; `mean`, `median`, `min`, `max`, `first`, `last`, lookups and interpolation are allowed. A weighted mean of temperatures goes through kelvin: `convert(sum(map(t(*), x -> convert(x, "K")) * w(*)) / sum(w(*)), "degC")`.
+- **Time.** An instant plus or minus a number in `s`, `min`, `h` or `d` (a bare literal: `s`) is an instant, in whole microseconds (`E_FORMULA_DOMAIN`); an instant minus an instant is in `s`. A date plus or minus an integer number of `d` (a bare literal: `d`) is a date; a date minus a date is in `d`. Results outside 0001-9999 are `E_FORMULA_RANGE`.
+- **Angles.** Radians are dimensionless (`1`), as in SI; `deg` is listed. `sin` and `cos` take `1` or `deg`; `atan2(y, x)` takes two numbers of one unit and returns radians; `pi()` is `1`.
+- **`convert(x, "u")`** converts within a group by an exact factor: `1`, `percent`, `permille`, `bp`; `mm`, `cm`, `m`, `km`; `s`, `min`, `h`, `d`; and `degC` to `K` (+273.15) and back; `deg` and `1` by `RAD_PER_DEG` (at 40 digits, then 34). Nothing else converts.
+- **HAVERSINE.** `haversine(lat1, lon1, lat2, lon2)` takes decimal degrees (`deg`, or bare) with `abs(lat) <= 90` and `abs(lon) <= 360` (`E_FORMULA_DOMAIN`) and returns metres on a sphere of radius R = 6371008.8 m: `phi = lat * RAD_PER_DEG`; `h = sin(dphi / 2)^2 + cos(phi1) * cos(phi2) * sin(dlambda / 2)^2` (clamped to [0, 1]); `d = R * 2 * atan2(SQRT40(h), SQRT40(1 - h))`, every step at 40 digits with the 40-digit forms of TRIG-T24 and ATAN2-T32; the result rounded half-even to millimetres (three decimals). `ellipsoidal_distance` is reserved for a later revision (`E_FORMULA_UNSUPPORTED`). The `point` metric of 1.3b dispatches to `haversine`; already now a slice keyed by latitude and longitude can be filtered by distance: `filter(f(lat: *, lon: *), (v, lat, lon) -> haversine(lat, lon, 51.5, -0.12) <= 20000 m)`.
+
+A verifier never checks a value against its unit (7.1); all of this is checked at define time.
+
+### 15.11 Error codes
+
+Define-time codes are reported by `define` and the reference checker; evaluation codes by an evaluator. None is a verification code (10.2): no receipt is signed for a failed evaluation.
+
+| Code | Rule |
+|---|---|
+| `E_FORMULA_SYNTAX` | Not a sentence of the grammar; a stray or unknown character. |
+| `E_FORMULA_NUMBER` | A number literal not in canonical form. |
+| `E_FORMULA_STRING` | A string literal unterminated, not NFC, with a control or unassigned character, or over 1024 bytes. |
+| `E_FORMULA_DATE` | A date-shaped token that is not a real day. |
+| `E_FORMULA_INSTANT` | An instant-shaped token not in canonical form or not a real time. |
+| `E_FORMULA_UNIT` | A unit suffix, or the unit of `convert`, that is not a listed unit. |
+| `E_FORMULA_NAME` | A qualified name, alias, variable or label that breaks 2.1-2.3. |
+| `E_FORMULA_RESERVED` | `this`, `super`, a keyword as a name, a word with a capital, a period key, `.` after an expression. |
+| `E_FORMULA_FORBIDDEN` | A forbidden function name called; the token is reported. |
+| `E_FORMULA_DYNAMIC_NAME` | A call whose callee is not a name. |
+| `E_FORMULA_AMBIGUOUS` | `-a^b` or `a^b^c` without parentheses. |
+| `E_FORMULA_CHAIN` | Two comparisons chained. |
+| `E_FORMULA_PLACEMENT` | `if`, `let` or `not` as an operand; `*` or a range outside a read; a lambda outside `map` and `filter`. |
+| `E_FORMULA_LIMIT` | A body over 1 MiB, nesting deeper than 256, more than 65,536 nodes. |
+| `E_FORMULA_UNKNOWN_FUNCTION` | A bare call that is not a built-in. |
+| `E_FORMULA_ALIAS` | An alias not in the alias map. |
+| `E_FORMULA_UNRESOLVED` | A function name with no binding. |
+| `E_FORMULA_UNKNOWN_NAME` | A variable not in scope. |
+| `E_FORMULA_SHADOW` | A `let` name or lambda parameter equal to a name in scope, or two equal lambda parameters. |
+| `E_FORMULA_ARITY` | A built-in with the wrong number of arguments; more positional read arguments than `order` lists. |
+| `E_FORMULA_ARG_UNKNOWN` | A label the callee does not declare. |
+| `E_FORMULA_ARG_MISSING` | A callee argument not bound. |
+| `E_FORMULA_ARG_DUPLICATE` | An argument bound twice. |
+| `E_FORMULA_ARG_ORDER` | A positional argument after a labelled one. |
+| `E_FORMULA_POSITIONAL` | A positional argument in a read of a function without `order`. |
+| `E_FORMULA_ORDER` | A formula descriptor without `order`. |
+| `E_FORMULA_TYPE` | A type mismatch. |
+| `E_FORMULA_SLICE_VALUE` | A slice where a scalar is required. |
+| `E_FORMULA_UNIT_MISMATCH` | Units that must agree do not. |
+| `E_FORMULA_UNIT_OFFSET` | An offset unit where only differences make sense. |
+| `E_FORMULA_UNIT_UNKNOWN` | A unit that cannot be determined statically. |
+| `E_FORMULA_EXPONENT` | A unit-bearing base with a non-literal exponent; a unit exponent; `sqrt` of an odd power. |
+| `E_FORMULA_RETURN_TYPE` | The body's type differs from `signature.returns`. |
+| `E_FORMULA_RETURN_UNIT` | The body's unit differs from the declared return unit. |
+| `E_FORMULA_UNBOUNDED` | An open or non-enumerable argument over a function without an extent, or a slice of more than 1,048,576 cells (15.13). |
+| `E_FORMULA_SLICE_BOUND` | A range over a boolean or blob argument. |
+| `E_FORMULA_METRIC` | A metric lookup on a dimension without a metric; a bound in the wrong unit. |
+| `E_FORMULA_ALONG` | A lookup or scan whose dimension cannot be chosen. |
+| `E_FORMULA_JOIN` | An operator over two slices with different key names or types. |
+| `E_FORMULA_LAMBDA_PARAM` | A lambda parameter after the first that is not an open argument. |
+| `E_FORMULA_LAMBDA_READ` | A cell read inside a lambda. |
+| `E_FORMULA_ENUM` | An enumeration argument not a literal from its list. |
+| `E_FORMULA_TX_ARG` | The first argument of `asof(cell, T)` or `versions` is not a single-cell read. |
+| `E_FORMULA_UNSUPPORTED` | Parsed but not in this revision: key-set arguments, the `point` metric, `ellipsoidal_distance`, `spline`. |
+| `E_FORMULA_INPUTS` | A descriptor's `inputs` differs from the derived set. |
+| `E_FORMULA_NOT_CANONICAL` | A descriptor's body is not the print of its AST. |
+| `E_FORMULA_DIV_ZERO` | Fault: division or `mod` by zero; zero to a negative power. |
+| `E_FORMULA_DOMAIN` | Fault: an argument outside an operation's domain. |
+| `E_FORMULA_RANGE` | Fault: a result outside the canonical forms. |
+| `E_FORMULA_EMPTY` | Fault: an aggregate that needs members over an empty slice (catchable). |
+| `E_FORMULA_ABSENT` | Fault: a lookup with no qualifying member; a computed slice with a member without value (catchable). |
+| `E_FORMULA_FUTURE` | Fault: `asof(c, T)` or `versions(c, f, T)` with `T` after the evaluation asof. |
+| `E_FORMULA_NOT_COVERED` | A single-cell read with no value as of the asof: the cell has none either. |
+| `E_FORMULA_BUDGET` | Fuel exhausted. |
+| `E_FORMULA_CYCLE` | A cell reappears on the evaluation stack. |
+| `E_FORMULA_DEPTH` | Evaluation deeper than the evaluator's limit. |
+
+### 15.12 Evaluation
+
+**Order.** Evaluation is strict and left to right, except: `if` evaluates only the chosen branch, `and` and `or` short-circuit, `otherwise` evaluates its fallback only on absence, and `let` always evaluates its value first. The lineage is exactly the reads performed, so this order is part of the semantics; the first fault in it is reported.
+
+**Faults and absence.** A fault gives the cell no value. A mesh answers `not_covered` with the fault in the envelope's `fault` member (5.5), so that it is not mistaken for missing data. `E_FORMULA_NOT_COVERED` is plain `not_covered`. `E_FORMULA_BUDGET`, `E_FORMULA_CYCLE` and `E_FORMULA_DEPTH` are the mesh's failures: an `error` envelope with `E_EVAL_UNAVAILABLE`. `otherwise` catches only `E_FORMULA_EMPTY` and `E_FORMULA_ABSENT`, absences that the slice lineage proves; a single-cell read with no value cannot be caught (a receipt cannot list an absence), but `otherwise(at(f(*), k), 0)` can.
+
+**`asof()`.** A body that contains `asof()`, or `latest` with a bound, is **asof-dependent**; the checker derives this statically. Its computed receipt's `asof` SHOULD be the evaluation asof (the request's `asof`, or the clock reading of the request), so that it recomputes there. Such receipts are one per requested asof, not one per version: the engine must not reuse one for another asof, and a mesh MUST NOT serve one as `ok` for a requested `asof` other than its own (5.5). Prefer a valid-time argument at a declared cadence to `asof()`.
+
+**Fuel.** Fuel is normative, so that every evaluator exhausts a budget at the same point:
+
+| Work | Fuel |
+|---|---|
+| each AST node evaluated | 1 |
+| a single-cell read | 1 |
+| a slice read | 1 + members |
+| an aggregate or lookup over n members | n (`median`: n × the bit length of n) |
+| `scan` over n; `window` over n, width w | n; n × w |
+| `x ^ n`, `n` an integer | abs(n) |
+| a non-integer power | 130 |
+| `sqrt`, `exp`, `ln`, `sin`, `cos`, `atan2`, `haversine` | 10, 50, 80, 50, 50, 60, 400 |
+| `upper`, `lower`, `trim`, `concat` | 1 + bytes of the result / 64, rounded down |
+| a business day stepped over | 1 |
+
+Fuel is per request and covers the computed inputs it evaluates. Refused at define time: open arguments over functions without an extent, ranges that cannot be enumerated or that enumerate more than 1,048,576 cells, and the size limits of 15.3.
+
+### 15.13 Slices and slice-as-lineage
+
+**Writing a slice.** A read with at least one argument `*` or `[lo..hi]` is a slice. Range ends are expressions of the argument's type, inclusive; `lo > hi` in a written range is `E_FORMULA_DOMAIN`.
+
+**Membership as of the evaluation asof A.** For a stored function, the cells of the function name, with the function hash it resolves to as of A, whose arguments match (bound arguments equal, ranges containing) and which have a version answering as of A; each member's value is that version's. For any other language, the cells of the declared extent (7) within the pattern; every one must have a value as of A, or the read is `E_FORMULA_ABSENT` as a whole.
+
+**Extents.** An open argument over a function whose `lang` is not `stored`, without an `extent` for that argument, is `E_FORMULA_UNBOUNDED` at define time; a range over such an argument is allowed for `date` and integer-valued `number` arguments (enumerated daily, or by 1) and is otherwise `E_FORMULA_UNBOUNDED`; a range over a boolean or blob is `E_FORMULA_SLICE_BOUND`. A stored function's extent is its recorded cells: an unbounded slice over a long stored history is accepted and limited by fuel.
+
+**Order.** Members are ordered by key tuple: the open arguments in ascending name order, each compared in its type's order (numbers numerically, dates and instants chronologically, strings by code point, `false` before `true`). `first`, `last`, scans and lookups use it.
+
+**Empty slices.** `sum` is 0 and `count` 0; other aggregates are `E_FORMULA_EMPTY` and lookups `E_FORMULA_ABSENT`.
+
+**Lookups** work along one dimension: the only open argument; otherwise the only open valid-time argument; otherwise the one named by `along` (`E_FORMULA_ALONG`). The other open arguments are group keys: a lookup over a k-dimensional slice gives a (k-1)-dimensional slice of the groups where it found a member, or a scalar when k = 1. The metric comes from the dimension's type: instants a duration (bound in `s`, `min`, `h` or `d`), dates days (`d`), numbers the absolute difference in their unit; strings, booleans and blobs have none (`E_FORMULA_METRIC`). **A bound narrows the read**, and the narrowed slice is what lineage records: `last_before(f(*), x, b)` reads `f([x - b..x])`; `first_after` `[x..x + b]`; `nearest`, `within` and `interpolate` `[x - b..x + b]`; `latest(s, b)` `[asof() - b..9999-12-31T23:59:59.999999Z]`; ends rounded inward to the key's precision and clamped to the type's range. Linear interpolation is `v0 + ((v1 - v0) * (x - x0)) / (x1 - x0)` as dialect operations (instants in seconds, dates in days), from the members at or before and after `x`, both within the bound; an exact key gives its value.
+
+**Joins.** `+ - * /` between two slices with the same open argument names and key types is an inner join on keys; between a slice and a scalar, the scalar applies to every member.
+
+**Transaction-time reads.** `asof(c, T)` reads the version of `c` answering as of `T` (T after A: `E_FORMULA_FUTURE`); it is an ordinary single-cell input whose `asof` is at or before `T`. `versions(c, from, to)` is a version slice of the stored cell `c`.
+
+**Lineage.** A slice read is one `inputs` entry (8.1): `slice:<slice id>:<members hash>`, where the slice id is SHA-256 of the slice object's canonical bytes (4.4: a cell object with `*` or range objects, or a version slice `{"cell", "from", "to"}`) and the members hash is SHA-256 of the canonical bytes of the JSON array of the member receipt hashes, ascending (for an empty slice, of `[]`). The same slice read twice is one entry. Its **manifest**, `{"members": [...], "slice": {...}}`, is fetched by the entry; a mesh SHOULD serve it at `https://<mesh>/slice/<slice id>/<members hash>` as `application/json`; members are fetched as receipts by hash.
+
+### 15.14 Excel compatibility
+
+Excel's ranges are slices and Excel's positions are keys: a criteria column becomes an argument of the function that holds the values. Every supported or partial row has a vector (`excel/<function>`) showing equivalence on a sample input. The vectors are **documentation-derived**: each cites the Microsoft documentation page it follows (`doc`), uses inputs on which Excel's binary doubles give the exact decimal result, and compares irrational results after `ROUND`; no Excel was run. The FIND vector cites Microsoft's FIND/SEARCH troubleshooting page, because the FIND article linked from Microsoft's function index redirected to a retired page when checked on 2026-10-24.
+
+| Excel | Status | Formula | Differences or reason |
+|---|---|---|---|
+| `SUM` | supported | `sum(s)`, `sum(a, b, …)` | Exact decimal, not double. |
+| `AVERAGE` | supported | `mean(s)` | |
+| `COUNT` | supported | `count(s)` | Members are typed: no "numbers only". |
+| `COUNTA` | supported | `count(s)` | |
+| `MIN` | supported | `min(s)` | An empty slice has no minimum, not 0. |
+| `MAX` | supported | `max(s)` | As MIN. |
+| `MEDIAN` | supported | `median(s)` | |
+| `STDEV.S` | supported | `stdev(s)` | The fixed sequence of 15.9.2. |
+| `STDEV.P` | supported | `stdev_p(s)` | |
+| `IF` | supported | `if c then a else b`, `if(c, a, b)` | |
+| `IFS` | partial | `if c1 then v1 else if c2 then v2 else …` | Needs a final `else`; Excel's `#N/A` has no equivalent. |
+| `AND` | supported | `a and b`, `and(a, b, …)` | Booleans only. |
+| `OR` | supported | `a or b`, `or(a, b, …)` | |
+| `NOT` | supported | `not a` | |
+| `ROUND` | supported | `round(x, digits)` | Half away from zero, as Excel. |
+| `ROUNDUP` | supported | `round_up(x, digits)` | |
+| `ROUNDDOWN` | supported | `round_down(x, digits)` | |
+| `INT` | supported | `floor(x)` | |
+| `FLOOR.MATH` | supported | `floor(x)` | One argument. |
+| `CEILING.MATH` | supported | `ceiling(x)` | One argument. |
+| `MOD` | supported | `mod(a, b)` | |
+| `ABS` | supported | `abs(x)` | |
+| `POWER` | supported | `x ^ y` | Non-integer exponents by POW-EXPLN. |
+| `SQRT` | supported | `sqrt(x)` | SQRT-T40. |
+| `EXP` | supported | `exp(x)` | 34 digits, not 15. |
+| `LN` | supported | `ln(x)` | |
+| `LOG` | partial | `ln(x) / ln(base)` | Two roundings: compare after `round`. |
+| `LOG10` | partial | `ln(x) / ln(10)` | As LOG. |
+| `SIN` | supported | `sin(x)` | Radians, or `deg`. |
+| `COS` | supported | `cos(x)` | |
+| `TAN` | partial | `sin(x) / cos(x)` | |
+| `ATAN2` | supported | `atan2(y, x)` | **Excel's argument order is ATAN2(x, y).** |
+| `ASIN` | partial | `atan2(x, sqrt(1 - x ^ 2))` | |
+| `ACOS` | partial | `atan2(sqrt(1 - x ^ 2), x)` | |
+| `ATAN` | partial | `atan2(x, 1)` | |
+| `PI` | supported | `pi()` | 34 digits. |
+| `DEGREES` | partial | `convert(x, "deg")` | Radians are dimensionless. |
+| `RADIANS` | partial | `convert(x deg, "1")` | |
+| `SUMPRODUCT` | supported | `sum(a(*) * b(*))` | Joined on keys, not positions. |
+| `SUMIF` | partial | `sum(f(row: *, item: "bolt", region: *))`, or `sum(filter(s, x -> x > 5))` | Criteria become keys or predicates; wildcard criteria are not supported. |
+| `SUMIFS` | partial | `sum(f(row: *, item: "nut", region: "north"))` | As SUMIF. |
+| `AVERAGEIF` | partial | `mean(…)` | As SUMIF. |
+| `AVERAGEIFS` | partial | `mean(…)` | As SUMIF. |
+| `COUNTIF` | partial | `count(filter(s, v -> v > 25))` | As SUMIF. |
+| `COUNTIFS` | partial | `count(f(…: "nut", …: "north"))` | As SUMIF. |
+| `VLOOKUP` | partial | exact: `at(s, k)`; approximate (TRUE): `last_before(s, k)` | By key, not column index: the looked-up function is the column. |
+| `HLOOKUP` | partial | `at(s, k)` | As VLOOKUP. |
+| `XLOOKUP` | partial | `at`; match mode -1 `last_before`, 1 `first_after`; `if_not_found`: `otherwise(at(s, k), d)` | Wildcard and binary-search modes not supported. |
+| `INDEX` | partial | `at(s, k)` with `MATCH` | Positions have no meaning in a slice. |
+| `MATCH` | partial | `at(s, k)` inside INDEX | MATCH alone (a position) is not supported. |
+| `EDATE` | supported | `add_months(d, n)` | |
+| `EOMONTH` | supported | `end_of_month(add_months(d, n))` | |
+| `NETWORKDAYS` | supported | `business_days(a, b, calendar: …)` | Holidays are a calendar slice; a weekend parameter. |
+| `WORKDAY` | supported | `add_days(d, n, calendar: …)` | As NETWORKDAYS. |
+| `YEARFRAC` | partial | `year_fraction(a, b, "30/360_us" / "act/360" / "act/365f" / "30e/360")` for bases 0, 2, 3, 4 | Basis 1 (Excel's actual/actual) is not supported; `"act/act_isda"` is near it and differs. |
+| `DATE` | supported | `date(y, m, d)` | No overflow of months or days: `E_FORMULA_DOMAIN`. |
+| `YEAR` | supported | `year(d)` | |
+| `MONTH` | supported | `month(d)` | |
+| `DAY` | supported | `day(d)` | |
+| `WEEKDAY` | supported | `mod(weekday(d), 7) + 1` | `weekday` is ISO (Monday 1). |
+| `LEN` | supported | `len(s)` | Code points, not UTF-16 units. |
+| `LEFT` | supported | `substr(s, 1, n)` | |
+| `RIGHT` | supported | `substr(s, len(s) - n + 1, n)` | |
+| `MID` | supported | `substr(s, i, n)` | |
+| `CONCAT` | supported | `concat(a, b, …)` | The result is NFC. |
+| `CONCATENATE` | supported | `a & b & …` | |
+| `FIND` | supported | `find(needle, s, [start])` | 0 when not found, not `#VALUE!`. |
+| `SEARCH` | partial | `find(lower(needle), lower(s))` | No wildcards. |
+| `UPPER` | supported | `upper(s)` | Unicode case mapping. |
+| `LOWER` | supported | `lower(s)` | |
+| `TRIM` | supported | `trim(s)` | |
+| `FIXED` | supported | `fixed(x, n)` | With `no_commas` TRUE. |
+| `IFERROR` | partial | `otherwise(x, y)` for slice absence; arithmetic: `if b = 0 then y else a / b` | Arithmetic faults are not catchable (15.12). |
+| `IFNA` | partial | `otherwise(x, y)` | |
+| `TEXT` | not supported | `text(x)`, `fixed(x, n)` | Format strings are locale-dependent. |
+| `VALUE` | not supported | none | Locale-dependent parsing. |
+| `NOW` | not supported | `asof()` or a valid-time argument | Purity: no clock. |
+| `TODAY` | not supported | `date_of(asof())` or a valid-time argument | Purity: no clock. |
+| `RAND` | not supported | none: publish random values as stored cells | Purity: no randomness. |
+| `RANDBETWEEN` | not supported | none | As RAND. |
+| `INDIRECT` | not supported | none | Inputs must be static. |
+| `OFFSET` | not supported | a bounded slice with a static shape | Dynamic ranges cannot be derived statically. |
+
+What Excel users will miss first: `IFERROR` over arithmetic, `TEXT` format strings, wildcard criteria, positions (`INDEX` by row number, `MATCH`, `OFFSET`), `NOW()`, and that results have 34 digits where Excel shows 15.
+
+### 15.15 Reserved for classes (1.3b)
+
+Three forms are reserved so that 1.3b can add meaning without changing any 0.4.0 body:
+
+1. **Method chaining.** `postfix = primary *( "." name "(" [ args ] ")" )`: `rates.example.org/fx_pair(base: "EUR", quote: "USD").forward(tenor: "1M")`. `).` is `E_FORMULA_RESERVED` now. A method call will resolve to a read of the method's function with the object's keys as its first arguments (by `signature.order`), so its canonical AST, and hash, equal those of the plain read.
+2. **Key literals.** A word with a capital letter not followed by `(` (`EUR`) and digits followed by `D`, `M` or `Y` (`1M`, `10Y`) are reserved for class keys; in 1.3b they are strings checked by the class's key normalisation and printed quoted, so `fx_pair(EUR, USD)` and `fx_pair("EUR", "USD")` will have one AST. `1W` stays one watt; a one-week tenor is `7D`.
+3. **Class-typed keys.** When a callee's parameter is declared with a class type (1.3b), a call in that position will be the object's key, not a read and not an input. The distinction is made at resolution from the callee's signature, with an AST node kind `key`; 0.4.0 signatures cannot declare class types, so every 0.4.0 body keeps meaning a read.
+
+## Appendix A: collected ABNF
+
+```
+; RFC 5234 core rules: ALPHA, DIGIT. lower = %x61-7A.
+cell-uri      = "cell://" namespace "/" name [ "?" query ]
+query         = params [ "&" asof-param ] / asof-param
+params        = param *( "&" param )
+param         = name "=" arg-value
+asof-param    = "asof=" instant
+arg-value     = "*" / *( literal / pct-encoded )
+literal       = ALPHA / DIGIT / "-" / "." / "_" / "~" / ":"
+pct-encoded   = "%" UPHEX UPHEX
+UPHEX         = DIGIT / %x41-46
+
+namespace     = dns-name *( "/" name )
+function-name = namespace "/" name
+dns-name      = label 1*( "." label )            ; <= 253 chars, last label not all digits
+label         = ( lower / DIGIT ) [ *61( lower / DIGIT / "-" ) ( lower / DIGIT ) ]
+name          = lower *( lower / DIGIT ) *( "_" 1*( lower / DIGIT ) )   ; <= 64 chars
+key-ref       = dns-name "#" 16HEXLOW
+
+number        = [ "-" ] ( "0" / %x31-39 *DIGIT ) [ "." *DIGIT %x31-39 ]   ; not "-0", <= 128 chars
+date          = 4DIGIT "-" 2DIGIT "-" 2DIGIT                               ; a real day, 0001..9999
+instant       = date "T" 2DIGIT ":" 2DIGIT ":" 2DIGIT "." 6DIGIT "Z"     ; seconds 00-59
+HEXLOW        = DIGIT / %x61-66
+
+blob          = 64HEXLOW ":" ( "0" / %x31-39 *DIGIT ) ":" media-type     ; length <= 2^53 - 1
+media-type    = restricted-name "/" restricted-name                       ; <= 128 chars
+restricted-name = ( lower / DIGIT ) *( lower / DIGIT / "!" / "#" / "$" / "&" / "-" / "^" / "_" / "." / "+" )
+
+index-unit    = "index:" 4DIGIT [ "-" 2DIGIT [ "-" 2DIGIT ] ] "=" number   ; units.md 2.4, value > 0, <= 64 chars
+
+input-entry   = 64HEXLOW / slice-entry                                    ; 8.1
+slice-entry   = "slice:" 64HEXLOW ":" 64HEXLOW                            ; slice id, members hash (15.13)
+```
+
+The formula dialect (section 15). A PEG: alternatives are tried in order; tokens by longest match
+(15.2), whitespace (SP, HTAB, LF) between any two tokens.
+
+```
+formula-body   = expr
+expr           = or-expr / if-expr / let-expr
+if-expr        = "if" expr "then" expr "else" expr
+let-expr       = "let" name "=" expr "in" expr
+or-expr        = and-expr *( "or" and-expr )
+and-expr       = not-expr *( "and" not-expr )
+not-expr       = "not" not-expr / cmp-expr
+cmp-expr       = cat-expr [ cmp-op cat-expr ]                    ; no chains
+cmp-op         = "=" / "<>" / "<" / "<=" / ">" / ">="
+cat-expr       = add-expr *( "&" add-expr )
+add-expr       = mul-expr *( ( "+" / "-" ) mul-expr )
+mul-expr       = unary *( ( "*" / "/" ) unary )
+unary          = 1*"-" postfix / power                           ; "-" never takes a power
+power          = postfix [ "^" *"-" postfix ]                    ; no chains
+postfix        = primary                                         ; "." is reserved (15.15)
+primary        = formula-literal / read / call / variable / "(" expr ")"
+formula-literal = number-literal [ unit-suffix ] / string / date / instant / "true" / "false"
+read           = ( qualified-name / alias ) "(" [ read-arg *( "," read-arg ) ] ")"
+read-arg       = [ arg-label ] ( "*" / range / expr )                ; "*" followed by "," or ")"
+range          = "[" expr ".." expr "]"
+call           = builtin "(" [ call-arg *( "," call-arg ) ] ")"  ; and "if", "and", "or" (15.3)
+call-arg       = [ arg-label ] ( lambda / expr )
+lambda         = name "->" expr / "(" name *( "," name ) ")" "->" expr
+arg-label      = name ":"
+variable       = name
+qualified-name = dns-name 1*( "/" name )                         ; longest match (15.2 L3)
+alias          = "@" name *( "/" name )
+unit-suffix    = *( SP / HTAB ) unit-literal                     ; the longest listed unit (15.2 L6)
+number-literal = ( "0" / %x31-39 *DIGIT ) [ "." *DIGIT %x31-39 ]  ; canonical, non-negative
+string         = DQUOTE *( string-char / 2DQUOTE ) DQUOTE      ; string-char: 3.5, not DQUOTE
+builtin        = <a word naming a built-in of 15.7, any case>
+unit-literal   = <a unit of units.md other than "1", or an index unit>
+```

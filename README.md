@@ -4,7 +4,7 @@
 
 Datumesh is an open protocol for addressable, verifiable data cells: a name, a resolver, a signed answer, and a lineage you can follow.
 
-This repository is the protocol's specification ([SPEC.md](SPEC.md), revision `spec-0.3.0`, with [units.md](units.md)), its JSON Schemas ([schemas/](schemas/)), its test vectors ([vectors/](vectors/)), and a reference canonicaliser used to generate and check them ([tools/canon.py](tools/canon.py)). The canonicaliser is a test tool, not a library.
+This repository is the protocol's specification ([SPEC.md](SPEC.md), revision `spec-0.4.0`, with [units.md](units.md)), its JSON Schemas ([schemas/](schemas/)), its test vectors ([vectors/](vectors/)), a reference canonicaliser used to generate and check them ([tools/canon.py](tools/canon.py)), and the reference implementation of the formula dialect, the default language of computed functions ([tools/formula.py](tools/formula.py), with [tools/fdecimal.py](tools/fdecimal.py) for its decimal arithmetic; SPEC.md section 15). They are test tools, not libraries. The design record of `spec-0.4.0` is [DESIGN-0.4.0.md](DESIGN-0.4.0.md).
 
 ## In ten lines
 
@@ -27,6 +27,14 @@ The URI names one cell: a function, rooted in a domain its publisher controls, a
 
 A mesh serves receipts inside a response envelope that says whether the answer is current, stale or superseded ([SPEC.md 5.5](SPEC.md#55-response-envelope)). Units are listed in [units.md](units.md).
 
+A computed function is usually written in the formula dialect, an Excel-compatible expression language over cells with exact decimal arithmetic, checked units and inputs derived from the body:
+
+```text
+mean(last_before(weather.example.org/temp(*, *), t, 10 min))      # each station's last reading within 10 minutes of t
+```
+
+A receipt for such a cell cites the whole slice it read as one input, `slice:<slice id>:<members hash>`, whose manifest lists the member receipts ([SPEC.md 15.13](SPEC.md#1513-slices-and-slice-as-lineage)).
+
 ## Integrations (design)
 
 [integrations/spreadsheets](integrations/spreadsheets/SPEC.md) specifies a future Excel add-in and Google Sheets add-on, with conversion test cases written ahead of the code. It is non-normative and not built.
@@ -38,7 +46,8 @@ The tools need Python 3.13 or later (for Unicode 15.1) and PyNaCl. Schema tests 
 ```sh
 pip install pynacl jsonschema
 python3 tools/canon.py check                 # every vector
-cd tests && python3 -m unittest -v           # all tests; DATUMESH_FUZZ_N=100000 by default
+cd tests && python3 -m unittest -v           # all tests; the fuzz sizes default to 100000 (DATUMESH_FUZZ_N,
+                                             # DATUMESH_FORMULA_FUZZ_N, DATUMESH_MIGRATION_N) and 10000 (DATUMESH_DECIMAL_N)
 ```
 
 With Docker only:
@@ -49,7 +58,7 @@ docker run --rm -v "$PWD":/w -w /w python:3.13-slim sh -c \
    pip -q install pynacl==1.5.0 jsonschema==4.23.0 && python tools/canon.py check && cd tests && python -m unittest -v'
 ```
 
-`tests/test_migration_0_3_0.py` reads the `spec-0.2.1` files from git, so it needs `git` and the full history (it is skipped without `git`).
+`tests/test_migration_0_3_0.py` and `tests/test_migration_0_4_0.py` read the `spec-0.2.1` and `spec-0.3.0` files from git, so they need `git` and the full history (they are skipped without `git`).
 
 Independent cross-check of every canonical form, hash and signature with the `canonicalize` npm package and Node's crypto:
 
