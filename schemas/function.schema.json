@@ -21,7 +21,7 @@
       "properties": {
         "body": {
           "type": "string",
-          "pattern": "^[^\u0000-\b\u000b-\u001f-]*$"
+          "pattern": "^[^\u0000-\b\u000b-\u001f\u007f-\u009f]*$"
         },
         "lang": {
           "$ref": "defs.schema.json#/$defs/name"
@@ -68,12 +68,10 @@
                 "type": "boolean"
               },
               "extent": {
-                "description": "Optional (spec-0.4.0): the argument's declared extent (SPEC.md 7): values in the type's order, or a range for date and integer number arguments.",
+                "description": "Optional (spec-0.4.0): the argument's declared extent (SPEC.md 7): values in the type's order, or a range for date and integer number arguments. The prose gives the codes for order, repetition and count (E_CANON_SET, E_CANON_LIMIT).",
                 "oneOf": [
                   {
                     "type": "array",
-                    "maxItems": 4096,
-                    "uniqueItems": true,
                     "items": {
                       "type": "string"
                     }
@@ -240,12 +238,10 @@
           ]
         },
         "order": {
-          "description": "Optional (spec-0.4.0): every argument name exactly once, the order positional arguments bind in (SPEC.md 7). Absent: labels only.",
+          "description": "Optional (spec-0.4.0): every argument name exactly once, the order positional arguments bind in (SPEC.md 7). Absent: labels only. The prose gives the codes: a missing, repeated or unknown name is E_CANON_SET.",
           "type": "array",
-          "uniqueItems": true,
-          "maxItems": 32,
           "items": {
-            "$ref": "defs.schema.json#/$defs/argName"
+            "type": "string"
           }
         }
       }

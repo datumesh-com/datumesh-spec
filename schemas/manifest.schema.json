@@ -12,11 +12,10 @@
   "properties": {
     "members": {
       "type": "array",
-      "uniqueItems": true,
-      "maxItems": 1048576,
       "items": {
         "$ref": "defs.schema.json#/$defs/hex64"
-      }
+      },
+      "description": "Ascending and unique (E_CANON_SET), at most 1048576 (E_CANON_LIMIT): SPEC.md 15.13."
     },
     "slice": {
       "$ref": "slice.schema.json"

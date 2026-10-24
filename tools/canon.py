@@ -1489,10 +1489,11 @@ def _check_slice_input(r, entry, desc, recompute, keyenv):
 def _superseded(r, recompute, keyenv):
     """Whether the evaluation's lineage replaces an input by a later version of the same cell, or
     a slice entry by the same slice with other members (step 7.6)."""
-    lineage = recompute["lineage"]
+    # The lineage is a set of strings; an item that is not a string replaces nothing (RS-37).
+    lineage = {n for n in recompute["lineage"] if isinstance(n, str)}
     supplied = recompute.get("inputs", {})
     listed = set(r["inputs"])
-    new = [e for e in lineage if e not in listed]
+    new = sorted(lineage - listed)  # the order of the lineage does not matter
     for e in r["inputs"]:
         if e in lineage:
             continue
