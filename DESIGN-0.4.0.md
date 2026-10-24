@@ -30,6 +30,53 @@ Base: `main` at `3bac3d4` (tag `spec-0.3.0`).
    documentation page cited per function in the table, and are marked documentation-derived. No
    real Excel is used.
 
+7. **Transcendental functions are in 0.4.0** (the brief's addendum, a fixed decision): `sqrt`,
+   `exp`, `ln`, non-integer `^`, `sin`, `cos` and `atan2`, each defined normatively by a named
+   fixed-precision decimal algorithm: working precision 40 significant digits, half-even at every
+   step, a stated term count, stated constants, then half-even to 34 and the range rule.
+   mpdecimal (Python's `decimal`) is the reference for `sqrt`, `exp`, `ln` and `^`; the
+   trigonometric functions use stated series. **The algorithm wins** where it differs from a
+   correctly rounded result (a hard case); tests count such cases. `sqrt` (and so `stdev`)
+   follows the rule too: the exact root truncated to 40 digits, then half-even to 34. Amended:
+   4.2, 4.3, 12, 16.2, D46, new D65-D67. The algorithms:
+   - `SQRT-T40`: the exact integer square root truncated to 40 digits; then half-even to 34.
+   - `EXP-T48`: `n` = `x / LN10` rounded half-even to an integer; `r = x - n * LN10_60` exact,
+     rounded once to 40; the Taylor series of `r` to 48 terms; times `10^n`. `abs(x) <= 300`.
+   - `LN-ATANH80`: `x = m * 10^k` with `m * m < 10 <= 100 m * m` decided exactly; `z = (m - 1) / (m + 1)`;
+     `2 * sum z^(2j+1) / (2j+1)` to 80 terms; plus `k * LN10`.
+   - `POW-EXPLN`: a non-integer exponent: `exp40(y * ln40(x))`; integer exponents stay exact.
+   - `TRIG-T24`: `k` = `x / HALF_PI` rounded half-even; `r = x - k * HALF_PI_60` exact, rounded once
+     to 40; the sine and cosine series of `r` to 24 terms each; the quadrant from `k mod 4`.
+     `abs(x) <= 1000000` radians.
+   - `ATAN2-T32`: reduce `t = min/max(abs y, abs x)` twice by `t / (1 + sqrt40(1 + t^2))`; the
+     series to 32 terms, times 4; the octant and quadrant from the comparisons and signs.
+   - Constants, each the true value rounded to its stated digits: `PI`, `HALF_PI`, `LN10` (40), and
+     `HALF_PI_60`, `LN10_60` (60, for argument reduction only, where the product `n * C` is exact).
+   - A term below a tenth of a unit in the 40th digit of the partial sum may be skipped: it cannot
+     change the sum, so the result is exactly that of the full term count.
+   - Units: `exp`, `ln` and non-integer `^` take dimensionless operands; `sin` and `cos` take
+     radians (dimensionless, as in SI) or the new unit `deg`; `atan2(y, x)` takes two numbers of
+     one unit and returns radians; `pi()` is dimensionless.
+   The 10,000-case runs per function found **no** hard case against mpdecimal or the 90-digit
+   series; a constructed `sqrt` hard case (a root whose digits 35-41 are 5000001) shows the
+   algorithm keeping the even neighbour where correct rounding goes up.
+8. **Geodesic distance**: `haversine(lat1, lon1, lat2, lon2)`, decimal degrees in, metres out, on
+   a sphere of radius 6371008.8 m from the primitives above, rounded half-even to millimetres.
+   `ellipsoidal_distance` is reserved (`E_FORMULA_UNSUPPORTED`). The `point` metric of 1.3b
+   dispatches to `haversine`; already now a slice keyed by latitude and longitude arguments can be
+   filtered by distance with lambda key parameters:
+   `filter(f(lat: *, lon: *), (v, lat, lon) -> haversine(lat, lon, p_lat, p_lon) <= 20 km)`
+   (with `lat`, `lon` in `deg`).
+9. **Interpolation**: linear and step only; `spline` is `E_FORMULA_UNSUPPORTED`, listed for later.
+10. **Vectors to the last digit** for every function: a `decimal` vector kind with one operation
+    and its cases, each with arguments and the exact 34-digit result or the fault code, and the
+    reference's value where it is not the algorithm's, ready for the Rust cross-check.
+11. **The decimal stop condition is reworded**: stop only if a result cannot be made deterministic
+    by a specified decimal algorithm, not merely because the true value is irrational. 16.2 below
+    is amended accordingly; it does not hold.
+12. **Excel table**: `SQRT`, `EXP`, `LN`, `POWER`, `SIN`, `COS`, `ATAN2`, `PI` supported; `LOG`,
+    `LOG10`, `TAN`, `ASIN`, `ACOS`, `ATAN`, `DEGREES`, `RADIANS` partial (translations).
+
 Two small simplifications made while implementing, recorded here: `degC` multiplied or divided by
 anything is `E_FORMULA_UNIT_OFFSET` (5.4 had an exception for a bare `1`, which bought nothing),
 and `not_covered`'s new member is named `fault`, not `error`, so that `error` keeps one meaning
@@ -1311,7 +1358,9 @@ form used only by receipts that read slices; `extent` is optional and per argume
 new `lang`; units are only added. The migration test (14) proves it, including a differential run
 of the old reference tool. Does not hold.
 
-**16.2 Decimal determinism without a float.** Risks: non-integer powers, `exp`/`ln`, `stdev`'s
+**16.2 Decimal determinism without a float.** *(Reworded after review: the condition is that a
+result cannot be made deterministic by a specified decimal algorithm, not that the true value is
+irrational. Every transcendental function now has such an algorithm, so it does not hold.)* Risks: non-integer powers, `exp`/`ln`, `stdev`'s
 square root, `median` of two values, interpolation, year fractions, mean. All are either defined
 as exact-then-correctly-rounded integer computations (`/`, `sqrt`, integer `^`, rational year
 fractions) or as a fixed sequence of such steps (`stdev`, `interpolate`), or excluded (non-integer
@@ -1381,7 +1430,7 @@ case mapping; Excel equivalence without a real Excel (12).
 | D43 | *(Replaced by D64 after review.)* | | |
 | D44 | `inputs` is derived from the body and must equal the derived set | Declared by the author | The brief |
 | D45 | Decimal: exact then round half-even to 34 digits per operation; every intermediate within the 128-character canonical form; no negative zero | decimal128's exponent range for intermediates | Fewer behaviours to reproduce; nothing outside the canonical form could be returned anyway |
-| D46 | Integer exponents only, exact then rounded once; `sqrt` correctly rounded; `stdev` a fixed sequence of correctly rounded steps | Non-integer powers via `exp`/`ln` | No float-free correctly rounded algorithm needs to be specified for them |
+| D46 | *(Revised after review, the brief's addendum.)* Integer exponents exact then rounded once; `sqrt`, `exp`, `ln`, non-integer `^`, `sin`, `cos`, `atan2` by named 40-digit algorithms with fixed term counts, then half-even to 34; the algorithm wins over correct rounding; `stdev` uses `SQRT-T40` | Integer exponents only and correctly rounded `sqrt` (the memo); correctly rounded results for everything | Correct rounding of transcendental functions has no bounded algorithm every evaluator can match; a fixed algorithm is deterministic and testable to the last digit |
 | D47 | Units as atom-exponent maps over `units.md` symbols and argument references; listed composite symbols are atoms | A unit grammar (UCUM) | D25 stands; the algebra exists only at define time |
 | D48 | Bare literals take their context's unit in `+ - <` and are dimensionless in `* /`, except against scaled ratios | Bare literals always `1` | `amount > 0` must work; `1 + r_percent` must not |
 | D49 | `degC` is affine | An ordinary unit | `units.md` says it is a temperature, not a difference |
@@ -1400,6 +1449,9 @@ case mapping; Excel equivalence without a real Excel (12).
 | D62 | `E_INPUT_SUPERSEDED` (7.6) is success at level `signed` with the code, raised when the resolver's lineage replaces an input by a later version of the same cell or slice | A failure; a bare `E_VALUE_MISMATCH` | The receipt is historical, not wrong (D34's reasoning) |
 | D33 (revised) | The computed `asof` SHOULD also include binding starts, explicit transaction times read, and the evaluation asof for asof-dependent bodies | Input `asof`s only | The SHOULD was incomplete, not wrong |
 | D63 | Normative fuel table | Implementation-defined fuel | Two evaluators exhaust a budget at the same point; vectors can state fuel |
+| D65 | `haversine` on a 6371008.8 m sphere, to the millimetre; `ellipsoidal_distance` reserved | Ellipsoidal (Vincenty, Karney) now | The user's decision: one simple, fully specified metric first |
+| D66 | Radians are dimensionless; `deg` is a listed unit; `sin`/`cos` accept both | A `rad` unit | SI treats the radian as dimensionless; `atan2(…) * r` then stays a length |
+| D67 | Argument reduction uses 60-digit constants with an exact product | 40-digit constants throughout | A 40-digit pi loses up to six digits of `sin` near large multiples of pi; the reduction is one exact step |
 | D64 | Positional arguments bind by an optional, hashed `signature.order` listing every argument once; formula descriptors always carry it; positional before labelled; a positional read of a function without `order` is refused at define time; the canonical AST is labelled (decided after review) | Ascending name order; a required `order`, which would change every descriptor and receipt hash; positional arguments only for one-argument functions, or labels only | Authors and readers expect the declared order; optional means no existing hash changes; classes (1.3b) reuse it for key tuples |
 
 ---
