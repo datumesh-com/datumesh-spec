@@ -17,5 +17,19 @@
         "body": "{\n  \"bindings\": \"https://mesh.example.org/bindings\",\n  \"endpoints\": {\n    \"blob\": \"https://mesh.example.org/blob/{sha256}\",\n    \"cell\": \"https://mesh.example.org/cell/{cell}\",\n    \"cells\": \"https://mesh.example.org/cells\",\n    \"descriptor\": \"https://mesh.example.org/descriptor/{hash}\",\n    \"explain\": \"https://mesh.example.org/explain/{cell}\",\n    \"find\": \"https://mesh.example.org/find\",\n    \"jobs\": \"https://mesh.example.org/jobs/{job}\",\n    \"manifest\": \"https://mesh.example.org/manifest/{slice_id}/{members_hash}\",\n    \"receipt\": \"https://mesh.example.org/receipt/{hash}\",\n    \"slice\": \"https://mesh.example.org/slice/{cell}\",\n    \"verify\": \"https://mesh.example.org/verify\"\n  },\n  \"host\": \"mesh.example.org\",\n  \"proto\": \"datumesh/1\"\n}"
       }
     }
+  },
+  "bindings": "https://mesh.example.org/bindings",
+  "endpoints": {
+    "blob": "https://mesh.example.org/blob/{sha256}",
+    "cell": "https://mesh.example.org/cell/{cell}",
+    "cells": "https://mesh.example.org/cells",
+    "descriptor": "https://mesh.example.org/descriptor/{hash}",
+    "explain": "https://mesh.example.org/explain/{cell}",
+    "find": "https://mesh.example.org/find",
+    "jobs": "https://mesh.example.org/jobs/{job}",
+    "manifest": "https://mesh.example.org/manifest/{slice_id}/{members_hash}",
+    "receipt": "https://mesh.example.org/receipt/{hash}",
+    "slice": "https://mesh.example.org/slice/{cell}",
+    "verify": "https://mesh.example.org/verify"
   }
 }

@@ -27,7 +27,9 @@ OUTPUT_FIELDS = ("object", "canonical", "sha256", "https", "key_id", "key_ids", 
                  "code", "unit", "outcome", "trust", "receipt_hash",
                  # spec-0.4.0 (SPEC 11): slices, the formula dialect, decimal cases
                  "slice_id", "members_hash", "entry", "ast", "ast_sha256", "body", "inputs", "returns", "asof_dependent",
-                 "value", "lineage", "tx", "receipt_asof", "fuel_used", "results")
+                 "value", "lineage", "tx", "receipt_asof", "fuel_used", "results",
+                 # spec-0.4.1: mesh documents
+                 "bindings", "endpoints")
 
 
 # Vectors from spec-0.1.1 whose bytes changed in spec-0.2.0, and why. tests/test_migration.py
@@ -1247,6 +1249,9 @@ add_envelope("envelope/job-result-not-covered", "A job may complete with any out
 add_envelope("envelope/job-unknown", "An unknown or expired job id: bad_request with E_JOB_UNKNOWN, the request's "
              "fault, never a completed not_covered.", {"error": "E_JOB_UNKNOWN", "outcome": "bad_request"}, 400,
              request=JOB_REQUEST)
+add_envelope("envelope/pending-poll-other-host", "poll on another host than the mesh asked passes the envelope check, "
+             "which does not know that host: the client's HTTP layer refuses to send it.",
+             pending(poll=f"https://other.example.net/jobs/{JOB}"), 202, request=FX_REQUEST)
 for name, env, status, request, why in [
     ("pending-missing-poll", pending(poll=None), 202, FX_REQUEST, "pending requires poll."),
     ("pending-missing-job", pending(job=None, poll="https://mesh.example/jobs/"), 202, FX_REQUEST, "pending requires job."),
@@ -1277,6 +1282,10 @@ for name, env, status, request, why in [
     ("job-result-later-asof", {"outcome": "ok", "receipt": R_FX, "trust": "primary"}, 200,
      {"asof": "2024-03-15T09:00:00.000000Z", "cell_id": FX_ID, "job": JOB},
      "The job's result has an asof after the original request's: step 5 against the original request fails."),
+    ("pending-poll-empty-host", pending(poll=f"https:///jobs/{JOB}"), 202, FX_REQUEST,
+     "poll names a host: https://, a DNS name, then the path."),
+    ("pending-poll-port", pending(poll=f"https://mesh.example:8443/jobs/{JOB}"), 202, FX_REQUEST,
+     "poll's host is a DNS name, with no port (or userinfo)."),
     ("job-unknown-on-cell", {"error": "E_JOB_UNKNOWN", "outcome": "bad_request"}, 400, FX_REQUEST,
      "E_JOB_UNKNOWN answers a job URL only, not a /cell request."),
     ("error-job-unknown", {"error": "E_JOB_UNKNOWN", "outcome": "error"}, 500, JOB_REQUEST,
@@ -1357,6 +1366,27 @@ for name, e, error, why in [
      "No key document: the key document's own code, as in 9.3."),
     ("invalid/mesh-key-doc-malformed", mesh_env(keys="{not json"), "E_KEY_DOC",
      "A key document that is not strict JSON keeps its own code."),
+    ("invalid/mesh-key-doc-not-object", mesh_env(keys="[]"), "E_KEY_DOC",
+     "A key document that is JSON but not an object: step 4 has no key side to compare, and step 5 fails."),
+    ("invalid/mesh-key-doc-no-proto", mesh_env(keys={"host": MESH_HOST, "keys": [key_entry("calc-2020", T0)]}),
+     "E_KEY_DOC", "A key document without proto: step 4 compares only a string proto, and step 5 fails."),
+    ("invalid/mesh-key-doc-no-body", {"keys": {"https": {"status": 200}}, "mesh": {"https": {"status": 404}}},
+     "E_KEY_DOC", "A 200 key-document response without a body is E_KEY_DOC at step 1, before the mesh document "
+     "is retrieved."),
+    ("invalid/mesh-endpoint-lone-brace", mesh_env(mesh_doc({"cell": f"{MB}/cell/{{cell}}}}"})), "E_MESH_DOC",
+     "Every brace of a template belongs to one of its placeholders: a lone } fails."),
+    ("invalid/mesh-endpoint-empty-placeholder", mesh_env(mesh_doc({"find": f"{MB}/find/{{}}"})), "E_MESH_DOC",
+     "{} is no placeholder of find, which has none."),
+    ("invalid/mesh-endpoint-port", mesh_env(mesh_doc({"cell": f"https://{MESH_HOST}:443/cell/{{cell}}"})),
+     "E_MESH_DOC", "A URL is on the host only when it begins https://<host>/: a port fails, even the default one."),
+    ("invalid/mesh-endpoint-userinfo", mesh_env(mesh_doc({"cell": f"https://user@{MESH_HOST}/cell/{{cell}}"})),
+     "E_MESH_DOC", "Userinfo before the host fails: the URL does not begin https://<host>/."),
+    ("invalid/mesh-endpoint-no-path", mesh_env(mesh_doc({"cell": f"https://{MESH_HOST}?c={{cell}}"})), "E_MESH_DOC",
+     "A query right after the host fails: the URL does not begin https://<host>/."),
+    ("mesh/bindings-with-braces", mesh_env(mesh_doc(bindings=f"{MB}/bindings/{{x}}}}")), None,
+     "bindings is a URL, not a template: its braces are not checked."),
+    ("mesh/unknown-endpoint-unchecked", mesh_env(mesh_doc({"x_graphql": "not a URL {"})), None,
+     "Unknown endpoints are not checked, and are dropped from the result."),
 ]:
     add(name, "mesh", why, error=error, host=MESH_HOST, env=e)
 

@@ -94,6 +94,9 @@ def jobs(i):
             poll = f"https://mesh.example/jobs/{job_id()}"
         elif r < 0.13:
             poll = "https://mesh.example/" + "x" * 500 + f"/jobs/{env_job}"
+        elif r < 0.18:
+            poll = rng.choice(["https://", "https://mesh.example:8443", "https://u@mesh.example", "https://Mesh.example",
+                               "https://localhost", "https://192.0.2.1", "https://other.example.net"]) + f"/jobs/{env_job}"
         env = {"estimate_seconds": rng.choice([0, 1, 30, 9007199254740991]), "job": env_job, "outcome": "pending",
                "poll": poll, "request": echoed}
         r = rng.random()
@@ -142,7 +145,7 @@ def mesh(i):
     keydoc = {"host": MESH, "keys": [KEY], "proto": canon.PROTO}
     labels = []
     for _ in range(rng.choice([0, 0, 1, 1, 2])):
-        m = rng.randrange(14)
+        m = rng.randrange(15)
         labels.append(str(m))
         name = rng.choice(sorted(endpoints)) if endpoints else "cell"
         if m == 0:
@@ -161,7 +164,7 @@ def mesh(i):
         elif m == 6 and name in endpoints:
             endpoints[name] = endpoints[name].split("/{")[0]  # placeholders dropped
         elif m == 7 and name in endpoints:
-            endpoints[name] += rng.choice(["/{cell}", "?x={x}", "{"])
+            endpoints[name] += rng.choice(["/{cell}", "?x={x}", "{", "}", "{}", "/" + endpoints[name][-6:]])
         elif m == 8:
             endpoints.pop(rng.choice(canon.MESH_REQUIRED), None)
         elif m == 9:
@@ -173,14 +176,20 @@ def mesh(i):
             endpoints[name] = rng.choice([7, None, f"{MB}/" + "x" * 520 + "/{cell}"])
         elif m == 12:
             keydoc["keys"] = []
+        elif m == 13 and rng.random() < 0.5:
+            keydoc.pop(rng.choice(["host", "proto"]), None)
+            labels[-1] += "-keydoc"
         else:
             labels[-1] += "-text"
     text = json.dumps({k: v for k, v in doc.items() if v is not None}, indent=rng.choice([None, 2]))
     if labels and labels[-1].endswith("-text"):
         text = rng.choice([text[:-1], "[]", text.replace('"host"', '"host": "x", "host"', 1), "﻿" + text])
-    env = {"keys": {"https": {"status": 200, "body": json.dumps(keydoc)}}, "mesh": {"https": {"status": 200, "body": text}}}
+    keytext = json.dumps(keydoc) if rng.random() > 0.03 else rng.choice(["[]", "5", '"x"', "null"])
+    env = {"keys": {"https": {"status": 200, "body": keytext}}, "mesh": {"https": {"status": 200, "body": text}}}
     r = rng.random()
-    if r < 0.04:
+    if r < 0.02:
+        env["keys"]["https"] = {"status": 200}
+    elif r < 0.04:
         env["mesh"]["https"] = {"status": rng.choice([404, 500, "200", "error"])}
     elif r < 0.07:
         env["keys"]["https"] = {"status": rng.choice([404, "error"])}

@@ -1,0 +1,20 @@
+{
+  "id": "invalid/mesh-key-doc-no-body",
+  "kind": "mesh",
+  "description": "A 200 key-document response without a body is E_KEY_DOC at step 1, before the mesh document is retrieved.",
+  "valid": false,
+  "host": "mesh.example.org",
+  "env": {
+    "keys": {
+      "https": {
+        "status": 200
+      }
+    },
+    "mesh": {
+      "https": {
+        "status": 404
+      }
+    }
+  },
+  "error": "E_KEY_DOC"
+}

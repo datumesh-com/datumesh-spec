@@ -1346,7 +1346,6 @@ MESH_ENDPOINTS = {  # endpoint -> its placeholders (each exactly once)
     "jobs": ("job",), "manifest": ("slice_id", "members_hash"), "receipt": ("hash",), "slice": ("cell",), "verify": (),
 }
 MESH_REQUIRED = ("cell", "descriptor", "jobs", "manifest", "receipt")
-_PLACEHOLDER = re.compile(r"\{([a-z_0-9]*)\}")
 
 
 def _retrieved(env, code, no_body):
@@ -1363,10 +1362,8 @@ def _retrieved(env, code, no_body):
 def _mesh_url(value, host, path):
     if not isinstance(value, str) or not _URL.fullmatch(value) or len(value) > LIMITS["licence_url"]:
         fail("E_MESH_DOC", "an https URL of at most 512 characters", path)
-    rest = value[len("https://"):]
-    authority = rest.split("/", 1)[0]
-    if authority != host or "/" not in rest:
-        fail("E_MESH_DOC", f"a URL on this host ({host}), with a path", path)
+    if not value.startswith(f"https://{host}/"):
+        fail("E_MESH_DOC", f"a URL on this host: it begins https://{host}/", path)
 
 
 def resolve_mesh(host, env):
@@ -1388,12 +1385,17 @@ def resolve_mesh(host, env):
     if not isinstance(mesh, dict):
         fail("E_MESH_DOC", "the mesh document is an object")
     # 4. identity: both name this host and the same proto
-    if isinstance(keydoc, dict) and isinstance(keydoc.get("host"), str) and keydoc["host"] != host:
+    # The key document's side is compared only for a member that is a string in an object; any
+    # other shape is the key document's own failure, at step 5 (E_KEY_DOC).
+    key_side = keydoc if isinstance(keydoc, dict) else {}
+    if isinstance(key_side.get("host"), str) and key_side["host"] != host:
         fail("E_MESH_DOC", "the key document names another host", "$.host")
     if mesh.get("host") != host:
         fail("E_MESH_DOC", "the mesh document names another host", "$.host")
-    if mesh.get("proto") != PROTO or (isinstance(keydoc, dict) and keydoc.get("proto") != mesh.get("proto")):
-        fail("E_MESH_DOC", "the mesh document and the key document disagree on proto", "$.proto")
+    if mesh.get("proto") != PROTO:
+        fail("E_MESH_DOC", "the mesh document's proto is not datumesh/1", "$.proto")
+    if isinstance(key_side.get("proto"), str) and key_side["proto"] != PROTO:
+        fail("E_MESH_DOC", "the key document and the mesh document disagree on proto", "$.proto")
     parse_key_doc(key_text, host)  # 5. the key document's own rules (9.2): E_KEY_DOC
     # 6. the mesh document's members; unknown members are ignored
     _mesh_url(mesh.get("bindings"), host, "$.bindings")
@@ -1409,8 +1411,14 @@ def resolve_mesh(host, env):
             continue
         value = endpoints[name]
         _mesh_url(value, host, f"$.endpoints.{name}")
-        if sorted(_PLACEHOLDER.findall(value)) != sorted(MESH_ENDPOINTS[name]) or value.count("{") != len(MESH_ENDPOINTS[name]):
-            fail("E_MESH_DOC", f"{name} has the placeholders {MESH_ENDPOINTS[name]}", f"$.endpoints.{name}")
+        # Every { and } belongs to one of the endpoint's placeholders, each once (spec-0.4.1).
+        rest = value
+        for placeholder in MESH_ENDPOINTS[name]:
+            if rest.count("{" + placeholder + "}") != 1:
+                fail("E_MESH_DOC", f"{name} has {{{placeholder}}} exactly once", f"$.endpoints.{name}")
+            rest = rest.replace("{" + placeholder + "}", "")
+        if "{" in rest or "}" in rest:
+            fail("E_MESH_DOC", f"{name} has no braces but its placeholders {MESH_ENDPOINTS[name]}", f"$.endpoints.{name}")
         known[name] = value
     return {"bindings": mesh["bindings"], "endpoints": known, "host": host, "proto": PROTO}
 
@@ -1692,6 +1700,12 @@ def _check_envelope_members(env):
         if not isinstance(poll, str) or not _URL.fullmatch(poll) or len(poll) > LIMITS["licence_url"] \
                 or not poll.endswith("/jobs/" + str(env.get("job"))):
             fail("E_ENVELOPE", "poll is the https URL of the job: .../jobs/<job>", "$.poll")
+        # spec-0.4.1 (DEF-51): https://, a DNS name (2.1), then the path. Whether it is the host
+        # asked is the client's check: the envelope check does not know that host.
+        try:
+            check_dns_name(poll[len("https://"):].split("/", 1)[0], "$.poll")
+        except DatumeshError:
+            fail("E_ENVELOPE", "poll names a DNS name as its host, with no port or userinfo", "$.poll")
     if "request" in env:
         req = env["request"]
         if not isinstance(req, dict) or "cell_id" not in req or set(req) - {"asof", "cell_id"}:
@@ -1857,6 +1871,8 @@ def check_vector(vec):
         for field in OUTPUT_FIELDS:
             if field in vec and vec[field] != got.get(field):
                 problems.append(f"{field}: expected {vec[field]!r}, got {got.get(field)!r}")
+        if vec["kind"] == "mesh":
+            problems += [f"{f}: missing from a valid mesh vector" for f in ("bindings", "endpoints") if f not in vec]
         if vec["kind"] == "receipt" and "code" in got and "code" not in vec:
             problems.append(f"code: expected none, got {got['code']!r}")
         if vec["kind"] == "uri" and got["uri"] != vec["input"]:

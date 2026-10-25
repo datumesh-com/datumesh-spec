@@ -17,5 +17,13 @@
         "body": "{\n  \"bindings\": \"https://mesh.example.org/bindings\",\n  \"endpoints\": {\n    \"cell\": \"https://mesh.example.org/cell/{cell}\",\n    \"descriptor\": \"https://mesh.example.org/descriptor/{hash}\",\n    \"jobs\": \"https://mesh.example.org/jobs/{job}\",\n    \"manifest\": \"https://mesh.example.org/manifest/{slice_id}/{members_hash}\",\n    \"receipt\": \"https://mesh.example.org/receipt/{hash}\"\n  },\n  \"host\": \"mesh.example.org\",\n  \"proto\": \"datumesh/1\"\n}"
       }
     }
+  },
+  "bindings": "https://mesh.example.org/bindings",
+  "endpoints": {
+    "cell": "https://mesh.example.org/cell/{cell}",
+    "descriptor": "https://mesh.example.org/descriptor/{hash}",
+    "jobs": "https://mesh.example.org/jobs/{job}",
+    "manifest": "https://mesh.example.org/manifest/{slice_id}/{members_hash}",
+    "receipt": "https://mesh.example.org/receipt/{hash}"
   }
 }

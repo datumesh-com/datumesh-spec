@@ -357,7 +357,7 @@ Members:
 - `error`: what failed. For `bad_request`, one of the codes `parse` can raise (5.4): `E_PARSE_URI`, `E_CANON_NAME`, `E_CANON_ARG_NAME`, `E_CANON_ARG_DUPLICATE`, `E_CANON_ARG_ORDER`, `E_CANON_PERCENT`, `E_CANON_TYPE`, `E_CANON_NUMBER`, `E_CANON_DATE`, `E_CANON_INSTANT`, `E_CANON_STRING`, `E_CANON_BLOB`, `E_CANON_LIMIT`, `E_ARG_UNKNOWN`, `E_ARG_MISSING`; or, in the answer to a job URL and only there, `E_JOB_UNKNOWN`. For `error`, any code in 10.2 except `E_ENVELOPE` (a client's code) and `E_JOB_UNKNOWN`, for example `E_INPUT_UNAVAILABLE`, or `E_EVAL_UNAVAILABLE` when the mesh could not evaluate the cell's function.
 - `job` (`pending`): the job id, 32 to 64 lowercase hex digits (`[0-9a-f]{32,64}`) encoding at least 128 bits drawn from a cryptographically secure random generator. It is unguessable because it is a capability: whoever holds it can fetch the result.
 - `estimate_seconds` (`pending`): a non-negative integer, the mesh's estimate of the seconds until the result is ready. It is a hint: a client MAY poll earlier or later.
-- `poll` (`pending`): the URL of the job, `https://` followed by printable ASCII, at most 512 characters, ending `/jobs/<job>` with this envelope's `job`. A mesh serves it on its own host; a client MUST NOT send a `poll` URL on another host than the one it asked (the envelope check cannot see this; the client's HTTP layer does).
+- `poll` (`pending`): the URL of the job, `https://` followed by printable ASCII, at most 512 characters, ending `/jobs/<job>` with this envelope's `job`. The text between `https://` and the next `/` is a DNS name (2.1): so an empty host (`https:///jobs/…`), a port, userinfo, an IP address or a query right after the host is `E_ENVELOPE`. A mesh serves it on its own host. Whether it is the host the client asked, the envelope check cannot know, since an envelope does not name that host: **the client's HTTP layer MUST check that `poll` names the host it sent the request to, and MUST NOT send it otherwise**. A `poll` on another DNS name therefore passes the envelope check (`envelope/pending-poll-other-host`).
 - `request` (`pending`): the original request, echoed: an object with exactly `cell_id`, the requested cell id (64 lowercase hex digits), and `asof`, the requested `asof` as an instant, if and only if the request carried one.
 
 **Integer members.** `age_seconds`, `retry_after_seconds` and `estimate_seconds` are JSON numbers written `0` or `[1-9][0-9]*`: no fraction, no exponent, no sign, and at most 2^53 - 1. So `30.0`, `3e1` and `-0` are `E_ENVELOPE`. They are the only JSON numbers in this specification, which is possible because envelopes are never hashed.
@@ -644,7 +644,7 @@ Since `spec-0.4.1`, a mesh describes its endpoints at `https://<host>/.well-know
 
 - `host`: the host it was fetched from. `proto`: `"datumesh/1"`, as in the key document.
 - `bindings`: the URL of the bindings resource (9.7).
-- `endpoints`: an object of endpoint templates. Each is a URL by the licence URL rule (`https://` followed by printable ASCII, at most 512 characters) on this host (its authority is exactly `host`, followed by a path), with exactly the placeholders listed, each once, and no other `{`:
+- `endpoints`: an object of endpoint templates. Each is a URL by the licence URL rule (`https://` followed by printable ASCII, at most 512 characters) on this host, with exactly the placeholders listed, each once. Every `{` and `}` in a template belongs to one of its placeholders: a lone `}` (or `{`), `{}`, an unlisted name such as `{Cell}`, or a listed one twice is `E_MESH_DOC`:
 
 | Endpoint | Placeholders | Required | What it serves |
 |---|---|---|---|
@@ -660,14 +660,16 @@ Since `spec-0.4.1`, a mesh describes its endpoints at `https://<host>/.well-know
 | `jobs` | `{job}` | yes | A job (5.5); a `pending` envelope's `poll` is this template with its `job`. |
 | `find` | none | no | Search. |
 
-**Unknown members are ignored**, at the top level and in `endpoints`, and are not checked; a member this section defines is checked by its rule. That is the room for extension: a later revision adds members, and a client of this one passes over them. Only this section defines members; a mesh SHOULD prefix private ones `x_`.
+**A URL is on this host** when it begins `https://<host>/`, with `host` exactly as fetched: a port (even `:443`), userinfo, a query or fragment right after the host, or no `/` after it fails (`https://<host>/` alone is on the host). The same rule holds for `bindings`, which is a URL, not a template: its `{` and `}` are not checked.
+
+**Unknown members are ignored**, at the top level and in `endpoints`, and are not checked. Unknown endpoints are not checked either: not their form, not their host, not their braces; a member this section defines is checked by its rule. That is the room for extension: a later revision adds members, and a client of this one passes over them. Only this section defines members; a mesh SHOULD prefix private ones `x_`.
 
 **Cross-mesh resolution.** A mesh or client that will send requests to another mesh, for example to read an input from it, resolves that host first: it fetches the key document (9.2) and the mesh document, and accepts the host only when both pass, in this order:
 
-1. Retrieve the key document as in 9.3 (`E_KEY_UNAVAILABLE`).
+1. Retrieve the key document as in 9.3: anything but the integer status 200 is `E_KEY_UNAVAILABLE`, and a 200 response without a body is `E_KEY_DOC`, here at step 1, before the mesh document is retrieved.
 2. Retrieve the mesh document: anything but the integer status 200 with a body, 404 included, is `E_MESH_DOC`.
 3. Parse both as strict JSON (6.1): a key document that does not parse is `E_KEY_DOC`; a mesh document that does not parse, or is not an object, is `E_MESH_DOC`.
-4. **The two documents describe the same mesh** (`E_MESH_DOC`): the mesh document's `host` equals the host fetched, the key document's `host`, where it is a string, equals it too, and the two `proto`s are equal and `"datumesh/1"`. A key document that names another host fails here, as `E_MESH_DOC`, not later as `E_KEY_DOC`.
+4. **The two documents describe the same mesh** (`E_MESH_DOC`): the mesh document's `host` equals the host fetched and its `proto` is `"datumesh/1"`; and the key document's `host` and `proto`, each where it is a string, equal the host fetched and `"datumesh/1"`. A key document that names another host or another protocol fails here, as `E_MESH_DOC`, not later as `E_KEY_DOC`. The key document's side is compared only for a member that is a string in an object: a key document that is valid JSON but is not an object, or that has no `host` or `proto` or a non-string one, has nothing to compare there, and fails at step 5 as `E_KEY_DOC`, its own failure.
 5. Check the key document by 9.2 (`E_KEY_DOC`).
 6. Check the mesh document's members: `bindings`, then `endpoints` (an object holding every required endpoint), then each known endpoint in ascending name order, by the rules above (`E_MESH_DOC`).
 
@@ -961,9 +963,16 @@ The two additions:
 - **`pending` (5.5, D68).** A ninth outcome, HTTP 202, with `job`, `estimate_seconds`, `poll` and the echoed `request`, and no receipt or `trust`. `GET <poll>` returns `pending` again while the job runs, then the envelope the `/cell` request would have returned, checked against the original request (step 5); an unknown or expired job is `bad_request` with the new code `E_JOB_UNKNOWN`. A library's request description gains an optional `job`. No existing envelope changes: none had `pending`, and `E_JOB_UNKNOWN` was not a code (an `error` envelope may not carry it; a `bad_request` may only at a job URL).
 - **The mesh document (9.6, 9.7, D69).** `/.well-known/datumesh-mesh.json`: `host`, `proto`, the bindings URL and endpoint templates; unknown members ignored. Cross-mesh resolution fetches it with the key document and rejects the host with the new code `E_MESH_DOC` when they disagree on `host` or `proto`, when either names another host, or when the mesh document is malformed. The key document (9.2) and verification are unchanged. The bindings resource answers which function a name denotes as of an instant.
 - **Codes (10.2).** `E_JOB_UNKNOWN` and `E_MESH_DOC`, after `E_ENVELOPE`; neither is a verification result.
-- **Vectors (11).** 46 new: 6 valid and 20 invalid envelopes for `pending`, job results and `E_JOB_UNKNOWN`; the new kind `mesh`, 3 valid and 17 invalid; envelope vectors' `request` may carry `job`. 1024 vectors in all.
+- **Vectors (11).** 46 new: 6 valid and 20 invalid envelopes for `pending`, job results and `E_JOB_UNKNOWN`; the new kind `mesh`, 3 valid and 17 invalid; envelope vectors' `request` may carry `job`. (13 more after the findings below.)
 - **Schemas.** `envelope.schema.json` gains `pending` and its members, and `E_JOB_UNKNOWN` for `bad_request`; the new `mesh.schema.json`; `vector.schema.json` gains the kind `mesh`, `request.job`, `bindings` and `endpoints`.
 - **Reference tool.** `tools/canon.py`: `pending` in `check_envelope`, `resolve_mesh`, the `mesh` kind; `tools/gen_vectors.py` generates the new vectors.
+- **Settled after the verifier libraries' findings** (the Python library's DEF-48 to DEF-51, the JavaScript library's 46 to 50, the Rust core's RS-38 to RS-41), before the tag; no `spec-0.4.0` vector changes:
+  - valid `mesh` vectors carry their outputs `bindings` and `endpoints`, and the reference tool requires them;
+  - 9.6 step 4 compares the key document's `host` and `proto` only where each is a string in an object; otherwise step 5 gives `E_KEY_DOC`. (The reference had given `E_MESH_DOC` for a key document object without `proto` or with a non-string one; it now gives `E_KEY_DOC`, like a missing or non-string `host`.)
+  - a 200 key-document response without a body is `E_KEY_DOC` at step 1, before the mesh document;
+  - a URL is on the host when it begins `https://<host>/`; every brace of an endpoint template belongs to one of its placeholders (the reference had accepted a lone `}`; it now rejects it); `bindings` is not a template; unknown endpoints are not checked;
+  - `poll`'s host is a DNS name (an empty host, a port or userinfo is `E_ENVELOPE`); comparing it with the host asked is the client's check.
+  - 13 more vectors: 10 `mesh` (2 valid), 3 envelopes (1 valid), 1037 vectors in all.
 
 ### spec-0.4.0
 

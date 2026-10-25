@@ -80,9 +80,9 @@
     },
     "poll": {
       "type": "string",
-      "pattern": "^https://[!-~]+/jobs/[0-9a-f]{32,64}$",
+      "pattern": "^https://[a-z0-9-]+(\\.[a-z0-9-]+)+/([!-~]*/)?jobs/[0-9a-f]{32,64}$",
       "maxLength": 512,
-      "description": "For pending: the URL of the job, ending /jobs/<job> with this envelope's job (checked by the procedure in 5.5)."
+      "description": "For pending: the URL of the job, https://, a DNS name (no port, no userinfo), then a path ending /jobs/<job> with this envelope's job (checked by the procedure in 5.5). Whether the host is the one asked is the client's check."
     },
     "request": {
       "type": "object",
