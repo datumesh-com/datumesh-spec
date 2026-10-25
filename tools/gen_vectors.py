@@ -1215,6 +1215,151 @@ add("invalid/scalar-blob-media-type-long-subtype", "scalar", "A subtype of 127 c
     "characters long.", text(BL(f"{H}:17:a/" + "x" * 127)), "E_CANON_BLOB")
 
 
+# ---------------------------------------------------------------------------
+# spec-0.4.1, addition A: the pending outcome and job results (SPEC 5.5, D68).
+
+JOB = "4f9c2a7e1b3d5f60817a9c2e4b6d8f01"  # 128 bits, as 32 lowercase hex digits
+OTHER_JOB = "0d1e2f3a4b5c6d7e8f9a0b1c2d3e4f5a"
+FX_ID = cell_id(FX_CELL)
+FX_REQUEST = {"asof": ASOF, "cell_id": FX_ID}
+JOB_REQUEST = {"asof": ASOF, "cell_id": FX_ID, "job": JOB}
+
+
+def pending(**over):
+    env = {"estimate_seconds": 5, "job": JOB, "outcome": "pending", "poll": f"https://mesh.example/jobs/{JOB}",
+           "request": {"asof": ASOF, "cell_id": FX_ID}}
+    env.update(over)
+    return {k: v for k, v in env.items() if v is not None}
+
+
+add_envelope("envelope/pending", "The mesh accepted the request and is computing the cell: 202, the job, an estimate "
+             "and the poll URL, with the original request echoed.", pending(), 202, request=FX_REQUEST)
+add_envelope("envelope/pending-no-asof", "A pending answer to a request without asof echoes the cell id only.",
+             pending(request={"cell_id": FX_ID}), 202, request={"cell_id": FX_ID})
+add_envelope("envelope/pending-polled", "GET /jobs/<job> while the job is still running returns the pending envelope "
+             "again; it is bound to the original request and to the job polled.", pending(estimate_seconds=2), 202,
+             request=JOB_REQUEST)
+add_envelope("envelope/job-result-ok", "GET /jobs/<job> once the job is done: the envelope the /cell call would have "
+             "returned, checked against the original request (cell and asof), not the job URL.",
+             {"outcome": "ok", "receipt": R_FX, "trust": "primary"}, 200, request=JOB_REQUEST)
+add_envelope("envelope/job-result-not-covered", "A job may complete with any outcome but pending's own: here the "
+             "mesh found no receipt.", {"outcome": "not_covered"}, 404, request=JOB_REQUEST)
+add_envelope("envelope/job-unknown", "An unknown or expired job id: bad_request with E_JOB_UNKNOWN, the request's "
+             "fault, never a completed not_covered.", {"error": "E_JOB_UNKNOWN", "outcome": "bad_request"}, 400,
+             request=JOB_REQUEST)
+for name, env, status, request, why in [
+    ("pending-missing-poll", pending(poll=None), 202, FX_REQUEST, "pending requires poll."),
+    ("pending-missing-job", pending(job=None, poll="https://mesh.example/jobs/"), 202, FX_REQUEST, "pending requires job."),
+    ("pending-missing-estimate", pending(estimate_seconds=None), 202, FX_REQUEST, "pending requires estimate_seconds."),
+    ("pending-missing-request", pending(request=None), 202, FX_REQUEST, "pending requires the original request."),
+    ("pending-with-receipt", pending(receipt=R_FX), 202, FX_REQUEST, "pending carries no receipt."),
+    ("pending-with-trust", pending(trust="primary"), 202, FX_REQUEST, "pending carries no trust."),
+    ("pending-short-job", pending(job=JOB[:31], poll=f"https://mesh.example/jobs/{JOB[:31]}"), 202, FX_REQUEST,
+     "A job id has at least 32 hex digits (128 bits)."),
+    ("pending-uppercase-job", pending(job=JOB.upper(), poll=f"https://mesh.example/jobs/{JOB.upper()}"), 202,
+     FX_REQUEST, "A job id is lowercase hex."),
+    ("pending-http-poll", pending(poll=f"http://mesh.example/jobs/{JOB}"), 202, FX_REQUEST, "poll is an https URL."),
+    ("pending-poll-other-job", pending(poll=f"https://mesh.example/jobs/{OTHER_JOB}"), 202, FX_REQUEST,
+     "poll is the URL of this envelope's job: it ends /jobs/<job>."),
+    ("pending-status", pending(), 200, FX_REQUEST, "pending is HTTP 202."),
+    ("pending-request-extra", pending(request={"asof": ASOF, "cell_id": FX_ID, "trust": "primary"}), 202, FX_REQUEST,
+     "The echoed request has cell_id and, if one was given, asof; nothing else."),
+    ("pending-other-cell", pending(request={"asof": ASOF, "cell_id": cell_id(R_CONVERT["cell"])}), 202, FX_REQUEST,
+     "The echoed request names another cell than the one asked for."),
+    ("pending-asof-dropped", pending(request={"cell_id": FX_ID}), 202, FX_REQUEST,
+     "The request carried an asof, which the echo drops."),
+    ("pending-asof-added", pending(), 202, {"cell_id": FX_ID}, "The echo carries an asof the request did not."),
+    ("pending-polled-other-job", pending(job=OTHER_JOB, poll=f"https://mesh.example/jobs/{OTHER_JOB}"), 202,
+     JOB_REQUEST, "Polled /jobs/<job>, the mesh answered for another job."),
+    ("job-result-other-cell", {"outcome": "ok", "receipt": R_CONVERT, "trust": "verified"}, 200, JOB_REQUEST,
+     "The job's result is a receipt for another cell than the original request's: step 5 against the original "
+     "request fails."),
+    ("job-result-later-asof", {"outcome": "ok", "receipt": R_FX, "trust": "primary"}, 200,
+     {"asof": "2024-03-15T09:00:00.000000Z", "cell_id": FX_ID, "job": JOB},
+     "The job's result has an asof after the original request's: step 5 against the original request fails."),
+    ("job-unknown-on-cell", {"error": "E_JOB_UNKNOWN", "outcome": "bad_request"}, 400, FX_REQUEST,
+     "E_JOB_UNKNOWN answers a job URL only, not a /cell request."),
+    ("error-job-unknown", {"error": "E_JOB_UNKNOWN", "outcome": "error"}, 500, JOB_REQUEST,
+     "An unknown job is bad_request, not a mesh error."),
+]:
+    add_envelope(f"invalid/envelope-{name}", why, env, status, "E_ENVELOPE", request=request)
+
+# ---------------------------------------------------------------------------
+# spec-0.4.1, addition B: the mesh document /.well-known/datumesh-mesh.json (SPEC 9.6, D69).
+
+MESH_HOST = "mesh.example.org"
+MB = f"https://{MESH_HOST}"
+MESH_ENDPOINTS = {"blob": f"{MB}/blob/{{sha256}}", "cell": f"{MB}/cell/{{cell}}", "cells": f"{MB}/cells",
+                  "descriptor": f"{MB}/descriptor/{{hash}}", "explain": f"{MB}/explain/{{cell}}", "find": f"{MB}/find",
+                  "jobs": f"{MB}/jobs/{{job}}", "manifest": f"{MB}/manifest/{{slice_id}}/{{members_hash}}",
+                  "receipt": f"{MB}/receipt/{{hash}}", "slice": f"{MB}/slice/{{cell}}", "verify": f"{MB}/verify"}
+
+
+def mesh_doc(endpoints=None, **over):
+    doc = {"bindings": f"{MB}/bindings", "endpoints": dict(MESH_ENDPOINTS, **(endpoints or {})), "host": MESH_HOST,
+           "proto": canon.PROTO}
+    doc.update(over)
+    return {k: v for k, v in doc.items() if v is not None}
+
+
+def mesh_env(mesh=None, keys=None, mesh_status=200, key_status=200):
+    keydoc = keys or {"host": MESH_HOST, "keys": [key_entry("calc-2020", T0)], "proto": canon.PROTO}
+    e = {"keys": {"https": {"status": key_status}}, "mesh": {"https": {"status": mesh_status}}}
+    if key_status == 200:
+        e["keys"]["https"]["body"] = keydoc if isinstance(keydoc, str) else json.dumps(keydoc, indent=2)
+    if mesh_status == 200:
+        e["mesh"]["https"]["body"] = mesh if isinstance(mesh, str) else json.dumps(mesh or mesh_doc(), indent=2)
+    return e
+
+
+REQUIRED_ONLY = {k: v for k, v in MESH_ENDPOINTS.items() if k in canon.MESH_REQUIRED}
+for name, e, error, why in [
+    ("mesh/full", mesh_env(), None, "A mesh document naming every endpoint of 9.6; it agrees with the key document "
+     "on host and proto."),
+    ("mesh/required-only", mesh_env(mesh_doc() | {"endpoints": REQUIRED_ONLY}),
+     None, "Only the required endpoints: cell, descriptor, jobs, manifest, receipt."),
+    ("mesh/extension-members", mesh_env(mesh_doc({"x_graphql": f"{MB}/graphql"}, x_status="beta")), None,
+     "Unknown members, at the top level and in endpoints, are ignored: they are not in the result."),
+    ("invalid/mesh-host-mismatch", mesh_env(mesh_doc(host="other.example.org")), "E_MESH_DOC",
+     "The mesh document names another host than the one fetched (and than the key document)."),
+    ("invalid/mesh-proto-mismatch", mesh_env(mesh_doc(proto="datumesh/2")), "E_MESH_DOC",
+     "The mesh document's proto differs from the key document's."),
+    ("invalid/mesh-key-doc-proto-mismatch", mesh_env(keys={"host": MESH_HOST, "keys": [key_entry("calc-2020", T0)],
+                                                           "proto": "datumesh/2"}), "E_MESH_DOC",
+     "The key document's proto differs from the mesh document's: the identity check comes before the key "
+     "document's own rules."),
+    ("invalid/mesh-key-doc-other-host", mesh_env(keys={"host": "other.example.org", "keys": [key_entry("calc-2020", T0)],
+                                                       "proto": canon.PROTO}), "E_MESH_DOC",
+     "The key document names another host: the two documents do not describe the same mesh."),
+    ("invalid/mesh-endpoint-other-host", mesh_env(mesh_doc({"cell": "https://other.example.org/cell/{cell}"})),
+     "E_MESH_DOC", "An endpoint on another host: a mesh document speaks for its own host only."),
+    ("invalid/mesh-bindings-other-host", mesh_env(mesh_doc(bindings="https://other.example.org/bindings")),
+     "E_MESH_DOC", "The bindings URL on another host."),
+    ("invalid/mesh-malformed", mesh_env("{\"host\": \"mesh.example.org\","), "E_MESH_DOC",
+     "The mesh document is not strict JSON."),
+    ("invalid/mesh-not-object", mesh_env("[]"), "E_MESH_DOC", "The mesh document is not a JSON object."),
+    ("invalid/mesh-duplicate-member", mesh_env('{"host": "mesh.example.org", "host": "mesh.example.org"}'),
+     "E_MESH_DOC", "The mesh document is parsed strictly: no duplicate members."),
+    ("invalid/mesh-missing-endpoints", mesh_env({k: v for k, v in mesh_doc().items() if k != "endpoints"}), "E_MESH_DOC",
+     "endpoints is required, an object."),
+    ("invalid/mesh-missing-required-endpoint", mesh_env(mesh_doc() | {"endpoints": {
+        k: v for k, v in MESH_ENDPOINTS.items() if k != "jobs"}}), "E_MESH_DOC",
+     "jobs is required: a client given a pending envelope must be able to poll."),
+    ("invalid/mesh-missing-placeholder", mesh_env(mesh_doc({"receipt": f"{MB}/receipt"})), "E_MESH_DOC",
+     "The receipt template lacks its {hash} placeholder."),
+    ("invalid/mesh-unknown-placeholder", mesh_env(mesh_doc({"cell": f"{MB}/cell/{{cell}}?v={{version}}"})),
+     "E_MESH_DOC", "A known endpoint has exactly its own placeholders."),
+    ("invalid/mesh-http-endpoint", mesh_env(mesh_doc({"cell": f"http://{MESH_HOST}/cell/{{cell}}"})), "E_MESH_DOC",
+     "Endpoints are https URLs."),
+    ("invalid/mesh-unavailable", mesh_env(mesh_status=404), "E_MESH_DOC",
+     "No mesh document: the host cannot be resolved across meshes (its receipts still verify)."),
+    ("invalid/mesh-key-doc-unavailable", mesh_env(key_status=404), "E_KEY_UNAVAILABLE",
+     "No key document: the key document's own code, as in 9.3."),
+    ("invalid/mesh-key-doc-malformed", mesh_env(keys="{not json"), "E_KEY_DOC",
+     "A key document that is not strict JSON keeps its own code."),
+]:
+    add(name, "mesh", why, error=error, host=MESH_HOST, env=e)
+
 # spec-0.4.0: the formula dialect and slice-as-lineage (tools/gen_formula.py).
 import gen_formula  # noqa: E402
 

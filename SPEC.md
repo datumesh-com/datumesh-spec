@@ -320,7 +320,7 @@ The first failure is reported. `signature` is taken as given: it comes from a de
 
 ### 5.5 Response envelope
 
-A mesh answers `GET https://<mesh>/cell/<rest>` (5.3) with an HTTP status and a JSON body, the **envelope**, served as `application/json`.
+A mesh answers `GET https://<mesh>/cell/<rest>` (5.3), and `GET` of a job's `poll` URL (below), with an HTTP status and a JSON body, the **envelope**, served as `application/json`.
 
 **An envelope is the mesh's statement and a receipt is the signer's. Only the receipt is verifiable.** The envelope is not hashed and not signed, and nothing in it changes what a receipt means. Everything a mesh says about a receipt (that it is stale, superseded or recomputed) is therefore said here, outside it, and receipts never change to carry such news. A client parses the envelope with the strict rules of 6.1.
 
@@ -334,12 +334,13 @@ The envelope is an object whose `outcome` decides which other members it has. A 
 | `unlicensed` | 403 | none | none | The requester may not receive this cell. |
 | `payment_required` | 402 | `quote` | none | The cell is available for the quoted price. |
 | `rate_limited` | 429 | `retry_after_seconds` | none | Too many requests. The mesh SHOULD also send the `Retry-After` header with the same value. |
-| `bad_request` | 400 | `error` | none | The request is malformed: the cell URI does not parse. |
+| `bad_request` | 400 | `error` | none | The request is malformed: the cell URI does not parse, or, at a job URL, the job is unknown or expired. |
 | `error` | 500-599 | `error` | none | The mesh failed to produce an answer. |
+| `pending` | 202 | `job`, `estimate_seconds`, `poll`, `request` | none | The mesh has accepted the request and is still computing the answer; the answer will be at `poll` (since `spec-0.4.1`). |
 
 Members:
 
-- `outcome`: one of the eight strings above.
+- `outcome`: one of the nine strings above.
 - `receipt`: a receipt object (section 8), embedded as JSON. For `ok`, it is the cell's latest version as of the requested `asof`, which may have been signed at an earlier `asof`. For `stale`, it is the last receipt the mesh knows for the cell.
 - `trust`: what the mesh asserts about how the receipt was produced:
   - `primary`: the host of `computed_by` equals the host of `cell.ns` (2.3), and `inputs` is empty. The publisher answered from its own records.
@@ -353,9 +354,13 @@ Members:
 - `quote`: an object with exactly `amount`, a number in the form of 3.1 (128 characters at most) greater than zero; `currency`, any currency code listed in `units.md`, withdrawn codes included; and `authorise`, where the requester can pay, an `https://` URL by the licence URL rule (`https://` followed by printable ASCII, at most 512 characters).
 - `retry_after_seconds`: a non-negative integer.
 - `fault`: one of the formula evaluation faults `E_FORMULA_DIV_ZERO`, `E_FORMULA_DOMAIN`, `E_FORMULA_RANGE`, `E_FORMULA_EMPTY`, `E_FORMULA_ABSENT`, `E_FORMULA_FUTURE` (15.11). Running out of fuel, a cycle and too deep an evaluation are not faults: they are the mesh's failures, an `error` with `E_EVAL_UNAVAILABLE`.
-- `error`: what failed. For `bad_request`, one of the codes `parse` can raise (5.4): `E_PARSE_URI`, `E_CANON_NAME`, `E_CANON_ARG_NAME`, `E_CANON_ARG_DUPLICATE`, `E_CANON_ARG_ORDER`, `E_CANON_PERCENT`, `E_CANON_TYPE`, `E_CANON_NUMBER`, `E_CANON_DATE`, `E_CANON_INSTANT`, `E_CANON_STRING`, `E_CANON_BLOB`, `E_CANON_LIMIT`, `E_ARG_UNKNOWN`, `E_ARG_MISSING`. For `error`, any code in 10.2 except `E_ENVELOPE` (a client's code), for example `E_INPUT_UNAVAILABLE`, or `E_EVAL_UNAVAILABLE` when the mesh could not evaluate the cell's function.
+- `error`: what failed. For `bad_request`, one of the codes `parse` can raise (5.4): `E_PARSE_URI`, `E_CANON_NAME`, `E_CANON_ARG_NAME`, `E_CANON_ARG_DUPLICATE`, `E_CANON_ARG_ORDER`, `E_CANON_PERCENT`, `E_CANON_TYPE`, `E_CANON_NUMBER`, `E_CANON_DATE`, `E_CANON_INSTANT`, `E_CANON_STRING`, `E_CANON_BLOB`, `E_CANON_LIMIT`, `E_ARG_UNKNOWN`, `E_ARG_MISSING`; or, in the answer to a job URL and only there, `E_JOB_UNKNOWN`. For `error`, any code in 10.2 except `E_ENVELOPE` (a client's code) and `E_JOB_UNKNOWN`, for example `E_INPUT_UNAVAILABLE`, or `E_EVAL_UNAVAILABLE` when the mesh could not evaluate the cell's function.
+- `job` (`pending`): the job id, 32 to 64 lowercase hex digits (`[0-9a-f]{32,64}`) encoding at least 128 bits drawn from a cryptographically secure random generator. It is unguessable because it is a capability: whoever holds it can fetch the result.
+- `estimate_seconds` (`pending`): a non-negative integer, the mesh's estimate of the seconds until the result is ready. It is a hint: a client MAY poll earlier or later.
+- `poll` (`pending`): the URL of the job, `https://` followed by printable ASCII, at most 512 characters, ending `/jobs/<job>` with this envelope's `job`. A mesh serves it on its own host; a client MUST NOT send a `poll` URL on another host than the one it asked (the envelope check cannot see this; the client's HTTP layer does).
+- `request` (`pending`): the original request, echoed: an object with exactly `cell_id`, the requested cell id (64 lowercase hex digits), and `asof`, the requested `asof` as an instant, if and only if the request carried one.
 
-**Integer members.** `age_seconds` and `retry_after_seconds` are JSON numbers written `0` or `[1-9][0-9]*`: no fraction, no exponent, no sign, and at most 2^53 - 1. So `30.0`, `3e1` and `-0` are `E_ENVELOPE`. They are the only JSON numbers in this specification, which is possible because envelopes are never hashed.
+**Integer members.** `age_seconds`, `retry_after_seconds` and `estimate_seconds` are JSON numbers written `0` or `[1-9][0-9]*`: no fraction, no exponent, no sign, and at most 2^53 - 1. So `30.0`, `3e1` and `-0` are `E_ENVELOPE`. They are the only JSON numbers in this specification, which is possible because envelopes are never hashed.
 
 A client checks an envelope in this order and reports the first failure:
 
@@ -363,7 +368,7 @@ A client checks an envelope in this order and reports the first failure:
 2. Check the members against the table and the rules above (`E_ENVELOPE`). Here `receipt` need only be an object. Every failure of a member's rule is `E_ENVELOPE`, including the rules `reason`, `quote` and `superseded_by` borrow from other sections.
 3. Check that the HTTP status matches `outcome` (`E_ENVELOPE`).
 4. If there is a receipt, verify it through step 6 of 10.1, with that procedure's codes.
-5. **The receipt answers the request** (`E_ENVELOPE`). Its cell id (4.4) MUST equal the id of the cell requested. That is, the cell the request's URI denotes, resolved to the `fn_hash` the client used. If the request carried `asof`, the receipt's `asof` MUST be at or before it, for `ok` and `stale` alike. If the request carried no `asof`, it asked for the mesh's "now", and the client accepts any receipt `asof`.
+5. **The receipt answers the request** (`E_ENVELOPE`). Its cell id (4.4) MUST equal the id of the cell requested. That is, the cell the request's URI denotes, resolved to the `fn_hash` the client used. If the request carried `asof`, the receipt's `asof` MUST be at or before it, for `ok` and `stale` alike. If the request carried no `asof`, it asked for the mesh's "now", and the client accepts any receipt `asof`. For `pending`, the echoed `request` MUST equal the request made: the same `cell_id`, and `asof` present exactly when the request carried one, with the same value; and when the envelope answers a job URL, its `job` MUST be the job polled. `E_JOB_UNKNOWN` answers a job URL only: in the answer to a `/cell` request it is `E_ENVELOPE`.
 6. Check `trust` against the receipt, as above, and that `superseded_by` differs from the receipt's hash (`E_ENVELOPE`).
 
 A receipt states a cell's value as of its own `asof`, and that value stands until the cell's next version. So one receipt answers every `asof` from its own up to the next version's, and a mesh serves it as `ok` for all of them without anything being re-signed. The two outcomes that carry a receipt differ only in what the mesh asserts about it:
@@ -378,6 +383,16 @@ A receipt of an **asof-dependent** function (one whose body reads `asof()`, 15.1
 Step 5 needs the request, which the envelope does not contain. A client MUST perform it; a library takes the requested cell id and `asof` as inputs. A malformed request description, meaning a `cell_id` that is not 64 lowercase hex digits or an `asof` that is not an instant, is the caller's error. It is not an `E_*` code: libraries report it the way their language reports a misused function. For outcomes without a receipt there is nothing to bind. Without it, a mesh could answer with a valid receipt for a different cell.
 
 An envelope that passes says only that this mesh made a well-formed statement, about the requested cell, citing a receipt that its signer signed.
+
+**Jobs** (since `spec-0.4.1`). A mesh that cannot answer within the request's time MAY answer `pending` (202) instead of waiting. It carries no receipt and no `trust`: it states nothing about the cell. The client then fetches `GET <poll>`:
+
+- **While the job is running**, the answer is a `pending` envelope again, with the same `job` and `request`; `estimate_seconds` may change.
+- **Once the job is done**, the answer is the envelope that the `/cell` request would have returned: any outcome but `pending`, with the HTTP status of that outcome. It is **bound to the original request, never to the job URL**: the client checks it as in steps 1-6, with step 5 against the original request's cell id and `asof` (the ones the client sent, which the `pending` envelope echoed). An answer that fails that binding is `E_ENVELOPE`, however well-formed. A job never ends in `pending`; a mesh that gives a job up answers `error`, for example with `E_EVAL_UNAVAILABLE`. A mesh applies the same licence, payment and rate rules at the job URL as at `/cell`.
+- **An unknown or expired job** is `bad_request` (400) with `E_JOB_UNKNOWN`. A mesh keeps a completed job's result for at least 300 seconds after it first serves it, and SHOULD keep a result not yet served at least 300 seconds after the job completes; after that it MAY forget the job, and the id is unknown. A client that gets `E_JOB_UNKNOWN` sends the original request again.
+
+A library takes the job polled as a third member of the request description (`{"cell_id", "asof"?, "job"}`); with it, an envelope may be `bad_request` with `E_JOB_UNKNOWN`, and a `pending` one must carry that `job`. Without it, the request was a `/cell` request.
+
+*Rationale.* Binding the result to the original request is what makes polling safe: a job URL names no cell, so a result checked against it would bind to nothing, and a mesh could hand a client another cell's receipt. An unknown job is not `not_covered`, which would state that the cell has no receipt when nothing is known about the cell; not `error`, since the mesh did not fail; and not distinguished from an expired one, so that answers do not reveal which ids were ever issued. It is the request that no longer names anything, so it is a `bad_request`, and the client's remedy is the same as for a lost job: ask again. 128 bits make an id unguessable in any number of attempts a mesh would serve; 300 seconds cover a client's retries after a lost response.
 
 ## 6. Canonical encoding and hashing
 
@@ -602,6 +617,85 @@ Resolution needs the network; verification (section 10) does not. A verifier lib
 
 A host publishes all keys still needed to verify receipts it has issued, each with its window. A key is usable for a receipt when `valid_from <= issued` and, if `valid_to` is present, `issued < valid_to` (`E_KEY_NOT_VALID`). To rotate a key, add the new key with a `valid_from`, then set the old key's `valid_to` to that time. To revoke a compromised key, set its `valid_to` to the time of compromise. Receipts issued after that time stop verifying, and earlier ones still verify.
 
+### 9.6 Mesh document
+
+Since `spec-0.4.1`, a mesh describes its endpoints at `https://<host>/.well-known/datumesh-mesh.json`:
+
+```json
+{
+  "bindings": "https://mesh.example.org/bindings",
+  "endpoints": {
+    "blob": "https://mesh.example.org/blob/{sha256}",
+    "cell": "https://mesh.example.org/cell/{cell}",
+    "cells": "https://mesh.example.org/cells",
+    "descriptor": "https://mesh.example.org/descriptor/{hash}",
+    "explain": "https://mesh.example.org/explain/{cell}",
+    "find": "https://mesh.example.org/find",
+    "jobs": "https://mesh.example.org/jobs/{job}",
+    "manifest": "https://mesh.example.org/manifest/{slice_id}/{members_hash}",
+    "receipt": "https://mesh.example.org/receipt/{hash}",
+    "slice": "https://mesh.example.org/slice/{cell}",
+    "verify": "https://mesh.example.org/verify"
+  },
+  "host": "mesh.example.org",
+  "proto": "datumesh/1"
+}
+```
+
+- `host`: the host it was fetched from. `proto`: `"datumesh/1"`, as in the key document.
+- `bindings`: the URL of the bindings resource (9.7).
+- `endpoints`: an object of endpoint templates. Each is a URL by the licence URL rule (`https://` followed by printable ASCII, at most 512 characters) on this host (its authority is exactly `host`, followed by a path), with exactly the placeholders listed, each once, and no other `{`:
+
+| Endpoint | Placeholders | Required | What it serves |
+|---|---|---|---|
+| `cell` | `{cell}` | yes | The envelope of a cell (5.5); `{cell}` is the `<rest>` of 5.3. |
+| `cells` | none | no | A batch of `cell` requests. |
+| `slice` | `{cell}` | no | The envelope for a slice read. |
+| `receipt` | `{hash}` | yes | A receipt by its hash (8.3). |
+| `descriptor` | `{hash}` | yes | A descriptor by its `fn_hash`. |
+| `manifest` | `{slice_id}`, `{members_hash}` | yes | A slice manifest (15.13). |
+| `blob` | `{sha256}` | no | Blob content (3.7). |
+| `explain` | `{cell}` | no | A human-readable account of a cell's lineage. |
+| `verify` | none | no | Verification as a service. |
+| `jobs` | `{job}` | yes | A job (5.5); a `pending` envelope's `poll` is this template with its `job`. |
+| `find` | none | no | Search. |
+
+**Unknown members are ignored**, at the top level and in `endpoints`, and are not checked; a member this section defines is checked by its rule. That is the room for extension: a later revision adds members, and a client of this one passes over them. Only this section defines members; a mesh SHOULD prefix private ones `x_`.
+
+**Cross-mesh resolution.** A mesh or client that will send requests to another mesh, for example to read an input from it, resolves that host first: it fetches the key document (9.2) and the mesh document, and accepts the host only when both pass, in this order:
+
+1. Retrieve the key document as in 9.3 (`E_KEY_UNAVAILABLE`).
+2. Retrieve the mesh document: anything but the integer status 200 with a body, 404 included, is `E_MESH_DOC`.
+3. Parse both as strict JSON (6.1): a key document that does not parse is `E_KEY_DOC`; a mesh document that does not parse, or is not an object, is `E_MESH_DOC`.
+4. **The two documents describe the same mesh** (`E_MESH_DOC`): the mesh document's `host` equals the host fetched, the key document's `host`, where it is a string, equals it too, and the two `proto`s are equal and `"datumesh/1"`. A key document that names another host fails here, as `E_MESH_DOC`, not later as `E_KEY_DOC`.
+5. Check the key document by 9.2 (`E_KEY_DOC`).
+6. Check the mesh document's members: `bindings`, then `endpoints` (an object holding every required endpoint), then each known endpoint in ascending name order, by the rules above (`E_MESH_DOC`).
+
+Unknown members are dropped from the result. A host that fails is not used for anything: none of its endpoints are called.
+
+**A verifier never needs the mesh document.** Verification (section 10) uses keys only, and step 5 of 10.1 resolves them from the key document alone; `E_MESH_DOC` is a resolution code, never a verification result. A host with a key document and no mesh document still issues verifiable receipts; it only cannot be resolved across meshes. The key document of 9.2 is unchanged: it still has exactly `host`, `keys` and `proto`.
+
+*Rationale.* A separate document leaves the key document, which every verifier reads, exactly as it was. Requiring the two to agree on `host` and `proto` keeps one host from describing another's endpoints and keeps a mesh from being read under two protocols. Endpoints on the same host only, because TLS authenticates the host, and that is all a client knows of an unsigned document.
+
+### 9.7 Bindings
+
+The bindings resource tells which function a name denotes, as of an instant. `GET <bindings>?name=<name>&asof=<instant>`, with each value percent-encoded as in 5.1 and `asof` optional (absent: now), returns `application/json`:
+
+```json
+{
+  "asof": "2026-05-01T00:00:00.000000Z",
+  "bindings": {
+    "calc.example.net/convert": {"fn_hash": "…64 hex digits…", "since": "2024-01-01T00:00:00.000000Z"}
+  }
+}
+```
+
+- `asof`: the instant answered for (the request's, or the mesh's now).
+- `bindings`: an object whose single member is the requested name (2.2), with `fn_hash`, the hash of the descriptor it is bound to as of `asof`, and `since`, the start of that binding, an instant at or before `asof`. A name unbound as of `asof` is answered with an empty `bindings` object.
+- Repeating `name` asks for several names; `bindings` then has one member per name bound. Unknown members are ignored, as in 9.6.
+
+Like an envelope, this answer is the mesh's statement, unsigned. A computed receipt's `fn_hash` is what verification checks (10.1 step 7.1); the bindings resource is how a mesh finds the descriptor to evaluate, and `since` is the binding start that 8.2 counts among a computed receipt's `asof` candidates.
+
 ## 10. Verification
 
 ### 10.1 Procedure
@@ -664,7 +758,7 @@ Signature-valid means the holder of key `computed_by` stated this value. Whether
 
 ### 10.2 Error codes
 
-The four failure classes a verifier distinguishes are: bad canonical form (parse, schema and canon codes), unknown or unusable key (key codes), bad signature, and value mismatch on recomputation (the remaining codes). Two codes, `E_EVAL_UNAVAILABLE` and `E_INPUT_SUPERSEDED`, are not failures: they are reported with success at level `signed` (10.1 step 7.6). The formula codes of section 15.11 are not verification codes.
+The four failure classes a verifier distinguishes are: bad canonical form (parse, schema and canon codes), unknown or unusable key (key codes), bad signature, and value mismatch on recomputation (the remaining codes). Two codes, `E_EVAL_UNAVAILABLE` and `E_INPUT_SUPERSEDED`, are not failures: they are reported with success at level `signed` (10.1 step 7.6). The formula codes of section 15.11 are not verification codes. Nor are the last two (since `spec-0.4.1`): `E_JOB_UNKNOWN` is a mesh's answer in an envelope (5.5), and `E_MESH_DOC` a result of cross-mesh resolution (9.6).
 
 | Code | Step | Meaning |
 |---|---|---|
@@ -712,8 +806,10 @@ The four failure classes a verifier distinguishes are: bad canonical form (parse
 | `E_INPUT_SUPERSEDED` | 7 | Recomputation read a later version of an input cell, or other members of an input slice (7.6): the receipt is historical, not wrong. Not a failure: reported with success at level `signed`. |
 | `E_BLOB_MISMATCH` | 7 | Blob content has another length or hash than the blob states. |
 | `E_ENVELOPE` | envelope | A response envelope breaks a rule of 5.5, its HTTP status does not match its outcome, or its receipt does not answer the request. |
+| `E_JOB_UNKNOWN` | envelope | In a `bad_request` envelope at a job URL: the job is unknown or expired (5.5). A mesh's code, not a client's. |
+| `E_MESH_DOC` | mesh | The mesh document cannot be retrieved, is malformed, breaks a rule of 9.6, or disagrees with the key document on `host` or `proto`. Never a verification result. |
 
-"URI" marks codes raised while parsing a cell URI (5.4), "envelope" codes raised while checking a response envelope (5.5), and "unit" codes raised while resolving a unit (7.1). Canonicalising a scalar, cell, reference or descriptor on its own uses the same codes as steps 1-3.
+"URI" marks codes raised while parsing a cell URI (5.4), "envelope" codes raised while checking a response envelope (5.5), "mesh" codes raised in cross-mesh resolution (9.6), and "unit" codes raised while resolving a unit (7.1). Canonicalising a scalar, cell, reference or descriptor on its own uses the same codes as steps 1-3.
 
 ## 11. Test vectors
 
@@ -728,7 +824,8 @@ The four failure classes a verifier distinguishes are: bad canonical form (parse
 | `keys` | `host`, `env`: what the HTTPS request returned | `key_ids` |
 | `receipt` | `input`: receipt JSON text; `keypair` (`seed`, `public`, `key_id`); `keys`: an `env` per host; optional `recompute`; optional `blob_hex`: content for step 7.7 | `canonical` (the signed payload), `sha256` (receipt hash), `sig`, `level` (`signed` or `recomputed`); `blob_checked` (true) when `blob_hex` is given; `code` (`E_EVAL_UNAVAILABLE`) when `recompute` has no `value` |
 | `unit` | `input`: JSON text of an object with exactly `cell` and `descriptor` (any other shape is `E_SCHEMA`) | `unit`: the resolved unit of the cell's value (7.1), or null when the function does not return a number |
-| `envelope` | `input`: the response body; `status`: the HTTP status; `keys`: an `env` per host; `request`: `{"cell_id", "asof"?}` for step 5 | `outcome`, and when there is a receipt, `trust` and `receipt_hash` |
+| `envelope` | `input`: the response body; `status`: the HTTP status; `keys`: an `env` per host; `request`: `{"cell_id", "asof"?, "job"?}` for step 5, with `job` (since `spec-0.4.1`) when the body answers `GET` of that job's `poll` URL | `outcome`, and when there is a receipt, `trust` and `receipt_hash` |
+| `mesh` (since `spec-0.4.1`) | `host`; `env`: `{"keys": <env of the key document>, "mesh": <env of the mesh document>}`, each an `env` as below (9.6) | `bindings` (the URL) and `endpoints` (the known endpoint templates; unknown members dropped) |
 | `slice` | `input`: JSON text of a slice object (4.4) or a manifest (15.13). It is a manifest exactly when it is an object with a `members` member; anything else is checked as a slice object (so `{"slice": …}` alone is `E_SCHEMA`, as a slice object without `args`) | `canonical`, `sha256`, `slice_id`; for a manifest also `members_hash` and `entry` |
 | `formula` | `input`: a formula source; `env`: `{"name", "signature", "functions": {name: descriptor}, "aliases": {alias: name}}` | `ast` (the canonical AST's JCS text), `ast_sha256`, `body`, `inputs` (the derived set), `returns` (type and unit), `asof_dependent`; an invalid vector has `error`, and `token` for `E_FORMULA_FORBIDDEN` |
 | `formula-eval` | `world`: `{"functions": {name: {"descriptor", "bound"}}, "receipts": [stored receipts], "max_depth"?}`; `cell`: `{"fn", "args"}`; `asof`; `fuel`? | `value`, `lineage` (the receipt's `inputs`), `tx`, `receipt_asof`, `fuel_used`, `receipt_hash`; an invalid vector has the evaluation code as `error` |
@@ -750,7 +847,7 @@ In an `env`, `status` is an integer HTTP status written without fraction or expo
 
 A failed verification reports only its code. Whether a library also returns the receipt hash when it could compute one is the library's choice, and vectors do not record it. Inputs are deliberately not canonical: member order is reversed, and there is whitespace and escaping. A valid receipt vector's expected verification result is success at `level`, with `code` when given (`E_EVAL_UNAVAILABLE`, or `E_INPUT_SUPERSEDED` when `recompute` has a `value` and a `lineage`; a library reports no code otherwise); an invalid one's is `error`. A runner whose interface reads a string as JSON text passes a vector's `descriptor` as its JSON serialisation. `code` is the only output that names a code on success, and it is never `error`'s. Keypairs come from fixed seeds and Ed25519 is deterministic, so `tools/gen_vectors.py` reproduces every file byte for byte.
 
-The `env` for a host is `{"https": {"status": 200, "body": "<text>"}}` for a retrieved document, or `{"https": {"status": <other status>}}` or `{"https": {"status": "error"}}` for a failed retrieval. A host absent from `keys` behaves as `{"https": {"status": "error"}}`.
+The `env` for a host is `{"https": {"status": 200, "body": "<text>"}}` for a retrieved document, or `{"https": {"status": <other status>}}` or `{"https": {"status": "error"}}` for a failed retrieval. A host absent from `keys` behaves as `{"https": {"status": "error"}}`, and so does a `keys` or `mesh` member absent from a `mesh` vector's `env`. In a `mesh` vector, the mesh document's `env` follows the same status rule, with `E_MESH_DOC` in place of `E_KEY_UNAVAILABLE`.
 
 The JSON Schemas under `schemas/` describe the shapes; where a schema keyword (`uniqueItems`, `maxItems`, a pattern) would reject an input that this document assigns another code, this document governs. In a cross-check, a runner that does not implement a kind of vector (a verifier library, for the kinds `formula`, `formula-eval`, `excel` and `decimal`) prints `{"id": …, "error": null, "skipped": "<kind>"}` for it, and is not compared on it (`crosscheck/README.md`).
 
@@ -765,6 +862,8 @@ The vectors use reserved example domains (`example.org`, `example.net`, `.exampl
 - **Revocation** is by shortening `valid_to`. There is no other revocation list.
 - **Text in summaries and strings** may contain bidi controls and confusable characters. Display it as data.
 - **Blob content** is untrusted until step 7.7 passes. Check the length before downloading or hashing more than that many bytes. Do not let the media type override what a client would otherwise do with the bytes: it is the publisher's claim.
+- **Job ids are capabilities** (5.5): anyone holding one can fetch the result while it is kept. A mesh draws them from a cryptographically secure generator, serves job URLs only over TLS, and applies the `/cell` licence rules at them; a client does not log or share them.
+- **Mesh documents are unsigned** (9.6). They are authenticated by TLS for their host only, which is why every URL in one must be on that host.
 - **Envelopes are unsigned.** TLS authenticates the mesh, not what it says. `stale`, `superseded_by`, `verified`, every non-`ok` outcome, and the currency that `ok` asserts are the mesh's claims, and a mesh can lie about them or omit them. In particular, a mesh can serve an outdated receipt as `ok`: the client checks only that its `asof` is at or before the requested one. A client that needs a newer value asks with a later `asof`, or asks another mesh.
 
 ## 13. Decisions and rationale
@@ -839,12 +938,14 @@ Every choice this specification makes where its brief left room, with the main a
 | D65 | `haversine` on a 6371008.8 m sphere, to the millimetre; `ellipsoidal_distance` reserved | Ellipsoidal (Vincenty, Karney) now | The user's decision: one simple, fully specified metric first |
 | D66 | Radians are dimensionless; `deg` is a listed unit; `sin`/`cos` accept both | A `rad` unit | SI treats the radian as dimensionless; `atan2(…) * r` then stays a length |
 | D67 | Argument reduction uses 60-digit constants with an exact product | 40-digit constants throughout | A 40-digit pi loses up to six digits of `sin` near large multiples of pi; the reduction is one exact step |
+| D68 | A ninth outcome, `pending` (202), with an unguessable `job` (at least 128 bits), `estimate_seconds`, a required `poll` and the echoed request; the job's result is bound to the original request; an unknown or expired job is `bad_request` with `E_JOB_UNKNOWN`, kept at least 300 s after it is first served (`spec-0.4.1`) | Hold the request open; `Location` and `Retry-After` headers only; bind the result to the job URL; `not_covered` for an expired job | The user's decision. Long evaluations need an answer before they finish; a job URL names no cell, so only the original request can bind the result; an expired job says nothing about the cell |
+| D69 | A separate mesh document `/.well-known/datumesh-mesh.json`, agreeing with the key document on `host` and `proto`, every URL on its own host, unknown members ignored; `E_MESH_DOC` in cross-mesh resolution only (`spec-0.4.1`) | Endpoints in the key document; fixed paths only | The user's decision. The key document every verifier reads stays as it is; a verifier never needs the mesh document |
 
 ## 14. Changes
 
 ### spec-0.4.1
 
-A text-only revision: it states six rules that `spec-0.4.0` left open, each as the reference implementation and the engine apply them. **No vector's expected result changes and no hash changes**: every `spec-0.4.0` vector file and example is byte-identical, which `tests/test_migration_0_4_1.py` checks against the `spec-0.4.0` files in git, together with the reference tool reproducing every expected result. `proto` is still `datumesh/1`.
+It states six rules that `spec-0.4.0` left open, each as the reference implementation and the engine apply them, and adds two things, both the user's decisions: the `pending` envelope outcome and the mesh document. **No vector's expected result changes and no hash changes**: every `spec-0.4.0` vector file and example is byte-identical, which `tests/test_migration_0_4_1.py` checks against the `spec-0.4.0` files in git, together with the reference tool reproducing every expected result. `proto` is still `datumesh/1`.
 
 1. **`asof(c, T)` (15.13):** the times, then the cell's arguments, then its name as of `T`.
 2. **Fixed fuel (15.12):** the fixed costs of `sqrt`, `exp`, `ln`, `sin`, `cos`, `atan2` and `haversine` are charged at the call, before the arguments; powers after their operands.
@@ -854,6 +955,15 @@ A text-only revision: it states six rules that `spec-0.4.0` left open, each as t
 6. **A caught fault (8.2 rule 2):** a value resting on a fault the function caught counts, among its `asof` candidates, the latest input `asof` and binding start of the evaluation that faulted.
 
 The reference implementation follows items 4 and 6, which it did not before (it checked every callee against the bindings as of the evaluation asof, and counted only the slice's binding start for a caught fault); no vector exercises either case. Items 1, 2, 3 and 5 are what it already did. The six items come from the 1.3 report (the formula crate's findings F1, F2 and G1-G3, and the engine 0.3.0 notes).
+
+The two additions:
+
+- **`pending` (5.5, D68).** A ninth outcome, HTTP 202, with `job`, `estimate_seconds`, `poll` and the echoed `request`, and no receipt or `trust`. `GET <poll>` returns `pending` again while the job runs, then the envelope the `/cell` request would have returned, checked against the original request (step 5); an unknown or expired job is `bad_request` with the new code `E_JOB_UNKNOWN`. A library's request description gains an optional `job`. No existing envelope changes: none had `pending`, and `E_JOB_UNKNOWN` was not a code (an `error` envelope may not carry it; a `bad_request` may only at a job URL).
+- **The mesh document (9.6, 9.7, D69).** `/.well-known/datumesh-mesh.json`: `host`, `proto`, the bindings URL and endpoint templates; unknown members ignored. Cross-mesh resolution fetches it with the key document and rejects the host with the new code `E_MESH_DOC` when they disagree on `host` or `proto`, when either names another host, or when the mesh document is malformed. The key document (9.2) and verification are unchanged. The bindings resource answers which function a name denotes as of an instant.
+- **Codes (10.2).** `E_JOB_UNKNOWN` and `E_MESH_DOC`, after `E_ENVELOPE`; neither is a verification result.
+- **Vectors (11).** 46 new: 6 valid and 20 invalid envelopes for `pending`, job results and `E_JOB_UNKNOWN`; the new kind `mesh`, 3 valid and 17 invalid; envelope vectors' `request` may carry `job`. 1024 vectors in all.
+- **Schemas.** `envelope.schema.json` gains `pending` and its members, and `E_JOB_UNKNOWN` for `bad_request`; the new `mesh.schema.json`; `vector.schema.json` gains the kind `mesh`, `request.job`, `bindings` and `endpoints`.
+- **Reference tool.** `tools/canon.py`: `pending` in `check_envelope`, `resolve_mesh`, the `mesh` kind; `tools/gen_vectors.py` generates the new vectors.
 
 ### spec-0.4.0
 

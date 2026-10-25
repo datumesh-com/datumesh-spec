@@ -1,0 +1,22 @@
+{
+  "id": "invalid/mesh-key-doc-other-host",
+  "kind": "mesh",
+  "description": "The key document names another host: the two documents do not describe the same mesh.",
+  "valid": false,
+  "host": "mesh.example.org",
+  "env": {
+    "keys": {
+      "https": {
+        "status": 200,
+        "body": "{\n  \"host\": \"other.example.org\",\n  \"keys\": [\n    {\n      \"alg\": \"ed25519\",\n      \"id\": \"f7ec60a92abf4774\",\n      \"public\": \"ccd4faa3a0b8338bc796d3bfc30bda2f6e87d336a576b70dc9d47cbfe0e8830f\",\n      \"valid_from\": \"2020-01-01T00:00:00.000000Z\"\n    }\n  ],\n  \"proto\": \"datumesh/1\"\n}"
+      }
+    },
+    "mesh": {
+      "https": {
+        "status": 200,
+        "body": "{\n  \"bindings\": \"https://mesh.example.org/bindings\",\n  \"endpoints\": {\n    \"blob\": \"https://mesh.example.org/blob/{sha256}\",\n    \"cell\": \"https://mesh.example.org/cell/{cell}\",\n    \"cells\": \"https://mesh.example.org/cells\",\n    \"descriptor\": \"https://mesh.example.org/descriptor/{hash}\",\n    \"explain\": \"https://mesh.example.org/explain/{cell}\",\n    \"find\": \"https://mesh.example.org/find\",\n    \"jobs\": \"https://mesh.example.org/jobs/{job}\",\n    \"manifest\": \"https://mesh.example.org/manifest/{slice_id}/{members_hash}\",\n    \"receipt\": \"https://mesh.example.org/receipt/{hash}\",\n    \"slice\": \"https://mesh.example.org/slice/{cell}\",\n    \"verify\": \"https://mesh.example.org/verify\"\n  },\n  \"host\": \"mesh.example.org\",\n  \"proto\": \"datumesh/1\"\n}"
+      }
+    }
+  },
+  "error": "E_MESH_DOC"
+}

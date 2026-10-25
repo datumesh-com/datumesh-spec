@@ -32,7 +32,8 @@
         "formula",
         "formula-eval",
         "excel",
-        "decimal"
+        "decimal",
+        "mesh"
       ]
     },
     "description": {
@@ -82,11 +83,11 @@
     },
     "host": {
       "type": "string",
-      "description": "The host keys are resolved for; a DNS name except in invalid vectors that test that rule."
+      "description": "The host keys (keys vectors) or the mesh (mesh vectors) are resolved for; a DNS name except in invalid vectors that test that rule."
     },
     "env": {
       "type": "object",
-      "description": "A key environment (keys vectors), or a formula vector's environment: name, signature, functions, aliases."
+      "description": "A key environment (keys vectors); for mesh vectors (spec-0.4.1) {keys, mesh}, each the HTTPS result for one document; or a formula vector's environment: name, signature, functions, aliases."
     },
     "keypair": {
       "type": "object",
@@ -193,6 +194,11 @@
         },
         "asof": {
           "$ref": "defs.schema.json#/$defs/instant"
+        },
+        "job": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{32,64}$",
+          "description": "spec-0.4.1: the envelope is the response to GET /jobs/<job> for this original request."
         }
       }
     },
@@ -389,6 +395,19 @@
     "hard_cases": {
       "type": "integer",
       "minimum": 0
+    },
+    "bindings": {
+      "type": "string",
+      "pattern": "^https://",
+      "description": "spec-0.4.1, mesh vectors: the bindings URL."
+    },
+    "endpoints": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "string",
+        "pattern": "^https://"
+      },
+      "description": "spec-0.4.1, mesh vectors: the known endpoint templates; unknown members are dropped."
     }
   },
   "oneOf": [
@@ -407,6 +426,7 @@
         "kind": {
           "enum": [
             "keys",
+            "mesh",
             "formula-eval",
             "excel",
             "decimal"

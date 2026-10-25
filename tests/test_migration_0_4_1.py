@@ -1,5 +1,6 @@
 # SPDX-License-Identifier: Apache-2.0
-"""spec-0.4.0 -> spec-0.4.1: a text-only revision; no vector's expected result changes.
+"""spec-0.4.0 -> spec-0.4.1: six rules stated and two additions (pending, the mesh document); no
+spec-0.4.0 vector's expected result changes.
 
 The spec-0.4.0 files are read from git at the spec-0.4.0 tag's commit (f3d3e2c), so this test
 needs git and that commit (a full clone).

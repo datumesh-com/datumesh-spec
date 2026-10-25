@@ -1,0 +1,22 @@
+{
+  "id": "invalid/mesh-not-object",
+  "kind": "mesh",
+  "description": "The mesh document is not a JSON object.",
+  "valid": false,
+  "host": "mesh.example.org",
+  "env": {
+    "keys": {
+      "https": {
+        "status": 200,
+        "body": "{\n  \"host\": \"mesh.example.org\",\n  \"keys\": [\n    {\n      \"alg\": \"ed25519\",\n      \"id\": \"f7ec60a92abf4774\",\n      \"public\": \"ccd4faa3a0b8338bc796d3bfc30bda2f6e87d336a576b70dc9d47cbfe0e8830f\",\n      \"valid_from\": \"2020-01-01T00:00:00.000000Z\"\n    }\n  ],\n  \"proto\": \"datumesh/1\"\n}"
+      }
+    },
+    "mesh": {
+      "https": {
+        "status": 200,
+        "body": "[]"
+      }
+    }
+  },
+  "error": "E_MESH_DOC"
+}

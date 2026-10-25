@@ -4,7 +4,10 @@
 
 Since `spec-0.4.0` two more sets: slice-lineage receipts (`generate_slices.py`: computed receipts citing slices, with manifests and members, about half corrupted at each new check of 10.1 step 7.5 and at `E_INPUT_SUPERSEDED`), which every verifier library of `spec-0.4.0` must agree on; and formula cases (`generate_formula.py`: grammar sources, some mutated, evaluations over a fuzz world, and decimal cases for every operation), on which an implementation of the formula dialect must agree with the reference to the last digit (`FORMULA_RUNNER`; without it the reference runs them twice, which checks its determinism). `LIBS=0.3` checks libraries of `spec-0.3.0`: the vector set is then the `spec-0.3.0` vectors only. A runner that does not implement a kind of vector (the verifier libraries, for `formula`, `formula-eval`, `excel` and `decimal`) prints `{"id": ..., "error": null, "skipped": "<kind>"}` for it; `compare.py` leaves that runner out of that case, checks the line has nothing else, and reports the skips. The reference tool never skips.
 
+Since `spec-0.4.1` one more set (`generate_041.py`): `pending` envelopes and results served at a job URL, checked against the original request (the echoed request, the job and `poll`, the binding of a job's result, `E_JOB_UNKNOWN`), and mesh documents resolved with their key documents (`mesh` vectors: host and proto agreement, URLs on another host, placeholders, required endpoints, unknown members, malformed text, failed retrievals). `LIBS=0.4` checks libraries of `spec-0.4.0`: the vector set is then the `spec-0.4.0` vectors only, and the `spec-0.4.1` set is run by the reference tool alone, twice. `LIBS=0.4.1`, the default, runs it through every library.
+
 ```sh
-crosscheck/run.sh 1000 7                 # needs Docker and git
+crosscheck/run.sh 1000 7                 # needs Docker and git; libraries of spec-0.4.1
+LIBS=0.4 crosscheck/run.sh 1000 7        # libraries of spec-0.4.0
 LIBS=0.3 crosscheck/run.sh 1000 7        # libraries of spec-0.3.0
 ```

@@ -82,6 +82,8 @@ ERROR_CODES = (
     "E_INPUT_SUPERSEDED",
     "E_BLOB_MISMATCH",
     "E_ENVELOPE",
+    "E_JOB_UNKNOWN",
+    "E_MESH_DOC",
 )
 
 # Section 4.5 of SPEC.md.
@@ -1337,6 +1339,83 @@ def resolve_keys(host, env):
 
 
 # ---------------------------------------------------------------------------
+# The mesh document (SPEC.md 9.6, spec-0.4.1): cross-mesh resolution, never verification.
+
+MESH_ENDPOINTS = {  # endpoint -> its placeholders (each exactly once)
+    "blob": ("sha256",), "cell": ("cell",), "cells": (), "descriptor": ("hash",), "explain": ("cell",), "find": (),
+    "jobs": ("job",), "manifest": ("slice_id", "members_hash"), "receipt": ("hash",), "slice": ("cell",), "verify": (),
+}
+MESH_REQUIRED = ("cell", "descriptor", "jobs", "manifest", "receipt")
+_PLACEHOLDER = re.compile(r"\{([a-z_0-9]*)\}")
+
+
+def _retrieved(env, code, no_body):
+    """A retrieval as in 9.3: only the number 200 is a document; a 200 without a body is no_body."""
+    https = (env or {}).get("https") or {"status": "error"}
+    status = https.get("status")
+    if isinstance(status, bool) or not isinstance(status, (int, float)) or status != 200:
+        fail(code, f"https document: {status!r}")
+    if "body" not in https:
+        fail(no_body, "a 200 response without a document")
+    return https["body"]
+
+
+def _mesh_url(value, host, path):
+    if not isinstance(value, str) or not _URL.fullmatch(value) or len(value) > LIMITS["licence_url"]:
+        fail("E_MESH_DOC", "an https URL of at most 512 characters", path)
+    rest = value[len("https://"):]
+    authority = rest.split("/", 1)[0]
+    if authority != host or "/" not in rest:
+        fail("E_MESH_DOC", f"a URL on this host ({host}), with a path", path)
+
+
+def resolve_mesh(host, env):
+    """Cross-mesh resolution of a host (SPEC.md 9.6): its key document and mesh document.
+
+    env: {"keys": <https env of /.well-known/datumesh.json>, "mesh": <https env of
+    /.well-known/datumesh-mesh.json>}. Returns {"bindings", "endpoints", "host", "proto"} with the
+    known members only, or raises E_KEY_UNAVAILABLE, E_KEY_DOC or E_MESH_DOC."""
+    key_text = _retrieved(env.get("keys"), "E_KEY_UNAVAILABLE", "E_KEY_DOC")  # 1. the key document (9.3)
+    mesh_text = _retrieved(env.get("mesh"), "E_MESH_DOC", "E_MESH_DOC")  # 2. the mesh document
+    try:  # 3. both strict JSON
+        keydoc = parse_json(key_text.encode("utf-8") if isinstance(key_text, str) else key_text)
+    except DatumeshError:
+        fail("E_KEY_DOC", "the key document is not strict JSON")
+    try:
+        mesh = parse_json(mesh_text.encode("utf-8") if isinstance(mesh_text, str) else mesh_text)
+    except DatumeshError:
+        fail("E_MESH_DOC", "the mesh document is not strict JSON")
+    if not isinstance(mesh, dict):
+        fail("E_MESH_DOC", "the mesh document is an object")
+    # 4. identity: both name this host and the same proto
+    if isinstance(keydoc, dict) and isinstance(keydoc.get("host"), str) and keydoc["host"] != host:
+        fail("E_MESH_DOC", "the key document names another host", "$.host")
+    if mesh.get("host") != host:
+        fail("E_MESH_DOC", "the mesh document names another host", "$.host")
+    if mesh.get("proto") != PROTO or (isinstance(keydoc, dict) and keydoc.get("proto") != mesh.get("proto")):
+        fail("E_MESH_DOC", "the mesh document and the key document disagree on proto", "$.proto")
+    parse_key_doc(key_text, host)  # 5. the key document's own rules (9.2): E_KEY_DOC
+    # 6. the mesh document's members; unknown members are ignored
+    _mesh_url(mesh.get("bindings"), host, "$.bindings")
+    endpoints = mesh.get("endpoints")
+    if not isinstance(endpoints, dict):
+        fail("E_MESH_DOC", "endpoints is an object", "$.endpoints")
+    for name in MESH_REQUIRED:
+        if name not in endpoints:
+            fail("E_MESH_DOC", f"the endpoint {name} is required", f"$.endpoints.{name}")
+    known = {}
+    for name in sorted(endpoints):
+        if name not in MESH_ENDPOINTS:
+            continue
+        value = endpoints[name]
+        _mesh_url(value, host, f"$.endpoints.{name}")
+        if sorted(_PLACEHOLDER.findall(value)) != sorted(MESH_ENDPOINTS[name]) or value.count("{") != len(MESH_ENDPOINTS[name]):
+            fail("E_MESH_DOC", f"{name} has the placeholders {MESH_ENDPOINTS[name]}", f"$.endpoints.{name}")
+        known[name] = value
+    return {"bindings": mesh["bindings"], "endpoints": known, "host": host, "proto": PROTO}
+
+
+# ---------------------------------------------------------------------------
 # Signing and verification (SPEC.md sections 8 and 10).
 
 
@@ -1529,11 +1608,13 @@ ENVELOPE_MEMBERS = {  # outcome -> (required, optional)
     "rate_limited": (("outcome", "retry_after_seconds"), ()),
     "error": (("error", "outcome"), ()),
     "bad_request": (("error", "outcome"), ()),
+    "pending": (("estimate_seconds", "job", "outcome", "poll", "request"), ()),
 }
 ENVELOPE_STATUS = {
     "ok": range(200, 201), "stale": range(200, 201), "not_covered": range(404, 405),
     "unlicensed": range(403, 404), "payment_required": range(402, 403),
     "rate_limited": range(429, 430), "error": range(500, 600), "bad_request": range(400, 401),
+    "pending": range(202, 203),
 }
 # The codes parse(uri, signature) can raise (SPEC 5.4): what a bad_request may report.
 URI_CODES = (
@@ -1543,6 +1624,15 @@ URI_CODES = (
 )
 _INTEGER = re.compile(r"0|[1-9][0-9]*")
 TRUST = ("primary", "verified", "unverified")
+_JOB = re.compile(r"[0-9a-f]{32,64}")
+
+
+def _is_instant(text):
+    try:
+        check_instant(text, "$")
+        return True
+    except DatumeshError:
+        return False
 # The faults a not_covered envelope may carry (SPEC 5.5, 15.11): a computed cell with no value.
 FORMULA_FAULTS = ("E_FORMULA_DIV_ZERO", "E_FORMULA_DOMAIN", "E_FORMULA_RANGE", "E_FORMULA_EMPTY",
                   "E_FORMULA_ABSENT", "E_FORMULA_FUTURE")
@@ -1565,7 +1655,10 @@ def _check_envelope_members(env):
     if "age_seconds" in env and not _seconds(env["age_seconds"]):
         fail("E_ENVELOPE", "age_seconds is a non-negative integer", "$.age_seconds")
     if "error" in env:
-        allowed = URI_CODES if env["outcome"] == "bad_request" else tuple(c for c in ERROR_CODES if c != "E_ENVELOPE")
+        # bad_request: a URI code, or E_JOB_UNKNOWN for a job URL (spec-0.4.1); error: any code
+        # of 10.2 but the client's E_ENVELOPE and the request's E_JOB_UNKNOWN.
+        allowed = URI_CODES + ("E_JOB_UNKNOWN",) if env["outcome"] == "bad_request" else tuple(
+            c for c in ERROR_CODES if c not in ("E_ENVELOPE", "E_JOB_UNKNOWN"))
         if env["error"] not in allowed:
             fail("E_ENVELOPE", f"{env['error']!r} is not a code this outcome can carry", "$.error")
     if "quote" in env:
@@ -1589,6 +1682,24 @@ def _check_envelope_members(env):
             fail("E_ENVELOPE", "reason is given only with superseded_by", "$.reason")
     if "receipt" in env and not isinstance(env["receipt"], dict):
         fail("E_ENVELOPE", "receipt is a receipt object", "$.receipt")
+    if "estimate_seconds" in env and not _seconds(env["estimate_seconds"]):
+        fail("E_ENVELOPE", "estimate_seconds is a non-negative integer", "$.estimate_seconds")
+    if "job" in env:
+        if not isinstance(env["job"], str) or not _JOB.fullmatch(env["job"]):
+            fail("E_ENVELOPE", "job is 32 to 64 lowercase hex digits", "$.job")
+    if "poll" in env:
+        poll = env["poll"]
+        if not isinstance(poll, str) or not _URL.fullmatch(poll) or len(poll) > LIMITS["licence_url"] \
+                or not poll.endswith("/jobs/" + str(env.get("job"))):
+            fail("E_ENVELOPE", "poll is the https URL of the job: .../jobs/<job>", "$.poll")
+    if "request" in env:
+        req = env["request"]
+        if not isinstance(req, dict) or "cell_id" not in req or set(req) - {"asof", "cell_id"}:
+            fail("E_ENVELOPE", "request is {cell_id, asof?}", "$.request")
+        if not isinstance(req["cell_id"], str) or not re.fullmatch(r"[0-9a-f]{64}", req["cell_id"]):
+            fail("E_ENVELOPE", "request.cell_id is a cell id", "$.request.cell_id")
+        if "asof" in req and (not isinstance(req["asof"], str) or not _is_instant(req["asof"])):
+            fail("E_ENVELOPE", "request.asof is an instant", "$.request.asof")
     if "retry_after_seconds" in env and not _seconds(env["retry_after_seconds"]):
         fail("E_ENVELOPE", "retry_after_seconds is a non-negative integer", "$.retry_after_seconds")
     if "superseded_by" in env:
@@ -1602,12 +1713,24 @@ def _check_envelope_members(env):
 
 def check_envelope(status, body, keyenv, request):
     """Check a mesh response (SPEC.md 5.5): HTTP status and JSON body, against the request:
-    {"cell_id": <cell id asked for>, "asof": <instant, if the request carried one>}."""
+    {"cell_id": <cell id asked for>, "asof": <instant, if the request carried one>}, and "job": <job id>
+    when the response is to GET /jobs/<job> (spec-0.4.1): the job's envelope is bound to the original
+    request, never to the job URL."""
     env = parse_json(body, keep_integer_text=True)
     _check_envelope_members(env)
     if status not in ENVELOPE_STATUS[env["outcome"]]:
         fail("E_ENVELOPE", f"status {status} does not match outcome {env['outcome']}", "$.outcome")
     result = {"outcome": env["outcome"]}
+    if env.get("error") == "E_JOB_UNKNOWN" and "job" not in request:
+        fail("E_ENVELOPE", "E_JOB_UNKNOWN answers a job URL only", "$.error")
+    if env["outcome"] == "pending":
+        # Step 5 for pending (spec-0.4.1): the echoed request is the one made, and a pending
+        # envelope fetched from a job URL is that job's.
+        echoed = env["request"]
+        if echoed["cell_id"] != request["cell_id"] or echoed.get("asof") != request.get("asof"):
+            fail("E_ENVELOPE", "the pending envelope echoes another request", "$.request")
+        if "job" in request and env["job"] != request["job"]:
+            fail("E_ENVELOPE", "the pending envelope is for another job than the one polled", "$.job")
     if "receipt" in env:
         r = env["receipt"]
         result["receipt_hash"] = verify_receipt(jcs(r), keyenv)["hash"]
@@ -1676,6 +1799,9 @@ def run_vector(vec):
             return {"unit": resolved_unit(obj["descriptor"], obj["cell"])}
         if kind == "envelope":
             return check_envelope(vec["status"], vector_input(vec), vec["keys"], vec["request"])
+        if kind == "mesh":
+            got = resolve_mesh(vec["host"], vec["env"])
+            return {"bindings": got["bindings"], "endpoints": got["endpoints"]}
         if kind == "slice":
             obj = parse_json(vector_input(vec))
             if isinstance(obj, dict) and "members" in obj:
@@ -1717,7 +1843,8 @@ def run_vector(vec):
 OUTPUT_FIELDS = ("canonical", "sha256", "object", "uri", "https", "key_id", "key_ids", "sig", "level",
                  "blob_checked", "code", "unit", "outcome", "trust", "receipt_hash",
                  "slice_id", "members_hash", "entry", "ast", "ast_sha256", "body", "inputs", "returns",
-                 "asof_dependent", "value", "lineage", "tx", "receipt_asof", "fuel_used", "results")
+                 "asof_dependent", "value", "lineage", "tx", "receipt_asof", "fuel_used", "results",
+                 "bindings", "endpoints")
 
 
 def check_vector(vec):

@@ -161,6 +161,27 @@ class MeshDocument(unittest.TestCase):
                 self.assertEqual(canon.check_vector(v), [])
 
 
+class Schemas(unittest.TestCase):
+    def test_mesh_and_envelope_schemas(self):
+        import jsonschema
+        from test_vectors import validator
+        mesh = validator("mesh")
+        mesh.validate(mesh_doc())
+        for v in VECTORS.values():
+            if v["kind"] == "mesh" and v["valid"]:
+                with self.subTest(v["id"]):
+                    mesh.validate(json.loads(v["env"]["mesh"]["https"]["body"]))
+        for bad in (mesh_doc(proto="datumesh/2"), mesh_doc(endpoints=None), mesh_doc(bindings="http://x/b")):
+            with self.assertRaises(jsonschema.ValidationError):
+                mesh.validate(bad)
+        envelope = validator("envelope")
+        envelope.validate(pending())
+        envelope.validate({"error": "E_JOB_UNKNOWN", "outcome": "bad_request"})
+        for bad in (pending(poll=None), pending(receipt={}), {"error": "E_JOB_UNKNOWN", "outcome": "error"}):
+            with self.assertRaises(jsonschema.ValidationError):
+                envelope.validate(bad)
+
+
 class Text(unittest.TestCase):
     def test_outcome_table_and_sections(self):
         self.assertRegex(SPEC, r"\| `pending` \| 202 \|")

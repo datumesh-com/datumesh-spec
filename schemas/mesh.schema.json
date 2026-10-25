@@ -1,0 +1,137 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://datumesh.com/schemas/1/mesh.schema.json",
+  "title": "Datumesh mesh document",
+  "description": "Served at https://<host>/.well-known/datumesh-mesh.json (SPEC.md 9.6, spec-0.4.1). Unsigned. It must agree with the key document on host and proto, and every URL in it must be on that host, which the procedure in 9.6 checks. Unknown members are ignored, at the top level and in endpoints. A verifier never needs it.",
+  "type": "object",
+  "required": [
+    "bindings",
+    "endpoints",
+    "host",
+    "proto"
+  ],
+  "properties": {
+    "host": {
+      "$ref": "defs.schema.json#/$defs/dnsName"
+    },
+    "proto": {
+      "const": "datumesh/1"
+    },
+    "bindings": {
+      "$ref": "#/$defs/url",
+      "description": "The bindings resource (SPEC.md 9.7)."
+    },
+    "endpoints": {
+      "type": "object",
+      "required": [
+        "cell",
+        "descriptor",
+        "jobs",
+        "manifest",
+        "receipt"
+      ],
+      "properties": {
+        "blob": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/url"
+            },
+            {
+              "pattern": "\\{sha256\\}"
+            }
+          ]
+        },
+        "cell": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/url"
+            },
+            {
+              "pattern": "\\{cell\\}"
+            }
+          ]
+        },
+        "cells": {
+          "$ref": "#/$defs/url"
+        },
+        "descriptor": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/url"
+            },
+            {
+              "pattern": "\\{hash\\}"
+            }
+          ]
+        },
+        "explain": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/url"
+            },
+            {
+              "pattern": "\\{cell\\}"
+            }
+          ]
+        },
+        "find": {
+          "$ref": "#/$defs/url"
+        },
+        "jobs": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/url"
+            },
+            {
+              "pattern": "\\{job\\}"
+            }
+          ]
+        },
+        "manifest": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/url"
+            },
+            {
+              "pattern": "\\{slice_id\\}"
+            },
+            {
+              "pattern": "\\{members_hash\\}"
+            }
+          ]
+        },
+        "receipt": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/url"
+            },
+            {
+              "pattern": "\\{hash\\}"
+            }
+          ]
+        },
+        "slice": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/url"
+            },
+            {
+              "pattern": "\\{cell\\}"
+            }
+          ]
+        },
+        "verify": {
+          "$ref": "#/$defs/url"
+        }
+      },
+      "description": "Endpoint templates: each known endpoint has exactly its placeholders, once each (9.6)."
+    }
+  },
+  "$defs": {
+    "url": {
+      "type": "string",
+      "pattern": "^https://[!-~]+$",
+      "maxLength": 512
+    }
+  }
+}
