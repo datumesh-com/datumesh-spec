@@ -1,6 +1,6 @@
 # Datumesh protocol, version 1
 
-Status: draft, revision `spec-0.4.0`. Identifier in data: `datumesh/1`. Changes are listed in section 14.
+Status: draft, revision `spec-0.4.1`. Identifier in data: `datumesh/1`. Changes are listed in section 14.
 
 Datumesh is an open protocol for addressable, verifiable data cells: a name, a resolver, a signed answer, and a lineage you can follow. This document defines how a cell is named (the cell URI), how it is written as canonical bytes, what a signed answer (a receipt) contains, what a mesh returns around it (the response envelope), how keys are published, and how a verifier checks a receipt, including receipts whose lineage cites whole slices of cells. Section 15 defines the formula dialect, the default language of computed functions. The units a function may declare are listed in `units.md`, which is part of this specification. Storage formats, wire protocols, resolvers and the engine are out of scope.
 
@@ -529,7 +529,7 @@ Example (`vectors/receipt/stored-number.json`):
 - By signing, `computed_by` asserts that each input receipt was the latest version of its cell as of the receipt's `asof`, except an input read at an explicit transaction time `T` (`asof(c, T)`, 15.13), which it asserts answered as of `T`; and that each slice entry's members were exactly the slice's members as of the receipt's `asof`. That a stored slice is complete is the signer's statement, like currency: a verifier checks that every listed member belongs to the slice, not that none is missing. Recomputation (10.1 step 7) checks that the value follows deterministically from exactly those inputs, which `inputs` pins by hash. It does not check that they were current: that is the signer's statement, like the value itself.
 - **Choosing `asof`** (D33). Two rules, one for each kind of issuer:
   1. A publisher of a stored receipt SHOULD set `asof = tx`.
-  2. An issuer of a computed receipt SHOULD set `asof` to the latest of: the `asof`s of its input receipts, slice members included; the start of every name binding it relied on (the function names read, transitively, its own name included when it reads itself; the requested cell's own name excluded, since its receipt pins the hash); every `T` of an `asof(c, T)` read and every `to` of a `versions` read. Where an input was kept across a change of its own inputs (early cutoff), its `asof` counts from where its value is known again. For an asof-dependent function (15.12) it SHOULD instead be the evaluation asof. When every input follows rule 1 and no binding or explicit time is later, this equals the latest input `tx`, so `asof = tx`. A function that reads nothing and is not asof-dependent has `tx = asof = 0001-01-01T00:00:00.000000Z`.
+  2. An issuer of a computed receipt SHOULD set `asof` to the latest of: the `asof`s of its input receipts, slice members included; the start of every name binding it relied on (the function names read, transitively, its own name included when it reads itself; the requested cell's own name excluded, since its receipt pins the hash); every `T` of an `asof(c, T)` read and every `to` of a `versions` read; and, for a value that rests on a fault the function caught (`otherwise` over a computed slice with a member without value, 15.12), the latest input `asof` and binding start of the evaluation that faulted, counted the same way (since `spec-0.4.1`; the failed read itself is in no lineage, so without this the receipt would not recompute at its `asof`). Where an input was kept across a change of its own inputs (early cutoff), its `asof` counts from where its value is known again. For an asof-dependent function (15.12) it SHOULD instead be the evaluation asof. When every input follows rule 1 and no binding or explicit time is later, this equals the latest input `tx`, so `asof = tx`. A function that reads nothing and is not asof-dependent has `tx = asof = 0001-01-01T00:00:00.000000Z`.
 
   Rule 2 always satisfies the rule on input `asof`s above, and it is determined by the inputs alone, so each version of a computed cell has exactly one canonical receipt: immutable, cacheable, and served as `ok` for every later requested `asof` until the next version (5.5). That holds even when an input's `asof` is later than its `tx`, as in `receipt/stored-number`. Both rules are SHOULD only: verification does not check them.
 - `issued` exists because `asof` can be in the past. A receipt answering "as of 2020", signed today, must be checked against the key valid today, not the key valid in 2020.
@@ -841,6 +841,19 @@ Every choice this specification makes where its brief left room, with the main a
 | D67 | Argument reduction uses 60-digit constants with an exact product | 40-digit constants throughout | A 40-digit pi loses up to six digits of `sin` near large multiples of pi; the reduction is one exact step |
 
 ## 14. Changes
+
+### spec-0.4.1
+
+A text-only revision: it states six rules that `spec-0.4.0` left open, each as the reference implementation and the engine apply them. **No vector's expected result changes and no hash changes**: every `spec-0.4.0` vector file and example is byte-identical, which `tests/test_migration_0_4_1.py` checks against the `spec-0.4.0` files in git, together with the reference tool reproducing every expected result. `proto` is still `datumesh/1`.
+
+1. **`asof(c, T)` (15.13):** the times, then the cell's arguments, then its name as of `T`.
+2. **Fixed fuel (15.12):** the fixed costs of `sqrt`, `exp`, `ln`, `sin`, `cos`, `atan2` and `haversine` are charged at the call, before the arguments; powers after their operands.
+3. **Members of a slice over a computed function (15.13):** evaluated in key order; the first without a value ends the read, and no later member is evaluated or charged.
+4. **A rebound callee (15.8):** checked at each read, against the binding that read sees (as of the evaluation asof, or as of `T` in `asof(c, T)`); a callee not read cannot make the evaluation fail.
+5. **Other evaluation codes (15.12):** every evaluation code that is neither a fault nor `E_FORMULA_NOT_COVERED` (`E_FORMULA_UNRESOLVED` at a `T` before a binding, a define-time code at a read of a rebound callee, `E_FORMULA_UNSUPPORTED`) is the mesh's failure: an `error` envelope with `E_EVAL_UNAVAILABLE`.
+6. **A caught fault (8.2 rule 2):** a value resting on a fault the function caught counts, among its `asof` candidates, the latest input `asof` and binding start of the evaluation that faulted.
+
+The reference implementation follows items 4 and 6, which it did not before (it checked every callee against the bindings as of the evaluation asof, and counted only the slice's binding start for a caught fault); no vector exercises either case. Items 1, 2, 3 and 5 are what it already did. The six items come from the 1.3 report (the formula crate's findings F1, F2 and G1-G3, and the engine 0.3.0 notes).
 
 ### spec-0.4.0
 
@@ -1159,7 +1172,7 @@ The types are the six scalars and **slices** `slice<T, keys>`: members, each a k
 
 **At define time** the checker walks the canonical AST depth first, left to right (a read's arguments in ascending label order), and reports the first failure: names in scope (`E_FORMULA_UNKNOWN_NAME`, `E_FORMULA_SHADOW`), built-in arity, argument types and units against the callee's signature, every node's type and unit (15.10), lambdas (`E_FORMULA_LAMBDA_PARAM`, and `E_FORMULA_LAMBDA_READ`: no cell reads inside a lambda; join instead), extents (15.13), joins (`E_FORMULA_JOIN`), lookups (`E_FORMULA_METRIC`, `E_FORMULA_ALONG`), transaction-time reads (`E_FORMULA_TX_ARG`), and finally the return type and unit against `signature.returns` (`E_FORMULA_RETURN_TYPE`, `E_FORMULA_RETURN_UNIT`).
 
-**At evaluation** the remaining failures are faults (15.12), absences and the evaluator's own limits. A callee name rebound since define time is checked again, with the same codes.
+**At evaluation** the remaining failures are faults (15.12), absences and the evaluator's own limits. **A callee name rebound since define time** (since `spec-0.4.1`, stated) is checked at each read, against the binding that read sees: as of the evaluation asof, or as of `T` in `asof(c, T)`. The body must check, with the define-time rules and codes, with that binding in place of the one it was checked with; if it does not, the read fails with the define-time code. A callee that the evaluation does not read (in a branch not taken, say) cannot make it fail.
 
 ### 15.9 Numbers
 
@@ -1297,7 +1310,7 @@ Define-time codes are reported by `define` and the reference checker; evaluation
 
 **Order.** Evaluation is strict and left to right, except: `if` evaluates only the chosen branch, `and` and `or` short-circuit, `otherwise` evaluates its fallback only on absence, and `let` always evaluates its value first. The lineage is exactly the reads performed, so this order is part of the semantics; the first fault in it is reported.
 
-**Faults and absence.** A fault gives the cell no value. A mesh answers `not_covered` with the fault in the envelope's `fault` member (5.5), so that it is not mistaken for missing data. `E_FORMULA_NOT_COVERED` is plain `not_covered`. `E_FORMULA_BUDGET`, `E_FORMULA_CYCLE` and `E_FORMULA_DEPTH` are the mesh's failures: an `error` envelope with `E_EVAL_UNAVAILABLE`. `otherwise` catches only `E_FORMULA_EMPTY` and `E_FORMULA_ABSENT`, absences that the slice lineage proves; a single-cell read with no value cannot be caught (a receipt cannot list an absence), but `otherwise(at(f(*), k), 0)` can.
+**Faults and absence.** A fault gives the cell no value. A mesh answers `not_covered` with the fault in the envelope's `fault` member (5.5), so that it is not mistaken for missing data. `E_FORMULA_NOT_COVERED` is plain `not_covered`. `E_FORMULA_BUDGET`, `E_FORMULA_CYCLE` and `E_FORMULA_DEPTH` are the mesh's failures: an `error` envelope with `E_EVAL_UNAVAILABLE`. So is every other evaluation code that is neither a fault nor `E_FORMULA_NOT_COVERED` (since `spec-0.4.1`, stated): `E_FORMULA_UNRESOLVED` for a name with no binding as of the time it is read (a `T` before the binding began), `E_FORMULA_UNSUPPORTED` for a callee in a language the mesh cannot evaluate, and a define-time code reported at a read of a rebound callee (15.8). None of them is a property of the cell's value, so none is a `fault`. `otherwise` catches only `E_FORMULA_EMPTY` and `E_FORMULA_ABSENT`, absences that the slice lineage proves; a single-cell read with no value cannot be caught (a receipt cannot list an absence), but `otherwise(at(f(*), k), 0)` can.
 
 **`asof()`.** A body that contains `asof()`, or `latest` with a bound, is **asof-dependent**; the checker derives this statically. Its computed receipt's `asof` SHOULD be the evaluation asof (the request's `asof`, or the clock reading of the request), so that it recomputes there. Such receipts are one per requested asof, not one per version: the engine must not reuse one for another asof, and a mesh MUST NOT serve one as `ok` for a requested `asof` other than its own (5.5). Prefer a valid-time argument at a declared cadence to `asof()`.
 
@@ -1312,9 +1325,9 @@ Define-time codes are reported by `define` and the reference checker; evaluation
 | a lookup over n members | n |
 | `scan` over n | n |
 | `window` with width w over a group of n members | (n - w + 1) × w: w for every member with w - 1 predecessors |
-| `x ^ n`, `n` an integer | abs(n) |
-| a non-integer power | 130 |
-| `sqrt`, `exp`, `ln`, `sin`, `cos`, `atan2`, `haversine` | 10, 50, 80, 50, 50, 60, 400 |
+| `x ^ n`, `n` an integer | abs(n), after the operands are evaluated |
+| a non-integer power | 130, after the operands are evaluated |
+| `sqrt`, `exp`, `ln`, `sin`, `cos`, `atan2`, `haversine` | 10, 50, 80, 50, 50, 60, 400, charged at the call, before the arguments are evaluated (`ln(1 / 0)` with fuel 50 is `E_FORMULA_BUDGET`) |
 | `upper`, `lower`, `trim`, `concat` | 1 + bytes of the result / 64, rounded down |
 | a business day | 1 for every day examined while stepping or rolling (a modified following that falls into the next month counts the days of both directions) |
 
@@ -1326,7 +1339,7 @@ Fuel is per request and covers the computed inputs it evaluates. Refused at defi
 
 **Writing a slice.** A read with at least one argument `*` or `[lo..hi]` is a slice. Range ends are expressions of the argument's type, inclusive; `lo > hi` in a written range is `E_FORMULA_DOMAIN`.
 
-**Membership as of the evaluation asof A.** For a stored function, the cells of the function name, with the function hash it resolves to as of A, whose arguments match (bound arguments equal, ranges containing) and which have a version answering as of A; each member's value is that version's. For any other language, the cells of the declared extent (7) within the pattern; every one must have a value as of A, or the read is `E_FORMULA_ABSENT` as a whole.
+**Membership as of the evaluation asof A.** For a stored function, the cells of the function name, with the function hash it resolves to as of A, whose arguments match (bound arguments equal, ranges containing) and which have a version answering as of A; each member's value is that version's. For any other language, the cells of the declared extent (7) within the pattern; every one must have a value as of A, or the read is `E_FORMULA_ABSENT` as a whole. They are evaluated in key order (below), and the first without a value ends the read: no later member is evaluated or charged (since `spec-0.4.1`, stated; the vector `formula-eval/member-fault-caught` uses fuel 7).
 
 **Extents.** An open argument over a function whose `lang` is not `stored`, without an `extent` for that argument, is `E_FORMULA_UNBOUNDED` at define time; a range over such an argument is allowed for `date` and integer-valued `number` arguments (enumerated daily, or by 1) and is otherwise `E_FORMULA_UNBOUNDED`; a range over a boolean or blob is `E_FORMULA_SLICE_BOUND`. A stored function's extent is its recorded cells: an unbounded slice over a long stored history is accepted and limited by fuel.
 
@@ -1340,7 +1353,7 @@ Fuel is per request and covers the computed inputs it evaluates. Refused at defi
 
 **Answering.** The version of a stored cell answering as of a time A is the receipt of that cell (with the function hash its name resolves to as of A) with the latest `tx` among those whose `tx` and `asof` are at or before A.
 
-**Transaction-time reads.** `asof(c, T)` reads the version of `c` answering as of `T` (T after A: `E_FORMULA_FUTURE`); it is an ordinary single-cell input whose `asof` is at or before `T`, and `c`'s function name resolves as of `T` (a `T` before its binding began is `E_FORMULA_UNRESOLVED`). `versions(c, from, to)` is a version slice of the stored cell `c`. In both, the times are evaluated, and `E_FORMULA_FUTURE` reported, before the cell's arguments.
+**Transaction-time reads.** `asof(c, T)` reads the version of `c` answering as of `T` (T after A: `E_FORMULA_FUTURE`); it is an ordinary single-cell input whose `asof` is at or before `T`, and `c`'s function name resolves as of `T` (a `T` before its binding began is `E_FORMULA_UNRESOLVED`). `versions(c, from, to)` is a version slice of the stored cell `c`. In both, the times are evaluated, and `E_FORMULA_FUTURE` reported, first; then the cell's arguments; then its name is resolved (as of `T` for `asof(c, T)`). So `asof(f(x: text(1 / 0)), T)` is `E_FORMULA_DIV_ZERO` even when `T` is before `f`'s binding began.
 
 **Lineage.** A slice read is one `inputs` entry (8.1): `slice:<slice id>:<members hash>`, where the slice id is SHA-256 of the slice object's canonical bytes (4.4: a cell object with `*` or range objects, or a version slice `{"cell", "from", "to"}`) and the members hash is SHA-256 of the canonical bytes of the JSON array of the member receipt hashes, ascending (for an empty slice, of `[]`). The same slice read twice is one entry. Its **manifest**, `{"members": [...], "slice": {...}}`, is fetched by the entry; a mesh SHOULD serve it at `https://<mesh>/slice/<slice id>/<members hash>` as `application/json`; members are fetched as receipts by hash.
 

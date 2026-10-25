@@ -2199,15 +2199,30 @@ class Answer:
         self.text = json.dumps(receipt, ensure_ascii=False)
 
 
-class _BoundAt:
-    """The descriptors of the names bound as of an asof: a view, not a copy."""
+def _bindings_of(entry):
+    """A world's functions entry: one binding {"descriptor", "bound"} or a list of them."""
+    items = entry if isinstance(entry, list) else [entry]
+    return sorted(items, key=lambda b: b["bound"])
 
-    def __init__(self, functions, asof):
-        self.functions, self.asof = functions, asof
+
+class _BoundAt:
+    """The descriptors of the names bound as of an asof: a view, not a copy. It records which
+    binding of each name it gave (the typing a compilation used), and may override one name."""
+
+    def __init__(self, world, asof, override=None):
+        self.world, self.asof, self.override = world, asof, override or {}
+        self.used = {}
 
     def get(self, name, default=None):
-        f = self.functions.get(name)
-        return f["descriptor"] if f is not None and f["bound"] <= self.asof else default
+        if name in self.override:
+            d = self.override[name]
+        else:
+            b = self.world.binding_or_none(name, self.asof)
+            if b is None:
+                return default
+            d = b[0]
+        self.used[name] = canon.function_hash(d)
+        return d
 
 
 class World:
@@ -2215,13 +2230,14 @@ class World:
     receipts: stored receipts (signed). Evaluation is memoised per (cell, asof)."""
 
     def __init__(self, functions, receipts=(), fuel=10_000_000, max_depth=2000):
-        self.functions = functions
-        self.hashes = {name: canon.function_hash(f["descriptor"]) for name, f in functions.items()}
+        self.functions = functions  # a binding, or a list of bindings of one name (spec-0.4.1 tests)
+        self._bindings = {name: [(b["bound"], b["descriptor"], canon.function_hash(b["descriptor"]))
+                                 for b in _bindings_of(f)] for name, f in functions.items()}
         self.by_hash = {}
         for r in receipts:
             self.add_receipt(r)
         self.fuel_limit, self.max_depth = fuel, max_depth
-        self.memo, self.compiled, self.stack = {}, {}, []
+        self.memo, self.compiled, self.stack, self.compatible = {}, {}, [], {}
         self.receipts = {}  # hash -> text, of every receipt answered (for resolvers)
         self.manifests = {}  # entry -> manifest text
         self.fuel_left = fuel
@@ -2232,7 +2248,7 @@ class World:
         if not getattr(self, "_own_functions", False):  # copy the shared spec once, not per binding
             self.functions, self._own_functions = dict(self.functions), True
         self.functions[fq] = {"descriptor": descriptor, "bound": bound}
-        self.hashes[fq] = canon.function_hash(descriptor)
+        self._bindings[fq] = [(bound, descriptor, canon.function_hash(descriptor))]
 
     def add_receipt(self, r):
         cell = r["cell"]
@@ -2245,15 +2261,62 @@ class World:
         if self.fuel_left < 0:
             fail("E_FORMULA_BUDGET", "fuel exhausted")
 
-    def binding(self, fq, asof):
-        f = self.functions.get(fq)
-        if f is None or f["bound"] > asof:
-            fail("E_FORMULA_UNRESOLVED", f"{fq} has no binding as of {asof}")
-        return f["descriptor"], self.hashes[fq], f["bound"]
+    def binding_or_none(self, fq, asof):
+        """(descriptor, hash, start) of the binding of fq answering as of asof: the latest begun."""
+        found = None
+        for bound, d, h in self._bindings.get(fq, ()):
+            if bound <= asof:
+                found = (d, h, bound)
+        return found
 
-    def env_at(self, fq, asof):
-        return {"name": fq, "signature": self.functions[fq]["descriptor"]["signature"],
-                "functions": _BoundAt(self.functions, asof), "aliases": {}}
+    def binding(self, fq, asof):
+        b = self.binding_or_none(fq, asof)
+        if b is None:
+            fail("E_FORMULA_UNRESOLVED", f"{fq} has no binding as of {asof}")
+        return b
+
+    def env_at(self, fq, asof, descriptor, override=None):
+        return {"name": fq, "signature": descriptor["signature"],
+                "functions": _BoundAt(self, asof, override), "aliases": {}}
+
+    def compiled_for(self, fq, descriptor, fn_hash, start, asof):
+        """The body typed for an evaluation as of asof (SPEC 15.8): against the callees bound as of
+        asof; when that fails, against those bound when the function's binding began (its define
+        time), so that a callee rebound since makes only a read of it fail (checked at the read)."""
+        ck = (fn_hash, asof)
+        if ck not in self.compiled:
+            body = descriptor["code"]["body"]
+            env = self.env_at(fq, asof, descriptor)
+            try:
+                c = compile(body, env)
+            except FormulaError as first:
+                env = self.env_at(fq, start, descriptor)
+                try:
+                    c = compile(body, env)
+                except FormulaError:
+                    raise first from None
+            c.typing = dict(env["functions"].used)
+            c.typing_asof = env["functions"].asof
+            c.self_fq, c.descriptor = fq, descriptor
+            self.compiled[ck] = c
+        return self.compiled[ck]
+
+    def check_read(self, compiled, callee, binding):
+        """A read of callee sees binding (descriptor, hash, start): the body must also check with
+        it (SPEC 15.8, spec-0.4.1); otherwise the read raises the define-time code."""
+        if callee == compiled.self_fq or compiled.typing.get(callee) == binding[1]:
+            return
+        key = (id(compiled), callee, binding[1])
+        if key not in self.compatible:
+            env = self.env_at(compiled.self_fq, compiled.typing_asof, compiled.descriptor, {callee: binding[0]})
+            try:
+                compile(compiled.descriptor["code"]["body"], env)
+                self.compatible[key] = None
+            except FormulaError as e:
+                self.compatible[key] = e
+        if self.compatible[key] is not None:
+            e = self.compatible[key]
+            raise FormulaError(e.code, f"{callee} as bound at this read: {e.detail}")
 
     def stored_answer(self, fn_hash, cid, asof):
         versions = [r for r in self.by_hash.get(fn_hash, {}).get(cid, []) if r["tx"] <= asof and r["asof"] <= asof]
@@ -2271,7 +2334,7 @@ class World:
         return answer
 
     def answer(self, fq, args, asof):
-        descriptor, fn_hash, _ = self.binding(fq, asof)
+        descriptor, fn_hash, start = self.binding(fq, asof)
         ns, _, fn = fq.rpartition("/")
         cell = {"args": args, "fn": fn, "fn_hash": fn_hash, "ns": ns}
         cid = canon.sha256_hex(canon.jcs(cell))
@@ -2296,13 +2359,17 @@ class World:
             fail("E_FORMULA_DEPTH", "evaluation deeper than the limit")
         self.stack.append(cid)
         try:
-            ck = (fn_hash, asof)
-            if ck not in self.compiled:
-                self.compiled[ck] = compile(descriptor["code"]["body"], self.env_at(fq, asof))
-            compiled = self.compiled[ck]
+            compiled = self.compiled_for(fq, descriptor, fn_hash, start, asof)
             ctx = Context(self, asof, compiled)
             scope = {name: untyped(v) for name, v in args.items()}
-            value = ctx.eval(compiled.ast, scope)
+            try:
+                value = ctx.eval(compiled.ast, scope)
+            except FormulaError as e:
+                # A fault holds from the faulted evaluation's latest input asof and binding start
+                # (8.2 rule 2, spec-0.4.1): a reader that catches it counts that among its candidates.
+                if e.code in FAULT_CODES + ("E_FORMULA_NOT_COVERED",) and getattr(e, "known", None) is None:
+                    e.known = ctx.known()
+                raise
             if isinstance(value, (Ref, Mat)):
                 fail("E_FORMULA_SLICE_VALUE", "a function returns a scalar")
             receipt = ctx.receipt(cell, descriptor, value)
@@ -2330,8 +2397,9 @@ class Context:
         self.world, self.A, self.c = world, asof, compiled
         self.entries = set()
         self.times = []  # (tx, asof) of every input receipt, slice members included
-        self.names = set()  # function names read
+        self.names = set()  # (function name, binding start) of every name read
         self.tx_reads = []  # T of asof(c, T), to of versions(c, from, to)
+        self.fault_known = []  # where faults this evaluation's reads returned hold from
 
     def ty(self, node):
         return self.c.ann[id(node)]
@@ -2343,9 +2411,8 @@ class Context:
         if self.c.asof_dependent:
             asof = self.A
         else:
-            candidates = [a for _, a in self.times] + [self.world.functions[n]["bound"] for n in self.names]
-            candidates += self.tx_reads
-            asof = max(candidates) if candidates else MIN_INSTANT
+            known = self.known()
+            asof = known if known is not None else MIN_INSTANT
             asof = max(asof, tx)
         sig = descriptor["signature"]["args"]
         unsigned = {
@@ -2365,10 +2432,26 @@ class Context:
         }
         return canon.sign_receipt(unsigned, host_seed(ENGINE_HOST))
 
+    def known(self):
+        """The latest of the asof candidates of 8.2 rule 2 so far, or None."""
+        candidates = [a for _, a in self.times] + [start for _, start in self.names] + self.tx_reads + self.fault_known
+        return max(candidates) if candidates else None
+
+    def rely(self, fq, at):
+        """Resolve fq as of at, check the read against that binding, and rely on it."""
+        b = self.world.binding(fq, at)
+        self.names.add((fq, b[2]))
+        self.world.check_read(self.c, fq, b)
+        return b
+
+    def faulted(self, e):
+        known = getattr(e, "known", None)
+        if known is not None:
+            self.fault_known.append(known)
+
     def record(self, answer, fq):
         self.entries.add(answer.hash)
         self.times.append((answer.tx, answer.asof))
-        self.names.add(fq)
 
     # -- evaluation
     def eval(self, node, scope):
@@ -2471,14 +2554,18 @@ class Context:
 
     def read_cell(self, fq, args, at=None):
         self.world.charge(1)
-        answer = self.world.answer(fq, args, at or self.A)
+        self.rely(fq, at or self.A)
+        try:
+            answer = self.world.answer(fq, args, at or self.A)
+        except FormulaError as e:
+            self.faulted(e)
+            raise
         self.record(answer, fq)
         return answer.value
 
     def read_slice(self, ref, narrow=None):
         world = self.world
-        descriptor, fn_hash, _ = world.binding(ref.fq, self.A)
-        self.names.add(ref.fq)
+        descriptor, fn_hash, _ = self.rely(ref.fq, self.A)
         pattern = dict(ref.pattern)
         if narrow is not None:
             dim, lo, hi = narrow
@@ -2524,7 +2611,10 @@ class Context:
                     a = world.answer(ref.fq, args, self.A)
                 except FormulaError as e:
                     if e.code in FAULT_CODES + ("E_FORMULA_NOT_COVERED",):
-                        fail("E_FORMULA_ABSENT", f"a member of the slice over {ref.fq} has no value")
+                        self.faulted(e)
+                        absent = FormulaError("E_FORMULA_ABSENT", f"a member of the slice over {ref.fq} has no value")
+                        absent.known = getattr(e, "known", None)
+                        raise absent from None
                     raise
                 members.append((tuple(combo), a))
         members.sort(key=lambda m: _tuple_key(kinds, m[0]))
@@ -2821,10 +2911,9 @@ class Context:
         self.tx_reads.append(t)
         args = {name: typed(self.eval(a, scope)) for name, a in sorted(read["args"].items())}
         fq = read["fn"]
-        descriptor, fn_hash, _ = self.world.binding(fq, self.A)
+        descriptor, fn_hash, _ = self.rely(fq, self.A)
         if descriptor["code"]["lang"] != "stored":
             fail("E_FORMULA_UNSUPPORTED", "versions() of a computed cell")
-        self.names.add(fq)
         ns, _, fn = fq.rpartition("/")
         cell = {"args": args, "fn": fn, "fn_hash": fn_hash, "ns": ns}
         cid = canon.sha256_hex(canon.jcs(cell))

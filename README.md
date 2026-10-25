@@ -4,7 +4,7 @@
 
 Datumesh is an open protocol for addressable, verifiable data cells: a name, a resolver, a signed answer, and a lineage you can follow.
 
-This repository is the protocol's specification ([SPEC.md](SPEC.md), revision `spec-0.4.0`, with [units.md](units.md)), its JSON Schemas ([schemas/](schemas/)), its test vectors ([vectors/](vectors/)), a reference canonicaliser used to generate and check them ([tools/canon.py](tools/canon.py)), and the reference implementation of the formula dialect, the default language of computed functions ([tools/formula.py](tools/formula.py), with [tools/fdecimal.py](tools/fdecimal.py) for its decimal arithmetic; SPEC.md section 15). They are test tools, not libraries. The design record of `spec-0.4.0` is [DESIGN-0.4.0.md](DESIGN-0.4.0.md).
+This repository is the protocol's specification ([SPEC.md](SPEC.md), revision `spec-0.4.1`, with [units.md](units.md)), its JSON Schemas ([schemas/](schemas/)), its test vectors ([vectors/](vectors/)), a reference canonicaliser used to generate and check them ([tools/canon.py](tools/canon.py)), and the reference implementation of the formula dialect, the default language of computed functions ([tools/formula.py](tools/formula.py), with [tools/fdecimal.py](tools/fdecimal.py) for its decimal arithmetic; SPEC.md section 15). They are test tools, not libraries. The design record of `spec-0.4.0` is [DESIGN-0.4.0.md](DESIGN-0.4.0.md).
 
 ## In ten lines
 
