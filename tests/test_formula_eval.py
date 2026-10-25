@@ -219,3 +219,81 @@ class EvalVectors(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class ReferenceDefects(unittest.TestCase):
+    """Defects the independent Rust crate found in the reference (its SPEC-FINDINGS.md, E1-E4)."""
+
+    SIG = {"args": {"a": {"type": "number", "unit": "1", "valid": False}, "flag": {"type": "boolean", "valid": False},
+                    "s": {"type": "string", "valid": False}, "d": {"type": "date", "valid": True}},
+           "order": ["a", "flag", "s", "d"], "returns": "string"}
+
+    def code(self, source, returns="string", args=None):
+        sig = dict(self.SIG, returns=returns)
+        try:
+            d = formula.define("calc.example.net/f", sig, source, {"functions": {}})
+            w = formula.World({"calc.example.net/f": {"descriptor": d, "bound": G.BOUND}})
+            values = {"a": N("1"), "flag": {"type": "boolean", "value": True}, "s": S("Datumesh"), "d": D("2026-03-02")}
+            values.update(args or {})
+            return w.get("calc.example.net/f", values, G.LATER).receipt["value"]
+        except formula.FormulaError as e:
+            return e.code
+
+    def test_e1_if_with_four_arguments(self):
+        self.assertEqual(self.code("if(flag, s, s, s)"), "E_FORMULA_ARITY")
+
+    def test_e2_non_integer_where_an_integer_is_required(self):
+        for source, returns in [('text(find("m", s, start: 1.5))', "string"), ("substr(s, 1.5, 1)", "string"),
+                                ("text(round(a, 1.5))", "string"), ("fixed(a, 1.5)", "string"),
+                                ("date(2024, 2.5, 1)", "date"), ("add_days(d, 1.5)", "date"),
+                                ("add_months(d, 1.5)", "date")]:
+            with self.subTest(source):
+                self.assertEqual(self.code(source, returns), "E_FORMULA_DOMAIN")
+
+    def test_e3_fixed_respects_the_string_limit(self):
+        self.assertEqual(self.code("fixed(a, 2000)"), "E_FORMULA_RANGE")
+        self.assertEqual(len(self.code("fixed(a, 1000)")), 1002)
+
+    def test_e4_long_operator_chains(self):
+        """Chains up to the node limit compile and evaluate; beyond it, E_FORMULA_LIMIT."""
+        sig = {"args": {"a": {"type": "number", "unit": "1", "valid": False}}, "order": ["a"],
+               "returns": {"type": "number", "unit": "1"}}
+        ok = " + ".join(["a"] * 20000)
+        d = formula.define("calc.example.net/f", sig, ok, {"functions": {}})
+        w = formula.World({"calc.example.net/f": {"descriptor": d, "bound": G.BOUND}})
+        self.assertEqual(w.get("calc.example.net/f", {"a": N("1")}, G.LATER).receipt["value"], "20000")
+        with self.assertRaises(formula.FormulaError) as e:
+            formula.define("calc.example.net/f", sig, " + ".join(["a"] * 40000), {"functions": {}})
+        self.assertEqual(e.exception.code, "E_FORMULA_LIMIT")
+
+
+class ReceiptConventions(unittest.TestCase):
+    """SPEC 11: the computed receipt behind a formula-eval or excel vector's receipt_hash, rebuilt
+    from the conventions the text states (the Rust crate's SPEC-FINDINGS.md, A1 and A2)."""
+
+    def test_every_receipt_hash_follows_the_stated_conventions(self):
+        engine = f"mesh.example.net#{formula.host_key_id('mesh.example.net')}"
+        self.assertEqual(engine, "mesh.example.net#cd42547c321bfc08")
+        checked = 0
+        for vec in [v for v in canon.load_vectors() if v["kind"] in ("formula-eval", "excel") and v["valid"]]:
+            fq = vec["cell"]["fn"]
+            if vec["kind"] == "excel":
+                body = vec["body"]
+                inputs = sorted({x for x in vec["world"]["functions"]})
+                descriptor = {"code": {"body": body, "lang": "formula"}, "inputs": inputs, "signature": vec["signature"]}
+            else:
+                descriptor = vec["world"]["functions"][fq]["descriptor"]
+            ns, _, fn = fq.rpartition("/")
+            sig = descriptor["signature"]["args"]
+            receipt = {
+                "asof": vec["receipt_asof"],
+                "cell": {"args": vec["cell"]["args"], "fn": fn, "fn_hash": canon.function_hash(descriptor), "ns": ns},
+                "computed_by": engine, "inputs": vec["lineage"], "issued": max(vec["receipt_asof"], "2020-01-01T00:00:00.000000Z"),
+                "licence": "CC0-1.0", "proto": "datumesh/1", "publisher": ns,
+                "summary": "Computed by the Datumesh formula reference evaluator.", "tx": vec["tx"],
+                "type": vec["value"]["type"], "valid": {k: v for k, v in vec["cell"]["args"].items() if sig[k]["valid"]},
+                "value": vec["value"]["value"]}
+            with self.subTest(vec["id"]):
+                self.assertEqual(canon.receipt_hash(receipt), vec["receipt_hash"])
+                checked += 1
+        self.assertGreater(checked, 190)
