@@ -737,6 +737,8 @@ The four failure classes a verifier distinguishes are: bad canonical form (parse
 
 `canonical` is the canonical byte string as UTF-8 text. It may contain U+2028 and U+2029, which some JSON-lines tools treat as line breaks. `key_ids` are in document order. Receipt vectors built by hand (the Ed25519 strictness vectors) have no `keypair`, because their keys have no seed.
 
+**Computed receipts of `formula-eval` and `excel` vectors.** `receipt_hash` is the hash of the receipt the reference evaluator signs for the cell, built with these conventions: `computed_by` `mesh.example.net#cd42547c321bfc08` (the key of seed SHA-256 of `datumesh formula test key: mesh.example.net`, valid from `2020-01-01T00:00:00.000000Z`); `issued` the later of the receipt's `asof` and `2020-01-01T00:00:00.000000Z`; `licence` `CC0-1.0`; `summary` `Computed by the Datumesh formula reference evaluator.`; `publisher` the cell's namespace; `valid` the cell's valid-time arguments; `cell` the requested cell with the function hash of its descriptor; `type` and `value` the result; `inputs` the vector's `lineage`; `tx` and `asof` the vector's `tx` and `receipt_asof`. The stored receipts of a vector's `world` are signed by the key of each host's seed, SHA-256 of `datumesh formula test key: <host>`. An `excel` vector's function is the descriptor `{"code": {"body": <body>, "lang": "formula"}, "inputs": <the derived inputs>, "signature": <signature>}`. A `formula` vector's `returns.unit` is the checker's unit text: atoms in ascending order, with `^exponent` when it is not 1 (`arg:base^-1 arg:quote`), `1` for none, and `a bare number` for a body whose unit is a bare literal's.
+
 A `recompute` object stands in for what step 7 obtains. It has these members:
 - `descriptor`: the descriptor offered for `cell.fn_hash`, as a JSON value; when absent, the descriptor is unavailable (`E_FN_UNAVAILABLE`). It is never text to parse: a JSON string here is a string value offered as the descriptor, even when it holds a descriptor's text, and like `null` it does not hash to `fn_hash` (`E_FN_HASH_MISMATCH`, 10.1 step 7.1). Only an absent member means unavailable;
 - `inputs`: a map from receipt hash to the input receipt's JSON text (slice members included); a hash with no entry is unavailable. Entries are always JSON strings; an entry that is not a string is a malformed vector;
@@ -863,6 +865,7 @@ The formula dialect and slice-as-lineage (step 1.3). **No hash of any receipt wh
   - 7: an `order` entry that is not an argument is `E_CANON_SET` whatever its form; an empty extent and an empty `order` are allowed; the check order of extent values and range ends; the formula rules of 15.6 are not a verifier's (10.1 step 7.1);
   - 11: how a `slice` vector's input is classified; the prose governs where a schema keyword would give another code (the schemas' `uniqueItems`, `maxItems` and name patterns on `order`, `extent` and manifest members are removed); the `skipped` line of a runner in a cross-check;
   - the schemas' control characters are `\u` escapes again (the JavaScript library's entries 31 and 45), with a test.
+- **Settled after the independent formula implementation's findings** (`datumesh-formula`, its SPEC-FINDINGS.md), each as the vectors and the reference already behaved; no vector's result changed: the computed-receipt conventions of `formula-eval` and `excel` vectors and an `excel` vector's descriptor (11); the fuel table made exact (`window`, free nodes, when a slice is charged; 15.12); how nesting and nodes are counted, lexing edge cases, tokens that cannot start an operand, lambda placement and key-set arguments (15.3); the error order of resolution (15.5); the built-ins' real parameter labels and the printed order of optional ones (15.7); `degC` and bare literals as applied (15.10); which operations round (`mod` does; `abs`, negation, `floor`, `ceiling` do not; 15.9.2); the 40-digit steps (15.9.3); step interpolation, the stored version answering, bindings as of `T` in `asof(c, T)` (15.13); `find` past the end; the descriptor check order (15.6). Four reference defects fixed, with tests: `if()` with four arguments, a non-integer where an integer is required, `fixed()` past 1024 bytes, and operator chains up to the node limit.
 - **Vectors.** 613 new, 978 in all: 293 `formula` (172 valid, 121 invalid), 155 `formula-eval` (121, 34), 78 `excel`, 20 `decimal` (300 or more cases each), 18 `slice` (11, 7), 30 slice-lineage `receipt` (13, 17), 16 `function` with `order` and `extent` (4, 12), 3 `envelope` with `fault` (1, 2).
 
 ### spec-0.3.0
@@ -1030,7 +1033,13 @@ The grammar is a PEG: alternatives are tried in order and the first that matches
 - A built-in call takes expressions; the second argument of `map` and `filter` is a lambda, `x -> e` or `(x, k1, …) -> e`. A lambda anywhere else, and `*` or a range outside a read, are `E_FORMULA_PLACEMENT`.
 - Positional arguments come before labelled ones (`E_FORMULA_ARG_ORDER`); a label appears once (`E_FORMULA_ARG_DUPLICATE`).
 - `(e)(x)`, `"a.org/f"(x)` and `f(x)(y)` are `E_FORMULA_DYNAMIC_NAME`; `).` and `x.y` are reserved for methods (`E_FORMULA_RESERVED`).
-- Nesting deeper than 256, or more than 65,536 nodes, is `E_FORMULA_LIMIT`.
+- **Limits** (`E_FORMULA_LIMIT`): a body over 1 MiB; nesting deeper than 256; more than 65,536 nodes. Nesting counts one level for every expression parsed (the body, each argument, each branch, a `let` value and body, a lambda body, each range end), one more for every parenthesis, and one for every `not`; a run of unary minus signs adds nothing. So 127 nested parentheses are accepted and 128 are not. Nodes are the canonical AST's objects (15.5), `open` and `range` markers included. An operator chain is not nesting: `a + a + … + a` is accepted up to the node limit.
+
+Readings fixed by the vectors and the reference (an independent implementation found each):
+- **Lexing.** A number's run covers digits and points up to a `..`, and a following exponent (`0.1.` and `1e5` are `E_FORMULA_NUMBER`; `1..2` is `1 .. 2`). An instant is exactly the 27 characters of 3.3 (`…Z.` is an instant, then a reserved `.`). A qualified name has non-empty labels (`a.b...org/f` is not one), and `x.org/` followed by something that is not a name is `E_FORMULA_NAME`. Period keys are digits only (`1.5M` is `E_FORMULA_UNIT`).
+- **A token that cannot start an operand** reports what it is: `^` `E_FORMULA_AMBIGUOUS`; a comparison operator `E_FORMULA_CHAIN`; a lone `.` `E_FORMULA_RESERVED`; `->`, `*` and `[` `E_FORMULA_PLACEMENT`; `not(` as an operand `E_FORMULA_PLACEMENT`; `not x` as an operand, `true(`, `false(` and other keywords followed by `(` `E_FORMULA_SYNTAX`. `let` not followed by a name reports what an operand there would (`let = 1` is `E_FORMULA_CHAIN`).
+- **Lambdas** are recognised in every built-in call argument (a name, or parenthesised names, before `->`), never in a read argument (where `->` is `E_FORMULA_PLACEMENT`). Their placement, the second argument of `map` or `filter` (positional, or labelled `fn:`), is checked at resolution, after the whole body has parsed. `if(` followed by a label is the keyword form.
+- **Key-set arguments** (`E_FORMULA_UNSUPPORTED`): a read argument that is a `within(…)` call.
 
 ### 15.4 Precedence and ambiguity
 
@@ -1067,7 +1076,7 @@ The printer (15.6) puts spaces round every binary operator, so no printed body c
 
 ### 15.5 Resolution and the canonical AST
 
-Resolution turns the parse tree into the **canonical AST**, a JSON value. It runs in source order, after parsing and before checking:
+Resolution turns the parse tree into the **canonical AST**, a JSON value. It runs after parsing and before checking. `E_FORMULA_UNKNOWN_FUNCTION`, `E_FORMULA_FORBIDDEN`, `E_FORMULA_ARG_ORDER` and a duplicate label are parse errors, reported in text order after the whole body is lexed. Resolution then walks the tree in source order. For a read: the callee first (`E_FORMULA_ALIAS`, `E_FORMULA_UNRESOLVED`, `E_FORMULA_POSITIONAL`, too many positional arguments), then each argument in source order (its label's name, then its value), then duplicates, unknown labels and missing arguments. For a built-in: arguments bind one at a time (too many positional, an unknown label, a duplicate, then the value), then missing required ones; `and`, `or` and `asof` check their arity first. In checking (15.8), a `let` name and lambda parameters are checked before their value and body, and the left operand of `and` or `or` before the right one. The steps are:
 
 - aliases become fully qualified names (`E_FORMULA_ALIAS`); a qualified name must have a binding at define time (`E_FORMULA_UNRESOLVED`), the function being defined included;
 - keywords and built-in names become lowercase; `if(c, a, b)` becomes an `if` node and `and(a, b, c)` becomes `(a and b) and c`;
@@ -1081,34 +1090,34 @@ The **canonical AST hash** is SHA-256 of the AST's JCS bytes. It is in no protoc
 
 ### 15.6 The printer and `code.body`
 
-A formula descriptor's `code.body` is the **printed canonical AST** followed by one LF: single spaces round every binary operator and `->`, keywords spaced, `name: value` labels in reads (ascending), built-ins with required arguments positional and optional ones labelled, a unit suffix after one space, strings with doubled quotes, and the fewest parentheses the precedence table allows plus those the rejected forms require. A formula descriptor whose body is not the print of its AST is not canonical (`E_FORMULA_NOT_CANONICAL`); one whose `inputs` differs from the derived set is `E_FORMULA_INPUTS`; one whose signature has no `order` is `E_FORMULA_ORDER`. So each formula has one body and one function hash.
+A formula descriptor's `code.body` is the **printed canonical AST** followed by one LF: single spaces round every binary operator and `->`, keywords spaced, `name: value` labels in reads (ascending), built-ins with required arguments positional and optional ones labelled, a unit suffix after one space, strings with doubled quotes, and the fewest parentheses the precedence table allows plus those the rejected forms require. A formula descriptor whose body is not the print of its AST is not canonical (`E_FORMULA_NOT_CANONICAL`); one whose `inputs` differs from the derived set is `E_FORMULA_INPUTS`; one whose signature has no `order` is `E_FORMULA_ORDER`. They are checked in this order: the descriptor's canonical form (7), `E_FORMULA_ORDER`, the body's own codes (compiled against the descriptor's signature), `E_FORMULA_NOT_CANONICAL`, then `E_FORMULA_INPUTS`. So each formula has one body and one function hash.
 
 For every canonical AST, parse(print(ast)) = ast, without an environment: a printed body has only full names and labelled reads.
 
 ### 15.7 Built-ins
 
-Arguments in brackets are optional and labelled when given. An aggregate takes one slice or one or more scalars of one type.
+The names in the table are the parameters' labels: every parameter, required or optional, may be given by label (`abs(x: a)`), positional ones first. Arguments in brackets are optional; the printer writes required ones positionally and optional ones labelled, in the order of this table (not ascending: `interpolate(…, method: "linear", bound: 1 h)` prints `method` before `bound`). An aggregate, `concat`, `and` and `or` take one slice or one or more positional scalars of one type, and no labels; `asof` takes none or two positional arguments.
 
 | Built-in | Result |
 |---|---|
-| `sum(s)` | Exact sum, rounded once; 0 on an empty slice. Not of `degC`. |
-| `count(s)` | Member count, unit `count`. |
-| `mean(s)` | Exact sum divided by the count, rounded once. |
-| `min(s)`, `max(s)` | Least or greatest value (numbers, dates, instants, strings). |
-| `first(s)`, `last(s)` | The first or last member in key order (15.13). |
-| `median(s)` | The middle value; for an even count, the two middle values' exact sum halved, rounded once. |
-| `stdev(s)`, `stdev_p(s)` | Sample and population standard deviation (15.9.2); of `degC`, in `K`. |
-| `at(s, key, [along])` | The member at `key`. |
-| `latest(s, [bound], [along])` | The last member along the dimension; with a bound, none if older than `asof() - bound` (asof-dependent). |
-| `last_before(s, x, [bound], [along])` | The member with the greatest key at or before `x`. |
-| `first_after(s, x, [bound], [along])` | The member with the least key at or after `x`. |
-| `nearest(s, x, [bound], [along])` | The member nearest to `x`; on a tie, the earlier key. |
-| `within(s, x, bound, [along])` | The slice of members within `bound` of `x`. |
-| `interpolate(s, x, [method], [bound], [along])` | `"linear"` (default) or `"step"`; no extrapolation; `"spline"` is `E_FORMULA_UNSUPPORTED`. |
-| `map(s, x -> e)` | Same keys, values `e`. Further lambda parameters name open arguments and bind to their key values. |
-| `filter(s, x -> p)` | The members for which `p` is true. |
-| `scan(s, aggregate, [along])` | The running aggregate along the dimension, per group. |
-| `window(s, n, aggregate, [along])` | The aggregate of the trailing `n` members; members with fewer than `n - 1` predecessors omitted. |
+| `sum(slice)` | Exact sum, rounded once; 0 on an empty slice. Not of `degC`. |
+| `count(slice)` | Member count, unit `count`. |
+| `mean(slice)` | Exact sum divided by the count, rounded once. |
+| `min(slice)`, `max(slice)` | Least or greatest value (numbers, dates, instants, strings). |
+| `first(slice)`, `last(slice)` | The first or last member in key order (15.13). |
+| `median(slice)` | The middle value; for an even count, the two middle values' exact sum halved, rounded once. |
+| `stdev(slice)`, `stdev_p(slice)` | Sample and population standard deviation (15.9.2); of `degC`, in `K`. |
+| `at(slice, key, [along])` | The member at `key`. |
+| `latest(slice, [bound], [along])` | The last member along the dimension; with a bound, none if older than `asof() - bound` (asof-dependent). |
+| `last_before(slice, x, [bound], [along])` | The member with the greatest key at or before `x`. |
+| `first_after(slice, x, [bound], [along])` | The member with the least key at or after `x`. |
+| `nearest(slice, x, [bound], [along])` | The member nearest to `x`; on a tie, the earlier key. |
+| `within(slice, x, bound, [along])` | The slice of members within `bound` of `x`. |
+| `interpolate(slice, x, [method], [bound], [along])` | `"linear"` (default) or `"step"`; no extrapolation; `"spline"` is `E_FORMULA_UNSUPPORTED`. |
+| `map(slice, fn)` | `fn` is a lambda `x -> e`: same keys, values `e`. Further lambda parameters name open arguments and bind to their key values. |
+| `filter(slice, fn)` | `fn` is a lambda `x -> p`: the members for which `p` is true. |
+| `scan(slice, aggregate, [along])` | The running aggregate along the dimension, per group. |
+| `window(slice, n, aggregate, [along])` | The aggregate of the trailing `n` members; members with fewer than `n - 1` predecessors omitted. |
 | `otherwise(x, fallback)` | `x`, or `fallback` when `x` is `E_FORMULA_EMPTY` or `E_FORMULA_ABSENT`. |
 | `asof()` | The evaluation asof (asof-dependent). |
 | `asof(cell, T)` | The value of the cell's version answering as of `T` (a transaction-time read). |
@@ -1125,8 +1134,8 @@ Arguments in brackets are optional and labelled when given. An aggregate takes o
 | `convert(x, unit)` | Between units of one group by an exact factor (15.10). |
 | `if(condition, then, else)`, `and(a, b, …)`, `or(a, b, …)` | Excel's forms of the keywords. |
 | `date(year, month, day)` | A date; not a real day: `E_FORMULA_DOMAIN`. |
-| `year(d)`, `month(d)`, `day(d)`, `weekday(d)` | `weekday` is ISO: Monday 1. |
-| `end_of_month(d)` | The month's last day. |
+| `year(date)`, `month(date)`, `day(date)`, `weekday(date)` | `weekday` is ISO: Monday 1. |
+| `end_of_month(date)` | The month's last day. |
 | `add_days(date, n, [calendar], [weekend])` | Calendar days; with a calendar or weekend, business days (Excel's WORKDAY). |
 | `add_months(date, n, [calendar], [roll], [weekend])` | Excel's EDATE; with a calendar or roll, rolled to a business day (`"following"`, `"modified_following"`, `"preceding"`). |
 | `business_days(from, to, [calendar], [weekend])` | Excel's NETWORKDAYS: both ends inclusive, negative when reversed. |
@@ -1138,11 +1147,11 @@ Arguments in brackets are optional and labelled when given. An aggregate takes o
 | `trim(text)` | Excel's TRIM: U+0020 trimmed at both ends and collapsed inside. |
 | `concat(a, b, …)` | Joined; the same as `&`. |
 | `substr(text, start, length)` | Excel's MID: 1-based, in code points. |
-| `find(needle, text, [start])` | 1-based position, case-sensitive; 0 when not found. |
+| `find(needle, text, [start])` | 1-based position, case-sensitive; 0 when not found, and when `start` is past the end of the text; `start < 1` is `E_FORMULA_DOMAIN`. |
 | `text(x)` | The canonical lexical form of any scalar. |
 | `fixed(x, digits)` | Excel's FIXED without separators. |
 
-A calendar is a slice with one open date argument; a date is a holiday when it is a member. `weekend` is `"sat-sun"` (default), `"fri-sat"`, `"sun"` or `"none"`. Enumeration arguments (`method`, `convention`, `roll`, `weekend`, the unit of `convert`, the aggregate of `scan` and `window`) are literals from their lists (`E_FORMULA_ENUM`). Every string result is normalised to NFC with Unicode 15.1 data (a computed value, not an input) and is at most 1024 bytes (`E_FORMULA_RANGE`).
+A calendar is a slice with one open date argument; a date is a holiday when it is a member. `weekend` is `"sat-sun"` (default), `"fri-sat"`, `"sun"` or `"none"`. Enumeration arguments (`method`, `convention`, `roll`, `weekend`, the unit of `convert`, the aggregate of `scan` and `window`) are literals from their lists (`E_FORMULA_ENUM`). Every string result, `fixed`'s and `text`'s included, is normalised to NFC with Unicode 15.1 data (a computed value, not an input) and is at most 1024 bytes (`E_FORMULA_RANGE`). Where an integer is required (`digits`, `start`, `length`, `n`, the arguments of `date`, a number of days), a value that is not one is `E_FORMULA_DOMAIN`.
 
 ### 15.8 Types and checking
 
@@ -1171,7 +1180,9 @@ The reference library for tests is Python's `decimal` in `Context(prec=34, round
 | `x ^ y`, `y` not an integer | POW-EXPLN (15.9.3). |
 | `sum`, `mean`, `median` | As in 15.7: exact sums, one rounding. |
 | `stdev`, `stdev_p` | `m` = mean; `ss` = the exact sum of the exact squares `(x_i - m)^2`, rounded once; `v = ss / (n - 1)` (or `/ n`), rounded once; the result SQRT-T40 of `v`. `stdev` needs two members, `stdev_p` one (`E_FORMULA_EMPTY`). |
-| `round`, `round_up`, `round_down`, `floor`, `ceiling`, `mod` | Exact, then the range rule. |
+| `abs`, unary `-`, `floor`, `ceiling` | Exact: not rounded (a 39-digit argument keeps its 39 digits). |
+| `round`, `round_up`, `round_down` | Exact, then the range rule. A huge positive `digits` leaves the value as it is; a huge negative one gives 0. |
+| `mod` | The exact remainder `a - b * floor(a / b)`, rounded once to 34 digits like every arithmetic result. |
 
 #### 15.9.3 Transcendental algorithms
 
@@ -1197,6 +1208,8 @@ The 60-digit constants are used only in argument reduction, where `x - n * C` is
 - **TRIG-T24.** `abs(x) <= 1000000` radians (`E_FORMULA_DOMAIN`). `k` = `x / HALF_PI` rounded half-even to an integer; `r = x - k * HALF_PI_60`; `sin r = sum of (-1)^j r^(2j+1) / (2j+1)!` and `cos r = sum of (-1)^j r^(2j) / (2j)!` for `j = 0..23`, each term from the previous by `* r^2 / ((2j)(2j+1))` (or `/ ((2j-1)(2j))`); by `k mod 4`: `(sin x, cos x)` is `(sin r, cos r)`, `(cos r, -sin r)`, `(-sin r, -cos r)`, `(-cos r, sin r)`.
 - **ATAN2-T32.** `atan2(0, 0)` is `E_FORMULA_DOMAIN`. `a = abs(y)`, `b = abs(x)`; `t = a / b`, or `b / a` when `a > b`; twice `t = t / (1 + SQRT40(1 + t * t))`, where SQRT40 is the 40-digit truncation of SQRT-T40; `A = 4 * sum of (-1)^j t^(2j+1) / (2j+1)` for `j = 0..31`; `HALF_PI - A` when `a > b`; then `PI` minus that when `x < 0`; negated when `y < 0`.
 
+"Rounded half-even to an integer" (`n` in EXP-T48, `k` in TRIG-T24) applies to the 40-digit quotient. In LN-ATANH80, `m - 1` and `m + 1` are each at 40 digits before their quotient; in HAVERSINE, `dphi = (lat2 - lat1) * RAD_PER_DEG` and `dlambda` are each at 40 digits, and `R * 2` is formed before the product with the angle.
+
 A term below a tenth of a unit in the 40th digit of the partial sum cannot change the sum, and every later term is smaller; an implementation may stop there, and the result is exactly that of the full term count.
 
 The tests run 10,000 random cases per function against mpdecimal (`sqrt`, `exp`, `ln`, powers) and against 90-digit series (`sin`, `cos`, `atan2`); a difference larger than one unit in the 34th digit fails, and the number of hard cases is reported. A hard case is constructed for `sqrt` (`decimal/sqrt` holds it).
@@ -1208,9 +1221,10 @@ The checker gives every number a unit: a map from atoms to non-zero integer expo
 - `*` and `/` add and subtract exponents; `^` with an integer literal multiplies them, and a unit-bearing base with any other exponent is `E_FORMULA_EXPONENT`; `sqrt` halves even exponents.
 - `+`, `-`, comparison, the branches of `if`, the variadic aggregates and `otherwise` need equal units (`E_FORMULA_UNIT_MISMATCH`). A read argument with a declared unit must receive it; the body's unit must equal the declared return unit (`E_FORMULA_RETURN_UNIT`).
 - **Bare literals.** A number without a suffix is dimensionless in `*`, `/` and `^`, and takes its context's unit in `+`, `-`, comparison, `if`, `otherwise`, arguments and the return: `amount > 0`, `price + 10`. Against `percent`, `permille` or `bp` only `0` is accepted: `1 + r` with `r` in percent is an error (write `1 + r / 100 percent` or `convert(r, "1")`). A value declared in `1` is the identity in `*` and `/` but needs `1` on the other side of `+`.
-- **Offset units.** `degC - degC` is `K`; `degC ± K` is `degC`; a bare literal added to `degC` is in `K`; comparisons of `degC` are allowed. `degC + degC`, `degC * x`, `degC / x` and `sum` over `degC` are `E_FORMULA_UNIT_OFFSET`; `mean`, `median`, `min`, `max`, `first`, `last`, lookups and interpolation are allowed. A weighted mean of temperatures goes through kelvin: `convert(sum(map(t(*), x -> convert(x, "K")) * w(*)) / sum(w(*)), "degC")`.
+- **Offset units.** In `+` and `-`: `degC - degC` is `K`; `degC ± K`, `degC ±` a bare literal, `K + degC` and a bare literal `+ degC` are `degC`; every other combination with `degC` is `E_FORMULA_UNIT_OFFSET` (so is `degC + EUR`). Comparisons of `degC` with `degC` or a bare literal are allowed; comparisons, `if`, `otherwise` and variadic aggregates mixing `degC` with another unit are `E_FORMULA_UNIT_MISMATCH`. Negation keeps `degC`. `degC + degC`, `*`, `/`, `^`, `mod`, `atan2` and `sqrt` of `degC`, and `sum` over `degC`, are `E_FORMULA_UNIT_OFFSET`; `mean`, `median`, `min`, `max`, `first`, `last`, lookups and interpolation are allowed. A weighted mean of temperatures goes through kelvin: `convert(sum(map(t(*), x -> convert(x, "K")) * w(*)) / sum(w(*)), "degC")`.
 - **Time.** An instant plus or minus a number in `s`, `min`, `h` or `d` (a bare literal: `s`) is an instant, in whole microseconds (`E_FORMULA_DOMAIN`); an instant minus an instant is in `s`. A date plus or minus an integer number of `d` (a bare literal: `d`) is a date; a date minus a date is in `d`. Results outside 0001-9999 are `E_FORMULA_RANGE`.
 - **Angles.** Radians are dimensionless (`1`), as in SI; `deg` is listed. `sin` and `cos` take `1` or `deg`; `atan2(y, x)` takes two numbers of one unit and returns radians; `pi()` is `1`.
+- **Other built-ins with bare numbers.** In `convert` a bare number is `1` (`convert(100, "deg")` is accepted, `convert(5, "m")` is a mismatch); `add_days` counts a bare number or `d` (a number in `1` is a mismatch); `add_months`, `round`'s `digits` and the arguments of `date` take dimensionless numbers; `count` of scalars does not unify their units.
 - **`convert(x, "u")`** converts within a group by an exact factor: `1`, `percent`, `permille`, `bp`; `mm`, `cm`, `m`, `km`; `s`, `min`, `h`, `d`; and `degC` to `K` (+273.15) and back; `deg` and `1` by `RAD_PER_DEG` (at 40 digits, then 34). Nothing else converts.
 - **HAVERSINE.** `haversine(lat1, lon1, lat2, lon2)` takes decimal degrees (`deg`, or bare) with `abs(lat) <= 90` and `abs(lon) <= 360` (`E_FORMULA_DOMAIN`) and returns metres on a sphere of radius R = 6371008.8 m: `phi = lat * RAD_PER_DEG`; `h = sin(dphi / 2)^2 + cos(phi1) * cos(phi2) * sin(dlambda / 2)^2` (clamped to [0, 1]); `d = R * 2 * atan2(SQRT40(h), SQRT40(1 - h))`, every step at 40 digits with the 40-digit forms of TRIG-T24 and ATAN2-T32; the result rounded half-even to millimetres (three decimals). `ellipsoidal_distance` is reserved for a later revision (`E_FORMULA_UNSUPPORTED`). The `point` metric of 1.3b dispatches to `haversine`; already now a slice keyed by latitude and longitude can be filtered by distance: `filter(f(lat: *, lon: *), (v, lat, lon) -> haversine(lat, lon, 51.5, -0.12) <= 20000 m)`.
 
@@ -1292,15 +1306,19 @@ Define-time codes are reported by `define` and the reference checker; evaluation
 | Work | Fuel |
 |---|---|
 | each AST node evaluated | 1 |
-| a single-cell read | 1 |
-| a slice read | 1 + members |
-| an aggregate or lookup over n members | n (`median`: n × the bit length of n) |
-| `scan` over n; `window` over n, width w | n; n × w |
+| a single-cell read | 1, besides its node (the read inside `asof(c, T)` is not a node: only its arguments are) |
+| a slice read | 1 + members, charged after the members are obtained (so a computed member's fault is reported first) |
+| an aggregate over a slice of n members | n (`median`: n × the bit length of n); over scalars, only its nodes |
+| a lookup over n members | n |
+| `scan` over n | n |
+| `window` with width w over a group of n members | (n - w + 1) × w: w for every member with w - 1 predecessors |
 | `x ^ n`, `n` an integer | abs(n) |
 | a non-integer power | 130 |
 | `sqrt`, `exp`, `ln`, `sin`, `cos`, `atan2`, `haversine` | 10, 50, 80, 50, 50, 60, 400 |
 | `upper`, `lower`, `trim`, `concat` | 1 + bytes of the result / 64, rounded down |
-| a business day stepped over | 1 |
+| a business day | 1 for every day examined while stepping or rolling (a modified following that falls into the next month counts the days of both directions) |
+
+Free: enumeration literals (`method`, `convention`, `roll`, `weekend`, the unit of `convert`, the aggregate of `scan` and `window`, `along`) and lambda nodes, which are not evaluated nodes (a lambda's body costs per member); the read inside `versions`, whose arguments are nodes. A name's binding is relied on (8.2 rule 2) as soon as a read of it is attempted, even when the read then fails: `otherwise(sum(f(*)), 0)` over a slice with a faulting member has the binding start of `f` among its `asof` candidates.
 
 Fuel is per request and covers the computed inputs it evaluates. Refused at define time: open arguments over functions without an extent, ranges that cannot be enumerated or that enumerate more than 1,048,576 cells, and the size limits of 15.3.
 
@@ -1316,11 +1334,13 @@ Fuel is per request and covers the computed inputs it evaluates. Refused at defi
 
 **Empty slices.** `sum` is 0 and `count` 0; other aggregates are `E_FORMULA_EMPTY` and lookups `E_FORMULA_ABSENT`.
 
-**Lookups** work along one dimension: the only open argument; otherwise the only open valid-time argument; otherwise the one named by `along` (`E_FORMULA_ALONG`). The other open arguments are group keys: a lookup over a k-dimensional slice gives a (k-1)-dimensional slice of the groups where it found a member, or a scalar when k = 1. The metric comes from the dimension's type: instants a duration (bound in `s`, `min`, `h` or `d`), dates days (`d`), numbers the absolute difference in their unit; strings, booleans and blobs have none (`E_FORMULA_METRIC`). **A bound narrows the read**, and the narrowed slice is what lineage records: `last_before(f(*), x, b)` reads `f([x - b..x])`; `first_after` `[x..x + b]`; `nearest`, `within` and `interpolate` `[x - b..x + b]`; `latest(s, b)` `[asof() - b..9999-12-31T23:59:59.999999Z]`; ends rounded inward to the key's precision and clamped to the type's range. Linear interpolation is `v0 + ((v1 - v0) * (x - x0)) / (x1 - x0)` as dialect operations (instants in seconds, dates in days), from the members at or before and after `x`, both within the bound; an exact key gives its value.
+**Lookups** work along one dimension: the only open argument; otherwise the only open valid-time argument; otherwise the one named by `along` (`E_FORMULA_ALONG`). The other open arguments are group keys: a lookup over a k-dimensional slice gives a (k-1)-dimensional slice of the groups where it found a member, or a scalar when k = 1. The metric comes from the dimension's type: instants a duration (bound in `s`, `min`, `h` or `d`), dates days (`d`), numbers the absolute difference in their unit; strings, booleans and blobs have none (`E_FORMULA_METRIC`). **A bound narrows the read**, and the narrowed slice is what lineage records: `last_before(f(*), x, b)` reads `f([x - b..x])`; `first_after` `[x..x + b]`; `nearest`, `within` and `interpolate` `[x - b..x + b]`; `latest(s, b)` `[asof() - b..9999-12-31T23:59:59.999999Z]`; ends rounded inward to the key's precision and clamped to the type's range. Step interpolation is `last_before` within the bound: it needs no member after `x`. Linear interpolation is `v0 + ((v1 - v0) * (x - x0)) / (x1 - x0)` as dialect operations (instants in seconds, dates in days), from the members at or before and after `x`, both within the bound; an exact key gives its value.
 
 **Joins.** `+ - * /` between two slices with the same open argument names and key types is an inner join on keys; between a slice and a scalar, the scalar applies to every member.
 
-**Transaction-time reads.** `asof(c, T)` reads the version of `c` answering as of `T` (T after A: `E_FORMULA_FUTURE`); it is an ordinary single-cell input whose `asof` is at or before `T`. `versions(c, from, to)` is a version slice of the stored cell `c`.
+**Answering.** The version of a stored cell answering as of a time A is the receipt of that cell (with the function hash its name resolves to as of A) with the latest `tx` among those whose `tx` and `asof` are at or before A.
+
+**Transaction-time reads.** `asof(c, T)` reads the version of `c` answering as of `T` (T after A: `E_FORMULA_FUTURE`); it is an ordinary single-cell input whose `asof` is at or before `T`, and `c`'s function name resolves as of `T` (a `T` before its binding began is `E_FORMULA_UNRESOLVED`). `versions(c, from, to)` is a version slice of the stored cell `c`. In both, the times are evaluated, and `E_FORMULA_FUTURE` reported, before the cell's arguments.
 
 **Lineage.** A slice read is one `inputs` entry (8.1): `slice:<slice id>:<members hash>`, where the slice id is SHA-256 of the slice object's canonical bytes (4.4: a cell object with `*` or range objects, or a version slice `{"cell", "from", "to"}`) and the members hash is SHA-256 of the canonical bytes of the JSON array of the member receipt hashes, ascending (for an empty slice, of `[]`). The same slice read twice is one entry. Its **manifest**, `{"members": [...], "slice": {...}}`, is fetched by the entry; a mesh SHOULD serve it at `https://<mesh>/slice/<slice id>/<members hash>` as `application/json`; members are fetched as receipts by hash.
 

@@ -21,6 +21,7 @@ import hashlib
 import json
 import re
 import sys
+import threading
 import unicodedata
 from fractions import Fraction
 
@@ -28,7 +29,7 @@ import canon
 import fdecimal
 from fdecimal import ArithmeticFault, Dec
 
-sys.setrecursionlimit(40000)
+sys.setrecursionlimit(1_000_000)  # with deep(): the passes recurse once or twice per AST level
 
 # ---------------------------------------------------------------------------
 # Codes (SPEC 15.11). Define-time codes first, then evaluation codes.
@@ -64,6 +65,39 @@ class FormulaError(Exception):
 
 def fail(code, detail="", token=None):
     raise FormulaError(code, detail, token)
+
+
+_DEEP = threading.local()
+
+
+def deep(fn):
+    """Run fn on a thread with a 1 GiB stack, so that the recursive passes over the AST (resolve,
+    print, check, evaluate) reach the 65,536-node limit of SPEC 15.3 without exhausting Python's
+    stack. Nested calls run in place."""
+    def run(*args, **kwargs):
+        if getattr(_DEEP, "on", False):
+            return fn(*args, **kwargs)
+        result = {}
+
+        def body():
+            _DEEP.on = True
+            try:
+                result["value"] = fn(*args, **kwargs)
+            except BaseException as e:  # re-raised on the caller's thread
+                result["error"] = e
+        old = threading.stack_size()
+        threading.stack_size(1 << 30)
+        try:
+            t = threading.Thread(target=body)
+            t.start()
+        finally:
+            threading.stack_size(old)
+        t.join()
+        if "error" in result:
+            raise result["error"]
+        return result["value"]
+    run.__doc__ = fn.__doc__
+    return run
 
 
 # ---------------------------------------------------------------------------
@@ -899,11 +933,11 @@ def _resolve_if(args, env):
     params = ("condition", "then", "else")
     bound = {}
     for i, (label, a) in enumerate(args):
+        if label is None and i >= 3:
+            fail("E_FORMULA_ARITY", "if() takes three arguments")
         param = params[i] if label is None else label
         if param not in params:
             fail("E_FORMULA_ARG_UNKNOWN", f"if() has no parameter {label}")
-        if label is None and i >= 3:
-            fail("E_FORMULA_ARITY", "if() takes three arguments")
         bound[param] = _arg("if", param, a, env)
     if len(bound) != 3:
         fail("E_FORMULA_ARITY", "if() takes three arguments")
@@ -929,6 +963,7 @@ def _arg(fn, param, a, env):
     return resolve(a, env)
 
 
+@deep
 def canonical_ast(source, env=None):
     """Parse and resolve. Without an environment, aliases and positional reads are refused."""
     return resolve(parse(source), env)
@@ -956,6 +991,10 @@ def _level(node):
 
 
 def print_ast(node):
+    return _deep_print(node)
+
+
+def _print(node):
     return _p(node, 0)
 
 
@@ -1933,6 +1972,7 @@ def _range_size(a, decl):
     return max(0, hi_d.to_int() - lo_d.to_int() + 1)
 
 
+@deep
 def compile(source, env):
     """Lex, parse, resolve and check a body against an environment (SPEC 15)."""
     ast = canonical_ast(source, env)
@@ -2108,7 +2148,7 @@ def _date_of_ordinal(n):
 
 def _int_of(d, what):
     if not d.is_integer():
-        raise ArithmeticFault("E_FORMULA_DOMAIN", f"{what} is an integer")
+        raise FormulaError("E_FORMULA_DOMAIN", f"{what} is an integer")
     return d.to_int()
 
 
@@ -2221,6 +2261,7 @@ class World:
             return None
         return Answer(max(versions, key=lambda r: (r["tx"], r["asof"])))
 
+    @deep
     def get(self, fq, args, asof, fuel=None):
         """The answer for a cell as of asof: a request, with its own fuel."""
         self.fuel_left = self.fuel_limit if fuel is None else fuel
@@ -3055,7 +3096,7 @@ class Context:
         if n > 0:
             whole, _, frac = text.partition(".")
             text = whole + "." + frac.ljust(n, "0")
-        return ("string", text)
+        return ("string", text_result(text))
 
 
 def _fault(fn, *args):
@@ -3305,3 +3346,6 @@ def run_vector(vec):
         if e.token is not None:
             out["token"] = e.token
         return out
+
+
+_deep_print = deep(_print)
