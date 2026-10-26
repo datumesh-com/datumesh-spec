@@ -1,0 +1,53 @@
+{
+  "id": "uri/pinned-slice",
+  "kind": "uri",
+  "description": "A slice may be pinned too.",
+  "valid": true,
+  "input": "cell://rates.example.org/fx_rate?base=EUR&date=2024-03-15&quote=*&fn_hash=7b58ecb8fd23b644c87951d0bd609790ff547cbb23fed27186c669ce2ce0aa80",
+  "signature": {
+    "args": {
+      "base": {
+        "type": "string",
+        "valid": false
+      },
+      "date": {
+        "type": "date",
+        "valid": true
+      },
+      "quote": {
+        "type": "string",
+        "valid": false
+      }
+    },
+    "returns": {
+      "type": "number",
+      "unit": {
+        "of": {
+          "arg": "quote"
+        },
+        "per": {
+          "arg": "base"
+        }
+      }
+    }
+  },
+  "object": {
+    "args": {
+      "base": {
+        "type": "string",
+        "value": "EUR"
+      },
+      "date": {
+        "type": "date",
+        "value": "2024-03-15"
+      },
+      "quote": "*"
+    },
+    "fn": "fx_rate",
+    "ns": "rates.example.org",
+    "fn_hash": "7b58ecb8fd23b644c87951d0bd609790ff547cbb23fed27186c669ce2ce0aa80"
+  },
+  "canonical": "{\"args\":{\"base\":{\"type\":\"string\",\"value\":\"EUR\"},\"date\":{\"type\":\"date\",\"value\":\"2024-03-15\"},\"quote\":\"*\"},\"fn\":\"fx_rate\",\"fn_hash\":\"7b58ecb8fd23b644c87951d0bd609790ff547cbb23fed27186c669ce2ce0aa80\",\"ns\":\"rates.example.org\"}",
+  "sha256": "92a8308e1148292fd169089a5fe8e85768c089a796b477a01c8b3781ef56f554",
+  "https": "https://mesh.example/cell/rates.example.org/fx_rate?base=EUR&date=2024-03-15&quote=*&fn_hash=7b58ecb8fd23b644c87951d0bd609790ff547cbb23fed27186c669ce2ce0aa80"
+}

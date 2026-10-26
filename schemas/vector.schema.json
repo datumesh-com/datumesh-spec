@@ -33,7 +33,9 @@
         "formula-eval",
         "excel",
         "decimal",
-        "mesh"
+        "mesh",
+        "call",
+        "batch"
       ]
     },
     "description": {
@@ -87,7 +89,7 @@
     },
     "env": {
       "type": "object",
-      "description": "A key environment (keys vectors); for mesh vectors (spec-0.4.1) {keys, mesh}, each the HTTPS result for one document; or a formula vector's environment: name, signature, functions, aliases."
+      "description": "A key environment (keys vectors); for mesh vectors (spec-0.4.1) {keys, mesh}, each the HTTPS result for one document; or a formula vector's environment: name, signature, functions, aliases. For call vectors (spec-0.4.2): {functions, aliases, descriptors}."
     },
     "keypair": {
       "type": "object",
@@ -176,7 +178,8 @@
       "enum": [
         "primary",
         "verified",
-        "unverified"
+        "unverified",
+        "computed"
       ]
     },
     "receipt_hash": {
@@ -184,9 +187,6 @@
     },
     "request": {
       "type": "object",
-      "required": [
-        "cell_id"
-      ],
       "additionalProperties": false,
       "properties": {
         "cell_id": {
@@ -199,8 +199,64 @@
           "type": "string",
           "pattern": "^[0-9a-f]{32,64}$",
           "description": "spec-0.4.1: the envelope is the response to GET /jobs/<job> for this original request."
+        },
+        "fn_hash": {
+          "$ref": "defs.schema.json#/$defs/hex64",
+          "description": "spec-0.4.2: the request's pin (fn_hash=)."
+        },
+        "mesh": {
+          "$ref": "defs.schema.json#/$defs/dnsName",
+          "description": "spec-0.4.2: the host the request was sent to; with it, trust computed, poll and next are checked against it."
+        },
+        "slice_id": {
+          "$ref": "defs.schema.json#/$defs/hex64",
+          "description": "spec-0.4.2: a request of the slice endpoint, for the slice with this id."
+        },
+        "after": {
+          "type": "object",
+          "description": "spec-0.4.2, slice requests: the key of the last member of the previous page."
         }
-      }
+      },
+      "oneOf": [
+        {
+          "required": [
+            "cell_id"
+          ],
+          "not": {
+            "anyOf": [
+              {
+                "required": [
+                  "slice_id"
+                ]
+              },
+              {
+                "required": [
+                  "after"
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "required": [
+            "slice_id"
+          ],
+          "not": {
+            "anyOf": [
+              {
+                "required": [
+                  "cell_id"
+                ]
+              },
+              {
+                "required": [
+                  "job"
+                ]
+              }
+            ]
+          }
+        }
+      ]
     },
     "blob_checked": {
       "type": "boolean"
@@ -379,8 +435,32 @@
     },
     "results": {
       "type": "array",
+      "description": "For decimal vectors, each case's result; for batch vectors and slice envelope vectors (spec-0.4.2), each item's or member's result: {outcome, trust?, receipt_hash?} or {error}.",
       "items": {
-        "type": "string"
+        "anyOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "outcome": {
+                "type": "string"
+              },
+              "trust": {
+                "type": "string"
+              },
+              "receipt_hash": {
+                "$ref": "defs.schema.json#/$defs/hex64"
+              },
+              "error": {
+                "type": "string",
+                "pattern": "^E_[A-Z_]+$"
+              }
+            }
+          }
+        ]
       }
     },
     "mpdecimal": {
@@ -408,6 +488,18 @@
         "pattern": "^https://"
       },
       "description": "spec-0.4.1, mesh vectors: the known endpoint templates; unknown members are dropped."
+    },
+    "uri": {
+      "type": "string",
+      "pattern": "^cell://",
+      "description": "spec-0.4.2, call vectors: the cell URI the call is written as."
+    },
+    "requests": {
+      "type": "array",
+      "items": {
+        "$ref": "#/properties/request"
+      },
+      "description": "spec-0.4.2, batch vectors: one request description per item, in order."
     }
   },
   "oneOf": [

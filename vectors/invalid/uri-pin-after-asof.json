@@ -1,0 +1,35 @@
+{
+  "id": "invalid/uri-pin-after-asof",
+  "kind": "uri",
+  "description": "asof is last; fn_hash= comes before it.",
+  "valid": false,
+  "input": "cell://rates.example.org/fx_rate?base=EUR&date=2024-03-15&quote=USD&asof=2024-03-16T09:00:00.000000Z&fn_hash=7b58ecb8fd23b644c87951d0bd609790ff547cbb23fed27186c669ce2ce0aa80",
+  "signature": {
+    "args": {
+      "base": {
+        "type": "string",
+        "valid": false
+      },
+      "date": {
+        "type": "date",
+        "valid": true
+      },
+      "quote": {
+        "type": "string",
+        "valid": false
+      }
+    },
+    "returns": {
+      "type": "number",
+      "unit": {
+        "of": {
+          "arg": "quote"
+        },
+        "per": {
+          "arg": "base"
+        }
+      }
+    }
+  },
+  "error": "E_CANON_ARG_ORDER"
+}

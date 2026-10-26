@@ -1,0 +1,45 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://datumesh.com/schemas/1/versions.schema.json",
+  "title": "Datumesh versions of a cell",
+  "description": "The answer of a mesh's versions endpoint (SPEC.md 9.8, spec-0.4.2): the versions of a stored cell it knows, ascending by tx, then by receipt hash; unsigned. Each version is fetched at the receipt endpoint and verified on its own terms.",
+  "type": "object",
+  "required": [
+    "cell",
+    "versions"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "cell": {
+      "$ref": "cell.schema.json"
+    },
+    "versions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "asof",
+          "receipt",
+          "tx"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "asof": {
+            "$ref": "defs.schema.json#/$defs/instant"
+          },
+          "receipt": {
+            "$ref": "defs.schema.json#/$defs/hex64"
+          },
+          "tx": {
+            "$ref": "defs.schema.json#/$defs/instant"
+          }
+        }
+      }
+    },
+    "next": {
+      "type": "string",
+      "pattern": "^https://[a-z0-9-]+(\\.[a-z0-9-]+)+/",
+      "maxLength": 512
+    }
+  }
+}

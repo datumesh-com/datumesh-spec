@@ -122,6 +122,17 @@
         },
         "verify": {
           "$ref": "#/$defs/url"
+        },
+        "versions": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/url"
+            },
+            {
+              "pattern": "\\{cell\\}"
+            }
+          ],
+          "description": "spec-0.4.2, optional: the versions of a stored cell (versions.schema.json)."
         }
       },
       "description": "Endpoint templates: each known endpoint has exactly its placeholders, once each (9.6)."

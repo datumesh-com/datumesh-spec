@@ -49,7 +49,7 @@
     "argName": {
       "$ref": "#/$defs/name",
       "not": {
-        "pattern": "^(asof$|dm_)"
+        "pattern": "^(asof$|fn_hash$|dm_)"
       }
     },
     "dnsName": {

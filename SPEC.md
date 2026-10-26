@@ -1,6 +1,6 @@
 # Datumesh protocol, version 1
 
-Status: draft, revision `spec-0.4.1`. Identifier in data: `datumesh/1`. Changes are listed in section 14.
+Status: draft, revision `spec-0.4.2`. Identifier in data: `datumesh/1`. Changes are listed in section 14.
 
 Datumesh is an open protocol for addressable, verifiable data cells: a name, a resolver, a signed answer, and a lineage you can follow. This document defines how a cell is named (the cell URI), how it is written as canonical bytes, what a signed answer (a receipt) contains, what a mesh returns around it (the response envelope), how keys are published, and how a verifier checks a receipt, including receipts whose lineage cites whole slices of cells. Section 15 defines the formula dialect, the default language of computed functions. The units a function may declare are listed in `units.md`, which is part of this specification. Storage formats, wire protocols, resolvers and the engine are out of scope.
 
@@ -81,7 +81,7 @@ The last segment of a fully qualified function name is the function. Everything 
 
 ### 2.4 Argument names
 
-Argument names are names (2.2). `asof`, and every name starting with `dm_`, are reserved for the protocol and rejected as argument names (`E_CANON_ARG_NAME`).
+Argument names are names (2.2). `asof`, `fn_hash` (since `spec-0.4.2`: the cell URI's pin, 5.1), and every name starting with `dm_`, are reserved for the protocol and rejected as argument names (`E_CANON_ARG_NAME`). A function declaring an argument `fn_hash` was valid before `spec-0.4.2` and is not from it on: its descriptor, and the cells and receipts of it, fail with `E_CANON_ARG_NAME`. No vector and no published function the reference knows has one; a publisher that has one republishes the function with the argument renamed.
 
 ## 3. Scalar types and lexical forms
 
@@ -194,7 +194,7 @@ What a cell URI denotes, before the function name has been resolved to a hash:
 {"args": {...}, "asof": "2024-03-16T09:00:00.000000Z", "fn": "fx_rate", "ns": "rates.example.org"}
 ```
 
-`asof` is optional (absent: now). Slice markers are allowed.
+`asof` is optional (absent: now). Slice markers are allowed. Since `spec-0.4.2` a reference may also carry `fn_hash`, 64 lowercase hex digits (`E_CANON_HEX`), when it is **pinned** to a function: it then denotes the cell of that function, whatever the name is bound to (5.1, 5.8).
 
 ### 4.4 Cell
 
@@ -258,7 +258,9 @@ Order of checks:
 
 ```
 cell-uri   = "cell://" namespace "/" name [ "?" query ]
-query      = params [ "&" asof-param ] / asof-param
+query      = params [ "&" pin-param ] [ "&" asof-param ] / pin-param [ "&" asof-param ] / asof-param
+pin-param  = "fn_hash=" 64LHEX                ; since spec-0.4.2
+LHEX       = DIGIT / "a" / "b" / "c" / "d" / "e" / "f"
 params     = param *( "&" param )
 param      = arg-name "=" arg-value
 asof-param = "asof=" instant
@@ -276,11 +278,19 @@ Example:
 cell://ecb.europa.eu/fx_rate?base=EUR&date=2024-03-15&quote=USD&asof=2024-03-16T09:00:00.000000Z
 ```
 
+**Pinning** (since `spec-0.4.2`). `fn_hash=` followed by a function hash pins the reference to that function (4.3): it comes after the arguments and before `asof`, outside their order, as `asof` is:
+
+```
+cell://ecb.europa.eu/fx_rate?base=EUR&date=2024-03-15&quote=USD&fn_hash=<64 hex digits>&asof=2024-03-16T09:00:00.000000Z
+```
+
+A pinned URI asks for exactly the function a receipt cites, which its name may no longer, or not yet, be bound to. `fn_hash` is therefore reserved as an argument name (2.4), so the pin and an argument cannot be confused.
+
 ### 5.2 One URI per reference
 
 The URI is canonical: every cell reference has exactly one URI, and every accepted URI maps back to it.
 
-- **Ordering.** Arguments appear in ascending order of name (byte order; names are ASCII), each exactly once. `asof`, if present, is last and is not part of that ordering. Out of order: `E_CANON_ARG_ORDER`. Repeated: `E_CANON_ARG_DUPLICATE`.
+- **Ordering.** Arguments appear in ascending order of name (byte order; names are ASCII), each exactly once. `asof`, if present, is last and is not part of that ordering; `fn_hash`, if present, comes just before it (or last), and is not part of it either. Out of order: `E_CANON_ARG_ORDER`. Repeated: `E_CANON_ARG_DUPLICATE`.
 - **Completeness.** Every argument the function declares appears. A missing argument is `E_ARG_MISSING`; an undeclared one is `E_ARG_UNKNOWN`.
 - **Percent-encoding.** A value is the UTF-8 encoding of its lexical form. Bytes that are `literal` characters appear as themselves; every other byte appears as `%` plus two uppercase hex digits. Lowercase hex, encoding a literal character (`%41`), an unencoded non-literal character (raw `ü`, `+`, space), or bytes that are not UTF-8 all fail with `E_CANON_PERCENT`. `+` is never a space. Space is `%20`.
 - **Values.** Numbers, dates and instants appear in their lexical forms (instants keep their literal `:`). Strings and blobs are encoded as above, so a blob's `:` stays literal and its `/` and `+` become `%2F` and `%2B`. The empty string is `name=`. Booleans are `true` or `false`; anything else is `E_CANON_TYPE`. Decoded values follow section 3, so `Zu%CC%88rich` (NFD) fails with `E_CANON_STRING`.
@@ -304,8 +314,8 @@ https://<mesh>/cell/<rest>
 
 1. the outer grammar, entirely before any name: the URI starts with `cell://`, contains no `#`, has no userinfo or port, and, if it contains `?`, the text after it is non-empty and each `&`-separated parameter contains `=` (`E_PARSE_URI`);
 2. the namespace and function names;
-3. parameter names. If the last parameter is named `asof`, it is the asof parameter. Each other parameter, left to right, is checked completely before the next:
-   1. if its name is `asof`: `E_CANON_ARG_DUPLICATE` when there is an asof parameter, otherwise `E_CANON_ARG_ORDER`;
+3. parameter names. If the last parameter is named `asof`, it is the asof parameter; then, if the last remaining one is named `fn_hash`, it is the pin (since `spec-0.4.2`). Each other parameter, left to right, is checked completely before the next:
+   1. if its name is `asof`: `E_CANON_ARG_DUPLICATE` when there is an asof parameter, otherwise `E_CANON_ARG_ORDER`; likewise for `fn_hash` and the pin;
    2. its name (`E_CANON_ARG_NAME`, or `E_CANON_LIMIT` when longer than 64), then reserved names (`dm_…`: `E_CANON_ARG_NAME`);
    3. equal to the previous parameter's name: `E_CANON_ARG_DUPLICATE`;
    4. sorting before it: `E_CANON_ARG_ORDER`.
@@ -314,13 +324,16 @@ https://<mesh>/cell/<rest>
 4. the argument count;
 5. the signature, then the arguments against it. The signature must be an object with an `args` object whose members are objects with a string `type`; otherwise `E_SCHEMA`, checked in JCS order of names. Then unknown arguments (`E_ARG_UNKNOWN`), then missing ones (`E_ARG_MISSING`);
 6. each value left to right (percent-encoding, then its lexical form). A type name outside the six is `E_CANON_TYPE` when a value of that argument is read; a slice reads none;
-7. `asof`, percent-decoded like a value (`E_CANON_PERCENT`; a bare `*` is not a slice there and fails percent-encoding), then checked as an instant (`E_CANON_INSTANT`).
+7. the pin, 64 lowercase hex digits (`E_CANON_HEX`; `*` included);
+8. `asof`, percent-decoded like a value (`E_CANON_PERCENT`; a bare `*` is not a slice there and fails percent-encoding), then checked as an instant (`E_CANON_INSTANT`).
+
+For a pinned URI, `signature` is that of the descriptor whose hash is the pin, not of the name's binding.
 
 The first failure is reported. `signature` is taken as given: it comes from a descriptor already checked under section 7, and `parse` does not check it again beyond what step 5 needs to read it. The result is a cell reference (4.3) whose typed scalars carry the declared types. `format(reference)` writes the unique URI. For every accepted URI, `format(parse(uri)) = uri`.
 
 ### 5.5 Response envelope
 
-A mesh answers `GET https://<mesh>/cell/<rest>` (5.3), and `GET` of a job's `poll` URL (below), with an HTTP status and a JSON body, the **envelope**, served as `application/json`.
+A mesh answers `GET https://<mesh>/cell/<rest>` (5.3), `GET` of a job's `poll` URL (below), and since `spec-0.4.2` each request of a batch (5.7) and of the slice endpoint (5.6), with an HTTP status and a JSON body, the **envelope**, served as `application/json`.
 
 **An envelope is the mesh's statement and a receipt is the signer's. Only the receipt is verifiable.** The envelope is not hashed and not signed, and nothing in it changes what a receipt means. Everything a mesh says about a receipt (that it is stale, superseded or recomputed) is therefore said here, outside it, and receipts never change to carry such news. A client parses the envelope with the strict rules of 6.1.
 
@@ -328,37 +341,42 @@ The envelope is an object whose `outcome` decides which other members it has. A 
 
 | `outcome` | HTTP status | Required members | Optional members | Meaning |
 |---|---|---|---|---|
-| `ok` | 200 | `receipt`, `trust` | `superseded_by`, `reason` | The receipt is for the requested cell, its `asof` is at or before the requested `asof`, and the mesh asserts that it is the cell's latest version known as of the requested `asof`. |
-| `stale` | 200 | `receipt`, `trust`, `age_seconds` | `superseded_by`, `reason` | As `ok`, except that the mesh cannot assert that the receipt is current: it could not get a current answer and serves the last receipt it knows. |
-| `not_covered` | 404 | none | `fault` | The mesh has no receipt for this cell: it does not serve the function, or the cell has no value. With `fault`, the cell is a computed cell whose evaluation faulted (15.12): it has no value, deterministically, and this is not missing data. |
-| `unlicensed` | 403 | none | none | The requester may not receive this cell. |
-| `payment_required` | 402 | `quote` | none | The cell is available for the quoted price. |
-| `rate_limited` | 429 | `retry_after_seconds` | none | Too many requests. The mesh SHOULD also send the `Retry-After` header with the same value. |
-| `bad_request` | 400 | `error` | none | The request is malformed: the cell URI does not parse, or, at a job URL, the job is unknown or expired. |
-| `error` | 500-599 | `error` | none | The mesh failed to produce an answer. |
+| `ok` | 200 | `receipt`, `trust` | `superseded_by`, `reason`, `fn_hash` | The receipt is for the requested cell, its `asof` is at or before the requested `asof`, and the mesh asserts that it is the cell's latest version known as of the requested `asof`. |
+| `stale` | 200 | `receipt`, `trust`, `age_seconds` | `superseded_by`, `reason`, `fn_hash` | As `ok`, except that the mesh cannot assert that the receipt is current: it could not get a current answer and serves the last receipt it knows. |
+| `not_covered` | 404 | none | `fault` or `error`, `fn_hash` | The mesh has no receipt for this cell: it does not serve the function, or the cell has no value. With `fault`, the cell is a computed cell whose evaluation faulted (15.12): it has no value, deterministically, and this is not missing data. With `error` (`E_NAME_UNBOUND`, since `spec-0.4.2`), the name is not bound as of the requested `asof`: it may be bound later, so this is not a malformed request. |
+| `unlicensed` | 403 | none | `fn_hash` | The requester may not receive this cell. |
+| `payment_required` | 402 | `quote` | `fn_hash` | The cell is available for the quoted price. |
+| `rate_limited` | 429 | `retry_after_seconds` | `fn_hash` | Too many requests. The mesh SHOULD also send the `Retry-After` header with the same value. |
+| `bad_request` | 400 | `error` | `fn_hash` | The request is malformed: the cell URI does not parse, it has a slice marker at `/cell` (`E_SLICE_AT_CELL`, since `spec-0.4.2`), or, at a job URL, the job is unknown or expired. |
+| `error` | 500-599 | `error` | `fn_hash` | The mesh failed to produce an answer. |
 | `pending` | 202 | `job`, `estimate_seconds`, `poll`, `request` | none | The mesh has accepted the request and is still computing the answer; the answer will be at `poll` (since `spec-0.4.1`). |
 
 Members:
 
 - `outcome`: one of the nine strings above.
 - `receipt`: a receipt object (section 8), embedded as JSON. For `ok`, it is the cell's latest version as of the requested `asof`, which may have been signed at an earlier `asof`. For `stale`, it is the last receipt the mesh knows for the cell.
-- `trust`: what the mesh asserts about how the receipt was produced:
-  - `primary`: the host of `computed_by` equals the host of `cell.ns` (2.3), and `inputs` is empty. The publisher answered from its own records.
-  - `verified`: not primary, and the mesh recomputed the receipt (10.1 step 7) and it matched.
-  - `unverified`: neither.
+- `trust`: what the mesh asserts about how the receipt was produced. "The mesh" is the host the request was sent to; "the signer" is the host of `computed_by`:
 
-  A mesh MUST say `primary` exactly when the first condition holds. A client checks this against the receipt. It cannot check `verified`, which remains the mesh's claim.
+  | `trust` | When a mesh uses it | What a client checks |
+  |---|---|---|
+  | `primary` | The signer equals the host of `cell.ns` (2.3), and `inputs` is empty: the publisher answered from its own records. | Exactly when this holds, from the receipt alone. |
+  | `computed` | Not primary, and the signer is this mesh: it evaluated the cell itself and signed the receipt, and it serves what recomputation needs (the descriptor, every input receipt and manifest, at its endpoints, 9.6). Since `spec-0.4.2`. | Not primary; and, when the client knows the host it asked, that the signer is that host. Recomputation (10.1 step 7) is then the client's to do. |
+  | `verified` | Not primary, the signer is another host than this mesh, and this mesh recomputed the receipt (10.1 step 7) and it matched. | Not primary, and, knowing the host asked, that the signer is another host. That the recomputation happened is the mesh's claim. |
+  | `unverified` | Not primary, the signer is another host than this mesh, and this mesh did not recompute it. | As `verified`. |
+
+  A mesh MUST say `primary` exactly when its condition holds, and, from `spec-0.4.2`, `computed` exactly when the receipt is not primary and it signed it itself: a mesh's own evaluation is never `verified`, which says that a second party checked the signer's work.
 - `age_seconds`: a non-negative integer. The number of seconds since the mesh last confirmed that the receipt was the current answer.
 - `superseded_by`: the receipt hash (8.3) of a newer receipt for the same cell at a later `tx`. It is not the receipt's own hash. A client fetches that receipt like any other.
 - `reason`: a non-empty string saying why the receipt was superseded, typically a correction. It follows the string rules (3.5) with the `summary` limit, and is only present with `superseded_by`.
 - `quote`: an object with exactly `amount`, a number in the form of 3.1 (128 characters at most) greater than zero; `currency`, any currency code listed in `units.md`, withdrawn codes included; and `authorise`, where the requester can pay, an `https://` URL by the licence URL rule (`https://` followed by printable ASCII, at most 512 characters).
 - `retry_after_seconds`: a non-negative integer.
 - `fault`: one of the formula evaluation faults `E_FORMULA_DIV_ZERO`, `E_FORMULA_DOMAIN`, `E_FORMULA_RANGE`, `E_FORMULA_EMPTY`, `E_FORMULA_ABSENT`, `E_FORMULA_FUTURE` (15.11). Running out of fuel, a cycle and too deep an evaluation are not faults: they are the mesh's failures, an `error` with `E_EVAL_UNAVAILABLE`.
-- `error`: what failed. For `bad_request`, one of the codes `parse` can raise (5.4): `E_PARSE_URI`, `E_CANON_NAME`, `E_CANON_ARG_NAME`, `E_CANON_ARG_DUPLICATE`, `E_CANON_ARG_ORDER`, `E_CANON_PERCENT`, `E_CANON_TYPE`, `E_CANON_NUMBER`, `E_CANON_DATE`, `E_CANON_INSTANT`, `E_CANON_STRING`, `E_CANON_BLOB`, `E_CANON_LIMIT`, `E_ARG_UNKNOWN`, `E_ARG_MISSING`; or, in the answer to a job URL and only there, `E_JOB_UNKNOWN`. For `error`, any code in 10.2 except `E_ENVELOPE` (a client's code) and `E_JOB_UNKNOWN`, for example `E_INPUT_UNAVAILABLE`, or `E_EVAL_UNAVAILABLE` when the mesh could not evaluate the cell's function.
+- `error`: what failed. For `bad_request`, one of the codes `parse` can raise (5.4): `E_PARSE_URI`, `E_CANON_NAME`, `E_CANON_ARG_NAME`, `E_CANON_ARG_DUPLICATE`, `E_CANON_ARG_ORDER`, `E_CANON_PERCENT`, `E_CANON_TYPE`, `E_CANON_NUMBER`, `E_CANON_DATE`, `E_CANON_INSTANT`, `E_CANON_STRING`, `E_CANON_BLOB`, `E_CANON_LIMIT`, `E_ARG_UNKNOWN`, `E_ARG_MISSING`, and since `spec-0.4.2` `E_CANON_HEX` (a pin); `E_SLICE_AT_CELL`, a slice marker in a `/cell` request (slices are read at the slice endpoint, 5.6); or, in the answer to a job URL and only there, `E_JOB_UNKNOWN`. For `not_covered`, only `E_NAME_UNBOUND`, and not with `fault`. For `error`, any code in 10.2 except `E_ENVELOPE` (a client's code) and the three request codes `E_JOB_UNKNOWN`, `E_SLICE_AT_CELL` and `E_NAME_UNBOUND`, for example `E_INPUT_UNAVAILABLE`, or `E_EVAL_UNAVAILABLE` when the mesh could not evaluate the cell's function. The exact status of an `error` envelope is the mesh's choice within 500-599; a client reads the outcome, not the status.
+- `fn_hash` (since `spec-0.4.2`): 64 lowercase hex digits, the function the answer is of: **the echo of a pin**. An envelope answering a pinned request MUST carry it, equal to the pin, except `rate_limited` and `bad_request` (which may not have got as far as reading it) and `pending` (whose `request` echoes it). An envelope answering an unpinned request MAY carry the hash the name resolved to. With a receipt, it MUST equal the receipt's `cell.fn_hash`.
 - `job` (`pending`): the job id, 32 to 64 lowercase hex digits (`[0-9a-f]{32,64}`) encoding at least 128 bits drawn from a cryptographically secure random generator. It is unguessable because it is a capability: whoever holds it can fetch the result.
 - `estimate_seconds` (`pending`): a non-negative integer, the mesh's estimate of the seconds until the result is ready. It is a hint: a client MAY poll earlier or later.
 - `poll` (`pending`): the URL of the job, `https://` followed by printable ASCII, at most 512 characters, ending `/jobs/<job>` with this envelope's `job`. The text between `https://` and the next `/` is a DNS name (2.1): so an empty host (`https:///jobs/…`), a port, userinfo, an IP address or a query right after the host is `E_ENVELOPE`. A mesh serves it on its own host. Whether it is the host the client asked, the envelope check cannot know, since an envelope does not name that host: **the client's HTTP layer MUST check that `poll` names the host it sent the request to, and MUST NOT send it otherwise**. A `poll` on another DNS name therefore passes the envelope check (`envelope/pending-poll-other-host`).
-- `request` (`pending`): the original request, echoed: an object with exactly `cell_id`, the requested cell id (64 lowercase hex digits), and `asof`, the requested `asof` as an instant, if and only if the request carried one.
+- `request` (`pending`): the original request, echoed: an object with exactly `cell_id`, the requested cell id (64 lowercase hex digits), `asof`, the requested `asof` as an instant, if and only if the request carried one, and `fn_hash`, the pin, if and only if the request was pinned (since `spec-0.4.2`).
 
 **Integer members.** `age_seconds`, `retry_after_seconds` and `estimate_seconds` are JSON numbers written `0` or `[1-9][0-9]*`: no fraction, no exponent, no sign, and at most 2^53 - 1. So `30.0`, `3e1` and `-0` are `E_ENVELOPE`. They are the only JSON numbers in this specification, which is possible because envelopes are never hashed.
 
@@ -368,8 +386,8 @@ A client checks an envelope in this order and reports the first failure:
 2. Check the members against the table and the rules above (`E_ENVELOPE`). Here `receipt` need only be an object. Every failure of a member's rule is `E_ENVELOPE`, including the rules `reason`, `quote` and `superseded_by` borrow from other sections.
 3. Check that the HTTP status matches `outcome` (`E_ENVELOPE`).
 4. If there is a receipt, verify it through step 6 of 10.1, with that procedure's codes.
-5. **The receipt answers the request** (`E_ENVELOPE`). Its cell id (4.4) MUST equal the id of the cell requested. That is, the cell the request's URI denotes, resolved to the `fn_hash` the client used. If the request carried `asof`, the receipt's `asof` MUST be at or before it, for `ok` and `stale` alike. If the request carried no `asof`, it asked for the mesh's "now", and the client accepts any receipt `asof`. For `pending`, the echoed `request` MUST equal the request made: the same `cell_id`, and `asof` present exactly when the request carried one, with the same value; and when the envelope answers a job URL, its `job` MUST be the job polled. `E_JOB_UNKNOWN` answers a job URL only: in the answer to a `/cell` request it is `E_ENVELOPE`.
-6. Check `trust` against the receipt, as above, and that `superseded_by` differs from the receipt's hash (`E_ENVELOPE`).
+5. **The receipt answers the request** (`E_ENVELOPE`). Its cell id (4.4) MUST equal the id of the cell requested. That is, the cell the request's URI denotes, resolved to the `fn_hash` the client used. If the request carried `asof`, the receipt's `asof` MUST be at or before it, for `ok` and `stale` alike. If the request carried no `asof`, it asked for the mesh's "now", and the client accepts any receipt `asof`. For `pending`, the echoed `request` MUST equal the request made: the same `cell_id`, and `asof` and `fn_hash` each present exactly when the request carried one, with the same value; and when the envelope answers a job URL, its `job` MUST be the job polled. `E_JOB_UNKNOWN` answers a job URL only: in the answer to a `/cell` request it is `E_ENVELOPE`. The `fn_hash` echo follows its rule above.
+6. Check `trust` against the receipt, as above, and that `superseded_by` differs from the receipt's hash (`E_ENVELOPE`). When the client knows the host it asked (below), `computed` exactly when that host signed a receipt that is not primary, and a `poll` on that host.
 
 A receipt states a cell's value as of its own `asof`, and that value stands until the cell's next version. So one receipt answers every `asof` from its own up to the next version's, and a mesh serves it as `ok` for all of them without anything being re-signed. The two outcomes that carry a receipt differ only in what the mesh asserts about it:
 
@@ -380,7 +398,7 @@ On the wire, the two are always told apart: by `outcome`, and by `age_seconds`, 
 
 A receipt of an **asof-dependent** function (one whose body reads `asof()`, 15.12) states a value as of its own `asof` only: its value may change with the asof alone. A mesh MUST NOT serve such a receipt as `ok` for a requested `asof` other than its own; it evaluates again, or answers `stale`. A client cannot check this without the descriptor, so step 5 is unchanged. A client checks the same binding for both (step 5): the cell, and an `asof` at or before the one requested. It cannot check either assertion. Whether an `ok` receipt is in fact the latest version, and how old a `stale` one is, are the mesh's claims (12); a client that doubts them asks another mesh.
 
-Step 5 needs the request, which the envelope does not contain. A client MUST perform it; a library takes the requested cell id and `asof` as inputs. A malformed request description, meaning a `cell_id` that is not 64 lowercase hex digits or an `asof` that is not an instant, is the caller's error. It is not an `E_*` code: libraries report it the way their language reports a misused function. For outcomes without a receipt there is nothing to bind. Without it, a mesh could answer with a valid receipt for a different cell.
+Step 5 needs the request, which the envelope does not contain. A client MUST perform it; a library takes the requested cell id and `asof` as inputs, and since `spec-0.4.2` the pin (`fn_hash`) when the request had one, and optionally the host the request was sent to (`mesh`, a DNS name). Without `mesh`, `computed` is accepted for any receipt that is not primary, and `poll` for any DNS name: comparing them with the host asked is then the client's own check, which it MUST make before it relies on `computed` or sends a `poll`. A malformed request description, meaning a `cell_id` that is not 64 lowercase hex digits or an `asof` that is not an instant, is the caller's error. It is not an `E_*` code: libraries report it the way their language reports a misused function. For outcomes without a receipt there is nothing to bind. Without it, a mesh could answer with a valid receipt for a different cell.
 
 An envelope that passes says only that this mesh made a well-formed statement, about the requested cell, citing a receipt that its signer signed.
 
@@ -388,11 +406,61 @@ An envelope that passes says only that this mesh made a well-formed statement, a
 
 - **While the job is running**, the answer is a `pending` envelope again, with the same `job` and `request`; `estimate_seconds` may change.
 - **Once the job is done**, the answer is the envelope that the `/cell` request would have returned: any outcome but `pending`, with the HTTP status of that outcome. It is **bound to the original request, never to the job URL**: the client checks it as in steps 1-6, with step 5 against the original request's cell id and `asof` (the ones the client sent, which the `pending` envelope echoed). An answer that fails that binding is `E_ENVELOPE`, however well-formed. A job never ends in `pending`; a mesh that gives a job up answers `error`, for example with `E_EVAL_UNAVAILABLE`. A mesh applies the same licence, payment and rate rules at the job URL as at `/cell`.
-- **An unknown or expired job** is `bad_request` (400) with `E_JOB_UNKNOWN`. A mesh keeps a completed job's result for at least 300 seconds after it first serves it, and SHOULD keep a result not yet served at least 300 seconds after the job completes; after that it MAY forget the job, and the id is unknown. A client that gets `E_JOB_UNKNOWN` sends the original request again.
+- **An unknown or expired job** is `bad_request` (400) with `E_JOB_UNKNOWN`. A mesh keeps a job, and a completed job's result, **while the mesh runs**: for at least 300 seconds after it first serves the result, and SHOULD keep a result not yet served at least 300 seconds after the job completes. Jobs need not survive a restart (since `spec-0.4.2`: the 300 seconds hold only while the mesh runs). After that, or after a restart, the id is unknown. A client that gets `E_JOB_UNKNOWN` sends the original request again.
 
 A library takes the job polled as a third member of the request description (`{"cell_id", "asof"?, "job"}`); with it, an envelope may be `bad_request` with `E_JOB_UNKNOWN`, and a `pending` one must carry that `job`. Without it, the request was a `/cell` request.
 
+**Answers for a past asof are immutable** (since `spec-0.4.2`). A mesh MAY serve an answer whose requested `asof` is in the past as immutable (for example `Cache-Control: immutable`), and caches MAY keep it forever. A correction recorded later with a `tx` before that `asof` (a backdated correction) does not change it: the old receipt stays a valid statement for its range, as of what was known (8.2, D31). A client wanting the corrected view asks at a later asof, at or after the correction's; the mesh MAY also point from a fresh answer to the correction with `superseded_by`.
+
 *Rationale.* Binding the result to the original request is what makes polling safe: a job URL names no cell, so a result checked against it would bind to nothing, and a mesh could hand a client another cell's receipt. An unknown job is not `not_covered`, which would state that the cell has no receipt when nothing is known about the cell; not `error`, since the mesh did not fail; and not distinguished from an expired one, so that answers do not reveal which ids were ever issued. It is the request that no longer names anything, so it is a `bad_request`, and the client's remedy is the same as for a lost job: ask again. 128 bits make an id unguessable in any number of attempts a mesh would serve; 300 seconds cover a client's retries after a lost response.
+
+### 5.6 Slices
+
+Since `spec-0.4.2`. A mesh answers `GET https://<mesh>/slice/<rest>`, where `<rest>` is the rest of the cell URI of a slice (at least one argument `*`), with the members of that slice as of the requested `asof` (now when absent), in pages. An answer is an envelope of 5.5. `stale` and `pending` are not answers of the slice endpoint (`E_ENVELOPE`); every other outcome but `ok` keeps its meaning and members (a name unbound is `not_covered` with `E_NAME_UNBOUND`); `ok` is a **page**:
+
+| Member | Required | |
+|---|---|---|
+| `outcome` | yes | `"ok"` |
+| `slice` | yes | The slice object (4.4) requested, with the function hash its name resolved to (or the pin). |
+| `members` | yes | An array of member envelopes: each an `ok` or `stale` envelope of 5.5 (with `receipt`, `trust` and that outcome's other members, without an HTTP status of its own) for one cell of the slice that has a value as of the `asof`. A cell without a value is not a member and does not appear. |
+| `next` | no | The URL of the following page: `https://`, the mesh's host (a DNS name), then a path; at most 512 characters. Absent on the last page. |
+| `fn_hash` | no | As in 5.5. |
+
+**Pagination is by key.** Members are in strictly ascending order of their key (15.13: the slice's open arguments in ascending name order, each in its type's order), across pages: every member of a page has a key after every member of the previous page. A mesh chooses the page size and the form of `next` (the reference mesh writes `limit=` and `after=`, the last key); a client follows `next` as given, on the host it asked, and nothing else. An empty `members` is an empty slice or an empty last page.
+
+**Binding** (`E_ENVELOPE` unless said otherwise). A client checks a page against its request: the slice id it asked for (the slice object it resolved, hashed as in 4.4), the `asof`, the pin, the host asked, and for a following page the key of the last member already received (`after`, an object from each open argument's name to the member's typed scalar):
+1. The members of 5.5 and their rules, for the page and for each member; a member that is not `ok` or `stale` fails.
+2. `slice` hashes to the requested slice id; `next`, when the host asked is known, is on it.
+3. For each member in order: its receipt verified as in 5.5 step 4 (with 10.1's codes); its cell a member of the slice (10.1 step 7.5's membership: same `ns`, `fn` and `fn_hash`, fixed arguments equal, open ones any); its `asof` at or before the requested `asof`; `trust` as in 5.5 step 6; its key after the previous member's, and after `after`.
+
+A page states only that each member is a cell of the slice, signed by its signer. That the members are all the slice's members as of the `asof` is the mesh's claim; a reader that needs completeness reads the slice through a computed receipt's manifest (15.13), whose members hash commits to them.
+
+### 5.7 Batches
+
+Since `spec-0.4.2`. A mesh answers `POST https://<mesh>/cells` (the mesh document's `cells` endpoint), whose body is a JSON array of requests (each a cell URI's `<rest>` as in 5.3, or a call as in 5.8), with:
+
+- **200 and a JSON array**, one item per request **in request order**, each an object with exactly `envelope`, the envelope that request alone would have been answered with, and `status`, its HTTP status as an integer (an `error` item carries the exact 5xx the mesh chose). Items answer independently: one item's failure says nothing about another's. A pending item's job is polled as in 5.5.
+- **Or a refusal of the whole batch**: one envelope with its own status, of outcome `unlicensed`, `payment_required`, `rate_limited`, `bad_request` (for example `E_CANON_LIMIT` for more requests than the mesh accepts in one batch, or a body that is not an array of requests: `E_PARSE_URI`) or `error`.
+
+A client checks a 200 batch as a whole, then item by item (`E_ENVELOPE` for the whole when it fails): the body is an array with exactly as many items as requests; each item has exactly `envelope` and `status`, `status` an integer 100-599. Then each item is checked as an envelope (5.5 steps 2-6, with the item's `status`) against its own request; a failing item is reported in its place, with its code, and does not fail the others. A non-200 response is checked as one envelope of a refusal outcome, with nothing to bind.
+
+### 5.8 Calls
+
+Since `spec-0.4.2`. A request may name a cell as a **call**: a read of the formula dialect (15.3) whose arguments are literals, optionally followed by `?asof=<instant>`. A mesh accepts it wherever it accepts a cell URI's `<rest>` (percent-encoded as any URL path), and it denotes the cell URI it is written as: a call and that URI are the same request.
+
+```
+rates.example.org/fx_rate("EUR", "USD", 2024-03-15)?asof=2024-03-16T09:00:00.000000Z
+@fx@<64 hex digits>(base: "EUR", quote: "USD", date: 2024-03-15)
+```
+
+- The callee is a qualified name or an `@alias` of the mesh's alias map, optionally **pinned**: followed directly, with no space, by `@` and the 64 lowercase hex digits of a function hash (`name@<fn_hash>(args)`). A pin is not an alias: an alias is `@` at the start of a name, a pin `@` after one. The URI of a pinned call carries `fn_hash=` (5.1).
+- Arguments are positional (bound by the callee's `signature.order`, 15.5; a callee without `order` takes labels only) or labelled (`name: value`), positional first. Each is a literal of the dialect: a number (a leading `-` allowed; no unit), a string in double quotes, a date, an instant, `true` or `false`, or `*` (a slice, for the slice endpoint). A blob argument is written as a string holding its lexical form.
+- Checked in this order, first failure reported: the text is a read of literals, then `?asof=` and nothing else (`E_PARSE_URI`; a literal the dialect's lexer refuses has its type's code instead: `E_CANON_NUMBER`, `E_CANON_STRING`, `E_CANON_DATE`, `E_CANON_INSTANT`); `asof` is an instant (`E_CANON_INSTANT`); the callee: an alias the mesh does not have, or a name not bound as of the asof, is `E_NAME_UNBOUND`; a pin with no descriptor known to the mesh, `E_FN_UNAVAILABLE`; the arguments, left to right: a positional one past `order`, or an unknown label, `E_ARG_UNKNOWN`; one bound twice `E_CANON_ARG_DUPLICATE`; then a declared one not bound `E_ARG_MISSING`; then each value as written: a literal of the wrong kind `E_CANON_TYPE`, then its lexical form (section 3).
+- A pinned call needs the descriptor of its hash, not a binding of its name. In a function body a pinned read is `E_FORMULA_PLACEMENT`: it is a request form only, and a body's reads resolve through bindings (15.5).
+
+A mesh answers a call it cannot parse with `bad_request` and that code; `E_NAME_UNBOUND` with `not_covered` carrying it; `E_FN_UNAVAILABLE` with a plain `not_covered` (the mesh does not serve that function).
+
+*Rationale.* Pinning lets a client ask for exactly the function a receipt cites, and lets a mesh answer any formula vector, whose functions are known by hash. The pin goes after the name in a call, as it reads, and in the URI as a parameter outside the arguments' order, as `asof` does; reserving `fn_hash` as an argument name keeps the two apart without a new syntax.
 
 ## 6. Canonical encoding and hashing
 
@@ -649,8 +717,8 @@ Since `spec-0.4.1`, a mesh describes its endpoints at `https://<host>/.well-know
 | Endpoint | Placeholders | Required | What it serves |
 |---|---|---|---|
 | `cell` | `{cell}` | yes | The envelope of a cell (5.5); `{cell}` is the `<rest>` of 5.3. |
-| `cells` | none | no | A batch of `cell` requests. |
-| `slice` | `{cell}` | no | The envelope for a slice read. |
+| `cells` | none | no | A batch of `cell` requests (5.7). |
+| `slice` | `{cell}` | no | A slice's members as of an asof, in pages (5.6); `{cell}` is the `<rest>` of a slice's cell URI. |
 | `receipt` | `{hash}` | yes | A receipt by its hash (8.3). |
 | `descriptor` | `{hash}` | yes | A descriptor by its `fn_hash`. |
 | `manifest` | `{slice_id}`, `{members_hash}` | yes | A slice manifest (15.13). |
@@ -659,6 +727,7 @@ Since `spec-0.4.1`, a mesh describes its endpoints at `https://<host>/.well-know
 | `verify` | none | no | Verification as a service. |
 | `jobs` | `{job}` | yes | A job (5.5); a `pending` envelope's `poll` is this template with its `job`. |
 | `find` | none | no | Search. |
+| `versions` | `{cell}` | no | The versions of a stored cell (9.8). Since `spec-0.4.2`. |
 
 **A URL is on this host** when it begins `https://<host>/`, with `host` exactly as fetched: a port (even `:443`), userinfo, a query or fragment right after the host, or no `/` after it fails (`https://<host>/` alone is on the host). The same rule holds for `bindings`, which is a URL, not a template: its `{` and `}` are not checked.
 
@@ -697,6 +766,26 @@ The bindings resource tells which function a name denotes, as of an instant. `GE
 - Repeating `name` asks for several names; `bindings` then has one member per name bound. Unknown members are ignored, as in 9.6.
 
 Like an envelope, this answer is the mesh's statement, unsigned. A computed receipt's `fn_hash` is what verification checks (10.1 step 7.1); the bindings resource is how a mesh finds the descriptor to evaluate, and `since` is the binding start that 8.2 counts among a computed receipt's `asof` candidates.
+
+### 9.8 Versions
+
+Since `spec-0.4.2`. The optional `versions` endpoint lists the versions of a stored cell a mesh holds, so that another mesh can import a cell's history without one request per version. `GET <versions with {cell}>`, where `{cell}` is the `<rest>` of the cell's URI (5.3) without `asof`, optionally followed by `?from=<instant>&to=<instant>` (each optional, inclusive bounds on `tx`), returns `application/json` (`schemas/versions.schema.json`):
+
+```json
+{
+  "cell": {"args": {...}, "fn": "fx_rate", "fn_hash": "…", "ns": "rates.example.org"},
+  "versions": [
+    {"asof": "2024-03-15T16:00:00.000000Z", "receipt": "…64 hex digits…", "tx": "2024-03-15T16:00:00.000000Z"}
+  ],
+  "next": "https://mesh.example.org/versions/…"
+}
+```
+
+- `cell`: the cell (4.4), its name resolved as of now (or pinned by `fn_hash=`).
+- `versions`: one entry per receipt the mesh holds for the cell: its `tx`, `asof` and receipt hash (8.3), ascending by `tx`, then by receipt hash. An empty array when there is none.
+- `next`: as in 5.6, absent on the last page.
+
+The answer is unsigned, like an envelope. An importer fetches each receipt at the `receipt` endpoint and verifies it on its own terms (10.1), checking that its cell is the listed cell; the list itself states only what this mesh holds. A name unbound is `not_covered` with `E_NAME_UNBOUND`; any other failure an envelope of 5.5.
 
 ## 10. Verification
 
@@ -760,7 +849,7 @@ Signature-valid means the holder of key `computed_by` stated this value. Whether
 
 ### 10.2 Error codes
 
-The four failure classes a verifier distinguishes are: bad canonical form (parse, schema and canon codes), unknown or unusable key (key codes), bad signature, and value mismatch on recomputation (the remaining codes). Two codes, `E_EVAL_UNAVAILABLE` and `E_INPUT_SUPERSEDED`, are not failures: they are reported with success at level `signed` (10.1 step 7.6). The formula codes of section 15.11 are not verification codes. Nor are the last two (since `spec-0.4.1`): `E_JOB_UNKNOWN` is a mesh's answer in an envelope (5.5), and `E_MESH_DOC` a result of cross-mesh resolution (9.6).
+The four failure classes a verifier distinguishes are: bad canonical form (parse, schema and canon codes), unknown or unusable key (key codes), bad signature, and value mismatch on recomputation (the remaining codes). Two codes, `E_EVAL_UNAVAILABLE` and `E_INPUT_SUPERSEDED`, are not failures: they are reported with success at level `signed` (10.1 step 7.6). The formula codes of section 15.11 are not verification codes. Nor are the last four (since `spec-0.4.1` and `spec-0.4.2`): `E_JOB_UNKNOWN`, `E_SLICE_AT_CELL` and `E_NAME_UNBOUND` are a mesh's answers about a request, in an envelope (5.5), and `E_MESH_DOC` a result of cross-mesh resolution (9.6).
 
 | Code | Step | Meaning |
 |---|---|---|
@@ -810,6 +899,8 @@ The four failure classes a verifier distinguishes are: bad canonical form (parse
 | `E_ENVELOPE` | envelope | A response envelope breaks a rule of 5.5, its HTTP status does not match its outcome, or its receipt does not answer the request. |
 | `E_JOB_UNKNOWN` | envelope | In a `bad_request` envelope at a job URL: the job is unknown or expired (5.5). A mesh's code, not a client's. |
 | `E_MESH_DOC` | mesh | The mesh document cannot be retrieved, is malformed, breaks a rule of 9.6, or disagrees with the key document on `host` or `proto`. Never a verification result. |
+| `E_SLICE_AT_CELL` | envelope | In a `bad_request` envelope: the `/cell` request has a slice marker; slices are read at the slice endpoint (5.6). A mesh's code. |
+| `E_NAME_UNBOUND` | envelope, call | In a `not_covered` envelope: the name (or alias) is not bound as of the requested `asof`; it may be bound later. A mesh's code; also a call's (5.8). |
 
 "URI" marks codes raised while parsing a cell URI (5.4), "envelope" codes raised while checking a response envelope (5.5), "mesh" codes raised in cross-mesh resolution (9.6), and "unit" codes raised while resolving a unit (7.1). Canonicalising a scalar, cell, reference or descriptor on its own uses the same codes as steps 1-3.
 
@@ -826,7 +917,9 @@ The four failure classes a verifier distinguishes are: bad canonical form (parse
 | `keys` | `host`, `env`: what the HTTPS request returned | `key_ids` |
 | `receipt` | `input`: receipt JSON text; `keypair` (`seed`, `public`, `key_id`); `keys`: an `env` per host; optional `recompute`; optional `blob_hex`: content for step 7.7 | `canonical` (the signed payload), `sha256` (receipt hash), `sig`, `level` (`signed` or `recomputed`); `blob_checked` (true) when `blob_hex` is given; `code` (`E_EVAL_UNAVAILABLE`) when `recompute` has no `value` |
 | `unit` | `input`: JSON text of an object with exactly `cell` and `descriptor` (any other shape is `E_SCHEMA`) | `unit`: the resolved unit of the cell's value (7.1), or null when the function does not return a number |
-| `envelope` | `input`: the response body; `status`: the HTTP status; `keys`: an `env` per host; `request`: `{"cell_id", "asof"?, "job"?}` for step 5, with `job` (since `spec-0.4.1`) when the body answers `GET` of that job's `poll` URL | `outcome`, and when there is a receipt, `trust` and `receipt_hash` |
+| `envelope` | `input`: the response body; `status`: the HTTP status; `keys`: an `env` per host; `request`: `{"cell_id", "asof"?, "job"?, "fn_hash"?, "mesh"?}` for step 5, with `job` (since `spec-0.4.1`) when the body answers `GET` of that job's `poll` URL, `fn_hash` the pin and `mesh` the host asked (since `spec-0.4.2`); for the slice endpoint (5.6) `{"slice_id", "asof"?, "fn_hash"?, "mesh"?, "after"?}` | `outcome`, and when there is a receipt, `trust` and `receipt_hash`; for a slice page, `results`: each member's `{outcome, receipt_hash, trust}` in order |
+| `batch` (since `spec-0.4.2`) | `input`: the response body; `status`: its HTTP status; `keys`; `requests`: one request description per item, as for `envelope` | for 200, `results`: per item `{outcome, receipt_hash?, trust?}` or `{error}`; otherwise `outcome` (5.7) |
+| `call` (since `spec-0.4.2`) | `input`: the call (5.8); `env`: `{"functions": {name: descriptor}, "aliases": {alias: name}, "descriptors": [descriptors known by hash]}` | `uri`: the cell URI it is written as |
 | `mesh` (since `spec-0.4.1`) | `host`; `env`: `{"keys": <env of the key document>, "mesh": <env of the mesh document>}`, each an `env` as below (9.6) | `bindings` (the URL) and `endpoints` (the known endpoint templates; unknown members dropped) |
 | `slice` | `input`: JSON text of a slice object (4.4) or a manifest (15.13). It is a manifest exactly when it is an object with a `members` member; anything else is checked as a slice object (so `{"slice": …}` alone is `E_SCHEMA`, as a slice object without `args`) | `canonical`, `sha256`, `slice_id`; for a manifest also `members_hash` and `entry` |
 | `formula` | `input`: a formula source; `env`: `{"name", "signature", "functions": {name: descriptor}, "aliases": {alias: name}}` | `ast` (the canonical AST's JCS text), `ast_sha256`, `body`, `inputs` (the derived set), `returns` (type and unit), `asof_dependent`; an invalid vector has `error`, and `token` for `E_FORMULA_FORBIDDEN` |
@@ -851,7 +944,7 @@ A failed verification reports only its code. Whether a library also returns the 
 
 The `env` for a host is `{"https": {"status": 200, "body": "<text>"}}` for a retrieved document, or `{"https": {"status": <other status>}}` or `{"https": {"status": "error"}}` for a failed retrieval. A host absent from `keys` behaves as `{"https": {"status": "error"}}`, and so does a `keys` or `mesh` member absent from a `mesh` vector's `env`. In a `mesh` vector, the mesh document's `env` follows the same status rule, with `E_MESH_DOC` in place of `E_KEY_UNAVAILABLE`.
 
-The JSON Schemas under `schemas/` describe the shapes; where a schema keyword (`uniqueItems`, `maxItems`, a pattern) would reject an input that this document assigns another code, this document governs. In a cross-check, a runner that does not implement a kind of vector (a verifier library, for the kinds `formula`, `formula-eval`, `excel` and `decimal`) prints `{"id": …, "error": null, "skipped": "<kind>"}` for it, and is not compared on it (`crosscheck/README.md`).
+The JSON Schemas under `schemas/` describe the shapes; where a schema keyword (`uniqueItems`, `maxItems`, a pattern) would reject an input that this document assigns another code, this document governs. In a cross-check, a runner that does not implement a kind of vector (a verifier library, for the kinds `formula`, `formula-eval`, `excel`, `decimal` and `call`) prints `{"id": …, "error": null, "skipped": "<kind>"}` for it, and is not compared on it (`crosscheck/README.md`).
 
 The vectors use reserved example domains (`example.org`, `example.net`, `.example`) for everything signed. `tools/gen_vectors.py` (with `tools/gen_formula.py` for the kinds of `spec-0.4.0`) reproduces every file byte for byte.
 
@@ -865,6 +958,7 @@ The vectors use reserved example domains (`example.org`, `example.net`, `.exampl
 - **Text in summaries and strings** may contain bidi controls and confusable characters. Display it as data.
 - **Blob content** is untrusted until step 7.7 passes. Check the length before downloading or hashing more than that many bytes. Do not let the media type override what a client would otherwise do with the bytes: it is the publisher's claim.
 - **Job ids are capabilities** (5.5): anyone holding one can fetch the result while it is kept. A mesh draws them from a cryptographically secure generator, serves job URLs only over TLS, and applies the `/cell` licence rules at them; a client does not log or share them.
+- **Pins name functions, not trust** (5.1, 5.8). A pinned answer is checked like any other: the receipt's cell, and so its `fn_hash`, must be the one asked for. Pinning an old function does not make its answers current; `asof` still says as of when.
 - **Mesh documents are unsigned** (9.6). They are authenticated by TLS for their host only, which is why every URL in one must be on that host.
 - **Envelopes are unsigned.** TLS authenticates the mesh, not what it says. `stale`, `superseded_by`, `verified`, every non-`ok` outcome, and the currency that `ok` asserts are the mesh's claims, and a mesh can lie about them or omit them. In particular, a mesh can serve an outdated receipt as `ok`: the client checks only that its `asof` is at or before the requested one. A client that needs a newer value asks with a later `asof`, or asks another mesh.
 
@@ -942,8 +1036,31 @@ Every choice this specification makes where its brief left room, with the main a
 | D67 | Argument reduction uses 60-digit constants with an exact product | 40-digit constants throughout | A 40-digit pi loses up to six digits of `sin` near large multiples of pi; the reduction is one exact step |
 | D68 | A ninth outcome, `pending` (202), with an unguessable `job` (at least 128 bits), `estimate_seconds`, a required `poll` and the echoed request; the job's result is bound to the original request; an unknown or expired job is `bad_request` with `E_JOB_UNKNOWN`, kept at least 300 s after it is first served (`spec-0.4.1`) | Hold the request open; `Location` and `Retry-After` headers only; bind the result to the job URL; `not_covered` for an expired job | The user's decision. Long evaluations need an answer before they finish; a job URL names no cell, so only the original request can bind the result; an expired job says nothing about the cell |
 | D69 | A separate mesh document `/.well-known/datumesh-mesh.json`, agreeing with the key document on `host` and `proto`, every URL on its own host, unknown members ignored; `E_MESH_DOC` in cross-mesh resolution only (`spec-0.4.1`) | Endpoints in the key document; fixed paths only | The user's decision. The key document every verifier reads stays as it is; a verifier never needs the mesh document |
+| D70 | Pinning by hash (`spec-0.4.2`): `name@<fn_hash>(args)` in a call, `fn_hash=` in the URI after the arguments and before `asof`, `fn_hash` reserved as an argument name, the hash echoed in envelopes; a pinned read is a request form, not a body form | `fn_hash` sorted among the arguments; a `dm_fn_hash` parameter; the pin in the path (`fx_rate@<hash>`); pinned reads in bodies | The user's decision. The parameter matches `asof`'s treatment; reserving the name (no function or vector uses it) removes the ambiguity; bodies keep resolving through bindings, so no AST, hash or lineage rule changes |
+| D71 | A fourth trust value, `computed`: the mesh evaluated and signed the cell itself, and serves what recomputation needs; `verified` stays a second party's recomputation (`spec-0.4.2`) | Keep `verified` for a mesh's own evaluations | The user's decision. `verified` must mean someone other than the signer checked the work; a client that names the host it asked can check which applies |
+| D72 | The slice endpoint answers pages of member envelopes in key order, paged by key with an opaque `next`; `/cells` answers an array of `{envelope, status}` in request order, or one refusal (`spec-0.4.2`) | A bespoke slice row format; batch items without status; `error` statuses derived from the outcome | The user's decision. Members bind as cells do; per-item status keeps an `error`'s exact 5xx |
+| D73 | `E_SLICE_AT_CELL` (`bad_request`) and `E_NAME_UNBOUND` (`not_covered`, carried in `error`); jobs kept while the mesh runs; answers for a past asof immutable, a backdated correction seen at a later asof; one manifest path; an optional `versions` endpoint (`spec-0.4.2`) | `E_PARSE_URI` for a slice at `/cell`; `bad_request` for an unbound name; invalidating cached past answers | The user's decisions. An unbound name may be bound later, so it is not the request's fault; a past answer stays true for what was known |
 
 ## 14. Changes
+
+### spec-0.4.2
+
+The step 1.4 answers, and two additions, all the user's decisions (BRIEF-spec-0.4.2). **No `spec-0.4.1` vector's expected result changes and no hash changes**: every `spec-0.4.1` vector file and example is byte-identical, which `tests/test_migration_0_4_2.py` checks against the `spec-0.4.1` files in git, with the reference tool reproducing every expected result. `proto` is still `datumesh/1`.
+
+Text:
+- **One manifest path** (15.13): `/manifest/{slice_id}/{members_hash}`, the mesh document's `manifest` endpoint; 15.13's `/slice/<slice id>/<members hash>` is dropped, and `/slice/` is the slice endpoint.
+- **The slice envelope** (5.6): an `ok` page of member envelopes, paginated by key, each bound to its cell (membership, `asof`, key order).
+- **Jobs** (5.5): kept while the mesh runs; the 300 seconds hold only then.
+- **Batches** (5.7): an array of `{envelope, status}` in request order, or one refusal; an `error`'s exact status travels with it.
+- **Codes** (10.2): `E_SLICE_AT_CELL` (`bad_request`) and `E_NAME_UNBOUND` (`not_covered`, in its `error` member), after `E_MESH_DOC`; neither is a verification result.
+- **The versions endpoint** (9.6, 9.8): optional, a template with `{cell}`; its answer lists a stored cell's versions by `tx`.
+- **Immutable past answers** (5.5): an answer for a past asof may be cached forever; a backdated correction is seen at a later asof.
+
+Additions (normative):
+- **Pinning a function by hash** (2.4, 4.3, 5.1, 5.4, 5.5, 5.8, 15.2, D70). The URI's `fn_hash=` (after the arguments, before `asof`), a reference's optional `fn_hash`, the call form `name@<fn_hash>(args)`, and the envelope's `fn_hash` echo (required in answers to a pinned request but `rate_limited`, `bad_request` and `pending`, whose `request` echoes it). `fn_hash` is reserved as an argument name: a function declaring one is no longer valid (no vector and no known function has one). A pinned read in a function body is `E_FORMULA_PLACEMENT`. `E_CANON_HEX` joins the `bad_request` codes.
+- **Trust `computed`** (5.5, D71): not primary, signed by the mesh asked. A request description may name the mesh asked (`mesh`); with it, `computed` is checked against the signer, and `poll` and `next` against the host.
+
+Vectors: 92 new (1129 in all): 13 `uri`, `ref` and `function` for pins; 27 of the new kind `call`; 1 `formula`; 38 `envelope` (pins, the two codes, `computed`, slice pages); 11 of the new kind `batch`; 2 `mesh` (`versions`). Schemas: `envelope.schema.json` (`computed`, `fn_hash`, `not_covered`'s `error`, the slice page), `cell-ref.schema.json` (`fn_hash`), `defs.schema.json` (`fn_hash` reserved), `mesh.schema.json` (`versions`), `vector.schema.json` (kinds `call` and `batch`, the request's new members), and the new `versions.schema.json`. Reference tools: `canon.py` (`parse_uri`/`format_uri` pins, `check_envelope` echo, `computed`, slice pages, `check_batch`, `parse_call`); `formula.py` (the pin token; `E_FORMULA_PLACEMENT` in a body).
 
 ### spec-0.4.1
 
@@ -1136,6 +1253,7 @@ Tokens are recognised by **longest match**, trying these classes in order at eac
 | L2 | date | `4DIGIT "-" 2DIGIT "-" 2DIGIT` | Always a date, never a subtraction. Not a real day, or followed by a word character: `E_FORMULA_DATE`. |
 | L3 | qualified name | `dns-name 1*( "/" name )` | A DNS name (2.1), so it contains a dot and its last label is not all digits; the last segment is the function (2.3). A run that looks like one but breaks 2.1-2.3 is `E_FORMULA_NAME`. |
 | L4 | alias | `"@" name *( "/" name )` | A short name, replaced at define time by the resolver's alias map. |
+| L4a | pin | `"@" 64LHEX`, directly after a qualified name or alias, not followed by a word character | Since `spec-0.4.2`: the function hash a request pins (5.8). Anything else after such an `@` is `E_FORMULA_NAME`. In a body, a pinned read is `E_FORMULA_PLACEMENT`. |
 | L5 | number | `( "0" / %x31-39 *DIGIT ) [ "." 1*DIGIT ]`, canonical (3.1) | Non-negative; a leading `-` is the unary operator. A non-canonical run (`1.50`, `01`, `1.`, `.5`, `1e5`, over 128 characters) is `E_FORMULA_NUMBER`. `1..2` is `1`, `..`, `2`. |
 | L6 | unit suffix | after a number, optional SP or HTAB, the **longest unit literal of `units.md`** (index units included) not followed by a word character | `10 m/s` is ten metres per second; `10 m / s` divides ten metres by `s`. A following word that is a keyword is not a suffix. Any other word is `E_FORMULA_UNIT`, except digits directly followed by `D`, `M` or `Y` (`1M`, `10Y`), which are reserved for period keys (`E_FORMULA_RESERVED`, 15.15). The unit `1` is never a suffix. |
 | L7 | string | `DQUOTE *( string-char / 2DQUOTE ) DQUOTE` | A doubled quote is a quote; there are no other escapes. The content follows 3.5 (assigned, NFC, no controls) and the 1024-byte limit: `E_FORMULA_STRING`. |
@@ -1161,7 +1279,7 @@ The grammar is a PEG: alternatives are tried in order and the first that matches
 - A body is an expression. `expr = or-expr / if-expr / let-expr`.
 - `if c then a else b` and `let x = v in b` extend as far right as possible; `else` is mandatory. They appear only where a whole expression is expected: the body, a parenthesised expression, an argument, a branch, a `let` value or body, a lambda body. As an operand they need parentheses (`E_FORMULA_PLACEMENT`).
 - Excel's `if(c, a, b)`, `and(a, b, …)` and `or(a, b, …)` are accepted as calls and resolve to the keyword forms. A body that starts `if (` is the function form exactly when the first parenthesised expression is followed by `,`.
-- A read is a qualified name or alias followed by `(` and arguments; each argument is an expression, `*` (an open argument, when followed by `,` or `)`), or a range `[lo..hi]` with expression ends. A qualified name not followed by `(` is `E_FORMULA_SYNTAX`: there are no function values.
+- A read is a qualified name or alias, optionally pinned (`@<fn_hash>`, a request form, 5.8), followed by `(` and arguments; each argument is an expression, `*` (an open argument, when followed by `,` or `)`), or a range `[lo..hi]` with expression ends. A qualified name not followed by `(` is `E_FORMULA_SYNTAX`: there are no function values.
 - A built-in call takes expressions; the second argument of `map` and `filter` is a lambda, `x -> e` or `(x, k1, …) -> e`. A lambda anywhere else, and `*` or a range outside a read, are `E_FORMULA_PLACEMENT`.
 - Positional arguments come before labelled ones (`E_FORMULA_ARG_ORDER`); a label appears once (`E_FORMULA_ARG_DUPLICATE`).
 - `(e)(x)`, `"a.org/f"(x)` and `f(x)(y)` are `E_FORMULA_DYNAMIC_NAME`; `).` and `x.y` are reserved for methods (`E_FORMULA_RESERVED`).
@@ -1474,7 +1592,7 @@ Fuel is per request and covers the computed inputs it evaluates. Refused at defi
 
 **Transaction-time reads.** `asof(c, T)` reads the version of `c` answering as of `T` (T after A: `E_FORMULA_FUTURE`); it is an ordinary single-cell input whose `asof` is at or before `T`, and `c`'s function name resolves as of `T` (a `T` before its binding began is `E_FORMULA_UNRESOLVED`). `versions(c, from, to)` is a version slice of the stored cell `c`. In both, the times are evaluated, and `E_FORMULA_FUTURE` reported, first; then the cell's arguments; then its name is resolved (as of `T` for `asof(c, T)`). So `asof(f(x: text(1 / 0)), T)` is `E_FORMULA_DIV_ZERO` even when `T` is before `f`'s binding began.
 
-**Lineage.** A slice read is one `inputs` entry (8.1): `slice:<slice id>:<members hash>`, where the slice id is SHA-256 of the slice object's canonical bytes (4.4: a cell object with `*` or range objects, or a version slice `{"cell", "from", "to"}`) and the members hash is SHA-256 of the canonical bytes of the JSON array of the member receipt hashes, ascending (for an empty slice, of `[]`). The same slice read twice is one entry. Its **manifest**, `{"members": [...], "slice": {...}}`, is fetched by the entry; a mesh SHOULD serve it at `https://<mesh>/slice/<slice id>/<members hash>` as `application/json`; members are fetched as receipts by hash.
+**Lineage.** A slice read is one `inputs` entry (8.1): `slice:<slice id>:<members hash>`, where the slice id is SHA-256 of the slice object's canonical bytes (4.4: a cell object with `*` or range objects, or a version slice `{"cell", "from", "to"}`) and the members hash is SHA-256 of the canonical bytes of the JSON array of the member receipt hashes, ascending (for an empty slice, of `[]`). The same slice read twice is one entry. Its **manifest**, `{"members": [...], "slice": {...}}`, is fetched by the entry; a mesh SHOULD serve it at its mesh document's `manifest` endpoint (9.6), by default `https://<mesh>/manifest/<slice id>/<members hash>`, as `application/json` (since `spec-0.4.2` the only manifest path); members are fetched as receipts by hash.
 
 ### 15.14 Excel compatibility
 
@@ -1632,7 +1750,8 @@ power          = postfix [ "^" *"-" postfix ]                    ; no chains
 postfix        = primary                                         ; "." is reserved (15.15)
 primary        = formula-literal / read / call / variable / "(" expr ")"
 formula-literal = number-literal [ unit-suffix ] / string / date / instant / "true" / "false"
-read           = ( qualified-name / alias ) "(" [ read-arg *( "," read-arg ) ] ")"
+read           = ( qualified-name / alias ) [ pin ] "(" [ read-arg *( "," read-arg ) ] ")"
+pin            = "@" 64LHEX                                      ; spec-0.4.2, requests only (5.8)
 read-arg       = [ arg-label ] ( "*" / range / expr )                ; "*" followed by "," or ")"
 range          = "[" expr ".." expr "]"
 call           = builtin "(" [ call-arg *( "," call-arg ) ] ")"  ; and "if", "and", "or" (15.3)

@@ -1,0 +1,124 @@
+{
+  "id": "call/pinned",
+  "kind": "call",
+  "description": "name@<fn_hash> pins the function: the URI carries fn_hash=.",
+  "valid": true,
+  "input": "rates.example.org/fx_rate@f041cf0f3eabaf4a611a6f57050dac8fb1f2e2cd5d6b6526913cff0847ef88df(\"EUR\", \"USD\", 2024-03-15)",
+  "env": {
+    "aliases": {
+      "fx": "rates.example.org/fx_rate"
+    },
+    "descriptors": [
+      {
+        "code": {
+          "body": "amount * rates.example.org/fx_rate(base: base, date: date, quote: quote)\n",
+          "lang": "expr"
+        },
+        "inputs": [
+          "rates.example.org/fx_rate"
+        ],
+        "signature": {
+          "args": {
+            "amount": {
+              "type": "number",
+              "unit": {
+                "arg": "base"
+              },
+              "valid": false
+            },
+            "base": {
+              "type": "string",
+              "valid": false
+            },
+            "date": {
+              "type": "date",
+              "valid": true
+            },
+            "quote": {
+              "type": "string",
+              "valid": false
+            }
+          },
+          "returns": {
+            "type": "number",
+            "unit": {
+              "arg": "quote"
+            }
+          }
+        }
+      }
+    ],
+    "functions": {
+      "rates.example.org/fx_rate": {
+        "code": {
+          "body": "",
+          "lang": "stored"
+        },
+        "inputs": [],
+        "signature": {
+          "args": {
+            "base": {
+              "type": "string",
+              "valid": false
+            },
+            "date": {
+              "type": "date",
+              "valid": true
+            },
+            "quote": {
+              "type": "string",
+              "valid": false
+            }
+          },
+          "returns": {
+            "type": "number",
+            "unit": {
+              "of": {
+                "arg": "quote"
+              },
+              "per": {
+                "arg": "base"
+              }
+            }
+          },
+          "order": [
+            "base",
+            "quote",
+            "date"
+          ]
+        }
+      },
+      "math.example.net/pi": {
+        "code": {
+          "body": "",
+          "lang": "stored"
+        },
+        "inputs": [],
+        "signature": {
+          "args": {},
+          "returns": {
+            "type": "number",
+            "unit": "1"
+          }
+        }
+      },
+      "files.example.org/describe": {
+        "code": {
+          "body": "",
+          "lang": "stored"
+        },
+        "inputs": [],
+        "signature": {
+          "args": {
+            "file": {
+              "type": "blob",
+              "valid": false
+            }
+          },
+          "returns": "string"
+        }
+      }
+    }
+  },
+  "uri": "cell://rates.example.org/fx_rate?base=EUR&date=2024-03-15&quote=USD&fn_hash=f041cf0f3eabaf4a611a6f57050dac8fb1f2e2cd5d6b6526913cff0847ef88df"
+}

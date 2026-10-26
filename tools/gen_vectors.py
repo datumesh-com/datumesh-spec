@@ -91,6 +91,8 @@ def add(id_, kind, description, input=None, error=None, input_hex=None, **extra)
         for field in OUTPUT_FIELDS:
             if field in got:
                 vec[field] = got[field]
+        if kind == "call":  # spec-0.4.2: a call's output is its cell URI
+            vec["uri"] = got["uri"]
     VECTORS.append(vec)
 
 
@@ -1394,6 +1396,243 @@ for name, e, error, why in [
 import gen_formula  # noqa: E402
 
 gen_formula.add_all(add, text)
+
+# ---------------------------------------------------------------------------
+# spec-0.4.2: pinning a function by hash (5.1, 5.8, D70), trust computed (5.5, D71), the slice
+# envelope (5.6), batches (5.7), E_SLICE_AT_CELL and E_NAME_UNBOUND, the versions endpoint (9.6).
+
+FX_SIG = FX["signature"]
+add("uri/pinned", "uri", "fn_hash= pins the function: after the arguments, outside their order (5.1).",
+    f"cell://rates.example.org/fx_rate?base=EUR&date=2024-03-15&quote=USD&fn_hash={FX_HASH}", signature=FX_SIG)
+add("uri/pinned-asof", "uri", "fn_hash= comes before asof, which stays last.",
+    f"cell://rates.example.org/fx_rate?base=EUR&date=2024-03-15&quote=USD&fn_hash={FX_HASH}&asof={ASOF}",
+    signature=FX_SIG)
+add("uri/pinned-no-arguments", "uri", "A function of no arguments, pinned.",
+    f"cell://math.example.net/pi?fn_hash={canon.function_hash(PI)}", signature=PI["signature"])
+add("uri/pinned-slice", "uri", "A slice may be pinned too.",
+    f"cell://rates.example.org/fx_rate?base=EUR&date=2024-03-15&quote=*&fn_hash={FX_HASH}", signature=FX_SIG)
+for name, uri, error, why in [
+    ("uri-pin-not-last", f"cell://rates.example.org/fx_rate?base=EUR&fn_hash={FX_HASH}&date=2024-03-15&quote=USD",
+     "E_CANON_ARG_ORDER", "fn_hash= anywhere but after the arguments is out of order, as asof is."),
+    ("uri-pin-twice", f"cell://rates.example.org/fx_rate?base=EUR&date=2024-03-15&quote=USD&fn_hash={FX_HASH}"
+                      f"&fn_hash={FX_HASH}", "E_CANON_ARG_DUPLICATE", "fn_hash= appears once."),
+    ("uri-pin-after-asof", f"cell://rates.example.org/fx_rate?base=EUR&date=2024-03-15&quote=USD&asof={ASOF}"
+                           f"&fn_hash={FX_HASH}", "E_CANON_ARG_ORDER", "asof is last; fn_hash= comes before it."),
+    ("uri-pin-uppercase", f"cell://rates.example.org/fx_rate?base=EUR&date=2024-03-15&quote=USD&fn_hash={FX_HASH.upper()}",
+     "E_CANON_HEX", "A function hash is 64 lowercase hex digits."),
+    ("uri-pin-slice-marker", "cell://rates.example.org/fx_rate?base=EUR&date=2024-03-15&quote=USD&fn_hash=*",
+     "E_CANON_HEX", "fn_hash= is never a slice marker."),
+]:
+    add(f"invalid/{name}", "uri", why, uri, error, signature=FX_SIG)
+add("ref/pinned", "ref", "A cell reference may carry fn_hash: the function it is pinned to (4.3).",
+    text({"args": FX_ARGS, "fn": "fx_rate", "fn_hash": FX_HASH, "ns": "rates.example.org"}))
+add("invalid/ref-pin-short", "ref", "fn_hash in a reference is 64 lowercase hex digits.",
+    text({"args": FX_ARGS, "fn": "fx_rate", "fn_hash": FX_HASH[:63], "ns": "rates.example.org"}), "E_CANON_HEX")
+add("invalid/function-argument-fn-hash", "function", "fn_hash is reserved as an argument name since spec-0.4.2, "
+    "like asof: it is the URI's pin.", text(stored({"fn_hash": SARG}, "boolean")), "E_CANON_ARG_NAME")
+add("invalid/ref-argument-fn-hash", "ref", "A reference cannot bind an argument named fn_hash.",
+    text({"args": {"fn_hash": S("x")}, "fn": "f", "ns": "rates.example.org"}), "E_CANON_ARG_NAME")
+
+# The call form (5.8): a read with literal arguments, as a request.
+G_FX = gen_formula.FUNCTIONS["rates.example.org/fx_rate"]
+G_FX_HASH = canon.function_hash(G_FX)
+CALL_ENV = {"aliases": {"fx": "rates.example.org/fx_rate"}, "descriptors": [CONVERT],
+            "functions": {"rates.example.org/fx_rate": G_FX, "math.example.net/pi": PI,
+                          "files.example.org/describe": {"code": {"body": "", "lang": "stored"}, "inputs": [],
+                                                         "signature": DESCRIBE_SIG}}}
+for name, call, why in [
+    ("positional", '@fx("EUR", "USD", 2024-03-15)', "Positional arguments bind by signature.order."),
+    ("labelled", 'rates.example.org/fx_rate(quote: "USD", date: 2024-03-15, base: "EUR")', "Labels in any order."),
+    ("mixed", 'rates.example.org/fx_rate("EUR", date: 2024-03-15, quote: "USD")', "Positional before labelled."),
+    ("asof", f'rates.example.org/fx_rate("EUR", "USD", 2024-03-15)?asof={ASOF}', "?asof= is the only query."),
+    ("pinned", f'rates.example.org/fx_rate@{G_FX_HASH}("EUR", "USD", 2024-03-15)',
+     "name@<fn_hash> pins the function: the URI carries fn_hash=."),
+    ("pinned-alias", f'@fx@{G_FX_HASH}("EUR", "USD", 2024-03-15)?asof={ASOF}', "An alias may be pinned too."),
+    ("pinned-unbound", f'calc.example.net/convert@{CONVERT_HASH}(amount: 100, base: "EUR", date: 2024-03-15, quote: "USD")',
+     "A pinned call needs the descriptor, not a binding of the name."),
+    ("slice", 'rates.example.org/fx_rate("EUR", *, 2024-03-15)', "* is the slice marker (for the slice endpoint)."),
+    ("no-arguments", "math.example.net/pi()", "A function of no arguments."),
+    ("blob", f'files.example.org/describe(file: "{H}:17:application/ld+json")', "A blob is written as a string of its "
+     "lexical form."),
+]:
+    add(f"call/{name}", "call", why, call, env=CALL_ENV)
+for name, call, error, why in [
+    ("unbound", 'rates.example.org/fx_close("EUR", "USD", 2024-03-15)', "E_NAME_UNBOUND",
+     "A name not bound as of the asof: the mesh answers not_covered with E_NAME_UNBOUND."),
+    ("alias-unknown", '@ecb("EUR", "USD", 2024-03-15)', "E_NAME_UNBOUND", "An alias the mesh does not know."),
+    ("pin-unknown", f'rates.example.org/fx_rate@{"0" * 64}("EUR", "USD", 2024-03-15)', "E_FN_UNAVAILABLE",
+     "No descriptor with that hash."),
+    ("pin-short", f'rates.example.org/fx_rate@{G_FX_HASH[:63]}("EUR", "USD", 2024-03-15)', "E_PARSE_URI",
+     "A pin is 64 lowercase hex digits."),
+    ("expression", 'rates.example.org/fx_rate("EUR", "USD", 2024-03-15) * 2', "E_PARSE_URI", "Only a read."),
+    ("argument-expression", 'rates.example.org/fx_rate("E" & "UR", "USD", 2024-03-15)', "E_PARSE_URI",
+     "Arguments are literals."),
+    ("range", 'rates.example.org/fx_rate("EUR", "USD", [2024-03-01..2024-03-15])', "E_PARSE_URI",
+     "Ranges have no cell URI."),
+    ("unit", "math.example.net/pi(1 EUR)", "E_PARSE_URI", "Numbers have no units here."),
+    ("query", 'rates.example.org/fx_rate("EUR", "USD", 2024-03-15)?asof=x&y=1', "E_PARSE_URI", "?asof= only."),
+    ("type", 'rates.example.org/fx_rate("EUR", "USD", "2024-03-15")', "E_CANON_TYPE", "A string for a date."),
+    ("date", 'rates.example.org/fx_rate("EUR", "USD", 2024-02-30)', "E_CANON_DATE", "Not a calendar day."),
+    ("number", "math.example.net/pi(1.50)", "E_CANON_NUMBER", "The lexer refuses a non-canonical number first."),
+    ("asof", 'rates.example.org/fx_rate("EUR", "USD", 2024-03-15)?asof=2024-03-16', "E_CANON_INSTANT",
+     "asof is an instant."),
+    ("arity", 'rates.example.org/fx_rate("EUR", "USD", 2024-03-15, "x")', "E_ARG_UNKNOWN", "Too many arguments."),
+    ("label-unknown", 'rates.example.org/fx_rate(base: "EUR", tenor: "1M", quote: "USD", date: 2024-03-15)',
+     "E_ARG_UNKNOWN", "An unknown label."),
+    ("missing", 'rates.example.org/fx_rate("EUR", "USD")', "E_ARG_MISSING", "Every argument is bound."),
+    ("duplicate", 'rates.example.org/fx_rate("EUR", base: "EUR", quote: "USD", date: 2024-03-15)',
+     "E_CANON_ARG_DUPLICATE", "An argument bound twice."),
+]:
+    add(f"invalid/call-{name}", "call", why, call, error, env=CALL_ENV)
+PIN_ENV = gen_formula.env_for("rates.example.org/fx_rate", gen_formula.std_sig("EUR/USD"))
+add("invalid/formula-pinned-read", "formula", "A pinned read is a request form (5.8), not part of a body.",
+    f'rates.example.org/fx_rate@{G_FX_HASH}("EUR", "USD", 2024-03-15)', "E_FORMULA_PLACEMENT", env=PIN_ENV)
+
+# Pins echoed (5.5), the two new codes, trust computed.
+PIN_REQUEST = {"asof": ASOF, "cell_id": FX_ID, "fn_hash": FX_HASH}
+add_envelope("envelope/ok-pinned", "An answer to a pinned request echoes the hash in fn_hash.",
+             {"fn_hash": FX_HASH, "outcome": "ok", "receipt": R_FX, "trust": "primary"}, 200, request=PIN_REQUEST)
+add_envelope("envelope/ok-unpinned-echo", "An answer to an unpinned request may carry the hash its name resolved to.",
+             {"fn_hash": FX_HASH, "outcome": "ok", "receipt": R_FX, "trust": "primary"}, 200)
+add_envelope("envelope/not-covered-pinned", "not_covered for a pinned request echoes the hash too.",
+             {"fn_hash": FX_HASH, "outcome": "not_covered"}, 404, request=PIN_REQUEST)
+add_envelope("envelope/not-covered-name-unbound", "The name is not bound as of the asof: not_covered, since it may "
+             "be bound later, with E_NAME_UNBOUND.", {"error": "E_NAME_UNBOUND", "outcome": "not_covered"}, 404)
+add_envelope("envelope/bad-request-slice-at-cell", "A slice marker at /cell: bad_request with E_SLICE_AT_CELL; "
+             "slices are read at the slice endpoint.", {"error": "E_SLICE_AT_CELL", "outcome": "bad_request"}, 400)
+add_envelope("envelope/bad-request-pin", "A fn_hash= that is not a function hash.",
+             {"error": "E_CANON_HEX", "outcome": "bad_request"}, 400)
+add_envelope("envelope/pending-pinned", "A pending answer to a pinned request echoes the pin in its request.",
+             pending(request={"asof": ASOF, "cell_id": FX_ID, "fn_hash": FX_HASH}), 202, request=PIN_REQUEST)
+MESH_REQUEST = {"asof": ASOF, "cell_id": cell_id(R_CONVERT["cell"]), "mesh": CALC}
+add_envelope("envelope/ok-computed", "computed: the mesh evaluated the cell and signed the receipt itself.",
+             {"outcome": "ok", "receipt": R_CONVERT, "trust": "computed"}, 200)
+add_envelope("envelope/stale-computed", "computed, stale.",
+             {"age_seconds": 60, "outcome": "stale", "receipt": R_CONVERT, "trust": "computed"}, 200)
+add_envelope("envelope/ok-computed-mesh", "With the mesh asked named, computed is checked: the receipt's signer is "
+             "that mesh.", {"outcome": "ok", "receipt": R_CONVERT, "trust": "computed"}, 200, request=MESH_REQUEST)
+add_envelope("envelope/ok-verified-other-mesh", "verified: another host signed, this mesh recomputed.",
+             {"outcome": "ok", "receipt": R_CONVERT, "trust": "verified"}, 200,
+             request=dict(MESH_REQUEST, mesh="mesh.example.net"))
+for name, env, status, request, why in [
+    ("pin-not-echoed", {"outcome": "ok", "receipt": R_FX, "trust": "primary"}, 200, PIN_REQUEST,
+     "An answer to a pinned request echoes fn_hash."),
+    ("pin-other", {"fn_hash": CONVERT_HASH, "outcome": "not_covered"}, 404, PIN_REQUEST,
+     "fn_hash echoes another function than the one pinned."),
+    ("echo-other-than-receipt", {"fn_hash": CONVERT_HASH, "outcome": "ok", "receipt": R_FX, "trust": "primary"}, 200,
+     None, "fn_hash differs from the receipt's."),
+    ("pending-pin-dropped", pending(), 202, PIN_REQUEST, "The pending echo drops the pin."),
+    ("not-covered-other-code", {"error": "E_PARSE_URI", "outcome": "not_covered"}, 404, None,
+     "not_covered carries E_NAME_UNBOUND only."),
+    ("not-covered-error-and-fault", {"error": "E_NAME_UNBOUND", "fault": "E_FORMULA_DIV_ZERO",
+                                     "outcome": "not_covered"}, 404, None, "fault or error, not both."),
+    ("error-name-unbound", {"error": "E_NAME_UNBOUND", "outcome": "error"}, 500, None,
+     "An unbound name is not the mesh's failure."),
+    ("error-slice-at-cell", {"error": "E_SLICE_AT_CELL", "outcome": "error"}, 500, None,
+     "A slice at /cell is the request's fault."),
+    ("computed-primary", {"outcome": "ok", "receipt": R_FX, "trust": "computed"}, 200, None,
+     "The publisher's own stored answer is primary, never computed."),
+    ("computed-other-signer", {"outcome": "ok", "receipt": R_CONVERT, "trust": "computed"}, 200,
+     dict(MESH_REQUEST, mesh="mesh.example.net"), "computed, but another host than the mesh asked signed."),
+    ("verified-own-receipt", {"outcome": "ok", "receipt": R_CONVERT, "trust": "verified"}, 200, MESH_REQUEST,
+     "verified is another signer's receipt; the mesh's own is computed."),
+    ("unverified-own-receipt", {"outcome": "ok", "receipt": R_CONVERT, "trust": "unverified"}, 200, MESH_REQUEST,
+     "unverified is another signer's receipt; the mesh's own is computed."),
+    ("poll-other-mesh", pending(), 202, dict(FX_REQUEST, mesh="other.example.net"),
+     "With the mesh asked named, poll must be on it."),
+]:
+    add_envelope(f"invalid/envelope-{name}", why, env, status, "E_ENVELOPE", request=request)
+
+# The slice endpoint (5.6).
+FX_SLICE = FX_CELL | {"args": FX_ARGS | {"quote": "*"}}
+SLICE_REQUEST = {"asof": ASOF, "slice_id": canon.slice_id(FX_SLICE)}
+
+
+def fx_member(quote, asof=ASOF):
+    c = FX_CELL | {"args": FX_ARGS | {"quote": S(quote)}}
+    return signed(receipt(c, "number", "1.0892", f"The EUR/{quote} rate for 15 March 2024.", "rates-2020", asof=asof),
+                  "rates-2020")
+
+
+R_CHF, R_GBP, R_JPY = fx_member("CHF"), fx_member("GBP"), fx_member("JPY")
+R_LATE = fx_member("NOK", asof="2024-03-17T09:00:00.000000Z")
+M = lambda r, trust="primary": {"outcome": "ok", "receipt": r, "trust": trust}  # noqa: E731
+
+
+def slice_page(members, **over):
+    env = {"members": members, "outcome": "ok", "slice": FX_SLICE}
+    env.update(over)
+    return env
+
+
+AFTER_GBP = dict(SLICE_REQUEST, after={"quote": S("GBP")})
+add_envelope("envelope/slice-page", "A page of a slice: member envelopes in key order, and next.",
+             slice_page([M(R_CHF), M(R_GBP)], next=f"https://mesh.example/slice/rates.example.org/fx_rate?base=EUR"
+                        f"&date=2024-03-15&quote=*&asof={ASOF}&after=GBP"), 200, request=SLICE_REQUEST)
+add_envelope("envelope/slice-after", "The following page: every key after the cursor, the last page has no next.",
+             slice_page([M(R_JPY), M(R_FX)]), 200, request=AFTER_GBP)
+add_envelope("envelope/slice-last-page", "A whole slice on one page, a member stale.",
+             slice_page([M(R_CHF), {"age_seconds": 3600, "outcome": "stale", "receipt": R_GBP, "trust": "primary"},
+                         M(R_FX)]), 200, request=SLICE_REQUEST)
+add_envelope("envelope/slice-empty", "No member as of the asof: an empty page.", slice_page([]), 200,
+             request=SLICE_REQUEST)
+add_envelope("envelope/slice-not-covered", "Any refusal at the slice endpoint is an ordinary envelope.",
+             {"error": "E_NAME_UNBOUND", "outcome": "not_covered"}, 404, request=SLICE_REQUEST)
+for name, env, request, why in [
+    ("slice-unordered", slice_page([M(R_GBP), M(R_CHF)]), SLICE_REQUEST, "Members are in ascending key order."),
+    ("slice-duplicate", slice_page([M(R_GBP), M(R_GBP)]), SLICE_REQUEST, "Strictly ascending: no member twice."),
+    ("slice-not-member", slice_page([M(R_CONVERT, "verified")]), SLICE_REQUEST, "A receipt outside the slice."),
+    ("slice-later-asof", slice_page([M(R_LATE)]), SLICE_REQUEST, "A member's asof is after the requested asof."),
+    ("slice-other-slice", slice_page([M(R_CHF)], slice=FX_SLICE | {"args": FX_ARGS | {"base": "*"}}), SLICE_REQUEST,
+     "The page is of another slice than the one requested."),
+    ("slice-before-cursor", slice_page([M(R_CHF)]), AFTER_GBP, "A member at or before the cursor."),
+    ("slice-member-outcome", slice_page([{"outcome": "not_covered"}]), SLICE_REQUEST,
+     "Members are ok or stale envelopes: a cell with no value is not a member."),
+    ("slice-receipt-at-top", slice_page([M(R_CHF)], receipt=R_CHF), SLICE_REQUEST, "A page has no receipt of its own."),
+    ("slice-next-other-mesh", slice_page([M(R_CHF)], next="https://other.example.net/slice/x"),
+     dict(SLICE_REQUEST, mesh="mesh.example"), "next is on the mesh asked."),
+]:
+    add_envelope(f"invalid/envelope-{name}", why, env, 200, "E_ENVELOPE", request=request)
+
+# Batches (5.7).
+B_REQUESTS = [FX_REQUEST, {"asof": ASOF, "cell_id": cell_id(R_CONVERT["cell"])}, {"cell_id": "f" * 64}]
+B_OK = [{"envelope": {"outcome": "ok", "receipt": R_FX, "trust": "primary"}, "status": 200},
+        {"envelope": {"outcome": "ok", "receipt": R_CONVERT, "trust": "computed"}, "status": 200},
+        {"envelope": pending(request={"cell_id": "f" * 64}), "status": 202}]
+
+
+def add_batch(id_, why, items, error=None, status=200, requests=B_REQUESTS, raw=None):
+    add(id_, "batch", why, raw if raw is not None else text(items), error, status=status, keys=ALL_KEYS,
+        requests=requests)
+
+
+add_batch("batch/in-order", "One item per request, in request order, each with its own status.", B_OK)
+add_batch("batch/item-failures", "A failing item is reported in its place: the first answers another cell, the "
+          "third has a status its outcome does not have.",
+          [B_OK[1], B_OK[1], {"envelope": {"outcome": "not_covered"}, "status": 200}])
+add_batch("batch/item-error-status", "An error item carries its exact status.",
+          [B_OK[0], {"envelope": {"error": "E_INPUT_UNAVAILABLE", "outcome": "error"}, "status": 503}, B_OK[2]])
+add_batch("batch/refused", "The whole batch refused: one envelope with its status.",
+          {"outcome": "rate_limited", "retry_after_seconds": 10}, status=429)
+add_batch("batch/too-large", "A batch over the mesh's bound: bad_request E_CANON_LIMIT, whole.",
+          {"error": "E_CANON_LIMIT", "outcome": "bad_request"}, status=400)
+for name, items, why in [
+    ("not-array", {"envelope": B_OK[0]["envelope"], "status": 200}, "A 200 batch response is an array."),
+    ("short", B_OK[:2], "One item per request."),
+    ("item-extra-member", [B_OK[0] | {"index": 0}, B_OK[1], B_OK[2]], "An item is exactly {envelope, status}."),
+    ("item-status-text", [B_OK[0] | {"status": "200"}, B_OK[1], B_OK[2]], "An item's status is an integer."),
+]:
+    add_batch(f"invalid/batch-{name}", why, items, "E_ENVELOPE")
+add_batch("invalid/batch-status-fraction", "An item's status is written as an integer.", None, "E_ENVELOPE",
+          raw=text(B_OK).replace('"status": 200', '"status": 200.0', 1))
+add_batch("invalid/batch-refused-ok", "Only a refusal answers the whole batch.",
+          {"outcome": "ok", "receipt": R_FX, "trust": "primary"}, "E_ENVELOPE", status=200)
+
+# The versions endpoint (9.6).
+add("mesh/versions", "mesh", "The optional versions endpoint, a template with {cell}.", host=MESH_HOST,
+    env=mesh_env(mesh_doc({"versions": f"{MB}/versions/{{cell}}"})))
+add("invalid/mesh-versions-no-placeholder", "mesh", "versions has the {cell} placeholder.", error="E_MESH_DOC",
+    host=MESH_HOST, env=mesh_env(mesh_doc({"versions": f"{MB}/versions"})))
 
 
 def main():

@@ -202,10 +202,11 @@ UNIT_LITERALS = _unit_literals()
 
 
 class Token:
-    __slots__ = ("kind", "text", "pos", "value", "unit")
+    __slots__ = ("kind", "text", "pos", "value", "unit", "pin")
 
     def __init__(self, kind, text, pos, value=None, unit=None):
         self.kind, self.text, self.pos, self.value, self.unit = kind, text, pos, value, unit
+        self.pin = None  # spec-0.4.2: name@<fn_hash>, a function pinned by hash
 
     def __repr__(self):
         return f"Token({self.kind}, {self.text!r})"
@@ -234,6 +235,20 @@ def _word_char(c):
 
 def is_name(text):
     return bool(_NAME.fullmatch(text)) and len(text) <= 64
+
+
+_PIN = re.compile(r"@([0-9a-f]{64})")
+
+
+def _pin(source, i, token):
+    """spec-0.4.2: a function name directly followed by @ and 64 lowercase hex digits (its fn_hash)."""
+    if i < len(source) and source[i] == "@":
+        m = _PIN.match(source, i)
+        if not m or (m.end() < len(source) and _word_char(source[m.end()])):
+            fail("E_FORMULA_NAME", "a pin is @ and the 64 lowercase hex digits of a function hash")
+        token.pin = m.group(1)
+        return m.end()
+    return i
 
 
 def tokenize(source):
@@ -291,6 +306,7 @@ def tokenize(source):
                         fail("E_FORMULA_NAME", f"not a function name: {text} ({e.code})")
                     tokens.append(Token("QNAME", text, i, text))
                     i += len(text)
+                    i = _pin(source, i, tokens[-1])
                     continue
             h = _HOSTISH.match(rest)
             if h and ".." in h.group():  # .. is a token (ranges), never inside a name
@@ -309,6 +325,7 @@ def tokenize(source):
                 fail("E_FORMULA_NAME", f"not an alias: {text}")
             tokens.append(Token("ALIAS", text, i, text[1:]))
             i += len(text)
+            i = _pin(source, i, tokens[-1])
             continue
         # L5 numbers, L6 unit suffixes
         if c.isdigit() or (c == "." and i + 1 < n and source[i + 1].isdigit()):
@@ -624,7 +641,8 @@ class Parser:
             if not self.is_p("("):
                 fail("E_FORMULA_SYNTAX", f"{tok.text} must be called: there are no function values")
             args = self.read_args()
-            return ("read", tok.value if k == "QNAME" else None, tok.value if k == "ALIAS" else None, args)
+            read = ("read", tok.value if k == "QNAME" else None, tok.value if k == "ALIAS" else None, args)
+            return read + (tok.pin,) if tok.pin is not None else read
         if k == "PUNCT" and tok.text == "(":
             self.advance()
             self.depth += 1
@@ -844,7 +862,10 @@ def _label_name(word):
 
 
 def _resolve_read(tree, env):
-    _, fq, alias, args = tree
+    _, fq, alias, args = tree[:4]
+    if len(tree) > 4:
+        fail("E_FORMULA_PLACEMENT", "a function pinned by hash (name@<fn_hash>) is a request form (SPEC 5.8), "
+             "not part of a body")
     if alias is not None:
         aliases = (env or {}).get("aliases", {})
         if alias not in aliases:

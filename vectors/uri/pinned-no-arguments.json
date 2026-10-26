@@ -1,0 +1,23 @@
+{
+  "id": "uri/pinned-no-arguments",
+  "kind": "uri",
+  "description": "A function of no arguments, pinned.",
+  "valid": true,
+  "input": "cell://math.example.net/pi?fn_hash=6548c6e298e8f66b98295303aaac8fcf45bed6fff3bdedcbda2ce8d49d6dedbb",
+  "signature": {
+    "args": {},
+    "returns": {
+      "type": "number",
+      "unit": "1"
+    }
+  },
+  "object": {
+    "args": {},
+    "fn": "pi",
+    "ns": "math.example.net",
+    "fn_hash": "6548c6e298e8f66b98295303aaac8fcf45bed6fff3bdedcbda2ce8d49d6dedbb"
+  },
+  "canonical": "{\"args\":{},\"fn\":\"pi\",\"fn_hash\":\"6548c6e298e8f66b98295303aaac8fcf45bed6fff3bdedcbda2ce8d49d6dedbb\",\"ns\":\"math.example.net\"}",
+  "sha256": "76c85f397464acae31a3799ed2ddea4335349777647dc0e78288f37ed0db4fe0",
+  "https": "https://mesh.example/cell/math.example.net/pi?fn_hash=6548c6e298e8f66b98295303aaac8fcf45bed6fff3bdedcbda2ce8d49d6dedbb"
+}

@@ -1,0 +1,35 @@
+{
+  "id": "invalid/uri-pin-uppercase",
+  "kind": "uri",
+  "description": "A function hash is 64 lowercase hex digits.",
+  "valid": false,
+  "input": "cell://rates.example.org/fx_rate?base=EUR&date=2024-03-15&quote=USD&fn_hash=7B58ECB8FD23B644C87951D0BD609790FF547CBB23FED27186C669CE2CE0AA80",
+  "signature": {
+    "args": {
+      "base": {
+        "type": "string",
+        "valid": false
+      },
+      "date": {
+        "type": "date",
+        "valid": true
+      },
+      "quote": {
+        "type": "string",
+        "valid": false
+      }
+    },
+    "returns": {
+      "type": "number",
+      "unit": {
+        "of": {
+          "arg": "quote"
+        },
+        "per": {
+          "arg": "base"
+        }
+      }
+    }
+  },
+  "error": "E_CANON_HEX"
+}

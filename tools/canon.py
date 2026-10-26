@@ -84,6 +84,8 @@ ERROR_CODES = (
     "E_ENVELOPE",
     "E_JOB_UNKNOWN",
     "E_MESH_DOC",
+    "E_SLICE_AT_CELL",
+    "E_NAME_UNBOUND",
 )
 
 # Section 4.5 of SPEC.md.
@@ -106,7 +108,7 @@ LIMITS = {
 TYPES = ("blob", "boolean", "date", "instant", "number", "string")
 VALID_TIME_TYPES = ("date", "instant", "string")
 SLICE = "*"
-RESERVED_ARG_NAMES = ("asof",)
+RESERVED_ARG_NAMES = ("asof", "fn_hash")  # fn_hash since spec-0.4.2: the URI's pin (5.1)
 RESERVED_ARG_PREFIX = "dm_"
 
 
@@ -638,9 +640,9 @@ def shape_args(args, path):
 
 
 def shape_ref(ref, path="$"):
-    _shape_object(ref, ("args", "fn", "ns"), ("asof",), path)
+    _shape_object(ref, ("args", "fn", "ns"), ("asof", "fn_hash"), path)
     shape_args(ref["args"], f"{path}.args")
-    for key in ("fn", "ns", "asof"):
+    for key in ("fn", "fn_hash", "ns", "asof"):
         if key in ref:
             _shape_str(ref, key, path)
 
@@ -759,6 +761,8 @@ def check_ref(ref, path="$"):
     if "asof" in ref:
         check_instant(ref["asof"], f"{path}.asof")
     check_name(ref["fn"], f"{path}.fn")
+    if "fn_hash" in ref:  # spec-0.4.2: a reference pinned to a function hash
+        check_hex(ref["fn_hash"], 64, f"{path}.fn_hash")
     check_namespace(ref["ns"], f"{path}.ns")
     check_function_name(ref["ns"] + "/" + ref["fn"], path)
     return ref
@@ -1177,12 +1181,18 @@ def parse_uri(uri, signature):
     asof = None
     if params and params[-1][0] == "asof":
         asof = params.pop()[1]
+    pin = None  # spec-0.4.2: fn_hash=, after the arguments and before asof
+    if params and params[-1][0] == "fn_hash":
+        pin = params.pop()[1]
     previous = None
     for name, raw in params:
         p = f"uri.query.{name}"
         if name == "asof":
             code = "E_CANON_ARG_DUPLICATE" if asof is not None else "E_CANON_ARG_ORDER"
             fail(code, "asof appears once, as the last parameter", p)
+        if name == "fn_hash":
+            code = "E_CANON_ARG_DUPLICATE" if pin is not None else "E_CANON_ARG_ORDER"
+            fail(code, "fn_hash appears once, after the arguments and before asof", p)
         check_arg_name(name, p)
         if previous is not None and name == previous:
             fail("E_CANON_ARG_DUPLICATE", f"argument {name!r} repeated", p)
@@ -1216,6 +1226,9 @@ def parse_uri(uri, signature):
             check_lexical(type_, value, p)
         args[name] = {"type": type_, "value": value}
     ref = {"args": args, "fn": function, "ns": namespace}
+    if pin is not None:
+        check_hex(pin, 64, "uri.query.fn_hash")
+        ref["fn_hash"] = pin
     if asof is not None:
         ref["asof"] = percent_decode(asof, "uri.query.asof")
         check_instant(ref["asof"], "uri.query.asof")
@@ -1245,6 +1258,8 @@ def format_uri(ref):
         else:
             text = percent_encode(value["value"])
         query.append(f"{name}={text}")
+    if "fn_hash" in ref:
+        query.append("fn_hash=" + ref["fn_hash"])
     if "asof" in ref:
         query.append("asof=" + ref["asof"])
     uri = f"cell://{ref['ns']}/{ref['fn']}"
@@ -1344,6 +1359,7 @@ def resolve_keys(host, env):
 MESH_ENDPOINTS = {  # endpoint -> its placeholders (each exactly once)
     "blob": ("sha256",), "cell": ("cell",), "cells": (), "descriptor": ("hash",), "explain": ("cell",), "find": (),
     "jobs": ("job",), "manifest": ("slice_id", "members_hash"), "receipt": ("hash",), "slice": ("cell",), "verify": (),
+    "versions": ("cell",),  # spec-0.4.2, optional
 }
 MESH_REQUIRED = ("cell", "descriptor", "jobs", "manifest", "receipt")
 
@@ -1608,16 +1624,18 @@ def _superseded(r, recompute, keyenv):
 # not signed; only the receipt inside it is verified.
 
 ENVELOPE_MEMBERS = {  # outcome -> (required, optional)
-    "ok": (("outcome", "receipt", "trust"), ("reason", "superseded_by")),
-    "stale": (("age_seconds", "outcome", "receipt", "trust"), ("reason", "superseded_by")),
-    "not_covered": (("outcome",), ("fault",)),
-    "unlicensed": (("outcome",), ()),
-    "payment_required": (("outcome", "quote"), ()),
-    "rate_limited": (("outcome", "retry_after_seconds"), ()),
-    "error": (("error", "outcome"), ()),
-    "bad_request": (("error", "outcome"), ()),
+    "ok": (("outcome", "receipt", "trust"), ("fn_hash", "reason", "superseded_by")),
+    "stale": (("age_seconds", "outcome", "receipt", "trust"), ("fn_hash", "reason", "superseded_by")),
+    "not_covered": (("outcome",), ("error", "fault", "fn_hash")),
+    "unlicensed": (("outcome",), ("fn_hash",)),
+    "payment_required": (("outcome", "quote"), ("fn_hash",)),
+    "rate_limited": (("outcome", "retry_after_seconds"), ("fn_hash",)),
+    "error": (("error", "outcome"), ("fn_hash",)),
+    "bad_request": (("error", "outcome"), ("fn_hash",)),
     "pending": (("estimate_seconds", "job", "outcome", "poll", "request"), ()),
 }
+# spec-0.4.2: an ok envelope at the slice endpoint (5.6) carries a page of member envelopes.
+SLICE_OK_MEMBERS = (("members", "outcome", "slice"), ("fn_hash", "next"))
 ENVELOPE_STATUS = {
     "ok": range(200, 201), "stale": range(200, 201), "not_covered": range(404, 405),
     "unlicensed": range(403, 404), "payment_required": range(402, 403),
@@ -1629,9 +1647,12 @@ URI_CODES = (
     "E_PARSE_URI", "E_CANON_NAME", "E_CANON_ARG_NAME", "E_CANON_ARG_DUPLICATE", "E_CANON_ARG_ORDER",
     "E_CANON_PERCENT", "E_CANON_TYPE", "E_CANON_NUMBER", "E_CANON_DATE", "E_CANON_INSTANT",
     "E_CANON_STRING", "E_CANON_BLOB", "E_CANON_LIMIT", "E_ARG_UNKNOWN", "E_ARG_MISSING",
+    "E_CANON_HEX",  # spec-0.4.2: a fn_hash= that is not 64 lowercase hex digits
 )
+# Codes a mesh reports about a request, never as an error (spec-0.4.1, spec-0.4.2).
+REQUEST_CODES = ("E_JOB_UNKNOWN", "E_SLICE_AT_CELL", "E_NAME_UNBOUND")
 _INTEGER = re.compile(r"0|[1-9][0-9]*")
-TRUST = ("primary", "verified", "unverified")
+TRUST = ("primary", "verified", "unverified", "computed")  # computed since spec-0.4.2
 _JOB = re.compile(r"[0-9a-f]{32,64}")
 
 
@@ -1652,23 +1673,47 @@ def _seconds(value):
             and int(value.text) <= MAX_SAFE_INTEGER)
 
 
+def _mesh_url_host(value, path, what):
+    """An https URL (at most 512 characters) whose host is a DNS name: https://<DNS name>/... ."""
+    if not isinstance(value, str) or not _URL.fullmatch(value) or len(value) > LIMITS["licence_url"]:
+        fail("E_ENVELOPE", f"{what} is an https URL", path)
+    host = value[len("https://"):].split("/", 1)[0]
+    if "/" not in value[len("https://"):]:
+        fail("E_ENVELOPE", f"{what} has a path", path)
+    try:
+        check_dns_name(host, path)
+    except DatumeshError:
+        fail("E_ENVELOPE", f"{what} names a DNS name as its host, with no port or userinfo", path)
+    return host
+
+
 @_as_error("E_ENVELOPE")
-def _check_envelope_members(env):
+def _check_envelope_members(env, members=None):
     if not isinstance(env, dict) or not isinstance(env.get("outcome"), str):
         fail("E_ENVELOPE", "an envelope is an object with a string outcome")
     if env["outcome"] not in ENVELOPE_MEMBERS:
         fail("E_ENVELOPE", f"unknown outcome {env['outcome']!r}", "$.outcome")
-    required, optional = ENVELOPE_MEMBERS[env["outcome"]]
+    required, optional = members or ENVELOPE_MEMBERS[env["outcome"]]
     _shape_object(env, required, optional, "$")
     if "age_seconds" in env and not _seconds(env["age_seconds"]):
         fail("E_ENVELOPE", "age_seconds is a non-negative integer", "$.age_seconds")
     if "error" in env:
-        # bad_request: a URI code, or E_JOB_UNKNOWN for a job URL (spec-0.4.1); error: any code
-        # of 10.2 but the client's E_ENVELOPE and the request's E_JOB_UNKNOWN.
-        allowed = URI_CODES + ("E_JOB_UNKNOWN",) if env["outcome"] == "bad_request" else tuple(
-            c for c in ERROR_CODES if c not in ("E_ENVELOPE", "E_JOB_UNKNOWN"))
+        # bad_request: a URI code, E_SLICE_AT_CELL (spec-0.4.2), or E_JOB_UNKNOWN for a job URL
+        # (spec-0.4.1); not_covered: E_NAME_UNBOUND only (spec-0.4.2); error: any code of 10.2 but
+        # the client's E_ENVELOPE and the request codes.
+        if env["outcome"] == "bad_request":
+            allowed = URI_CODES + ("E_JOB_UNKNOWN", "E_SLICE_AT_CELL")
+        elif env["outcome"] == "not_covered":
+            allowed = ("E_NAME_UNBOUND",)
+        else:
+            allowed = tuple(c for c in ERROR_CODES if c != "E_ENVELOPE" and c not in REQUEST_CODES)
         if env["error"] not in allowed:
             fail("E_ENVELOPE", f"{env['error']!r} is not a code this outcome can carry", "$.error")
+        if "fault" in env:
+            fail("E_ENVELOPE", "not_covered carries fault or error, not both", "$.error")
+    if "fn_hash" in env:
+        if not isinstance(env["fn_hash"], str) or not re.fullmatch(r"[0-9a-f]{64}", env["fn_hash"]):
+            fail("E_ENVELOPE", "fn_hash is 64 lowercase hex digits", "$.fn_hash")
     if "quote" in env:
         quote = env["quote"]
         _shape_object(quote, ("amount", "authorise", "currency"), (), "$.quote")
@@ -1701,19 +1746,18 @@ def _check_envelope_members(env):
                 or not poll.endswith("/jobs/" + str(env.get("job"))):
             fail("E_ENVELOPE", "poll is the https URL of the job: .../jobs/<job>", "$.poll")
         # spec-0.4.1 (DEF-51): https://, a DNS name (2.1), then the path. Whether it is the host
-        # asked is the client's check: the envelope check does not know that host.
-        try:
-            check_dns_name(poll[len("https://"):].split("/", 1)[0], "$.poll")
-        except DatumeshError:
-            fail("E_ENVELOPE", "poll names a DNS name as its host, with no port or userinfo", "$.poll")
+        # asked is checked against the request's mesh, when the caller gives it (spec-0.4.2).
+        _mesh_url_host(poll, "$.poll", "poll")
     if "request" in env:
         req = env["request"]
-        if not isinstance(req, dict) or "cell_id" not in req or set(req) - {"asof", "cell_id"}:
-            fail("E_ENVELOPE", "request is {cell_id, asof?}", "$.request")
+        if not isinstance(req, dict) or "cell_id" not in req or set(req) - {"asof", "cell_id", "fn_hash"}:
+            fail("E_ENVELOPE", "request is {cell_id, asof?, fn_hash?}", "$.request")
         if not isinstance(req["cell_id"], str) or not re.fullmatch(r"[0-9a-f]{64}", req["cell_id"]):
             fail("E_ENVELOPE", "request.cell_id is a cell id", "$.request.cell_id")
         if "asof" in req and (not isinstance(req["asof"], str) or not _is_instant(req["asof"])):
             fail("E_ENVELOPE", "request.asof is an instant", "$.request.asof")
+        if "fn_hash" in req and (not isinstance(req["fn_hash"], str) or not re.fullmatch(r"[0-9a-f]{64}", req["fn_hash"])):
+            fail("E_ENVELOPE", "request.fn_hash is a function hash", "$.request.fn_hash")
     if "retry_after_seconds" in env and not _seconds(env["retry_after_seconds"]):
         fail("E_ENVELOPE", "retry_after_seconds is a non-negative integer", "$.retry_after_seconds")
     if "superseded_by" in env:
@@ -1723,45 +1767,341 @@ def _check_envelope_members(env):
         fail("E_ENVELOPE", "fault is a formula evaluation fault code (SPEC 15.11)", "$.fault")
     if "trust" in env and env["trust"] not in TRUST:
         fail("E_ENVELOPE", f"trust is one of {', '.join(TRUST)}", "$.trust")
+    if "next" in env:
+        _mesh_url_host(env["next"], "$.next", "next")
+    if "members" in env and not isinstance(env["members"], list):
+        fail("E_ENVELOPE", "members is an array of envelopes", "$.members")
+    if "slice" in env and not isinstance(env["slice"], dict):
+        fail("E_ENVELOPE", "slice is a slice object", "$.slice")
 
 
-def check_envelope(status, body, keyenv, request):
-    """Check a mesh response (SPEC.md 5.5): HTTP status and JSON body, against the request:
-    {"cell_id": <cell id asked for>, "asof": <instant, if the request carried one>}, and "job": <job id>
-    when the response is to GET /jobs/<job> (spec-0.4.1): the job's envelope is bound to the original
-    request, never to the job URL."""
-    env = parse_json(body, keep_integer_text=True)
+def _host(key_ref):
+    return key_ref.split("#")[0]
+
+
+def _check_receipt_answer(env, keyenv, request, cell_ok, path="$"):
+    """Steps 4-6 for an envelope with a receipt: verify it, bind it, check trust."""
+    r = env["receipt"]
+    receipt_hash = verify_receipt(jcs(r), keyenv)["hash"]
+    if not cell_ok(r):
+        fail("E_ENVELOPE", "the receipt is for another cell than the one requested", f"{path}.receipt.cell")
+    # ok and stale alike: a receipt answers every asof from its own up to the cell's next
+    # version, so its asof is at or before the one requested (D31). What ok adds, that the
+    # receipt is the latest version known as of the requested asof, is the mesh's claim.
+    if "asof" in request and not r["asof"] <= request["asof"]:
+        fail("E_ENVELOPE", "the receipt's asof is after the one requested", f"{path}.receipt.asof")
+    primary = _host(r["computed_by"]) == r["cell"]["ns"].split("/")[0] and not r["inputs"]
+    if primary != (env["trust"] == "primary"):
+        fail("E_ENVELOPE", "trust is primary exactly when the publisher's host signed a stored answer", f"{path}.trust")
+    # spec-0.4.2: computed is this mesh's own evaluation, signed by it; verified and unverified are
+    # receipts another host signed. The envelope check can tell them apart only when the caller
+    # names the mesh it asked.
+    if not primary and "mesh" in request:
+        own = _host(r["computed_by"]) == request["mesh"]
+        if own != (env["trust"] == "computed"):
+            fail("E_ENVELOPE", "trust is computed exactly when the mesh asked signed the receipt", f"{path}.trust")
+    if "fn_hash" in env and env["fn_hash"] != r["cell"]["fn_hash"]:
+        fail("E_ENVELOPE", "fn_hash echoes another function than the receipt's", f"{path}.fn_hash")
+    if env.get("superseded_by") == receipt_hash:
+        fail("E_ENVELOPE", "a receipt cannot supersede itself", f"{path}.superseded_by")
+    return {"outcome": env["outcome"], "receipt_hash": receipt_hash, "trust": env["trust"]}
+
+
+def _check_pin_echo(env, request):
+    """spec-0.4.2: an envelope answering a request pinned to a function hash echoes it."""
+    pin = request.get("fn_hash")
+    if "fn_hash" in env and pin is not None and env["fn_hash"] != pin:
+        fail("E_ENVELOPE", "fn_hash echoes another function than the one pinned", "$.fn_hash")
+    if pin is not None and "fn_hash" not in env and env["outcome"] not in ("rate_limited", "bad_request", "pending"):
+        fail("E_ENVELOPE", "an envelope answering a pinned request echoes its fn_hash", "$.fn_hash")
+
+
+def _key_tuple(slice_obj, cell_args, path):
+    """The key of a slice member (15.13): its open and ranged arguments, ascending by name, each in
+    its type's order."""
+    names = [n for n in keys_in_order(slice_obj["args"]) if not _is_scalar_arg(slice_obj["args"][n])]
+    try:
+        return tuple(type_key(cell_args[n]["type"], cell_args[n]["value"]) for n in names)
+    except (KeyError, TypeError, DatumeshError):
+        fail("E_ENVELOPE", "a key is the slice's open arguments, as typed scalars", path)
+
+
+def _is_scalar_arg(value):
+    return isinstance(value, dict) and "value" in value
+
+
+def check_envelope_object(status, env, keyenv, request):
+    """check_envelope on a parsed envelope (the items of a batch, 5.7, use it)."""
+    if "slice_id" in request:
+        return _check_slice_envelope(status, env, keyenv, request)
     _check_envelope_members(env)
     if status not in ENVELOPE_STATUS[env["outcome"]]:
         fail("E_ENVELOPE", f"status {status} does not match outcome {env['outcome']}", "$.outcome")
     result = {"outcome": env["outcome"]}
     if env.get("error") == "E_JOB_UNKNOWN" and "job" not in request:
         fail("E_ENVELOPE", "E_JOB_UNKNOWN answers a job URL only", "$.error")
+    _check_pin_echo(env, request)
     if env["outcome"] == "pending":
         # Step 5 for pending (spec-0.4.1): the echoed request is the one made, and a pending
         # envelope fetched from a job URL is that job's.
         echoed = env["request"]
-        if echoed["cell_id"] != request["cell_id"] or echoed.get("asof") != request.get("asof"):
+        if echoed["cell_id"] != request["cell_id"] or echoed.get("asof") != request.get("asof") \
+                or echoed.get("fn_hash") != request.get("fn_hash"):
             fail("E_ENVELOPE", "the pending envelope echoes another request", "$.request")
         if "job" in request and env["job"] != request["job"]:
             fail("E_ENVELOPE", "the pending envelope is for another job than the one polled", "$.job")
+        if "mesh" in request and _mesh_url_host(env["poll"], "$.poll", "poll") != request["mesh"]:
+            fail("E_ENVELOPE", "poll names another host than the mesh asked", "$.poll")
     if "receipt" in env:
-        r = env["receipt"]
-        result["receipt_hash"] = verify_receipt(jcs(r), keyenv)["hash"]
-        if sha256_hex(jcs(r["cell"])) != request["cell_id"]:
-            fail("E_ENVELOPE", "the receipt is for another cell than the one requested", "$.receipt.cell")
-        # ok and stale alike: a receipt answers every asof from its own up to the cell's next
-        # version, so its asof is at or before the one requested (D31). What ok adds, that the
-        # receipt is the latest version known as of the requested asof, is the mesh's claim.
-        if "asof" in request and not r["asof"] <= request["asof"]:
-            fail("E_ENVELOPE", "the receipt's asof is after the one requested", "$.receipt.asof")
-        primary = r["computed_by"].split("#")[0] == r["cell"]["ns"].split("/")[0] and not r["inputs"]
-        if primary != (env["trust"] == "primary"):
-            fail("E_ENVELOPE", "trust is primary exactly when the publisher's host signed a stored answer", "$.trust")
-        if env.get("superseded_by") == result["receipt_hash"]:
-            fail("E_ENVELOPE", "a receipt cannot supersede itself", "$.superseded_by")
-        result["trust"] = env["trust"]
+        result = _check_receipt_answer(
+            env, keyenv, request, lambda r: sha256_hex(jcs(r["cell"])) == request["cell_id"])
     return result
+
+
+@_as_error("E_ENVELOPE")
+def _slice_members_shape(env):
+    _check_envelope_members(env, SLICE_OK_MEMBERS)
+
+
+def _check_slice_envelope(status, env, keyenv, request):
+    """A response of the slice endpoint (5.6, spec-0.4.2), against the request
+    {"slice_id", "asof"?, "fn_hash"?, "mesh"?, "after"?}."""
+    if isinstance(env, dict) and env.get("outcome") == "ok":
+        _slice_members_shape(env)
+    else:
+        _check_envelope_members(env)
+        if env["outcome"] in ("ok", "stale", "pending"):
+            fail("E_ENVELOPE", f"{env['outcome']} is not an answer of the slice endpoint", "$.outcome")
+    if status not in ENVELOPE_STATUS[env["outcome"]]:
+        fail("E_ENVELOPE", f"status {status} does not match outcome {env['outcome']}", "$.outcome")
+    if env.get("error") == "E_JOB_UNKNOWN":
+        fail("E_ENVELOPE", "E_JOB_UNKNOWN answers a job URL only", "$.error")
+    _check_pin_echo(env, request)
+    if env["outcome"] != "ok":
+        return {"outcome": env["outcome"]}
+    s = env["slice"]
+    if sha256_hex(jcs(s)) != request["slice_id"] or "args" not in s:
+        fail("E_ENVELOPE", "the page is of another slice than the one requested", "$.slice")
+    if "fn_hash" in env and env["fn_hash"] != s.get("fn_hash"):
+        fail("E_ENVELOPE", "fn_hash echoes another function than the slice's", "$.fn_hash")
+    if "next" in env and "mesh" in request and _mesh_url_host(env["next"], "$.next", "next") != request["mesh"]:
+        fail("E_ENVELOPE", "next names another host than the mesh asked", "$.next")
+    previous = _key_tuple(s, request["after"], "request.after") if "after" in request else None
+    results = []
+    for i, member in enumerate(env["members"]):
+        path = f"$.members[{i}]"
+        _check_member_shape(member, path)
+        got = _check_receipt_answer(member, keyenv, request, lambda r: is_slice_member(s, r), path)
+        key = _key_tuple(s, member["receipt"]["cell"]["args"], path)
+        if previous is not None and not key > previous:
+            fail("E_ENVELOPE", "members are in strictly ascending key order, after the cursor", path)
+        previous = key
+        results.append(got)
+    return {"outcome": "ok", "results": results}
+
+
+@_as_error("E_ENVELOPE")
+def _check_member_shape(member, path):
+    if not isinstance(member, dict) or member.get("outcome") not in ("ok", "stale"):
+        fail("E_ENVELOPE", "a slice member is an ok or stale envelope", path)
+    _check_envelope_members(member)
+
+
+def check_envelope(status, body, keyenv, request):
+    """Check a mesh response (SPEC.md 5.5): HTTP status and JSON body, against the request:
+    {"cell_id": <cell id asked for>, "asof": <instant, if the request carried one>}, and "job": <job id>
+    when the response is to GET /jobs/<job> (spec-0.4.1): the job's envelope is bound to the original
+    request, never to the job URL. Since spec-0.4.2 also "fn_hash" (the request's pin) and "mesh"
+    (the host asked); and for the slice endpoint (5.6) {"slice_id", "asof"?, "fn_hash"?, "mesh"?,
+    "after"?} in place of cell_id and job."""
+    env = parse_json(body, keep_integer_text=True)
+    return check_envelope_object(status, env, keyenv, request)
+
+
+# Whole-batch answers (5.7): the batch as a whole was refused.
+BATCH_REFUSALS = ("unlicensed", "payment_required", "rate_limited", "bad_request", "error")
+
+
+def check_batch(status, body, keyenv, requests):
+    """A response of the batch endpoint (5.7, spec-0.4.2): 200 with a JSON array, one item per
+    request in request order, each {"envelope", "status"}; or a refusal of the whole batch, one
+    envelope with its own status. Each item is checked as check_envelope against its request; a
+    failing item is reported in its place, and does not fail the others."""
+    batch = parse_json(body, keep_integer_text=True)
+    if status != 200:
+        if not isinstance(batch, dict) or batch.get("outcome") not in BATCH_REFUSALS:
+            fail("E_ENVELOPE", "a batch is refused whole only by a refusal outcome", "$.outcome")
+        return {"outcome": check_envelope_object(status, batch, keyenv, {})["outcome"]}
+    if not isinstance(batch, list) or len(batch) != len(requests):
+        fail("E_ENVELOPE", "a batch response is an array with one item per request", "$")
+    for i, item in enumerate(batch):
+        path = f"$[{i}]"
+        if not isinstance(item, dict) or set(item) != {"envelope", "status"}:
+            fail("E_ENVELOPE", "an item is {envelope, status}", path)
+        st = item["status"]
+        if not isinstance(st, JsonInteger) or not _INTEGER.fullmatch(st.text) or not 100 <= int(st.text) <= 599:
+            fail("E_ENVELOPE", "an item's status is an HTTP status code, an integer", f"{path}.status")
+    results = []
+    for item, request in zip(batch, requests):
+        try:
+            got = check_envelope_object(int(item["status"].text), item["envelope"], keyenv, request)
+            results.append({k: got[k] for k in ("outcome", "receipt_hash", "trust") if k in got})
+        except DatumeshError as e:
+            results.append({"error": e.code})
+    return {"results": results}
+
+
+# ---------------------------------------------------------------------------
+# The call form (5.8, spec-0.4.2): a read of the formula dialect with literal arguments, as a
+# request; it denotes the cell URI it is written as.
+
+_CALL_LEXER_CODES = {"E_FORMULA_NUMBER": "E_CANON_NUMBER", "E_FORMULA_STRING": "E_CANON_STRING",
+                     "E_FORMULA_DATE": "E_CANON_DATE", "E_FORMULA_INSTANT": "E_CANON_INSTANT"}
+
+
+def parse_call(text, env):
+    """A call (5.8) -> {"uri": its cell URI}. env: {"functions": {name: descriptor} (the names bound
+    as of the request's asof), "aliases": {alias: name}, "descriptors": [descriptors the mesh has,
+    for a pinned call]}."""
+    import formula
+    if not isinstance(text, str):
+        fail("E_PARSE_URI", "a call is text")
+    end = text.rfind(")")
+    rest = text[end + 1:] if end >= 0 else ""
+    try:
+        tokens = formula.tokenize(text[:end + 1] if end >= 0 else text)
+    except formula.FormulaError as e:
+        fail(_CALL_LEXER_CODES.get(e.code, "E_PARSE_URI"), f"not a call: {e}")
+    callee, args = _call_tree(tokens)
+    asof = None
+    if rest:
+        if not rest.startswith("?asof=") or "&" in rest:
+            fail("E_PARSE_URI", "a call is a read, optionally followed by ?asof=<instant>")
+        asof = rest[len("?asof="):]
+    if asof is not None:
+        check_instant(asof, "call.asof")
+    if callee.kind == "ALIAS":
+        aliases = env.get("aliases") or {}
+        if callee.value not in aliases:
+            fail("E_NAME_UNBOUND", f"@{callee.value} is not an alias of this mesh")
+        fq = aliases[callee.value]
+    else:
+        fq = callee.value
+    functions = env.get("functions") or {}
+    if callee.pin is not None:
+        found = [d for d in list(env.get("descriptors") or []) + list(functions.values()) if function_hash(d) == callee.pin]
+        if not found:
+            fail("E_FN_UNAVAILABLE", f"no descriptor with hash {callee.pin}")
+        descriptor = found[0]
+    else:
+        if fq not in functions:
+            fail("E_NAME_UNBOUND", f"{fq} is not bound")
+        descriptor = functions[fq]
+    signature = descriptor["signature"]
+    declared, order = signature["args"], signature.get("order")
+    bound = {}
+    for i, (label, value) in enumerate(args):
+        if label is None:
+            if order is None:
+                fail("E_PARSE_URI", f"{fq} declares no order: label the arguments")
+            if i >= len(order):
+                fail("E_ARG_UNKNOWN", f"{fq} takes {len(order)} arguments")
+            name = order[i]
+        else:
+            name = label
+            if name not in declared:
+                fail("E_ARG_UNKNOWN", f"{fq} has no argument {name!r}")
+        if name in bound:
+            fail("E_CANON_ARG_DUPLICATE", f"{name} is given twice")
+        bound[name] = value
+    for name in keys_in_order(declared):
+        if name not in bound:
+            fail("E_ARG_MISSING", f"{fq} needs {name} (an open argument is written *)")
+    ref_args = {}
+    for name, (kind, value) in bound.items():
+        type_ = declared[name]["type"]
+        p = f"call.{name}"
+        if kind == "open":
+            ref_args[name] = SLICE
+            continue
+        accepts = {"number": ("number",), "string": ("string", "blob"), "date": ("date",), "instant": ("instant",),
+                   "boolean": ("boolean",)}[kind]
+        if type_ not in accepts:
+            fail("E_CANON_TYPE", f"a {kind} literal for a {type_} argument", p)
+        if type_ != "boolean":
+            check_lexical(type_, value, p)
+        ref_args[name] = {"type": type_, "value": value}
+    ns, fn = fq.rsplit("/", 1)
+    ref = {"args": ref_args, "fn": fn, "ns": ns}
+    if callee.pin is not None:
+        ref["fn_hash"] = callee.pin
+    if asof is not None:
+        ref["asof"] = asof
+    return {"uri": format_uri(ref)}
+
+
+def _call_tree(tokens):
+    """The callee token and [(label or None, (kind, value))] of a call; E_PARSE_URI otherwise."""
+    def bad(detail="not a call of literals"):
+        fail("E_PARSE_URI", detail)
+
+    i = 0
+
+    def at(k=0):
+        return tokens[min(i + k, len(tokens) - 1)]
+
+    def punct(text, k=0):
+        return at(k).kind == "PUNCT" and at(k).text == text
+
+    callee = at()
+    if callee.kind not in ("QNAME", "ALIAS"):
+        bad("a call begins with a function name or an @alias")
+    i += 1
+    if not punct("("):
+        bad("a call has its arguments in parentheses")
+    i += 1
+    args, labelled = [], False
+    if punct(")"):
+        i += 1
+    else:
+        while True:
+            label = None
+            if at().kind == "WORD" and punct(":", 1):
+                label = at().text
+                labelled = True
+                i += 2
+            elif labelled:
+                bad("positional arguments come before labelled ones")
+            tok = at()
+            if tok.kind == "STR":
+                value = ("string", tok.value)
+            elif tok.kind == "DATE":
+                value = ("date", tok.value)
+            elif tok.kind == "INSTANT":
+                value = ("instant", tok.value)
+            elif tok.kind == "NUM" and tok.unit is None:
+                value = ("number", tok.value)
+            elif tok.kind == "PUNCT" and tok.text == "-" and at(1).kind == "NUM" and at(1).unit is None:
+                i += 1
+                value = ("number", "-" + at().value)
+            elif tok.kind == "WORD" and tok.text in ("true", "false"):
+                value = ("boolean", tok.text == "true")
+            elif tok.kind == "PUNCT" and tok.text == "*":
+                value = ("open", None)
+            else:
+                bad()
+            i += 1
+            args.append((label, value))
+            if punct(","):
+                i += 1
+                continue
+            if punct(")"):
+                i += 1
+                break
+            bad()
+    if at().kind != "EOF":
+        bad("nothing follows a call but ?asof=")
+    return callee, args
 
 
 # ---------------------------------------------------------------------------
@@ -1813,6 +2153,10 @@ def run_vector(vec):
             return {"unit": resolved_unit(obj["descriptor"], obj["cell"])}
         if kind == "envelope":
             return check_envelope(vec["status"], vector_input(vec), vec["keys"], vec["request"])
+        if kind == "batch":
+            return check_batch(vec["status"], vector_input(vec), vec["keys"], vec["requests"])
+        if kind == "call":
+            return parse_call(vec["input"], vec["env"])
         if kind == "mesh":
             got = resolve_mesh(vec["host"], vec["env"])
             return {"bindings": got["bindings"], "endpoints": got["endpoints"]}

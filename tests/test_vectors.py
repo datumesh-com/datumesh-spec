@@ -101,10 +101,10 @@ class Coverage(unittest.TestCase):
         # tests cover them.
         used = {v["error"] for v in VECTORS if not v["valid"] and not v["error"].startswith("E_FORMULA_")} | \
             {v["code"] for v in VECTORS if "code" in v}
-        # E_JOB_UNKNOWN (spec-0.4.1) is the mesh's answer to an unknown job, never a client's
-        # failure: it appears in valid envelope vectors (envelope/job-unknown).
-        used |= {"E_JOB_UNKNOWN"} & {json.loads(v["input"]).get("error") for v in VECTORS
-                                     if v["kind"] == "envelope" and v["valid"]}
+        # E_JOB_UNKNOWN (spec-0.4.1), E_SLICE_AT_CELL and E_NAME_UNBOUND (spec-0.4.2) are a mesh's
+        # answers about a request, never a client's failure: they appear in valid envelope vectors.
+        used |= set(canon.REQUEST_CODES) & {json.loads(v["input"]).get("error") for v in VECTORS
+                                            if v["kind"] == "envelope" and v["valid"]}
         self.assertEqual(set(canon.ERROR_CODES) - used, set())
         self.assertEqual(used - set(canon.ERROR_CODES), set())
 

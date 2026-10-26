@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: Apache-2.0
 """Mutate the spec's valid URI vectors into N cases (JSON lines, vector format)."""
 import json
+import os
 import pathlib
 import random
 import sys
@@ -8,6 +9,10 @@ import sys
 spec, n, seed = sys.argv[1], int(sys.argv[2]), int(sys.argv[3])
 rng = random.Random(seed)
 base = [json.loads(p.read_text()) for p in sorted(pathlib.Path(spec, "vectors/uri").glob("*.json"))]
+# Libraries of spec-0.4.1 and earlier know no pin (fn_hash=, spec-0.4.2): mutate only the URIs they
+# know; generate_042.py mutates pinned URIs.
+if os.environ.get("LIBS", "0.4.2") in ("0.3", "0.4", "0.4.1"):
+    base = [v for v in base if "fn_hash=" not in v["input"]]
 CHARS = list("@:/?#&=%*+ ._~-") + ["%20", "%2A", "%C3%BC", "%c3", "%41", "u@", ":443", "asof=", "dm_x=1", "Ü", "A", "0"]
 
 

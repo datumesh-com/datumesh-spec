@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://datumesh.com/schemas/1/envelope.schema.json",
   "title": "Datumesh response envelope",
-  "description": "The JSON body a mesh returns at https://<mesh>/cell/<rest> (SPEC.md 5.5). Not hashed, not signed: the mesh's statement. Only the embedded receipt is verifiable. The HTTP status must match outcome; that, and trust: primary against the receipt, are checked by the procedure in 5.5. The receipt must also answer the request (step 5), which the body does not contain; a pending envelope (spec-0.4.1) echoes the request, and the envelope served at its poll URL is checked against that original request.",
+  "description": "The JSON body a mesh returns at https://<mesh>/cell/<rest> (SPEC.md 5.5). Not hashed, not signed: the mesh's statement. Only the embedded receipt is verifiable. The HTTP status must match outcome; that, and trust: primary against the receipt, are checked by the procedure in 5.5. The receipt must also answer the request (step 5), which the body does not contain; a pending envelope (spec-0.4.1) echoes the request, and the envelope served at its poll URL is checked against that original request. Since spec-0.4.2: trust computed, the fn_hash echo, not_covered with E_NAME_UNBOUND, and the slice endpoint's page (5.6): an ok envelope with slice, members (ok or stale envelopes) and next.",
   "type": "object",
   "required": [
     "outcome"
@@ -28,7 +28,8 @@
       "enum": [
         "primary",
         "verified",
-        "unverified"
+        "unverified",
+        "computed"
       ]
     },
     "age_seconds": {
@@ -90,15 +91,47 @@
         "cell_id"
       ],
       "additionalProperties": false,
-      "description": "For pending: the original request, echoed.",
+      "description": "For pending: the original request, echoed (fn_hash when it was pinned, since spec-0.4.2).",
       "properties": {
         "cell_id": {
           "$ref": "defs.schema.json#/$defs/hex64"
         },
         "asof": {
           "$ref": "defs.schema.json#/$defs/instant"
+        },
+        "fn_hash": {
+          "$ref": "defs.schema.json#/$defs/hex64"
         }
       }
+    },
+    "fn_hash": {
+      "$ref": "defs.schema.json#/$defs/hex64",
+      "description": "spec-0.4.2: the function hash of the answer; required when the request pinned one (except rate_limited, bad_request and pending, whose request echoes it)."
+    },
+    "slice": {
+      "type": "object",
+      "description": "spec-0.4.2, slice pages: the slice object (SPEC.md 4.4) whose id was requested."
+    },
+    "members": {
+      "type": "array",
+      "items": {
+        "$ref": "#",
+        "properties": {
+          "outcome": {
+            "enum": [
+              "ok",
+              "stale"
+            ]
+          }
+        }
+      },
+      "description": "spec-0.4.2, slice pages: member envelopes in ascending key order."
+    },
+    "next": {
+      "type": "string",
+      "pattern": "^https://[a-z0-9-]+(\\.[a-z0-9-]+)+/",
+      "maxLength": 512,
+      "description": "spec-0.4.2, slice pages: the URL of the following page, on the mesh's host; absent on the last page."
     },
     "error": {
       "enum": [
@@ -146,9 +179,11 @@
         "E_INPUT_SUPERSEDED",
         "E_BLOB_MISMATCH",
         "E_JOB_UNKNOWN",
-        "E_MESH_DOC"
+        "E_MESH_DOC",
+        "E_SLICE_AT_CELL",
+        "E_NAME_UNBOUND"
       ],
-      "description": "A code from SPEC.md 10.2 other than E_ENVELOPE; for bad_request, a URI parse code or, at a job URL, E_JOB_UNKNOWN (5.5); for error, not E_JOB_UNKNOWN."
+      "description": "A code from SPEC.md 10.2 other than E_ENVELOPE; for bad_request, a URI parse code (E_CANON_HEX included, since spec-0.4.2), E_SLICE_AT_CELL, or at a job URL E_JOB_UNKNOWN (5.5); for not_covered, E_NAME_UNBOUND only; for error, none of E_JOB_UNKNOWN, E_SLICE_AT_CELL and E_NAME_UNBOUND."
     },
     "fault": {
       "description": "For not_covered only (spec-0.4.0): the formula evaluation fault that gave the cell no value (SPEC.md 5.5, 15.11).",
@@ -184,9 +219,31 @@
           "receipt",
           "trust",
           "superseded_by",
-          "reason"
+          "reason",
+          "fn_hash"
         ]
       }
+    },
+    {
+      "properties": {
+        "outcome": {
+          "const": "ok"
+        }
+      },
+      "required": [
+        "members",
+        "slice"
+      ],
+      "propertyNames": {
+        "enum": [
+          "outcome",
+          "members",
+          "slice",
+          "next",
+          "fn_hash"
+        ]
+      },
+      "description": "spec-0.4.2: a page of the slice endpoint (5.6)."
     },
     {
       "properties": {
@@ -206,7 +263,8 @@
           "trust",
           "age_seconds",
           "superseded_by",
-          "reason"
+          "reason",
+          "fn_hash"
         ]
       }
     },
@@ -214,11 +272,22 @@
       "properties": {
         "outcome": {
           "const": "not_covered"
+        },
+        "error": {
+          "const": "E_NAME_UNBOUND"
         }
       },
       "propertyNames": {
         "enum": [
           "outcome",
+          "error",
+          "fault",
+          "fn_hash"
+        ]
+      },
+      "not": {
+        "required": [
+          "error",
           "fault"
         ]
       }
@@ -230,7 +299,10 @@
         }
       },
       "propertyNames": {
-        "const": "outcome"
+        "enum": [
+          "outcome",
+          "fn_hash"
+        ]
       }
     },
     {
@@ -245,7 +317,8 @@
       "propertyNames": {
         "enum": [
           "outcome",
-          "quote"
+          "quote",
+          "fn_hash"
         ]
       }
     },
@@ -261,7 +334,8 @@
       "propertyNames": {
         "enum": [
           "outcome",
-          "retry_after_seconds"
+          "retry_after_seconds",
+          "fn_hash"
         ]
       }
     },
@@ -272,7 +346,11 @@
         },
         "error": {
           "not": {
-            "const": "E_JOB_UNKNOWN"
+            "enum": [
+              "E_JOB_UNKNOWN",
+              "E_SLICE_AT_CELL",
+              "E_NAME_UNBOUND"
+            ]
           }
         }
       },
@@ -282,7 +360,8 @@
       "propertyNames": {
         "enum": [
           "outcome",
-          "error"
+          "error",
+          "fn_hash"
         ]
       }
     },
@@ -308,7 +387,9 @@
             "E_CANON_LIMIT",
             "E_ARG_UNKNOWN",
             "E_ARG_MISSING",
-            "E_JOB_UNKNOWN"
+            "E_JOB_UNKNOWN",
+            "E_CANON_HEX",
+            "E_SLICE_AT_CELL"
           ]
         }
       },
@@ -318,7 +399,8 @@
       "propertyNames": {
         "enum": [
           "outcome",
-          "error"
+          "error",
+          "fn_hash"
         ]
       }
     },

@@ -415,6 +415,28 @@ class MeshVersions(unittest.TestCase):
         self.assertTrue((ROOT / "schemas" / "versions.schema.json").exists())
 
 
+class Schemas(unittest.TestCase):
+    def test_envelopes_batches_and_versions(self):
+        import jsonschema
+        from test_vectors import validator
+        envelope = validator("envelope")
+        for v in VECTORS.values():
+            if v["kind"] == "batch" and v["valid"] and v["status"] == 200:
+                for item in json.loads(v["input"]):
+                    if "error" not in json.dumps(v["results"]):
+                        envelope.validate(item["envelope"])
+            if v["kind"] == "envelope" and v["valid"] and "slice_id" in v["request"]:
+                with self.subTest(v["id"]):
+                    envelope.validate(json.loads(v["input"]))
+        with self.assertRaises(jsonschema.ValidationError):
+            envelope.validate({"error": "E_NAME_UNBOUND", "fault": "E_FORMULA_DIV_ZERO", "outcome": "not_covered"})
+        with self.assertRaises(jsonschema.ValidationError):
+            envelope.validate({"error": "E_SLICE_AT_CELL", "outcome": "error"})
+        validator("versions").validate({"cell": {"args": {}, "fn": "pi", "fn_hash": H, "ns": "math.example.net"},
+                                         "versions": [{"asof": T, "receipt": H2, "tx": T}]})
+        validator("cell-ref").validate({"args": {}, "fn": "pi", "fn_hash": H, "ns": "math.example.net"})
+
+
 class Text(unittest.TestCase):
     def test_statements(self):
         s15 = SPEC[SPEC.index("### 15.13"):SPEC.index("### 15.14")]
