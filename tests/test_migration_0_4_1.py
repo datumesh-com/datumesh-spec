@@ -47,10 +47,9 @@ class Migration041(unittest.TestCase):
                     self.assertEqual(canon.check_vector(json.loads(data)), [])
 
     def test_revision_strings(self):
-        self.assertIn("Status: draft, revision `spec-0.4.1`.", (ROOT / "SPEC.md").read_text(encoding="utf-8"))
+        # Since spec-0.4.2 the revision strings name spec-0.4.2 (test_migration_0_4_2.py); this
+        # revision's entry stays in section 14.
         self.assertIn("### spec-0.4.1", (ROOT / "SPEC.md").read_text(encoding="utf-8"))
-        self.assertIn("`spec-0.4.1`", (ROOT / "units.md").read_text(encoding="utf-8"))
-        self.assertIn("revision `spec-0.4.1`", (ROOT / "README.md").read_text(encoding="utf-8"))
 
 
 if __name__ == "__main__":
