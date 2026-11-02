@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://datumesh.com/schemas/1/keydoc.schema.json",
   "title": "Datumesh key document",
-  "description": "Served at https://<host>/.well-known/datumesh.json (SPEC.md 9.2).",
+  "description": "Served at https://<host>/.well-known/datumesh.json (SPEC.md 9.2). declarations since spec-0.4.3.",
   "type": "object",
   "required": ["host", "keys", "proto"],
   "additionalProperties": false,
@@ -25,6 +25,7 @@
           "valid_to": { "$ref": "defs.schema.json#/$defs/instant" }
         }
       }
-    }
+    },
+    "declarations": { "$ref": "defs.schema.json#/$defs/declarations" }
   }
 }

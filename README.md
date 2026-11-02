@@ -4,7 +4,7 @@
 
 Datumesh is an open protocol for addressable, verifiable data cells: a name, a resolver, a signed answer, and a lineage you can follow.
 
-This repository is the protocol's specification ([SPEC.md](SPEC.md), revision `spec-0.4.2`, with [units.md](units.md)), its JSON Schemas ([schemas/](schemas/)), its test vectors ([vectors/](vectors/)), a reference canonicaliser used to generate and check them ([tools/canon.py](tools/canon.py)), and the reference implementation of the formula dialect, the default language of computed functions ([tools/formula.py](tools/formula.py), with [tools/fdecimal.py](tools/fdecimal.py) for its decimal arithmetic; SPEC.md section 15). They are test tools, not libraries. The design record of `spec-0.4.0` is [DESIGN-0.4.0.md](DESIGN-0.4.0.md).
+This repository is the protocol's specification ([SPEC.md](SPEC.md), revision `spec-0.4.3`, with [units.md](units.md)), its JSON Schemas ([schemas/](schemas/)), its test vectors ([vectors/](vectors/)), a reference canonicaliser used to generate and check them ([tools/canon.py](tools/canon.py)), and the reference implementation of the formula dialect, the default language of computed functions ([tools/formula.py](tools/formula.py), with [tools/fdecimal.py](tools/fdecimal.py) for its decimal arithmetic; SPEC.md section 15). They are test tools, not libraries. The design record of `spec-0.4.0` is [DESIGN-0.4.0.md](DESIGN-0.4.0.md).
 
 ## In ten lines
 
@@ -34,6 +34,21 @@ mean(last_before(weather.example.org/temp(*, *), t, 10 min))      # each station
 ```
 
 A receipt for such a cell cites the whole slice it read as one input, `slice:<slice id>:<members hash>`, whose manifest lists the member receipts ([SPEC.md 15.13](SPEC.md#1513-slices-and-slice-as-lineage)).
+
+## Test vectors
+
+One vector per file, `vectors/<group>/<name>.json`, in the format of [SPEC.md section 11](SPEC.md#11-test-vectors) and [schemas/vector.schema.json](schemas/vector.schema.json); `vectors/` holds group directories of vector files and nothing else. `tools/gen_vectors.py` writes every file byte for byte, and `python3 tools/canon.py check` runs them all against the reference tool.
+
+**Evaluation vectors are defined against an isolated mesh** (since `spec-0.4.3`). The formula and Excel evaluation vectors (kinds `formula-eval` and `excel`) are defined against an isolated mesh: each vector's `world` alone, with that vector's names bound as its `world` binds them, and nothing else. Two vectors may bind one name to different functions or give one cell different values; each answers as it says on a mesh holding its own world. A mesh holding many worlds at once, as a test mesh that loads every vector does, answers some of them otherwise, and that is not a disagreement with the vector.
+
+Two vectors are **evaluator-only**: a mesh that evaluates cell by cell, each callee cell its own evaluation, cannot reproduce them even with its world alone.
+
+| Vector | Why a mesh cannot reproduce it |
+|---|---|
+| `invalid/formula-eval-depth` | It expects `E_FORMULA_DEPTH`, the evaluator's depth limit (`world.max_depth`, 20). A mesh evaluates each callee cell on its own, memoised, so no single evaluation is that deep, and it gives the value. |
+| `invalid/formula-eval-budget` | It expects `E_FORMULA_BUDGET` with the vector's own `fuel` (5). Fuel is per request (SPEC.md 15.12), and a request cannot carry a budget, so a mesh evaluates with its own. |
+
+This is how the vectors are read; no vector file carries a field for it. Every other `formula-eval` and `excel` vector is expected of a mesh that holds its world alone.
 
 ## Integrations (design)
 

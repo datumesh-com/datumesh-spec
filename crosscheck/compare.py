@@ -12,7 +12,9 @@ FIELDS = ("error", "canonical", "sha256", "sig", "level", "code", "object", "htt
           "slice_id", "members_hash", "entry", "ast_sha256", "body", "inputs", "returns", "asof_dependent", "token",
           "value", "lineage", "tx", "receipt_asof", "fuel_used", "results",
           # spec-0.4.1: mesh documents
-          "bindings", "endpoints")
+          "bindings", "endpoints",
+          # spec-0.4.3: key document declarations, licence inheritance, entitlement
+          "declarations", "licence", "reason", "entitled")
 runs = {name: [json.loads(l) for l in open(path)] for name, path in (a.split("=") for a in sys.argv[1:])}
 names = list(runs)
 n = len(runs[names[0]])

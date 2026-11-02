@@ -103,6 +103,8 @@ LIMITS = {
     "keys": 64,  # keys in one key publication
     "extent": 4096,  # values in an argument's extent
     "members": 1048576,  # members in a slice manifest
+    "declarations": 64,  # function names in a key document's declarations (spec-0.4.3)
+    "declaration_entries": 16,  # entries per declared function name (spec-0.4.3)
 }
 
 TYPES = ("blob", "boolean", "date", "instant", "number", "string")
@@ -1305,11 +1307,18 @@ def _as_error(code):
     return decorate
 
 
-@_as_error("E_KEY_DOC")
 def parse_key_doc(text, host):
-    """The document at https://<host>/.well-known/datumesh.json."""
+    """The keys of the document at https://<host>/.well-known/datumesh.json."""
+    return parse_key_document(text, host)["keys"]
+
+
+@_as_error("E_KEY_DOC")
+def parse_key_document(text, host):
+    """The document at https://<host>/.well-known/datumesh.json: {"host", "keys", "declarations"}.
+
+    declarations (spec-0.4.3, SPEC.md 9.2) is optional; absent, the result's is {}."""
     doc = parse_json(text)
-    _shape_object(doc, ("host", "keys", "proto"), (), "$")
+    _shape_object(doc, ("host", "keys", "proto"), ("declarations",), "$")
     if doc["proto"] != PROTO or doc["host"] != host:
         fail("E_KEY_DOC", "proto or host does not match", "$")
     check_dns_name(doc["host"], "$.host")  # keys exist only for DNS names (SPEC.md 9.3)
@@ -1327,7 +1336,34 @@ def parse_key_doc(text, host):
         if entry["id"] != key["id"]:
             fail("E_KEY_DOC", "id is not the key id of public", p)
         keys.append(key)
-    return _no_duplicate_keys(keys)
+    declarations = _declarations(doc["declarations"], doc["host"]) if "declarations" in doc else {}
+    return {"host": doc["host"], "keys": _no_duplicate_keys(keys), "declarations": declarations}
+
+
+def _declarations(decl, host):
+    """A key document's declarations (SPEC.md 9.2, spec-0.4.3); every failure is E_KEY_DOC."""
+    p = "$.declarations"
+    if not isinstance(decl, dict) or not 1 <= len(decl) <= LIMITS["declarations"]:
+        fail("E_KEY_DOC", f"declarations must be an object of 1 to {LIMITS['declarations']} names", p)
+    for name, entries in decl.items():
+        q = f"{p}.{name}"
+        check_function_name(name, q)
+        if name.split("/")[0] != host:
+            fail("E_KEY_DOC", f"a declared name is under the document's own host {host}", q)
+        if not isinstance(entries, list) or not 1 <= len(entries) <= LIMITS["declaration_entries"]:
+            fail("E_KEY_DOC", f"a declared name has 1 to {LIMITS['declaration_entries']} entries", q)
+        for i, entry in enumerate(entries):
+            e = f"{q}[{i}]"
+            _shape_object(entry, ("licence", "valid_from"), ("valid_to",), e)
+            for k in entry:
+                _shape_str(entry, k, e)
+            check_licence(entry["licence"], e)
+            check_instant(entry["valid_from"], e)
+            if "valid_to" in entry:
+                check_instant(entry["valid_to"], e)
+                if not entry["valid_from"] < entry["valid_to"]:
+                    fail("E_KEY_DOC", "valid_to must be after valid_from", e)
+    return decl
 
 
 def _no_duplicate_keys(keys):
@@ -1342,6 +1378,11 @@ def resolve_keys(host, env):
     env describes what the HTTPS request returned for this host:
       {"https": {"status": 200, "body": "..."} | {"status": <other>} | {"status": "error"}}
     """
+    return resolve_key_document(host, env)["keys"]
+
+
+def resolve_key_document(host, env):
+    """As resolve_keys, returning the whole document: {"host", "keys", "declarations"}."""
     https = (env or {}).get("https") or {"status": "error"}
     status = https.get("status")
     # Only the number 200 is a retrieved document; any other status, including the string "200"
@@ -1350,7 +1391,107 @@ def resolve_keys(host, env):
         fail("E_KEY_UNAVAILABLE", f"https key document: {status!r}")
     if "body" not in https:
         fail("E_KEY_DOC", "a 200 response without a document")
-    return parse_key_doc(https["body"], host)
+    return parse_key_document(https["body"], host)
+
+
+# ---------------------------------------------------------------------------
+# Unrooted namespaces, licence inheritance and entitlement (SPEC.md 2.5, 8.5, 10.3; spec-0.4.3).
+
+
+def is_unrooted(namespace):
+    """A namespace whose host is under .invalid (SPEC.md 2.5): it never resolves."""
+    return namespace.split("/")[0].rsplit(".", 1)[-1] == "invalid"
+
+
+# The open licences, least to most strict, in the order 8.5 lists them. Every other licence, any
+# https:// URL and any SPDX identifier not listed (compared byte for byte), is restricted (tier 4).
+LICENCE_TIERS = (("CC0-1.0", "PDDL-1.0"),
+                 ("MIT", "Apache-2.0", "CC-BY-4.0", "OGL-UK-3.0"),
+                 ("CC-BY-SA-4.0", "ODbL-1.0"))
+RESTRICTED = 4
+
+
+def licence_tier(licence):
+    for tier, ids in enumerate(LICENCE_TIERS, 1):
+        if licence in ids:
+            return tier
+    return RESTRICTED
+
+
+def _open_at(entry, at):
+    """A declaration entry's window, as a key's (9.5): valid_from <= at < valid_to."""
+    return entry["valid_from"] <= at and ("valid_to" not in entry or at < entry["valid_to"])
+
+
+def inherit_licence(licences, declarations, fn, issued, own):
+    """The licence of a computed receipt (SPEC.md 8.5).
+
+    licences: the licences of its input receipts, slice members included (a list; repeats allowed);
+    declarations: the function's publisher's key document declarations (9.2); fn: the function's full
+    name; issued: the receipt's issued; own: the mesh's own licence. Returns {"licence", "reason"}:
+    licence None means the mesh may not compute the cell (an unlicensed answer, 5.5)."""
+    if not licences:
+        return {"licence": own, "reason": "no_inputs"}
+    restricted = sorted({x for x in licences if licence_tier(x) == RESTRICTED})
+    if len(restricted) > 1:
+        return {"licence": None, "reason": "restricted_conflict"}
+    if restricted:
+        entries = [e for e in declarations.get(fn, ()) if e["licence"] == restricted[0]]
+        if not entries:
+            return {"licence": None, "reason": "not_declared"}
+        if not any(_open_at(e, issued) for e in entries):
+            return {"licence": None, "reason": "declaration_not_open"}
+        return {"licence": restricted[0], "reason": "declared"}
+    top = max(licence_tier(x) for x in licences)
+    present = [x for x in LICENCE_TIERS[top - 1] if x in licences]
+    if top == 3 and len(present) > 1:
+        return {"licence": None, "reason": "share_alike_conflict"}
+    return {"licence": present[-1], "reason": "open"}
+
+
+def check_entitlement(receipt, licences, keydoc):
+    """The entitlement check (SPEC.md 10.3): is a computed receipt's licence the one 8.5 gives?
+
+    receipt: a receipt object; licences: its input receipts' licences, slice members included;
+    keydoc: the key document of the publisher's host (the host of cell.ns), as parse_key_document
+    returns it. Returns {"entitled", "reason"}. Not a verification step: no E_* code."""
+    host = receipt["cell"]["ns"].split("/")[0]
+    if not isinstance(keydoc, dict) or keydoc.get("host") != host:
+        raise ValueError(f"the entitlement check takes the key document of the publisher's host {host}")
+    fn = receipt["cell"]["ns"] + "/" + receipt["cell"]["fn"]
+    rule = inherit_licence(licences, keydoc.get("declarations", {}), fn, receipt["issued"], receipt["licence"])
+    if rule["licence"] is None:
+        return {"entitled": False, "reason": rule["reason"]}
+    if rule["licence"] != receipt["licence"]:
+        return {"entitled": False, "reason": "licence_mismatch"}
+    return {"entitled": True, "reason": rule["reason"]}
+
+
+def input_licences(receipt, receipts, manifests):
+    """The licences of a receipt's input receipts, slice members included, in inputs order.
+
+    receipts: receipt hash -> receipt JSON text; manifests: slice entry -> manifest JSON text, as a
+    recompute object's (11). A missing or mismatching one is a malformed vector (ValueError)."""
+    def get(h):
+        if h not in receipts:
+            raise ValueError(f"no input receipt {h}")
+        r = parse_json(receipts[h])
+        if receipt_hash(r) != h:
+            raise ValueError(f"the receipt given for {h} has another hash")
+        return r["licence"]
+    out = []
+    for entry in receipt["inputs"]:
+        if not entry.startswith("slice:"):
+            out.append(get(entry))
+            continue
+        if entry not in manifests:
+            raise ValueError(f"no manifest for {entry}")
+        m = parse_json(manifests[entry])
+        check_manifest(m)
+        if slice_entry(m["slice"], m["members"]) != entry:
+            raise ValueError(f"the manifest given for {entry} is another slice's")
+        out.extend(get(h) for h in m["members"])
+    return out
 
 
 # ---------------------------------------------------------------------------
@@ -2197,8 +2338,22 @@ def run_vector(vec):
         if kind == "keyid":
             return {"key_id": key_id(bytes.fromhex(vec["input"]))}
         if kind == "keys":
-            keys = resolve_keys(vec["host"], vec["env"])
-            return {"key_ids": [k["id"] for k in keys]}
+            doc = resolve_key_document(vec["host"], vec["env"])
+            out = {"key_ids": [k["id"] for k in doc["keys"]]}
+            if doc["declarations"]:  # spec-0.4.3
+                out["declarations"] = doc["declarations"]
+            return out
+        if kind == "licence":  # spec-0.4.3: licence inheritance (8.5)
+            return inherit_licence(vec["licences"], vec.get("declarations", {}), vec["fn"], vec["issued"],
+                                   vec["mesh_licence"])
+        if kind == "entitlement":  # spec-0.4.3: the entitlement check (10.3)
+            r = parse_json(vector_input(vec))
+            for text in [vector_input(vec)] + [t.encode("utf-8") for t in vec.get("receipts", {}).values()]:
+                verify_receipt(text, vec["keys"])  # the receipts are signature-valid (10.3)
+            host = r["cell"]["ns"].split("/")[0]
+            keydoc = resolve_key_document(host, vec["keys"].get(host))
+            licences = input_licences(r, vec.get("receipts", {}), vec.get("manifests", {}))
+            return check_entitlement(r, licences, keydoc)
         if kind == "unit":
             obj = parse_json(vector_input(vec))
             _shape_object(obj, ("cell", "descriptor"), (), "$")
@@ -2254,7 +2409,8 @@ OUTPUT_FIELDS = ("canonical", "sha256", "object", "uri", "https", "key_id", "key
                  "blob_checked", "code", "unit", "outcome", "trust", "receipt_hash",
                  "slice_id", "members_hash", "entry", "ast", "ast_sha256", "body", "inputs", "returns",
                  "asof_dependent", "value", "lineage", "tx", "receipt_asof", "fuel_used", "results",
-                 "bindings", "endpoints")
+                 "bindings", "endpoints",
+                 "declarations", "licence", "reason", "entitled")  # spec-0.4.3
 
 
 def check_vector(vec):
@@ -2265,6 +2421,8 @@ def check_vector(vec):
         if "error" in got:
             return [f"expected valid, got {got['detail']}"]
         for field in OUTPUT_FIELDS:
+            if field == "declarations" and vec["kind"] == "licence":  # an input there (spec-0.4.3)
+                continue
             if field in vec and vec[field] != got.get(field):
                 problems.append(f"{field}: expected {vec[field]!r}, got {got.get(field)!r}")
         if vec["kind"] == "mesh":

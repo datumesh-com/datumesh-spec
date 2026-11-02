@@ -1,6 +1,6 @@
 # Datumesh protocol, version 1
 
-Status: draft, revision `spec-0.4.2`. Identifier in data: `datumesh/1`. Changes are listed in section 14.
+Status: draft, revision `spec-0.4.3`. Identifier in data: `datumesh/1`. Changes are listed in section 14.
 
 Datumesh is an open protocol for addressable, verifiable data cells: a name, a resolver, a signed answer, and a lineage you can follow. This document defines how a cell is named (the cell URI), how it is written as canonical bytes, what a signed answer (a receipt) contains, what a mesh returns around it (the response envelope), how keys are published, and how a verifier checks a receipt, including receipts whose lineage cites whole slices of cells. Section 15 defines the formula dialect, the default language of computed functions. The units a function may declare are listed in `units.md`, which is part of this specification. Storage formats, wire protocols, resolvers and the engine are out of scope.
 
@@ -41,6 +41,7 @@ The executable form of this document is `tools/canon.py`, with `tools/formula.py
 - **Transaction time**: the time the system knew a value. Every call has an `asof` transaction time (default: now). Every receipt carries `asof` (as of when it answers), `tx` (when the value it gives was recorded) and `issued` (when it was signed).
 - **Receipt**: a signed statement of one cell's value as of one transaction time, with its lineage.
 - **Mesh**: any HTTPS host that resolves cells and serves receipts.
+- **Unrooted namespace**: a namespace whose host is under `.invalid`, which never resolves (2.5). Every other namespace is rooted.
 - **Unit**: what a number means, such as `EUR` or `degC`. A function declares the unit of every number argument and number return (7.1). Values and receipts never carry units.
 - **Blob**: a scalar whose value names content by its hash, byte length and media type (3.7). The content itself travels out of band.
 - **Envelope**: the JSON body a mesh returns around a receipt (5.5). It is the mesh's statement, unsigned; the receipt inside is the signer's.
@@ -82,6 +83,16 @@ The last segment of a fully qualified function name is the function. Everything 
 ### 2.4 Argument names
 
 Argument names are names (2.2). `asof`, `fn_hash` (since `spec-0.4.2`: the cell URI's pin, 5.1), and every name starting with `dm_`, are reserved for the protocol and rejected as argument names (`E_CANON_ARG_NAME`). A function declaring an argument `fn_hash` was valid before `spec-0.4.2` and is not from it on: its descriptor, and the cells and receipts of it, fail with `E_CANON_ARG_NAME`. No vector and no published function the reference knows has one; a publisher that has one republishes the function with the argument renamed.
+
+### 2.5 Unrooted namespaces
+
+Since `spec-0.4.3`. A namespace whose host's last label is `invalid` (`local.invalid`, `agent-7.local.invalid`, `local.invalid/notes`) is **unrooted**. `.invalid` is reserved by RFC 2606, and by RFC 6761 section 6.4 it never resolves, so an unrooted host can never be a real host and no Web PKI certificate names it. Every other namespace is **rooted**.
+
+No grammar changes: `local.invalid` is a DNS name by 2.1 (two labels of letters, the last not all digits), so it is a namespace by 2.3 and a key reference `local.invalid#<key id>` is valid by 9.1 (`cell/unrooted-namespace`).
+
+- **Rooted functions may not read unrooted ones.** A mesh, or a resolver, refuses at define time a function under a rooted namespace whose `inputs` (7) name a function under an unrooted one. The refusal is define's, like the define-time refusals of 15.12: it is not a verification code, and a verifier does not check it. A function under an unrooted namespace may read both.
+- **Their receipts are ordinary receipts**, in the one format of section 8, signed with a key of the unrooted host (`computed_by` `local.invalid#<key id>`). They verify only where the signer's key document is reachable: on the machine that holds the key, or where that key document was supplied out of band (9.4; `receipt/unrooted-key-supplied`). Anywhere else there are no keys, and verification stops at step 5 with `E_KEY_UNAVAILABLE` (9.3; `invalid/receipt-unrooted-no-key-document`); a client need not attempt the request.
+- Sharing is by rooting: publishing the functions under a rooted namespace and signing new receipts there, which are new statements with new hashes.
 
 ## 3. Scalar types and lexical forms
 
@@ -244,8 +255,10 @@ A cell binds every argument its function declares, and no others. Arguments are 
 | `keys` | 64 | keys in one key publication |
 | `extent` | 4096 | values in an argument's extent (7) |
 | `members` | 1048576 | member receipt hashes in a slice manifest (15.13) |
+| `declarations` | 64 | function names in a key document's `declarations` (9.2; since `spec-0.4.3`) |
+| `declaration_entries` | 16 | entries for one declared function name (9.2; since `spec-0.4.3`) |
 
-Exceeding a limit fails with `E_CANON_LIMIT`, except `keys`: a key document with more than 64 keys is rejected whole, with `E_KEY_DOC` (9.2). DNS's own limits (63-character labels, 253-character names) are part of the DNS grammar and fail with `E_CANON_NAME`.
+Exceeding a limit fails with `E_CANON_LIMIT`, except in the key document: one with more than 64 keys, more than 64 declared names or more than 16 entries for one name is rejected whole, with `E_KEY_DOC` (9.2). DNS's own limits (63-character labels, 253-character names) are part of the DNS grammar and fail with `E_CANON_NAME`.
 
 Order of checks:
 - **Values and names.** A value or name is checked against its lexical form first and its length limit second. An argument name is then checked for reserved names.
@@ -344,7 +357,7 @@ The envelope is an object whose `outcome` decides which other members it has. A 
 | `ok` | 200 | `receipt`, `trust` | `superseded_by`, `reason`, `fn_hash` | The receipt is for the requested cell, its `asof` is at or before the requested `asof`, and the mesh asserts that it is the cell's latest version known as of the requested `asof`. |
 | `stale` | 200 | `receipt`, `trust`, `age_seconds` | `superseded_by`, `reason`, `fn_hash` | As `ok`, except that the mesh cannot assert that the receipt is current: it could not get a current answer and serves the last receipt it knows. |
 | `not_covered` | 404 | none | `fault` or `error`, `fn_hash` | The mesh has no receipt for this cell: it does not serve the function, or the cell has no value. With `fault`, the cell is a computed cell whose evaluation faulted (15.12): it has no value, deterministically, and this is not missing data. With `error` (`E_NAME_UNBOUND`, since `spec-0.4.2`), the name is not bound as of the requested `asof`: it may be bound later, so this is not a malformed request. |
-| `unlicensed` | 403 | none | `fn_hash` | The requester may not receive this cell. |
+| `unlicensed` | 403 | none | `fn_hash` | The requester may not receive this cell; or, since `spec-0.4.3`, the mesh may not compute this cell under the inheritance rule (8.5). |
 | `payment_required` | 402 | `quote` | `fn_hash` | The cell is available for the quoted price. |
 | `rate_limited` | 429 | `retry_after_seconds` | `fn_hash` | Too many requests. The mesh SHOULD also send the `Retry-After` header with the same value. |
 | `bad_request` | 400 | `error` | `fn_hash` | The request is malformed: the cell URI does not parse, it has a slice marker at `/cell` (`E_SLICE_AT_CELL`, since `spec-0.4.2`), or, at a job URL, the job is unknown or expired. |
@@ -631,6 +644,36 @@ The signed bytes are exactly the hashed bytes. A receipt hash therefore identifi
 
 `inputs` lists receipt hashes and slice entries. Each input receipt must be a cell of a function named in the descriptor's `inputs` (`E_INPUT_UNDECLARED`); so must each slice's function, and each member of a slice must belong to it (`E_SLICE_MEMBER`). Following `inputs` recursively, through manifests, gives the full lineage of a value down to stored cells. A slice entry is one entry for the 4,096 limit whatever its member count.
 
+### 8.5 Licence inheritance
+
+Since `spec-0.4.3`. The `licence` of a **computed** receipt is the strictest among its inputs' licences: the strictest ancestor wins. A stored receipt's licence is its publisher's choice, and this rule does not touch it. The rule binds the mesh that computes and signs; a verifier checks it only if it chooses to, with the entitlement check (10.3), never in verification (10.1).
+
+**The inputs.** The licences that count are those of the receipt's input receipts: the receipt of each receipt hash in `inputs`, and for a slice entry every member receipt of its manifest (15.13). One licence per receipt; several may be the same. They are read from the input receipts as verified, and an input from another mesh counts exactly as a local one: its licence is the one its verified receipt carries.
+
+**Rank**, least to most strict:
+
+| Tier | | Licences, in this order |
+|---|---|---|
+| 1 | public domain | `CC0-1.0`, `PDDL-1.0` |
+| 2 | attribution | `MIT`, `Apache-2.0`, `CC-BY-4.0`, `OGL-UK-3.0` |
+| 3 | share-alike | `CC-BY-SA-4.0`, `ODbL-1.0` |
+| 4 | **restricted** | every other licence: any `https://` URL, and any SPDX identifier not listed above, for example `CC-BY-NC-4.0` |
+
+Tiers 1 to 3 are the **open** licences. Licences are compared byte for byte, as 8.1 reads them (it does not check identifiers against the SPDX list): `cc0-1.0` is not `CC0-1.0`, so it is restricted.
+
+**The rule.** Let L be the input licences, `fn` the function's full name (`cell.ns + "/" + cell.fn`), and D the declarations of the function's publisher (9.2), from the key document of the host of `cell.ns`. The licence of a receipt to be issued at `issued` is decided in this order; each outcome has a name, which the entitlement check (10.3) reports:
+
+1. **No inputs.** L is empty (the function read nothing, a constant, or only empty slices): the mesh's own licence, as before (`no_inputs`).
+2. **Two restricted licences.** L holds two or more different restricted licences: the mesh refuses (`restricted_conflict`), because a receipt carries one licence (D20).
+3. **One restricted licence** r, once or more, with or without open ones: the mesh computes only if the publisher has **declared** r for `fn`, that is, D has an entry for `fn` whose `licence` is exactly r and which is open at `issued` (`valid_from <= issued`, and `issued < valid_to` when `valid_to` is present, as a key's window in 9.5). Then the result's licence is r, which wins over every open licence in L (`declared`). With no entry for `fn` naming r, the mesh refuses (`not_declared`); with such entries but none open at `issued`, it refuses (`declaration_not_open`).
+4. **Open inputs only.** The result takes the highest tier present in L. In tier 3, two different identifiers are refused (`share_alike_conflict`): each would require the result to carry it alone. Otherwise, of the identifiers of that tier present in L, the result is the one listed last above (`open`): the order runs from least to most demanding, so `CC-BY-4.0` with `MIT` gives `CC-BY-4.0`, and `CC0-1.0` with `PDDL-1.0` gives `PDDL-1.0`.
+
+**Refusal.** A mesh that may not compute a cell under this rule answers `unlicensed` (403, 5.5), with no new code, and signs nothing. A cell that would read it cannot be computed either, and is answered the same way.
+
+**Declarations** (9.2) are where a publisher relaxes the rule for its own functions' inputs (the decision log: "a publisher may relax for its own inputs via aggregation or allowlist rules"). In this revision a declaration permits one thing: computing the declared function over inputs under the declared restricted licence, the result carrying that licence. Later revisions may widen what a declaration permits, for example with aggregation or allowlist rules under which the result carries another licence.
+
+The `licence` vectors (section 11) give the result for every tier and mix.
+
 ## 9. Keys
 
 ### 9.1 Key id
@@ -652,13 +695,31 @@ A key is an Ed25519 public key: 32 bytes, written as 64 lowercase hex digits. It
 }
 ```
 
-- The document has exactly `host`, `keys` and `proto` (`"datumesh/1"`). Each key has exactly `alg` (`"ed25519"`), `id`, `public`, `valid_from` and optionally `valid_to`, all strings.
+- The document has `host`, `keys`, `proto`, and optionally `declarations` (since `spec-0.4.3`, below); any other member is rejected. `proto` is `"datumesh/1"`. Each key has exactly `alg` (`"ed25519"`), `id`, `public`, `valid_from` and optionally `valid_to`, all strings.
 - `host` equals the host it was fetched from.
 - `keys` holds 1 to 64 entries. `id` MUST equal the key id of `public`, and no two keys share an `id` (and so no two share a `public`). A `public` that is not a valid curve point is not a document error: signatures made with it fail in step 6.
 - `valid_to` is optional (absent: open-ended). When present it is later than `valid_from`.
 - No redirects are followed.
 
-A document that breaks any of these rules is rejected whole (`E_KEY_DOC`).
+**Declarations** (since `spec-0.4.3`). The optional `declarations` member says which restricted licences a publisher permits as inputs of its own functions (8.5):
+
+```json
+"declarations": {
+  "rates.example.org/cross_rate": [
+    {"licence": "https://rates.example.org/licences/restricted", "valid_from": "2020-01-01T00:00:00.000000Z", "valid_to": "2024-06-01T00:00:00.000000Z"},
+    {"licence": "https://rates.example.org/licences/restricted", "valid_from": "2025-01-01T00:00:00.000000Z"}
+  ]
+}
+```
+
+- `declarations` is an object of 1 to 64 members (`{}` is rejected). Each name is a full function name (2.3) under the document's own `host`: its namespace's host is `host` exactly, so a name under another host, a subdomain of `host` included, is rejected.
+- Each value is an array of 1 to 16 entries. An empty array declares nothing and is rejected.
+- An entry has exactly `licence` (by the grammar and limits of 8.1), `valid_from` (an instant) and optionally `valid_to` (an instant later than `valid_from`), all strings, exactly as keys are dated. Absent `valid_to`, the entry is open-ended. Several entries may name one licence, such as a declaration closed and later made again.
+- An entry permits its function to be computed over inputs under its `licence` while it is open (8.5). The engine uses the entries open at a receipt's `issued`, and so does the entitlement check (10.3).
+- **Entries are never removed, only closed** with `valid_to`. A publisher SHOULD keep every entry it has published, as it keeps its keys (9.5), so that a receipt issued while an entry was open can still be checked; to withdraw a declaration it sets `valid_to`. This is the publisher's obligation: the document check cannot see history.
+- Declarations change nothing in verification (section 10): a document with them verifies every receipt exactly as the same document without them (`receipt/keydoc-declarations`). A verifier of `spec-0.4.2` or earlier rejects a document that has them (`E_KEY_DOC`), and with it every receipt of that host (section 14, `spec-0.4.3`).
+
+A document that breaks any of these rules is rejected whole (`E_KEY_DOC`): a malformed name, licence, instant or entry, a name under another host, and the limits exceeded included.
 
 ### 9.3 Resolution
 
@@ -745,7 +806,7 @@ Since `spec-0.4.1`, a mesh describes its endpoints at `https://<host>/.well-know
 
 Unknown members are dropped from the result. A host that fails is not used for anything: none of its endpoints are called.
 
-**A verifier never needs the mesh document.** Verification (section 10) uses keys only, and step 5 of 10.1 resolves them from the key document alone; `E_MESH_DOC` is a resolution code, never a verification result. A host with a key document and no mesh document still issues verifiable receipts; it only cannot be resolved across meshes. The key document of 9.2 is unchanged: it still has exactly `host`, `keys` and `proto`.
+**A verifier never needs the mesh document.** Verification (section 10) uses keys only, and step 5 of 10.1 resolves them from the key document alone; `E_MESH_DOC` is a resolution code, never a verification result. A host with a key document and no mesh document still issues verifiable receipts; it only cannot be resolved across meshes. The key document of 9.2 gains no mesh members: it has `host`, `keys` and `proto`, and since `spec-0.4.3` optionally `declarations` (9.2), which step 5 checks with the rest (`mesh/keydoc-declarations`).
 
 *Rationale.* A separate document leaves the key document, which every verifier reads, exactly as it was. Requiring the two to agree on `host` and `proto` keeps one host from describing another's endpoints and keeps a mesh from being read under two protocols. Endpoints on the same host only, because TLS authenticates the host, and that is all a client knows of an unsigned document.
 
@@ -905,6 +966,27 @@ The four failure classes a verifier distinguishes are: bad canonical form (parse
 
 "URI" marks codes raised while parsing a cell URI (5.4), "envelope" codes raised while checking a response envelope (5.5), "mesh" codes raised in cross-mesh resolution (9.6), and "unit" codes raised while resolving a unit (7.1). Canonicalising a scalar, cell, reference or descriptor on its own uses the same codes as steps 1-3.
 
+### 10.3 Licence entitlement
+
+Since `spec-0.4.3`. A verifier MAY check whether a receipt's licence is the one the inheritance rule (8.5) gives. The check is optional and separate from verification: it is run on a receipt that has passed 10.1 (at least through step 6, its input receipts verified as in step 7.5), it is not a verification failure, and it adds no code to 10.1 or 10.2. It answers **entitled** or **not entitled**, with a **reason**: a string, not an error code.
+
+**Given:**
+- R, a receipt;
+- L, the licences of R's input receipts, slice members included, one per receipt, as step 7.5 obtains them. An implementation may take the receipts or their licences;
+- K, the key document (9.2, already checked) of R's publisher's host, the host of `R.cell.ns`. A K of another host is the caller's error, reported as a misused function is (as a malformed request description is, 5.5), never as a reason.
+
+Let `fn` be `R.cell.ns + "/" + R.cell.fn`, and D be K's `declarations` (none when absent).
+
+**Procedure:**
+1. Apply the rule of 8.5 to L, D, `fn` and `R.issued`, with `R.licence` standing for the mesh's own licence of step 1 there.
+2. If the rule refuses, the answer is **not entitled**, with the rule's reason: `restricted_conflict`, `not_declared`, `declaration_not_open` or `share_alike_conflict`. The mesh should have answered `unlicensed` and signed nothing.
+3. If the rule gives a licence other than `R.licence` (compared byte for byte), **not entitled**: `licence_mismatch`.
+4. Otherwise **entitled**, with the rule's reason: `no_inputs` (R has no input receipt, so the rule does not constrain its licence: a stored receipt, a constant, or a receipt whose only inputs are empty slices), `open` (open inputs only), or `declared` (a restricted input, declared for `fn` and open at `R.issued`).
+
+So R is entitled exactly when its licence equals what 8.5 gives and every restricted input licence has a declaration entry for `fn` open at `R.issued`. The eight reasons are `no_inputs`, `open` and `declared` (entitled) and `restricted_conflict`, `not_declared`, `declaration_not_open`, `share_alike_conflict` and `licence_mismatch` (not entitled). A library implements the check as a pure function of R, L and K; the `entitlement` vectors (section 11) test it.
+
+The answer is about the licence only. An entitled receipt is no more valid than another, and a not entitled one is still signature-valid, and recomputed when it recomputes: what to do with it is the verifier's policy.
+
 ## 11. Test vectors
 
 `vectors/<group>/<name>.json`, one vector per file, described by `schemas/vector.schema.json`. Every vector has `id` (its path without `.json`), `kind`, `description` and `valid`. An invalid vector has `error`: the exact code the reference tool reports.
@@ -915,7 +997,7 @@ The four failure classes a verifier distinguishes are: bad canonical form (parse
 | `scalar`, `cell`, `ref`, `function` | `input`: JSON text (or `input_hex`: raw bytes) | `canonical`, `sha256` |
 | `uri` | `input`: URI, `signature`: function signature | `object` (cell reference), `canonical`, `sha256`, `https` (on mesh `mesh.example`) |
 | `keyid` | `input`: public key hex | `key_id` |
-| `keys` | `host`, `env`: what the HTTPS request returned | `key_ids` |
+| `keys` | `host`, `env`: what the HTTPS request returned | `key_ids`; since `spec-0.4.3`, `declarations` (the document's, as given) when the document has them |
 | `receipt` | `input`: receipt JSON text; `keypair` (`seed`, `public`, `key_id`); `keys`: an `env` per host; optional `recompute`; optional `blob_hex`: content for step 7.7 | `canonical` (the signed payload), `sha256` (receipt hash), `sig`, `level` (`signed` or `recomputed`); `blob_checked` (true) when `blob_hex` is given; `code` (`E_EVAL_UNAVAILABLE`) when `recompute` has no `value` |
 | `unit` | `input`: JSON text of an object with exactly `cell` and `descriptor` (any other shape is `E_SCHEMA`) | `unit`: the resolved unit of the cell's value (7.1), or null when the function does not return a number |
 | `envelope` | `input`: the response body; `status`: the HTTP status; `keys`: an `env` per host; `request`: `{"cell_id", "asof"?, "job"?, "fn_hash"?, "mesh"?}` for step 5, with `job` (since `spec-0.4.1`) when the body answers `GET` of that job's `poll` URL, `fn_hash` the pin and `mesh` the host asked (since `spec-0.4.2`); for the slice endpoint (5.6) `{"slice_id", "asof"?, "fn_hash"?, "mesh"?, "after"?}` | `outcome`, and when there is a receipt, `trust` and `receipt_hash`; for a slice page, `results`: each member's `{outcome, receipt_hash, trust}` in order |
@@ -926,11 +1008,15 @@ The four failure classes a verifier distinguishes are: bad canonical form (parse
 | `formula` | `input`: a formula source; `env`: `{"name", "signature", "functions": {name: descriptor}, "aliases": {alias: name}}` | `ast` (the canonical AST's JCS text), `ast_sha256`, `body`, `inputs` (the derived set), `returns` (type and unit), `asof_dependent`; an invalid vector has `error`, and `token` for `E_FORMULA_FORBIDDEN` |
 | `formula-eval` | `world`: `{"functions": {name: {"descriptor", "bound"}}, "receipts": [stored receipts], "max_depth"?, "blobs"?}`, `blobs` (since `spec-0.4.2`) the content the resolver can give, SHA-256 to the content's hex; `cell`: `{"fn", "args"}`; `asof`; `fuel`? | `value`, `lineage` (the receipt's `inputs`), `tx`, `receipt_asof`, `fuel_used`, `receipt_hash`; an invalid vector has the evaluation code as `error` |
 | `excel` | `excel` (the Excel formula), `doc` (the Microsoft page it follows), `documentation_derived` (true), `status`, `sample`, `excel_result`, `formula`, `signature`, `world`, `cell`, `asof` | as `formula-eval`, and `body`; `value` equals `excel_result` |
+| `licence` (since `spec-0.4.3`) | `licences`: the input receipts' licences (slice members included; repeats allowed); `declarations`: the function's publisher's declarations (9.2), `{}` for none; `fn`: the function's full name; `issued`; `mesh_licence`: the mesh's own licence | `licence`: the result's licence by 8.5, or null when the mesh may not compute the cell (it answers `unlicensed`); `reason` (8.5) |
+| `entitlement` (since `spec-0.4.3`) | `input`: a receipt's JSON text; `keys`: an `env` per host, the publisher's key document and the input receipts' included; `receipts`: receipt hash to the JSON text of each input receipt, slice members included; `manifests`: slice entry to manifest JSON text | `entitled` (a boolean) and `reason` (10.3) |
 | `decimal` | `op`; `cases`: an array of argument arrays (canonical numbers; for `power` and `round` an integer second argument) | `results`: each case's canonical result or fault code, to the last digit; for `sqrt`, `exp`, `ln` and `pow` also `mpdecimal` (Python decimal's correctly rounded result, or null on a fault) and `hard_cases` (how many differ from the algorithm) |
+
+Every `licence` and `entitlement` vector is valid: a refusal (`licence` null) or a not entitled answer is a result, not an error. An `entitlement` vector's receipts are signature-valid, and a runner may verify them first, as the reference does; it takes K from the `env` of the host of the receipt's `cell.ns`, and L by following the receipt's `inputs` through `receipts` and `manifests`. Since `spec-0.4.3` a valid `keys` vector whose document has declarations carries them as the output `declarations`; the vectors of earlier revisions have none, and their files are unchanged.
 
 `canonical` is the canonical byte string as UTF-8 text. It may contain U+2028 and U+2029, which some JSON-lines tools treat as line breaks. `key_ids` are in document order. Receipt vectors built by hand (the Ed25519 strictness vectors) have no `keypair`, because their keys have no seed.
 
-**Computed receipts of `formula-eval` and `excel` vectors.** `receipt_hash` is the hash of the receipt the reference evaluator signs for the cell, built with these conventions: `computed_by` `mesh.example.net#cd42547c321bfc08` (the key of seed SHA-256 of `datumesh formula test key: mesh.example.net`, valid from `2020-01-01T00:00:00.000000Z`); `issued` the later of the receipt's `asof` and `2020-01-01T00:00:00.000000Z`; `licence` `CC0-1.0`; `summary` `Computed by the Datumesh formula reference evaluator.`; `publisher` the cell's namespace; `valid` the cell's valid-time arguments; `cell` the requested cell with the function hash of its descriptor; `type` and `value` the result; `inputs` the vector's `lineage`; `tx` and `asof` the vector's `tx` and `receipt_asof`. The stored receipts of a vector's `world` are signed by the key of each host's seed, SHA-256 of `datumesh formula test key: <host>`. An `excel` vector's function is the descriptor `{"code": {"body": <body>, "lang": "formula"}, "inputs": <the derived inputs>, "signature": <signature>}`. A `formula` vector's `returns.unit` is the checker's unit text: atoms in ascending order, with `^exponent` when it is not 1 (`arg:base^-1 arg:quote`), `1` for none, and `a bare number` for a body whose unit is a bare literal's.
+**Computed receipts of `formula-eval` and `excel` vectors.** `receipt_hash` is the hash of the receipt the reference evaluator signs for the cell, built with these conventions: `computed_by` `mesh.example.net#cd42547c321bfc08` (the key of seed SHA-256 of `datumesh formula test key: mesh.example.net`, valid from `2020-01-01T00:00:00.000000Z`); `issued` the later of the receipt's `asof` and `2020-01-01T00:00:00.000000Z`; `licence` `CC0-1.0`; `summary` `Computed by the Datumesh formula reference evaluator.`; `publisher` the cell's namespace; `valid` the cell's valid-time arguments; `cell` the requested cell with the function hash of its descriptor; `type` and `value` the result; `inputs` the vector's `lineage`; `tx` and `asof` the vector's `tx` and `receipt_asof`. The stored receipts of a vector's `world` are signed by the key of each host's seed, SHA-256 of `datumesh formula test key: <host>`. An `excel` vector's function is the descriptor `{"code": {"body": <body>, "lang": "formula"}, "inputs": <the derived inputs>, "signature": <signature>}`. These conventions predate licence inheritance (8.5) and are kept, since every hash stays as it is: a computed receipt of a world whose stored receipts carry `CC-BY-4.0` carries `CC0-1.0` by this convention, and the entitlement check (10.3) would answer it not entitled (`licence_mismatch`), which is not a verification result. A `formula` vector's `returns.unit` is the checker's unit text: atoms in ascending order, with `^exponent` when it is not 1 (`arg:base^-1 arg:quote`), `1` for none, and `a bare number` for a body whose unit is a bare literal's.
 
 A `recompute` object stands in for what step 7 obtains. It has these members:
 - `descriptor`: the descriptor offered for `cell.fn_hash`, as a JSON value; when absent, the descriptor is unavailable (`E_FN_UNAVAILABLE`). It is never text to parse: a JSON string here is a string value offered as the descriptor, even when it holds a descriptor's text, and like `null` it does not hash to `fn_hash` (`E_FN_HASH_MISMATCH`, 10.1 step 7.1). Only an absent member means unavailable;
@@ -947,7 +1033,9 @@ The `env` for a host is `{"https": {"status": 200, "body": "<text>"}}` for a ret
 
 The JSON Schemas under `schemas/` describe the shapes; where a schema keyword (`uniqueItems`, `maxItems`, a pattern) would reject an input that this document assigns another code, this document governs. In a cross-check, a runner that does not implement a kind of vector (a verifier library, for the kinds `formula`, `formula-eval`, `excel`, `decimal` and `call`) prints `{"id": …, "error": null, "skipped": "<kind>"}` for it, and is not compared on it (`crosscheck/README.md`).
 
-The vectors use reserved example domains (`example.org`, `example.net`, `.example`) for everything signed. `tools/gen_vectors.py` (with `tools/gen_formula.py` for the kinds of `spec-0.4.0`) reproduces every file byte for byte.
+How a mesh reads the `formula-eval` and `excel` vectors (each against an isolated mesh holding its world alone; `invalid/formula-eval-depth` and `invalid/formula-eval-budget` evaluator-only) is noted in the repository's `README.md`, under "Test vectors" (since `spec-0.4.3`); no vector carries a field for it, and `vectors/` holds group directories of vector files only.
+
+The vectors use reserved example domains (`example.org`, `example.net`, `.example`, and since `spec-0.4.3` `local.invalid`) for everything signed. `tools/gen_vectors.py` (with `tools/gen_formula.py` for the kinds of `spec-0.4.0`) reproduces every file byte for byte.
 
 ## 12. Security considerations
 
@@ -961,6 +1049,8 @@ The vectors use reserved example domains (`example.org`, `example.net`, `.exampl
 - **Job ids are capabilities** (5.5): anyone holding one can fetch the result while it is kept. A mesh draws them from a cryptographically secure generator, serves job URLs only over TLS, and applies the `/cell` licence rules at them; a client does not log or share them.
 - **Pins name functions, not trust** (5.1, 5.8). A pinned answer is checked like any other: the receipt's cell, and so its `fn_hash`, must be the one asked for. Pinning an old function does not make its answers current; `asof` still says as of when.
 - **Mesh documents are unsigned** (9.6). They are authenticated by TLS for their host only, which is why every URL in one must be on that host.
+- **Licences are statements, entitlement is policy** (8.5, 10.3). A receipt's licence is its signer's statement. The entitlement check says whether it follows from the input receipts and the publisher's declarations, which are as trustworthy as the key document that carries them (TLS, for the publisher's host). It changes nothing about a receipt's validity, and it cannot hold a value once someone has read it: protection is strong for what stays a cell and weak at the moment of reading.
+- **Unrooted receipts** (2.5) verify only against a key document supplied out of band. Whoever supplies it vouches for the key; a client should accept one only from the machine or party it trusts for that unrooted host.
 - **Envelopes are unsigned.** TLS authenticates the mesh, not what it says. `stale`, `superseded_by`, `verified`, every non-`ok` outcome, and the currency that `ok` asserts are the mesh's claims, and a mesh can lie about them or omit them. In particular, a mesh can serve an outdated receipt as `ok`: the client checks only that its `asof` is at or before the requested one. A client that needs a newer value asks with a later `asof`, or asks another mesh.
 
 ## 13. Decisions and rationale
@@ -1042,8 +1132,27 @@ Every choice this specification makes where its brief left room, with the main a
 | D72 | The slice endpoint answers pages of member envelopes in key order, paged by key with an opaque `next`; `/cells` answers an array of `{envelope, status}` in request order, or one refusal (`spec-0.4.2`) | A bespoke slice row format; batch items without status; `error` statuses derived from the outcome | The user's decision. Members bind as cells do; per-item status keeps an `error`'s exact 5xx |
 | D73 | `E_SLICE_AT_CELL` (`bad_request`) and `E_NAME_UNBOUND` (`not_covered`, carried in `error`); jobs kept while the mesh runs; answers for a past asof immutable, a backdated correction seen at a later asof; one manifest path; an optional `versions` endpoint (`spec-0.4.2`) | `E_PARSE_URI` for a slice at `/cell`; `bad_request` for an unbound name; invalidating cached past answers | The user's decisions. An unbound name may be bound later, so it is not the request's fault; a past answer stays true for what was known |
 | D74 | `text_of(blob)` for `text/plain` blobs, the content from the resolver by SHA-256 (`E_FORMULA_BLOB_UNAVAILABLE`, the evaluator's failure, when it has none); `remove_chars(text, chars)` on NFC code points (`spec-0.4.2`) | Any `text/*`; a charset parameter; the content as an input entry; general `substitute` | The user's decision 3a. A media type here carries no charset, so only `text/plain` is declared UTF-8 text; the hash already fixes the content, so lineage is unchanged; consonantal Hebrew is `remove_chars(text_of(v), <points and accents>)` |
+| D75 | A computed receipt's licence is the strictest of its inputs' licences: three open tiers, within tiers 1 and 2 the identifier listed last, two share-alike identifiers or two restricted licences refused, a restricted licence only where the publisher declared it for the function, open at `issued`; a refusal is `unlicensed`, with no new code; stored receipts unaffected (`spec-0.4.3`) | The derived publisher declares the licence, and the system only warns | The user's decision ("the strictest ancestor wins", decision log). Safe by default, and it makes the clean room enforceable at cell level; a warning is not a rule a mesh can be held to. A receipt carries one licence (D20), so two licences that each demand to be carried alone cannot both be honoured |
+| D76 | Declarations in the key document: the optional `declarations`, a function name under the document's host to dated licence entries, closed with `valid_to` and never removed; anything malformed rejects the document (`E_KEY_DOC`); at most 64 names and 16 entries; an empty array or object rejected; the entitlement check separate from verification, with named reasons (`spec-0.4.3`) | In the mesh document (9.6), which verifiers never read; an undated list; empty arrays allowed | The user's decision. Every verifier reads the key document, authenticated for the publisher's host; dates let a receipt be judged by what was declared at its `issued`, as keys are dated for it. An empty array declares nothing, and would be a second spelling of an absent name |
+| D77 | Unrooted namespaces are names under `.invalid` (RFC 2606, RFC 6761): ordinary signed receipts that verify only where the key document is reachable; a rooted function may not read them (`spec-0.4.3`) | A bare `local` namespace with unsigned receipts | The user's decision. `.invalid` never resolves, so it cannot be anyone's real host; `local.invalid` already passes 2.1, so neither the grammar nor the receipt format changes, and there is one receipt format |
 
 ## 14. Changes
+
+### spec-0.4.3
+
+Licence inheritance, `declarations` in the key document and unrooted namespaces, the user's decisions (CONTRACT-spec-0.4.3). **No `spec-0.4.2` vector's expected result changes and no hash changes**: every `spec-0.4.2` vector file and example is byte-identical, which `tests/test_migration_0_4_3.py` checks against the `spec-0.4.2` files in git, with the reference tool reproducing every expected result. `proto` is still `datumesh/1`, and the receipt format is unchanged.
+
+**A mesh that serves `declarations` is unverifiable by clients on core < 0.3.7 or datumesh < 0.4.3; publishers should wait for their consumers to upgrade before declaring.**
+
+- **Licence inheritance** (8.5, D75). A computed receipt's licence is the strictest among its inputs' (slice members included, inputs from other meshes as local ones): public domain, attribution and share-alike tiers, within tiers 1 and 2 the identifier listed last; every other licence is restricted and needs a declaration. A mesh that may not compute a cell answers `unlicensed` (5.5), with no new code. No inputs: the mesh's own licence, as before.
+- **Declarations in the key document** (9.2, 4.5, D76). The key document may carry `declarations`: per function name under its own host, 1 to 16 dated licence entries, never removed, only closed. Anything malformed, a name under another host, an empty array or object, more than 64 names or 16 entries, rejects the document (`E_KEY_DOC`). Verification is otherwise unchanged. New limits `declarations` and `declaration_entries`.
+- **The entitlement check** (10.3). Optional and separate from verification: given a receipt, its input licences and the publisher's key document, entitled or not, with one of eight named reasons; not an error code.
+- **Unrooted namespaces** (2.5, 1, D77). Names under `.invalid`; `local.invalid` already passes 2.1. A rooted function may not read them (refused at define time); their receipts are ordinary receipts that verify where the key document is reachable.
+- **Evaluation vectors** (11, `README.md`, the user's decision 4). `formula-eval` and `excel` vectors are defined against an isolated mesh; `invalid/formula-eval-depth` and `invalid/formula-eval-budget` are evaluator-only. No field is added to the vector files.
+- **Other text.** The `unlicensed` row (5.5); 9.6 on the key document; the `formula-eval` receipt convention's licence predates 8.5 (11); two security notes (12).
+- **Vectors** (11). 79 new, 1225 in all: the new kinds `licence` (47) and `entitlement` (10); 17 `keys` (2 valid, 15 invalid) for declarations, whose valid ones carry the output `declarations`; `receipt/keydoc-declarations`, `mesh/keydoc-declarations`; for unrooted namespaces `cell/unrooted-namespace`, `receipt/unrooted-key-supplied` and `invalid/receipt-unrooted-no-key-document`.
+- **Schemas.** `defs.schema.json` gains `licence` and `declarations`; `keydoc.schema.json` gains `declarations`; `vector.schema.json` the kinds `licence` and `entitlement` and their members.
+- **Reference tool.** `tools/canon.py`: `parse_key_document` and `resolve_key_document` (with declarations; `parse_key_doc` and `resolve_keys` still return the keys), `inherit_licence`, `check_entitlement`, `input_licences`, `is_unrooted`, the two kinds; `tools/gen_vectors.py` generates the new vectors. Cross-check: `generate_043.py`, `LIBS=0.4.2`.
 
 ### spec-0.4.2
 

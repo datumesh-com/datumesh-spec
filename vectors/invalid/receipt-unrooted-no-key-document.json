@@ -1,0 +1,14 @@
+{
+  "id": "invalid/receipt-unrooted-no-key-document",
+  "kind": "receipt",
+  "description": "spec-0.4.3: the same receipt where its key document is not supplied: local.invalid never resolves, so there are no keys.",
+  "valid": false,
+  "input": "{\n  \"sig\": \"b2e17b9c03ab7ccfddb8bdd8162605998bcce084a2407763b77baebc1b3e912ebbda22eeaae1b1942b9662ec2a52e96f75a611c127045ef2881cc7a4e780ec0a\",\n  \"value\": \"3.14159\",\n  \"valid\": {},\n  \"type\": \"number\",\n  \"tx\": \"2024-03-15T16:00:00.000000Z\",\n  \"summary\": \"Pi to five places, recorded on this machine.\",\n  \"publisher\": \"local.invalid\",\n  \"proto\": \"datumesh/1\",\n  \"licence\": \"CC-BY-4.0\",\n  \"issued\": \"2024-03-16T09:00:00.000000Z\",\n  \"inputs\": [],\n  \"computed_by\": \"local.invalid#0e05f0539f8628b6\",\n  \"cell\": {\n    \"ns\": \"local.invalid\",\n    \"fn_hash\": \"6548c6e298e8f66b98295303aaac8fcf45bed6fff3bdedcbda2ce8d49d6dedbb\",\n    \"fn\": \"pi\",\n    \"args\": {}\n  },\n  \"asof\": \"2024-03-16T09:00:00.000000Z\"\n}",
+  "keypair": {
+    "seed": "7e4ddf9e7b737361ecbcfd67f02087a9caf862b585902d528391e30051fc48e5",
+    "public": "7d13d1d5b350d11b6badf505e6f319ada2425ed324651acb8760f813d85d55eb",
+    "key_id": "0e05f0539f8628b6"
+  },
+  "keys": {},
+  "error": "E_KEY_UNAVAILABLE"
+}

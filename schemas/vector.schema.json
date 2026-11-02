@@ -35,7 +35,9 @@
         "decimal",
         "mesh",
         "call",
-        "batch"
+        "batch",
+        "licence",
+        "entitlement"
       ]
     },
     "description": {
@@ -508,6 +510,79 @@
         "$ref": "#/properties/request"
       },
       "description": "spec-0.4.2, batch vectors: one request description per item, in order."
+    },
+    "licences": {
+      "type": "array",
+      "items": {
+        "$ref": "defs.schema.json#/$defs/licence"
+      },
+      "description": "spec-0.4.3, licence vectors: the licences of the input receipts, slice members included; repeats allowed."
+    },
+    "declarations": {
+      "description": "spec-0.4.3: for licence vectors, the function's publisher's declarations (an input; absent or {} when there are none, {} allowed here only); for keys vectors, the document's declarations (an output).",
+      "anyOf": [
+        {
+          "$ref": "defs.schema.json#/$defs/declarations"
+        },
+        {
+          "type": "object",
+          "maxProperties": 0
+        }
+      ]
+    },
+    "fn": {
+      "$ref": "defs.schema.json#/$defs/functionName",
+      "description": "spec-0.4.3, licence vectors: the computed function's full name."
+    },
+    "issued": {
+      "$ref": "defs.schema.json#/$defs/instant",
+      "description": "spec-0.4.3, licence vectors: the receipt's issued."
+    },
+    "mesh_licence": {
+      "$ref": "defs.schema.json#/$defs/licence",
+      "description": "spec-0.4.3, licence vectors: the mesh's own licence, for a cell with no input receipt."
+    },
+    "licence": {
+      "description": "spec-0.4.3, licence vectors: the result's licence (8.5), or null when the mesh may not compute the cell (an unlicensed answer).",
+      "anyOf": [
+        {
+          "$ref": "defs.schema.json#/$defs/licence"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "reason": {
+      "description": "spec-0.4.3, licence and entitlement vectors: the named reason (8.5, 10.3); not an error code.",
+      "enum": [
+        "no_inputs",
+        "open",
+        "declared",
+        "share_alike_conflict",
+        "restricted_conflict",
+        "not_declared",
+        "declaration_not_open",
+        "licence_mismatch"
+      ]
+    },
+    "entitled": {
+      "type": "boolean",
+      "description": "spec-0.4.3, entitlement vectors: the answer of the entitlement check (10.3)."
+    },
+    "receipts": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "string"
+      },
+      "description": "spec-0.4.3, entitlement vectors: receipt hash to the JSON text of each input receipt, slice members included."
+    },
+    "manifests": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "string"
+      },
+      "description": "spec-0.4.3, entitlement vectors: slice entry to manifest JSON text."
     }
   },
   "oneOf": [
@@ -529,7 +604,8 @@
             "mesh",
             "formula-eval",
             "excel",
-            "decimal"
+            "decimal",
+            "licence"
           ]
         }
       },

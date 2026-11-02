@@ -756,6 +756,53 @@
           ]
         }
       }
+    },
+    "licence": {
+      "description": "A licence (SPEC.md 8.1): an SPDX identifier or an https:// URL.",
+      "type": "string",
+      "anyOf": [
+        {
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9.+-]*$",
+          "maxLength": 64
+        },
+        {
+          "pattern": "^https://[!-~]+$",
+          "maxLength": 512
+        }
+      ]
+    },
+    "declarations": {
+      "description": "spec-0.4.3: a key document's declarations (SPEC.md 9.2): full function names under the document's own host (not expressible here: E_KEY_DOC) to 1-16 dated licence entries; 1-64 names.",
+      "type": "object",
+      "minProperties": 1,
+      "maxProperties": 64,
+      "propertyNames": {
+        "$ref": "#/$defs/functionName"
+      },
+      "additionalProperties": {
+        "type": "array",
+        "minItems": 1,
+        "maxItems": 16,
+        "items": {
+          "type": "object",
+          "required": [
+            "licence",
+            "valid_from"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "licence": {
+              "$ref": "#/$defs/licence"
+            },
+            "valid_from": {
+              "$ref": "#/$defs/instant"
+            },
+            "valid_to": {
+              "$ref": "#/$defs/instant"
+            }
+          }
+        }
+      }
     }
   }
 }

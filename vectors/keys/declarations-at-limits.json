@@ -1,0 +1,479 @@
+{
+  "id": "keys/declarations-at-limits",
+  "kind": "keys",
+  "description": "64 declared names, one with 16 entries: the limits (4.5), accepted.",
+  "valid": true,
+  "host": "rates.example.org",
+  "env": {
+    "https": {
+      "status": 200,
+      "body": "{\n  \"declarations\": {\n    \"rates.example.org/f00\": [\n      {\n        \"licence\": \"https://rates.example.org/licences/restricted\",\n        \"valid_from\": \"2010-01-01T00:00:00.000000Z\",\n        \"valid_to\": \"2011-01-01T00:00:00.000000Z\"\n      },\n      {\n        \"licence\": \"https://rates.example.org/licences/restricted\",\n        \"valid_from\": \"2011-01-01T00:00:00.000000Z\",\n        \"valid_to\": \"2012-01-01T00:00:00.000000Z\"\n      },\n      {\n        \"licence\": \"https://rates.example.org/licences/restricted\",\n        \"valid_from\": \"2012-01-01T00:00:00.000000Z\",\n        \"valid_to\": \"2013-01-01T00:00:00.000000Z\"\n      },\n      {\n        \"licence\": \"https://rates.example.org/licences/restricted\",\n        \"valid_from\": \"2013-01-01T00:00:00.000000Z\",\n        \"valid_to\": \"2014-01-01T00:00:00.000000Z\"\n      },\n      {\n        \"licence\": \"https://rates.example.org/licences/restricted\",\n        \"valid_from\": \"2014-01-01T00:00:00.000000Z\",\n        \"valid_to\": \"2015-01-01T00:00:00.000000Z\"\n      },\n      {\n        \"licence\": \"https://rates.example.org/licences/restricted\",\n        \"valid_from\": \"2015-01-01T00:00:00.000000Z\",\n        \"valid_to\": \"2016-01-01T00:00:00.000000Z\"\n      },\n      {\n        \"licence\": \"https://rates.example.org/licences/restricted\",\n        \"valid_from\": \"2016-01-01T00:00:00.000000Z\",\n        \"valid_to\": \"2017-01-01T00:00:00.000000Z\"\n      },\n      {\n        \"licence\": \"https://rates.example.org/licences/restricted\",\n        \"valid_from\": \"2017-01-01T00:00:00.000000Z\",\n        \"valid_to\": \"2018-01-01T00:00:00.000000Z\"\n      },\n      {\n        \"licence\": \"https://rates.example.org/licences/restricted\",\n        \"valid_from\": \"2018-01-01T00:00:00.000000Z\",\n        \"valid_to\": \"2019-01-01T00:00:00.000000Z\"\n      },\n      {\n        \"licence\": \"https://rates.example.org/licences/restricted\",\n        \"valid_from\": \"2019-01-01T00:00:00.000000Z\",\n        \"valid_to\": \"2020-01-01T00:00:00.000000Z\"\n      },\n      {\n        \"licence\": \"https://rates.example.org/licences/restricted\",\n        \"valid_from\": \"2020-01-01T00:00:00.000000Z\",\n        \"valid_to\": \"2021-01-01T00:00:00.000000Z\"\n      },\n      {\n        \"licence\": \"https://rates.example.org/licences/restricted\",\n        \"valid_from\": \"2021-01-01T00:00:00.000000Z\",\n        \"valid_to\": \"2022-01-01T00:00:00.000000Z\"\n      },\n      {\n        \"licence\": \"https://rates.example.org/licences/restricted\",\n        \"valid_from\": \"2022-01-01T00:00:00.000000Z\",\n        \"valid_to\": \"2023-01-01T00:00:00.000000Z\"\n      },\n      {\n        \"licence\": \"https://rates.example.org/licences/restricted\",\n        \"valid_from\": \"2023-01-01T00:00:00.000000Z\",\n        \"valid_to\": \"2024-01-01T00:00:00.000000Z\"\n      },\n      {\n        \"licence\": \"https://rates.example.org/licences/restricted\",\n        \"valid_from\": \"2024-01-01T00:00:00.000000Z\",\n        \"valid_to\": \"2025-01-01T00:00:00.000000Z\"\n      },\n      {\n        \"licence\": \"https://rates.example.org/licences/restricted\",\n        \"valid_from\": \"2025-01-01T00:00:00.000000Z\",\n        \"valid_to\": \"2026-01-01T00:00:00.000000Z\"\n      }\n    ],\n    \"rates.example.org/f01\": [\n      {\n        \"licence\": \"https://rates.example.org/licences/restricted\",\n        \"valid_from\": \"2020-01-01T00:00:00.000000Z\"\n      }\n    ],\n    \"rates.example.org/f02\": [\n      {\n        \"licence\": \"https://rates.example.org/licences/restricted\",\n        \"valid_from\": \"2020-01-01T00:00:00.000000Z\"\n      }\n    ],\n    \"rates.example.org/f03\": [\n      {\n        \"licence\": \"https://rates.example.org/licences/restricted\",\n        \"valid_from\": \"2020-01-01T00:00:00.000000Z\"\n      }\n    ],\n    \"rates.example.org/f04\": [\n      {\n        \"licence\": \"https://rates.example.org/licences/restricted\",\n        \"valid_from\": \"2020-01-01T00:00:00.000000Z\"\n      }\n    ],\n    \"rates.example.org/f05\": [\n      {\n        \"licence\": \"https://rates.example.org/licences/restricted\",\n        \"valid_from\": \"2020-01-01T00:00:00.000000Z\"\n      }\n    ],\n    \"rates.example.org/f06\": [\n      {\n        \"licence\": \"https://rates.example.org/licences/restricted\",\n        \"valid_from\": \"2020-01-01T00:00:00.000000Z\"\n      }\n    ],\n    \"rates.example.org/f07\": [\n      {\n        \"licence\": \"https://rates.example.org/licences/restricted\",\n        \"valid_from\": \"2020-01-01T00:00:00.000000Z\"\n      }\n    ],\n    \"rates.example.org/f08\": [\n      {\n        \"licence\": \"https://rates.example.org/licences/restricted\",\n        \"valid_from\": \"2020-01-01T00:00:00.000000Z\"\n      }\n    ],\n    \"rates.example.org/f09\": [\n      {\n        \"licence\": \"https://rates.example.org/licences/restricted\",\n        \"valid_from\": \"2020-01-01T00:00:00.000000Z\"\n      }\n    ],\n    \"rates.example.org/f10\": [\n      {\n        \"licence\": \"https://rates.example.org/licences/restricted\",\n        \"valid_from\": \"2020-01-01T00:00:00.000000Z\"\n      }\n    ],\n    \"rates.example.org/f11\": [\n      {\n        \"licence\": \"https://rates.example.org/licences/restricted\",\n        \"valid_from\": \"2020-01-01T00:00:00.000000Z\"\n      }\n    ],\n    \"rates.example.org/f12\": [\n      {\n        \"licence\": \"https://rates.example.org/licences/restricted\",\n        \"valid_from\": \"2020-01-01T00:00:00.000000Z\"\n      }\n    ],\n    \"rates.example.org/f13\": [\n      {\n        \"licence\": \"https://rates.example.org/licences/restricted\",\n        \"valid_from\": \"2020-01-01T00:00:00.000000Z\"\n      }\n    ],\n    \"rates.example.org/f14\": [\n      {\n        \"licence\": \"https://rates.example.org/licences/restricted\",\n        \"valid_from\": \"2020-01-01T00:00:00.000000Z\"\n      }\n    ],\n    \"rates.example.org/f15\": [\n      {\n        \"licence\": \"https://rates.example.org/licences/restricted\",\n        \"valid_from\": \"2020-01-01T00:00:00.000000Z\"\n      }\n    ],\n    \"rates.example.org/f16\": [\n      {\n        \"licence\": \"https://rates.example.org/licences/restricted\",\n        \"valid_from\": \"2020-01-01T00:00:00.000000Z\"\n      }\n    ],\n    \"rates.example.org/f17\": [\n      {\n        \"licence\": \"https://rates.example.org/licences/restricted\",\n        \"valid_from\": \"2020-01-01T00:00:00.000000Z\"\n      }\n    ],\n    \"rates.example.org/f18\": [\n      {\n        \"licence\": \"https://rates.example.org/licences/restricted\",\n        \"valid_from\": \"2020-01-01T00:00:00.000000Z\"\n      }\n    ],\n    \"rates.example.org/f19\": [\n      {\n        \"licence\": \"https://rates.example.org/licences/restricted\",\n        \"valid_from\": \"2020-01-01T00:00:00.000000Z\"\n      }\n    ],\n    \"rates.example.org/f20\": [\n      {\n        \"licence\": \"https://rates.example.org/licences/restricted\",\n        \"valid_from\": \"2020-01-01T00:00:00.000000Z\"\n      }\n    ],\n    \"rates.example.org/f21\": [\n      {\n        \"licence\": \"https://rates.example.org/licences/restricted\",\n        \"valid_from\": \"2020-01-01T00:00:00.000000Z\"\n      }\n    ],\n    \"rates.example.org/f22\": [\n      {\n        \"licence\": \"https://rates.example.org/licences/restricted\",\n        \"valid_from\": \"2020-01-01T00:00:00.000000Z\"\n      }\n    ],\n    \"rates.example.org/f23\": [\n      {\n        \"licence\": \"https://rates.example.org/licences/restricted\",\n        \"valid_from\": \"2020-01-01T00:00:00.000000Z\"\n      }\n    ],\n    \"rates.example.org/f24\": [\n      {\n        \"licence\": \"https://rates.example.org/licences/restricted\",\n        \"valid_from\": \"2020-01-01T00:00:00.000000Z\"\n      }\n    ],\n    \"rates.example.org/f25\": [\n      {\n        \"licence\": \"https://rates.example.org/licences/restricted\",\n        \"valid_from\": \"2020-01-01T00:00:00.000000Z\"\n      }\n    ],\n    \"rates.example.org/f26\": [\n      {\n        \"licence\": \"https://rates.example.org/licences/restricted\",\n        \"valid_from\": \"2020-01-01T00:00:00.000000Z\"\n      }\n    ],\n    \"rates.example.org/f27\": [\n      {\n        \"licence\": \"https://rates.example.org/licences/restricted\",\n        \"valid_from\": \"2020-01-01T00:00:00.000000Z\"\n      }\n    ],\n    \"rates.example.org/f28\": [\n      {\n        \"licence\": \"https://rates.example.org/licences/restricted\",\n        \"valid_from\": \"2020-01-01T00:00:00.000000Z\"\n      }\n    ],\n    \"rates.example.org/f29\": [\n      {\n        \"licence\": \"https://rates.example.org/licences/restricted\",\n        \"valid_from\": \"2020-01-01T00:00:00.000000Z\"\n      }\n    ],\n    \"rates.example.org/f30\": [\n      {\n        \"licence\": \"https://rates.example.org/licences/restricted\",\n        \"valid_from\": \"2020-01-01T00:00:00.000000Z\"\n      }\n    ],\n    \"rates.example.org/f31\": [\n      {\n        \"licence\": \"https://rates.example.org/licences/restricted\",\n        \"valid_from\": \"2020-01-01T00:00:00.000000Z\"\n      }\n    ],\n    \"rates.example.org/f32\": [\n      {\n        \"licence\": \"https://rates.example.org/licences/restricted\",\n        \"valid_from\": \"2020-01-01T00:00:00.000000Z\"\n      }\n    ],\n    \"rates.example.org/f33\": [\n      {\n        \"licence\": \"https://rates.example.org/licences/restricted\",\n        \"valid_from\": \"2020-01-01T00:00:00.000000Z\"\n      }\n    ],\n    \"rates.example.org/f34\": [\n      {\n        \"licence\": \"https://rates.example.org/licences/restricted\",\n        \"valid_from\": \"2020-01-01T00:00:00.000000Z\"\n      }\n    ],\n    \"rates.example.org/f35\": [\n      {\n        \"licence\": \"https://rates.example.org/licences/restricted\",\n        \"valid_from\": \"2020-01-01T00:00:00.000000Z\"\n      }\n    ],\n    \"rates.example.org/f36\": [\n      {\n        \"licence\": \"https://rates.example.org/licences/restricted\",\n        \"valid_from\": \"2020-01-01T00:00:00.000000Z\"\n      }\n    ],\n    \"rates.example.org/f37\": [\n      {\n        \"licence\": \"https://rates.example.org/licences/restricted\",\n        \"valid_from\": \"2020-01-01T00:00:00.000000Z\"\n      }\n    ],\n    \"rates.example.org/f38\": [\n      {\n        \"licence\": \"https://rates.example.org/licences/restricted\",\n        \"valid_from\": \"2020-01-01T00:00:00.000000Z\"\n      }\n    ],\n    \"rates.example.org/f39\": [\n      {\n        \"licence\": \"https://rates.example.org/licences/restricted\",\n        \"valid_from\": \"2020-01-01T00:00:00.000000Z\"\n      }\n    ],\n    \"rates.example.org/f40\": [\n      {\n        \"licence\": \"https://rates.example.org/licences/restricted\",\n        \"valid_from\": \"2020-01-01T00:00:00.000000Z\"\n      }\n    ],\n    \"rates.example.org/f41\": [\n      {\n        \"licence\": \"https://rates.example.org/licences/restricted\",\n        \"valid_from\": \"2020-01-01T00:00:00.000000Z\"\n      }\n    ],\n    \"rates.example.org/f42\": [\n      {\n        \"licence\": \"https://rates.example.org/licences/restricted\",\n        \"valid_from\": \"2020-01-01T00:00:00.000000Z\"\n      }\n    ],\n    \"rates.example.org/f43\": [\n      {\n        \"licence\": \"https://rates.example.org/licences/restricted\",\n        \"valid_from\": \"2020-01-01T00:00:00.000000Z\"\n      }\n    ],\n    \"rates.example.org/f44\": [\n      {\n        \"licence\": \"https://rates.example.org/licences/restricted\",\n        \"valid_from\": \"2020-01-01T00:00:00.000000Z\"\n      }\n    ],\n    \"rates.example.org/f45\": [\n      {\n        \"licence\": \"https://rates.example.org/licences/restricted\",\n        \"valid_from\": \"2020-01-01T00:00:00.000000Z\"\n      }\n    ],\n    \"rates.example.org/f46\": [\n      {\n        \"licence\": \"https://rates.example.org/licences/restricted\",\n        \"valid_from\": \"2020-01-01T00:00:00.000000Z\"\n      }\n    ],\n    \"rates.example.org/f47\": [\n      {\n        \"licence\": \"https://rates.example.org/licences/restricted\",\n        \"valid_from\": \"2020-01-01T00:00:00.000000Z\"\n      }\n    ],\n    \"rates.example.org/f48\": [\n      {\n        \"licence\": \"https://rates.example.org/licences/restricted\",\n        \"valid_from\": \"2020-01-01T00:00:00.000000Z\"\n      }\n    ],\n    \"rates.example.org/f49\": [\n      {\n        \"licence\": \"https://rates.example.org/licences/restricted\",\n        \"valid_from\": \"2020-01-01T00:00:00.000000Z\"\n      }\n    ],\n    \"rates.example.org/f50\": [\n      {\n        \"licence\": \"https://rates.example.org/licences/restricted\",\n        \"valid_from\": \"2020-01-01T00:00:00.000000Z\"\n      }\n    ],\n    \"rates.example.org/f51\": [\n      {\n        \"licence\": \"https://rates.example.org/licences/restricted\",\n        \"valid_from\": \"2020-01-01T00:00:00.000000Z\"\n      }\n    ],\n    \"rates.example.org/f52\": [\n      {\n        \"licence\": \"https://rates.example.org/licences/restricted\",\n        \"valid_from\": \"2020-01-01T00:00:00.000000Z\"\n      }\n    ],\n    \"rates.example.org/f53\": [\n      {\n        \"licence\": \"https://rates.example.org/licences/restricted\",\n        \"valid_from\": \"2020-01-01T00:00:00.000000Z\"\n      }\n    ],\n    \"rates.example.org/f54\": [\n      {\n        \"licence\": \"https://rates.example.org/licences/restricted\",\n        \"valid_from\": \"2020-01-01T00:00:00.000000Z\"\n      }\n    ],\n    \"rates.example.org/f55\": [\n      {\n        \"licence\": \"https://rates.example.org/licences/restricted\",\n        \"valid_from\": \"2020-01-01T00:00:00.000000Z\"\n      }\n    ],\n    \"rates.example.org/f56\": [\n      {\n        \"licence\": \"https://rates.example.org/licences/restricted\",\n        \"valid_from\": \"2020-01-01T00:00:00.000000Z\"\n      }\n    ],\n    \"rates.example.org/f57\": [\n      {\n        \"licence\": \"https://rates.example.org/licences/restricted\",\n        \"valid_from\": \"2020-01-01T00:00:00.000000Z\"\n      }\n    ],\n    \"rates.example.org/f58\": [\n      {\n        \"licence\": \"https://rates.example.org/licences/restricted\",\n        \"valid_from\": \"2020-01-01T00:00:00.000000Z\"\n      }\n    ],\n    \"rates.example.org/f59\": [\n      {\n        \"licence\": \"https://rates.example.org/licences/restricted\",\n        \"valid_from\": \"2020-01-01T00:00:00.000000Z\"\n      }\n    ],\n    \"rates.example.org/f60\": [\n      {\n        \"licence\": \"https://rates.example.org/licences/restricted\",\n        \"valid_from\": \"2020-01-01T00:00:00.000000Z\"\n      }\n    ],\n    \"rates.example.org/f61\": [\n      {\n        \"licence\": \"https://rates.example.org/licences/restricted\",\n        \"valid_from\": \"2020-01-01T00:00:00.000000Z\"\n      }\n    ],\n    \"rates.example.org/f62\": [\n      {\n        \"licence\": \"https://rates.example.org/licences/restricted\",\n        \"valid_from\": \"2020-01-01T00:00:00.000000Z\"\n      }\n    ],\n    \"rates.example.org/f63\": [\n      {\n        \"licence\": \"https://rates.example.org/licences/restricted\",\n        \"valid_from\": \"2020-01-01T00:00:00.000000Z\"\n      }\n    ]\n  },\n  \"host\": \"rates.example.org\",\n  \"keys\": [\n    {\n      \"alg\": \"ed25519\",\n      \"id\": \"d712b32a2cc5cb7c\",\n      \"public\": \"843baeb22bfd0364fb1b7262b367fb3202e7886c69a070fecf8e343fedb1eabf\",\n      \"valid_from\": \"2020-01-01T00:00:00.000000Z\",\n      \"valid_to\": \"2024-06-01T00:00:00.000000Z\"\n    },\n    {\n      \"alg\": \"ed25519\",\n      \"id\": \"d9a2df65559c4444\",\n      \"public\": \"3ecf7b3ff834cb6782f5405dfcb213b5e78c0f30188068c25568adc25a739b52\",\n      \"valid_from\": \"2024-06-01T00:00:00.000000Z\"\n    }\n  ],\n  \"proto\": \"datumesh/1\"\n}"
+    }
+  },
+  "key_ids": [
+    "d712b32a2cc5cb7c",
+    "d9a2df65559c4444"
+  ],
+  "declarations": {
+    "rates.example.org/f00": [
+      {
+        "licence": "https://rates.example.org/licences/restricted",
+        "valid_from": "2010-01-01T00:00:00.000000Z",
+        "valid_to": "2011-01-01T00:00:00.000000Z"
+      },
+      {
+        "licence": "https://rates.example.org/licences/restricted",
+        "valid_from": "2011-01-01T00:00:00.000000Z",
+        "valid_to": "2012-01-01T00:00:00.000000Z"
+      },
+      {
+        "licence": "https://rates.example.org/licences/restricted",
+        "valid_from": "2012-01-01T00:00:00.000000Z",
+        "valid_to": "2013-01-01T00:00:00.000000Z"
+      },
+      {
+        "licence": "https://rates.example.org/licences/restricted",
+        "valid_from": "2013-01-01T00:00:00.000000Z",
+        "valid_to": "2014-01-01T00:00:00.000000Z"
+      },
+      {
+        "licence": "https://rates.example.org/licences/restricted",
+        "valid_from": "2014-01-01T00:00:00.000000Z",
+        "valid_to": "2015-01-01T00:00:00.000000Z"
+      },
+      {
+        "licence": "https://rates.example.org/licences/restricted",
+        "valid_from": "2015-01-01T00:00:00.000000Z",
+        "valid_to": "2016-01-01T00:00:00.000000Z"
+      },
+      {
+        "licence": "https://rates.example.org/licences/restricted",
+        "valid_from": "2016-01-01T00:00:00.000000Z",
+        "valid_to": "2017-01-01T00:00:00.000000Z"
+      },
+      {
+        "licence": "https://rates.example.org/licences/restricted",
+        "valid_from": "2017-01-01T00:00:00.000000Z",
+        "valid_to": "2018-01-01T00:00:00.000000Z"
+      },
+      {
+        "licence": "https://rates.example.org/licences/restricted",
+        "valid_from": "2018-01-01T00:00:00.000000Z",
+        "valid_to": "2019-01-01T00:00:00.000000Z"
+      },
+      {
+        "licence": "https://rates.example.org/licences/restricted",
+        "valid_from": "2019-01-01T00:00:00.000000Z",
+        "valid_to": "2020-01-01T00:00:00.000000Z"
+      },
+      {
+        "licence": "https://rates.example.org/licences/restricted",
+        "valid_from": "2020-01-01T00:00:00.000000Z",
+        "valid_to": "2021-01-01T00:00:00.000000Z"
+      },
+      {
+        "licence": "https://rates.example.org/licences/restricted",
+        "valid_from": "2021-01-01T00:00:00.000000Z",
+        "valid_to": "2022-01-01T00:00:00.000000Z"
+      },
+      {
+        "licence": "https://rates.example.org/licences/restricted",
+        "valid_from": "2022-01-01T00:00:00.000000Z",
+        "valid_to": "2023-01-01T00:00:00.000000Z"
+      },
+      {
+        "licence": "https://rates.example.org/licences/restricted",
+        "valid_from": "2023-01-01T00:00:00.000000Z",
+        "valid_to": "2024-01-01T00:00:00.000000Z"
+      },
+      {
+        "licence": "https://rates.example.org/licences/restricted",
+        "valid_from": "2024-01-01T00:00:00.000000Z",
+        "valid_to": "2025-01-01T00:00:00.000000Z"
+      },
+      {
+        "licence": "https://rates.example.org/licences/restricted",
+        "valid_from": "2025-01-01T00:00:00.000000Z",
+        "valid_to": "2026-01-01T00:00:00.000000Z"
+      }
+    ],
+    "rates.example.org/f01": [
+      {
+        "licence": "https://rates.example.org/licences/restricted",
+        "valid_from": "2020-01-01T00:00:00.000000Z"
+      }
+    ],
+    "rates.example.org/f02": [
+      {
+        "licence": "https://rates.example.org/licences/restricted",
+        "valid_from": "2020-01-01T00:00:00.000000Z"
+      }
+    ],
+    "rates.example.org/f03": [
+      {
+        "licence": "https://rates.example.org/licences/restricted",
+        "valid_from": "2020-01-01T00:00:00.000000Z"
+      }
+    ],
+    "rates.example.org/f04": [
+      {
+        "licence": "https://rates.example.org/licences/restricted",
+        "valid_from": "2020-01-01T00:00:00.000000Z"
+      }
+    ],
+    "rates.example.org/f05": [
+      {
+        "licence": "https://rates.example.org/licences/restricted",
+        "valid_from": "2020-01-01T00:00:00.000000Z"
+      }
+    ],
+    "rates.example.org/f06": [
+      {
+        "licence": "https://rates.example.org/licences/restricted",
+        "valid_from": "2020-01-01T00:00:00.000000Z"
+      }
+    ],
+    "rates.example.org/f07": [
+      {
+        "licence": "https://rates.example.org/licences/restricted",
+        "valid_from": "2020-01-01T00:00:00.000000Z"
+      }
+    ],
+    "rates.example.org/f08": [
+      {
+        "licence": "https://rates.example.org/licences/restricted",
+        "valid_from": "2020-01-01T00:00:00.000000Z"
+      }
+    ],
+    "rates.example.org/f09": [
+      {
+        "licence": "https://rates.example.org/licences/restricted",
+        "valid_from": "2020-01-01T00:00:00.000000Z"
+      }
+    ],
+    "rates.example.org/f10": [
+      {
+        "licence": "https://rates.example.org/licences/restricted",
+        "valid_from": "2020-01-01T00:00:00.000000Z"
+      }
+    ],
+    "rates.example.org/f11": [
+      {
+        "licence": "https://rates.example.org/licences/restricted",
+        "valid_from": "2020-01-01T00:00:00.000000Z"
+      }
+    ],
+    "rates.example.org/f12": [
+      {
+        "licence": "https://rates.example.org/licences/restricted",
+        "valid_from": "2020-01-01T00:00:00.000000Z"
+      }
+    ],
+    "rates.example.org/f13": [
+      {
+        "licence": "https://rates.example.org/licences/restricted",
+        "valid_from": "2020-01-01T00:00:00.000000Z"
+      }
+    ],
+    "rates.example.org/f14": [
+      {
+        "licence": "https://rates.example.org/licences/restricted",
+        "valid_from": "2020-01-01T00:00:00.000000Z"
+      }
+    ],
+    "rates.example.org/f15": [
+      {
+        "licence": "https://rates.example.org/licences/restricted",
+        "valid_from": "2020-01-01T00:00:00.000000Z"
+      }
+    ],
+    "rates.example.org/f16": [
+      {
+        "licence": "https://rates.example.org/licences/restricted",
+        "valid_from": "2020-01-01T00:00:00.000000Z"
+      }
+    ],
+    "rates.example.org/f17": [
+      {
+        "licence": "https://rates.example.org/licences/restricted",
+        "valid_from": "2020-01-01T00:00:00.000000Z"
+      }
+    ],
+    "rates.example.org/f18": [
+      {
+        "licence": "https://rates.example.org/licences/restricted",
+        "valid_from": "2020-01-01T00:00:00.000000Z"
+      }
+    ],
+    "rates.example.org/f19": [
+      {
+        "licence": "https://rates.example.org/licences/restricted",
+        "valid_from": "2020-01-01T00:00:00.000000Z"
+      }
+    ],
+    "rates.example.org/f20": [
+      {
+        "licence": "https://rates.example.org/licences/restricted",
+        "valid_from": "2020-01-01T00:00:00.000000Z"
+      }
+    ],
+    "rates.example.org/f21": [
+      {
+        "licence": "https://rates.example.org/licences/restricted",
+        "valid_from": "2020-01-01T00:00:00.000000Z"
+      }
+    ],
+    "rates.example.org/f22": [
+      {
+        "licence": "https://rates.example.org/licences/restricted",
+        "valid_from": "2020-01-01T00:00:00.000000Z"
+      }
+    ],
+    "rates.example.org/f23": [
+      {
+        "licence": "https://rates.example.org/licences/restricted",
+        "valid_from": "2020-01-01T00:00:00.000000Z"
+      }
+    ],
+    "rates.example.org/f24": [
+      {
+        "licence": "https://rates.example.org/licences/restricted",
+        "valid_from": "2020-01-01T00:00:00.000000Z"
+      }
+    ],
+    "rates.example.org/f25": [
+      {
+        "licence": "https://rates.example.org/licences/restricted",
+        "valid_from": "2020-01-01T00:00:00.000000Z"
+      }
+    ],
+    "rates.example.org/f26": [
+      {
+        "licence": "https://rates.example.org/licences/restricted",
+        "valid_from": "2020-01-01T00:00:00.000000Z"
+      }
+    ],
+    "rates.example.org/f27": [
+      {
+        "licence": "https://rates.example.org/licences/restricted",
+        "valid_from": "2020-01-01T00:00:00.000000Z"
+      }
+    ],
+    "rates.example.org/f28": [
+      {
+        "licence": "https://rates.example.org/licences/restricted",
+        "valid_from": "2020-01-01T00:00:00.000000Z"
+      }
+    ],
+    "rates.example.org/f29": [
+      {
+        "licence": "https://rates.example.org/licences/restricted",
+        "valid_from": "2020-01-01T00:00:00.000000Z"
+      }
+    ],
+    "rates.example.org/f30": [
+      {
+        "licence": "https://rates.example.org/licences/restricted",
+        "valid_from": "2020-01-01T00:00:00.000000Z"
+      }
+    ],
+    "rates.example.org/f31": [
+      {
+        "licence": "https://rates.example.org/licences/restricted",
+        "valid_from": "2020-01-01T00:00:00.000000Z"
+      }
+    ],
+    "rates.example.org/f32": [
+      {
+        "licence": "https://rates.example.org/licences/restricted",
+        "valid_from": "2020-01-01T00:00:00.000000Z"
+      }
+    ],
+    "rates.example.org/f33": [
+      {
+        "licence": "https://rates.example.org/licences/restricted",
+        "valid_from": "2020-01-01T00:00:00.000000Z"
+      }
+    ],
+    "rates.example.org/f34": [
+      {
+        "licence": "https://rates.example.org/licences/restricted",
+        "valid_from": "2020-01-01T00:00:00.000000Z"
+      }
+    ],
+    "rates.example.org/f35": [
+      {
+        "licence": "https://rates.example.org/licences/restricted",
+        "valid_from": "2020-01-01T00:00:00.000000Z"
+      }
+    ],
+    "rates.example.org/f36": [
+      {
+        "licence": "https://rates.example.org/licences/restricted",
+        "valid_from": "2020-01-01T00:00:00.000000Z"
+      }
+    ],
+    "rates.example.org/f37": [
+      {
+        "licence": "https://rates.example.org/licences/restricted",
+        "valid_from": "2020-01-01T00:00:00.000000Z"
+      }
+    ],
+    "rates.example.org/f38": [
+      {
+        "licence": "https://rates.example.org/licences/restricted",
+        "valid_from": "2020-01-01T00:00:00.000000Z"
+      }
+    ],
+    "rates.example.org/f39": [
+      {
+        "licence": "https://rates.example.org/licences/restricted",
+        "valid_from": "2020-01-01T00:00:00.000000Z"
+      }
+    ],
+    "rates.example.org/f40": [
+      {
+        "licence": "https://rates.example.org/licences/restricted",
+        "valid_from": "2020-01-01T00:00:00.000000Z"
+      }
+    ],
+    "rates.example.org/f41": [
+      {
+        "licence": "https://rates.example.org/licences/restricted",
+        "valid_from": "2020-01-01T00:00:00.000000Z"
+      }
+    ],
+    "rates.example.org/f42": [
+      {
+        "licence": "https://rates.example.org/licences/restricted",
+        "valid_from": "2020-01-01T00:00:00.000000Z"
+      }
+    ],
+    "rates.example.org/f43": [
+      {
+        "licence": "https://rates.example.org/licences/restricted",
+        "valid_from": "2020-01-01T00:00:00.000000Z"
+      }
+    ],
+    "rates.example.org/f44": [
+      {
+        "licence": "https://rates.example.org/licences/restricted",
+        "valid_from": "2020-01-01T00:00:00.000000Z"
+      }
+    ],
+    "rates.example.org/f45": [
+      {
+        "licence": "https://rates.example.org/licences/restricted",
+        "valid_from": "2020-01-01T00:00:00.000000Z"
+      }
+    ],
+    "rates.example.org/f46": [
+      {
+        "licence": "https://rates.example.org/licences/restricted",
+        "valid_from": "2020-01-01T00:00:00.000000Z"
+      }
+    ],
+    "rates.example.org/f47": [
+      {
+        "licence": "https://rates.example.org/licences/restricted",
+        "valid_from": "2020-01-01T00:00:00.000000Z"
+      }
+    ],
+    "rates.example.org/f48": [
+      {
+        "licence": "https://rates.example.org/licences/restricted",
+        "valid_from": "2020-01-01T00:00:00.000000Z"
+      }
+    ],
+    "rates.example.org/f49": [
+      {
+        "licence": "https://rates.example.org/licences/restricted",
+        "valid_from": "2020-01-01T00:00:00.000000Z"
+      }
+    ],
+    "rates.example.org/f50": [
+      {
+        "licence": "https://rates.example.org/licences/restricted",
+        "valid_from": "2020-01-01T00:00:00.000000Z"
+      }
+    ],
+    "rates.example.org/f51": [
+      {
+        "licence": "https://rates.example.org/licences/restricted",
+        "valid_from": "2020-01-01T00:00:00.000000Z"
+      }
+    ],
+    "rates.example.org/f52": [
+      {
+        "licence": "https://rates.example.org/licences/restricted",
+        "valid_from": "2020-01-01T00:00:00.000000Z"
+      }
+    ],
+    "rates.example.org/f53": [
+      {
+        "licence": "https://rates.example.org/licences/restricted",
+        "valid_from": "2020-01-01T00:00:00.000000Z"
+      }
+    ],
+    "rates.example.org/f54": [
+      {
+        "licence": "https://rates.example.org/licences/restricted",
+        "valid_from": "2020-01-01T00:00:00.000000Z"
+      }
+    ],
+    "rates.example.org/f55": [
+      {
+        "licence": "https://rates.example.org/licences/restricted",
+        "valid_from": "2020-01-01T00:00:00.000000Z"
+      }
+    ],
+    "rates.example.org/f56": [
+      {
+        "licence": "https://rates.example.org/licences/restricted",
+        "valid_from": "2020-01-01T00:00:00.000000Z"
+      }
+    ],
+    "rates.example.org/f57": [
+      {
+        "licence": "https://rates.example.org/licences/restricted",
+        "valid_from": "2020-01-01T00:00:00.000000Z"
+      }
+    ],
+    "rates.example.org/f58": [
+      {
+        "licence": "https://rates.example.org/licences/restricted",
+        "valid_from": "2020-01-01T00:00:00.000000Z"
+      }
+    ],
+    "rates.example.org/f59": [
+      {
+        "licence": "https://rates.example.org/licences/restricted",
+        "valid_from": "2020-01-01T00:00:00.000000Z"
+      }
+    ],
+    "rates.example.org/f60": [
+      {
+        "licence": "https://rates.example.org/licences/restricted",
+        "valid_from": "2020-01-01T00:00:00.000000Z"
+      }
+    ],
+    "rates.example.org/f61": [
+      {
+        "licence": "https://rates.example.org/licences/restricted",
+        "valid_from": "2020-01-01T00:00:00.000000Z"
+      }
+    ],
+    "rates.example.org/f62": [
+      {
+        "licence": "https://rates.example.org/licences/restricted",
+        "valid_from": "2020-01-01T00:00:00.000000Z"
+      }
+    ],
+    "rates.example.org/f63": [
+      {
+        "licence": "https://rates.example.org/licences/restricted",
+        "valid_from": "2020-01-01T00:00:00.000000Z"
+      }
+    ]
+  }
+}

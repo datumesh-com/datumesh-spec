@@ -1,0 +1,30 @@
+{
+  "id": "entitlement/slice-members",
+  "kind": "entitlement",
+  "description": "spec-0.4.3: A slice entry: every member receipt counts as an input (CC0-1.0 and CC-BY-SA-4.0), and the receipt carries CC-BY-SA-4.0.",
+  "valid": true,
+  "input": "{\n  \"sig\": \"6d15f2257383edf0f47d5be13e79b1cb27cad18fbb7ac712a97a8b1cce9ea688fcb8fad21179f854f351a32e06a2f405570be99d4673c17eedf8969986c2dd07\",\n  \"value\": \"108.92\",\n  \"valid\": {\n    \"date\": {\n      \"value\": \"2024-03-15\",\n      \"type\": \"date\"\n    }\n  },\n  \"type\": \"number\",\n  \"tx\": \"2024-03-15T16:00:00.000000Z\",\n  \"summary\": \"Over a slice of two members.\",\n  \"publisher\": \"calc.example.net\",\n  \"proto\": \"datumesh/1\",\n  \"licence\": \"CC-BY-SA-4.0\",\n  \"issued\": \"2024-03-16T09:00:01.250000Z\",\n  \"inputs\": [\n    \"slice:92a8308e1148292fd169089a5fe8e85768c089a796b477a01c8b3781ef56f554:7d6433772086740abc52370a24e3eeaedbc5bf83d18e65f8080dada6f672ce5c\"\n  ],\n  \"computed_by\": \"calc.example.net#f7ec60a92abf4774\",\n  \"cell\": {\n    \"ns\": \"calc.example.net\",\n    \"fn_hash\": \"014fc97eb3a442ab28a96d89131ccfd11c9eec8187595578c212b392d0702c71\",\n    \"fn\": \"convert\",\n    \"args\": {\n      \"quote\": {\n        \"value\": \"USD\",\n        \"type\": \"string\"\n      },\n      \"date\": {\n        \"value\": \"2024-03-15\",\n        \"type\": \"date\"\n      },\n      \"base\": {\n        \"value\": \"EUR\",\n        \"type\": \"string\"\n      },\n      \"amount\": {\n        \"value\": \"100\",\n        \"type\": \"number\"\n      }\n    }\n  },\n  \"asof\": \"2024-03-16T09:00:00.000000Z\"\n}",
+  "keys": {
+    "rates.example.org": {
+      "https": {
+        "status": 200,
+        "body": "{\n  \"host\": \"rates.example.org\",\n  \"keys\": [\n    {\n      \"alg\": \"ed25519\",\n      \"id\": \"d712b32a2cc5cb7c\",\n      \"public\": \"843baeb22bfd0364fb1b7262b367fb3202e7886c69a070fecf8e343fedb1eabf\",\n      \"valid_from\": \"2020-01-01T00:00:00.000000Z\",\n      \"valid_to\": \"2024-06-01T00:00:00.000000Z\"\n    },\n    {\n      \"alg\": \"ed25519\",\n      \"id\": \"d9a2df65559c4444\",\n      \"public\": \"3ecf7b3ff834cb6782f5405dfcb213b5e78c0f30188068c25568adc25a739b52\",\n      \"valid_from\": \"2024-06-01T00:00:00.000000Z\"\n    }\n  ],\n  \"proto\": \"datumesh/1\"\n}"
+      }
+    },
+    "calc.example.net": {
+      "https": {
+        "status": 200,
+        "body": "{\n  \"host\": \"calc.example.net\",\n  \"keys\": [\n    {\n      \"alg\": \"ed25519\",\n      \"id\": \"f7ec60a92abf4774\",\n      \"public\": \"ccd4faa3a0b8338bc796d3bfc30bda2f6e87d336a576b70dc9d47cbfe0e8830f\",\n      \"valid_from\": \"2020-01-01T00:00:00.000000Z\"\n    }\n  ],\n  \"proto\": \"datumesh/1\"\n}"
+      }
+    }
+  },
+  "receipts": {
+    "a2ffb65d78bf0c02db7bf4e7f31c63b5e02ddc254680cdb39cc53b7e4ecb05b1": "{\n  \"sig\": \"43037791cec1cdf428db651940166a00e5499a45891582ab0efa14bd6093537fb95747528c54b2db31a19334c091c81529dae4c272e63fe86c461d549d564302\",\n  \"value\": \"1.0892\",\n  \"valid\": {\n    \"date\": {\n      \"value\": \"2024-03-15\",\n      \"type\": \"date\"\n    }\n  },\n  \"type\": \"number\",\n  \"tx\": \"2024-03-15T16:00:00.000000Z\",\n  \"summary\": \"A EUR/USD rate under CC0-1.0.\",\n  \"publisher\": \"rates.example.org\",\n  \"proto\": \"datumesh/1\",\n  \"licence\": \"CC0-1.0\",\n  \"issued\": \"2024-03-16T09:00:00.000000Z\",\n  \"inputs\": [],\n  \"computed_by\": \"rates.example.org#d712b32a2cc5cb7c\",\n  \"cell\": {\n    \"ns\": \"rates.example.org\",\n    \"fn_hash\": \"7b58ecb8fd23b644c87951d0bd609790ff547cbb23fed27186c669ce2ce0aa80\",\n    \"fn\": \"fx_rate\",\n    \"args\": {\n      \"quote\": {\n        \"value\": \"USD\",\n        \"type\": \"string\"\n      },\n      \"date\": {\n        \"value\": \"2024-03-15\",\n        \"type\": \"date\"\n      },\n      \"base\": {\n        \"value\": \"EUR\",\n        \"type\": \"string\"\n      }\n    }\n  },\n  \"asof\": \"2024-03-16T09:00:00.000000Z\"\n}",
+    "31ff6a246f8a52fcc107c58fbbee5994ce0c28eb6000ef88da6dcfc1db77a0da": "{\n  \"sig\": \"3314c1ca09c5dcb2aed6efae527cf847d9c617af640b041160aac22e1d4ca80e627b42a1dfa5d51f61dadaf0cd9b98f599ee7a8925b5e7c5634f00a481d02e02\",\n  \"value\": \"1.0892\",\n  \"valid\": {\n    \"date\": {\n      \"value\": \"2024-03-15\",\n      \"type\": \"date\"\n    }\n  },\n  \"type\": \"number\",\n  \"tx\": \"2024-03-15T16:00:00.000000Z\",\n  \"summary\": \"A EUR/GBP rate under CC-BY-SA-4.0.\",\n  \"publisher\": \"rates.example.org\",\n  \"proto\": \"datumesh/1\",\n  \"licence\": \"CC-BY-SA-4.0\",\n  \"issued\": \"2024-03-16T09:00:00.000000Z\",\n  \"inputs\": [],\n  \"computed_by\": \"rates.example.org#d712b32a2cc5cb7c\",\n  \"cell\": {\n    \"ns\": \"rates.example.org\",\n    \"fn_hash\": \"7b58ecb8fd23b644c87951d0bd609790ff547cbb23fed27186c669ce2ce0aa80\",\n    \"fn\": \"fx_rate\",\n    \"args\": {\n      \"quote\": {\n        \"value\": \"GBP\",\n        \"type\": \"string\"\n      },\n      \"date\": {\n        \"value\": \"2024-03-15\",\n        \"type\": \"date\"\n      },\n      \"base\": {\n        \"value\": \"EUR\",\n        \"type\": \"string\"\n      }\n    }\n  },\n  \"asof\": \"2024-03-16T09:00:00.000000Z\"\n}"
+  },
+  "manifests": {
+    "slice:92a8308e1148292fd169089a5fe8e85768c089a796b477a01c8b3781ef56f554:7d6433772086740abc52370a24e3eeaedbc5bf83d18e65f8080dada6f672ce5c": "{\n  \"slice\": {\n    \"ns\": \"rates.example.org\",\n    \"fn_hash\": \"7b58ecb8fd23b644c87951d0bd609790ff547cbb23fed27186c669ce2ce0aa80\",\n    \"fn\": \"fx_rate\",\n    \"args\": {\n      \"quote\": \"*\",\n      \"date\": {\n        \"value\": \"2024-03-15\",\n        \"type\": \"date\"\n      },\n      \"base\": {\n        \"value\": \"EUR\",\n        \"type\": \"string\"\n      }\n    }\n  },\n  \"members\": [\n    \"31ff6a246f8a52fcc107c58fbbee5994ce0c28eb6000ef88da6dcfc1db77a0da\",\n    \"a2ffb65d78bf0c02db7bf4e7f31c63b5e02ddc254680cdb39cc53b7e4ecb05b1\"\n  ]\n}"
+  },
+  "reason": "open",
+  "entitled": true
+}

@@ -1,0 +1,9 @@
+{
+  "id": "cell/unrooted-namespace",
+  "kind": "cell",
+  "description": "spec-0.4.3: an unrooted namespace, local.invalid: a DNS name by 2.1 that never resolves (RFC 6761).",
+  "valid": true,
+  "input": "{\n  \"ns\": \"local.invalid\",\n  \"fn_hash\": \"6548c6e298e8f66b98295303aaac8fcf45bed6fff3bdedcbda2ce8d49d6dedbb\",\n  \"fn\": \"pi\",\n  \"args\": {}\n}",
+  "canonical": "{\"args\":{},\"fn\":\"pi\",\"fn_hash\":\"6548c6e298e8f66b98295303aaac8fcf45bed6fff3bdedcbda2ce8d49d6dedbb\",\"ns\":\"local.invalid\"}",
+  "sha256": "315f80c7c8abcd78e3421fb0c3970a67eda5bd55aa8acdfd4b59609a270fa9f3"
+}

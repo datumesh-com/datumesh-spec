@@ -29,7 +29,9 @@ OUTPUT_FIELDS = ("object", "canonical", "sha256", "https", "key_id", "key_ids", 
                  "slice_id", "members_hash", "entry", "ast", "ast_sha256", "body", "inputs", "returns", "asof_dependent",
                  "value", "lineage", "tx", "receipt_asof", "fuel_used", "results",
                  # spec-0.4.1: mesh documents
-                 "bindings", "endpoints")
+                 "bindings", "endpoints",
+                 # spec-0.4.3: key document declarations, licence inheritance, entitlement
+                 "declarations", "licence", "reason", "entitled")
 
 
 # Vectors from spec-0.1.1 whose bytes changed in spec-0.2.0, and why. tests/test_migration.py
@@ -89,7 +91,7 @@ def add(id_, kind, description, input=None, error=None, input_hex=None, **extra)
         if "error" in got:
             raise SystemExit(f"{id_}: expected valid, canon.py says {got['detail']}")
         for field in OUTPUT_FIELDS:
-            if field in got:
+            if field in got and not (field == "declarations" and kind == "licence"):
                 vec[field] = got[field]
         if kind == "call":  # spec-0.4.2: a call's output is its cell URI
             vec["uri"] = got["uri"]
@@ -1704,6 +1706,243 @@ add("mesh/versions", "mesh", "The optional versions endpoint, a template with {c
     env=mesh_env(mesh_doc({"versions": f"{MB}/versions/{{cell}}"})))
 add("invalid/mesh-versions-no-placeholder", "mesh", "versions has the {cell} placeholder.", error="E_MESH_DOC",
     host=MESH_HOST, env=mesh_env(mesh_doc({"versions": f"{MB}/versions"})))
+
+
+# ---------------------------------------------------------------------------
+# spec-0.4.3: declarations in the key document (9.2), licence inheritance (8.5), the entitlement
+# check (10.3), unrooted namespaces (2.5).
+
+RESTRICTED_L = "https://rates.example.org/licences/restricted"
+OTHER_L = "https://rates.example.org/licences/other"
+DECL_FN = "calc.example.net/convert"
+LATER_T = "2025-01-01T00:00:00.000000Z"
+
+
+def decl(licence, valid_from=T0, valid_to=None):
+    e = {"licence": licence, "valid_from": valid_from}
+    if valid_to:
+        e["valid_to"] = valid_to
+    return e
+
+
+def keydoc_env(host, entries, declarations):
+    doc = {"declarations": declarations, "host": host, "keys": list(entries), "proto": canon.PROTO}
+    return {"https": {"status": 200, "body": json.dumps(doc, indent=2)}}
+
+
+RATES_KEYS = (key_entry("rates-2020", T0, ROTATE), key_entry("rates-2024", ROTATE))
+R_DECL = {"rates.example.org/cross_rate": [decl(RESTRICTED_L, T0, ROTATE), decl(RESTRICTED_L, LATER_T)],
+          "rates.example.org/stats/mean_rate": [decl("CC-BY-NC-4.0", ROTATE)]}
+add("keys/declarations", "keys", "spec-0.4.3: a key document with declarations (9.2): dated licence entries for "
+    "full function names under the document's own host, path namespaces included; an entry closed with valid_to "
+    "stays listed. The keys are those of keys/https-document.",
+    host=RATES, env=keydoc_env(RATES, RATES_KEYS, R_DECL))
+AT_LIMITS = {f"rates.example.org/f{i:02d}": [decl(RESTRICTED_L)] for i in range(64)}
+SIXTEEN = [decl(RESTRICTED_L, f"20{10 + i}-01-01T00:00:00.000000Z", f"20{11 + i}-01-01T00:00:00.000000Z")
+           for i in range(16)]
+AT_LIMITS["rates.example.org/f00"] = SIXTEEN
+add("keys/declarations-at-limits", "keys", "64 declared names, one with 16 entries: the limits (4.5), accepted.",
+    host=RATES, env=keydoc_env(RATES, RATES_KEYS, AT_LIMITS))
+for name, d, why in [
+    ("other-host", {"other.example.org/cross_rate": [decl(RESTRICTED_L)]},
+     "A declared name under another host than the document's."),
+    ("subdomain", {"eu.rates.example.org/cross_rate": [decl(RESTRICTED_L)]},
+     "A name under a subdomain of the document's host is under another host."),
+    ("not-function-name", {"rates.example.org": [decl(RESTRICTED_L)]},
+     "A namespace alone is not a full function name."),
+    ("bad-licence", {"rates.example.org/cross_rate": [decl("CC BY 4.0")]},
+     "An entry's licence follows the grammar of 8.1."),
+    ("bad-instant", {"rates.example.org/cross_rate": [decl(RESTRICTED_L, "2024-01-01")]},
+     "valid_from is an instant (3.3)."),
+    ("valid-to-equal", {"rates.example.org/cross_rate": [decl(RESTRICTED_L, ROTATE, ROTATE)]},
+     "valid_to is later than valid_from: equal is not."),
+    ("valid-to-before", {"rates.example.org/cross_rate": [decl(RESTRICTED_L, ROTATE, T0)]},
+     "valid_to before valid_from."),
+    ("extra-member", {"rates.example.org/cross_rate": [decl(RESTRICTED_L) | {"note": "relaxed"}]},
+     "An entry has exactly licence, valid_from and optionally valid_to."),
+    ("missing-member", {"rates.example.org/cross_rate": [{"valid_from": T0}]}, "An entry without licence."),
+    ("not-string", {"rates.example.org/cross_rate": [{"licence": RESTRICTED_L, "valid_from": T0, "valid_to": 1}]},
+     "Every member of an entry is a string."),
+    ("empty-array", {"rates.example.org/cross_rate": []},
+     "A declared name has at least one entry: an empty array declares nothing and is rejected."),
+    ("empty-object", {}, "declarations, when present, names at least one function."),
+    ("not-object", [decl(RESTRICTED_L)], "declarations is an object of names."),
+    ("65-names", {f"rates.example.org/f{i:02d}": [decl(RESTRICTED_L)] for i in range(65)},
+     "More than 64 declared names."),
+    ("17-entries", {"rates.example.org/f00": SIXTEEN + [decl(RESTRICTED_L, "2026-01-01T00:00:00.000000Z")]},
+     "More than 16 entries for one name."),
+]:
+    add(f"invalid/keys-declarations-{name}", "keys", f"spec-0.4.3: {why} The document is rejected whole.",
+        host=RATES, env=keydoc_env(RATES, RATES_KEYS, d), error="E_KEY_DOC")
+
+CALC_KEYS = (key_entry("calc-2020", T0),)
+add_receipt("receipt/keydoc-declarations", "spec-0.4.3: receipt/computed-with-lineage under key documents that "
+            "carry declarations: verification, recomputation included, is exactly as without them.",
+            R_CONVERT, "calc-2020",
+            keys={RATES: keydoc_env(RATES, RATES_KEYS, R_DECL),
+                  CALC: keydoc_env(CALC, CALC_KEYS, {DECL_FN: [decl(RESTRICTED_L)]})},
+            recompute={"descriptor": CONVERT, "inputs": {H_FX: text(R_FX)}, "value": N("108.92")})
+add("mesh/keydoc-declarations", "mesh", "spec-0.4.3: a key document with declarations passes cross-mesh resolution "
+    "(9.6 step 5).", host=MESH_HOST,
+    env=mesh_env(keys={"declarations": {f"{MESH_HOST}/stats/mean_rate": [decl(RESTRICTED_L)]}, "host": MESH_HOST,
+                       "keys": [key_entry("calc-2020", T0)], "proto": canon.PROTO}))
+
+# Licence inheritance (8.5): the licences of the input receipts, the publisher's declarations, the function
+# name, issued and the mesh's own licence -> the result's licence, or null (the mesh answers unlicensed).
+ISSUED_L = "2024-03-16T09:00:00.000000Z"
+OPEN_DECL = {DECL_FN: [decl(RESTRICTED_L)]}
+for name, licences, declarations, why in [
+    ("no-inputs", [], {}, "No input receipt (a constant): the mesh's own licence."),
+    ("cc0", ["CC0-1.0"], {}, "One public-domain input."),
+    ("pddl", ["PDDL-1.0"], {}, "One public-domain input."),
+    ("mit", ["MIT"], {}, "One attribution input."),
+    ("apache", ["Apache-2.0"], {}, "One attribution input."),
+    ("cc-by", ["CC-BY-4.0"], {}, "One attribution input."),
+    ("ogl", ["OGL-UK-3.0"], {}, "One attribution input."),
+    ("cc-by-sa", ["CC-BY-SA-4.0"], {}, "One share-alike input."),
+    ("odbl", ["ODbL-1.0"], {}, "One share-alike input."),
+    ("cc0-mit", ["CC0-1.0", "MIT"], {}, "Public domain and attribution: the higher tier."),
+    ("pddl-cc-by-sa", ["PDDL-1.0", "CC-BY-SA-4.0"], {}, "Public domain and share-alike: the higher tier."),
+    ("mit-odbl", ["ODbL-1.0", "MIT"], {}, "Attribution and share-alike: the higher tier."),
+    ("three-tiers", ["CC-BY-SA-4.0", "MIT", "CC0-1.0"], {}, "One input of each open tier: share-alike."),
+    ("pddl-ogl-odbl", ["OGL-UK-3.0", "ODbL-1.0", "PDDL-1.0"], {}, "One input of each open tier: share-alike."),
+    ("within-public-domain", ["CC0-1.0", "PDDL-1.0"], {}, "Two public-domain ids: the last listed, PDDL-1.0."),
+    ("within-public-domain-reversed", ["PDDL-1.0", "CC0-1.0"], {},
+     "The order of the inputs does not matter: PDDL-1.0."),
+    ("within-attribution-mit-apache", ["MIT", "Apache-2.0"], {}, "Two attribution ids: the last listed."),
+    ("within-attribution-mit-cc-by", ["CC-BY-4.0", "MIT"], {}, "Two attribution ids: the last listed, CC-BY-4.0."),
+    ("within-attribution-apache-cc-by", ["Apache-2.0", "CC-BY-4.0"], {}, "Two attribution ids: the last listed."),
+    ("within-attribution-cc-by-ogl", ["OGL-UK-3.0", "CC-BY-4.0"], {}, "Two attribution ids: the last listed."),
+    ("within-attribution-all", ["CC-BY-4.0", "OGL-UK-3.0", "Apache-2.0", "MIT"], {},
+     "Every attribution id: the last listed, OGL-UK-3.0."),
+    ("within-attribution-with-public-domain", ["MIT", "CC0-1.0", "Apache-2.0"], {},
+     "Public domain under two attribution ids: the last listed attribution id."),
+    ("same-id-twice", ["CC-BY-4.0", "CC-BY-4.0"], {}, "One id from two inputs."),
+    ("share-alike-two-ids", ["CC-BY-SA-4.0", "ODbL-1.0"], {},
+     "Two different share-alike ids: each would require the result to carry it alone, so the mesh refuses."),
+    ("share-alike-same-id-twice", ["ODbL-1.0", "ODbL-1.0"], {}, "One share-alike id from two inputs."),
+    ("share-alike-two-ids-with-open", ["CC0-1.0", "ODbL-1.0", "MIT", "CC-BY-SA-4.0"], {},
+     "Two different share-alike ids among open inputs: refused."),
+    ("restricted-declared", [RESTRICTED_L], OPEN_DECL,
+     "A restricted input whose licence the publisher declared for this function, open at issued."),
+    ("restricted-undeclared", [RESTRICTED_L], {}, "A restricted input with no declaration: refused."),
+    ("restricted-declaration-closed", [RESTRICTED_L], {DECL_FN: [decl(RESTRICTED_L, T0, "2024-01-01T00:00:00.000000Z")]},
+     "The declaration was closed before issued."),
+    ("restricted-declaration-opens-later", [RESTRICTED_L], {DECL_FN: [decl(RESTRICTED_L, LATER_T)]},
+     "The declaration opens after issued."),
+    ("restricted-declaration-closes-at-issued", [RESTRICTED_L], {DECL_FN: [decl(RESTRICTED_L, T0, ISSUED_L)]},
+     "A declaration closed at issued is not open then (valid_from <= issued < valid_to, as keys in 9.5)."),
+    ("restricted-declaration-opens-at-issued", [RESTRICTED_L], {DECL_FN: [decl(RESTRICTED_L, ISSUED_L)]},
+     "A declaration opening at issued is open then."),
+    ("restricted-declaration-reopened", [RESTRICTED_L],
+     {DECL_FN: [decl(RESTRICTED_L, T0, "2022-01-01T00:00:00.000000Z"), decl(RESTRICTED_L, "2023-01-01T00:00:00.000000Z")]},
+     "Closed, then declared again in a second entry: the second is open at issued."),
+    ("restricted-declared-other-function", [RESTRICTED_L], {"calc.example.net/other": [decl(RESTRICTED_L)]},
+     "Declared for another function of the same publisher: not for this one."),
+    ("restricted-declared-other-licence", [RESTRICTED_L], {DECL_FN: [decl(OTHER_L)]},
+     "A declaration names one exact licence string; another restricted licence is not declared."),
+    ("restricted-with-open-declared", ["CC0-1.0", RESTRICTED_L, "CC-BY-SA-4.0"], OPEN_DECL,
+     "A restricted input with open ones: the restricted licence wins."),
+    ("restricted-with-open-undeclared", ["CC-BY-4.0", RESTRICTED_L], {},
+     "A restricted input with open ones, undeclared: refused."),
+    ("restricted-with-share-alike-conflict", ["CC-BY-SA-4.0", "ODbL-1.0", RESTRICTED_L], OPEN_DECL,
+     "A declared restricted input wins over open ones, two share-alike ids included."),
+    ("restricted-two-different", [RESTRICTED_L, OTHER_L], {},
+     "Two different restricted licences: a receipt carries one licence (D20), so the mesh refuses."),
+    ("restricted-two-different-both-declared", [OTHER_L, RESTRICTED_L],
+     {DECL_FN: [decl(RESTRICTED_L), decl(OTHER_L)]}, "Two different restricted licences, both declared: refused."),
+    ("restricted-same-twice", [RESTRICTED_L, RESTRICTED_L], OPEN_DECL, "One restricted licence from two inputs."),
+    ("unlisted-spdx-undeclared", ["CC-BY-NC-4.0"], {}, "An SPDX id not in tiers 1-3 is restricted."),
+    ("unlisted-spdx-declared", ["CC-BY-NC-4.0", "MIT"], {DECL_FN: [decl("CC-BY-NC-4.0")]},
+     "An SPDX id not in tiers 1-3, declared: it is the result's licence."),
+    ("unlisted-spdx-case", ["CC-BY-NC-4.0"], {DECL_FN: [decl("cc-by-nc-4.0")]},
+     "Licences are compared byte for byte: a declaration of cc-by-nc-4.0 does not declare CC-BY-NC-4.0."),
+    ("lowercase-id-is-restricted", ["cc0-1.0"], {}, "cc0-1.0 is not CC0-1.0: an unlisted id, so restricted."),
+    ("unlisted-spdx-and-url", ["CC-BY-NC-4.0", RESTRICTED_L], {DECL_FN: [decl("CC-BY-NC-4.0"), decl(RESTRICTED_L)]},
+     "An unlisted SPDX id and a licence URL are two different restricted licences: refused."),
+]:
+    add(f"licence/{name}", "licence", f"spec-0.4.3: {why}", licences=licences, declarations=declarations,
+        fn=DECL_FN, issued=ISSUED_L, mesh_licence="CC-BY-4.0")
+add("licence/no-inputs-restricted-own", "licence", "spec-0.4.3: no input receipt: the mesh's own licence, "
+    "whatever it is; the rule does not constrain it.", licences=[], declarations={}, fn=DECL_FN, issued=ISSUED_L,
+    mesh_licence=RESTRICTED_L)
+
+# The entitlement check (10.3): a computed receipt, its input receipts (and manifests), the key documents.
+SA_L = "CC-BY-SA-4.0"
+
+
+def fx_input(quote, licence):
+    cell = FX_CELL | {"args": FX_ARGS | {"quote": S(quote)}}
+    return signed(receipt(cell, "number", "1.0892", f"A EUR/{quote} rate under {licence}.", "rates-2020",
+                          licence=licence), "rates-2020")
+
+
+def computed(inputs, licence, summary, tx="2024-03-15T16:00:00.000000Z"):
+    return signed(receipt(convert_cell, "number", "108.92", summary, "calc-2020", inputs=sorted(inputs),
+                          issued="2024-03-16T09:00:01.250000Z", licence=licence, tx=tx), "calc-2020")
+
+
+def add_entitlement(name, why, r, inputs=(), manifests=None, declarations=None):
+    keys = {RATES: RATES_ENV, CALC: keydoc_env(CALC, CALC_KEYS, declarations) if declarations else CALC_ENV}
+    extra = {"keys": keys, "receipts": {canon.receipt_hash(x): text(x) for x in inputs}}
+    if manifests:
+        extra["manifests"] = manifests
+    add(f"entitlement/{name}", "entitlement", f"spec-0.4.3: {why}", text(r), **extra)
+
+
+F_RESTRICTED = fx_input("USD", RESTRICTED_L)
+H_RESTRICTED = canon.receipt_hash(F_RESTRICTED)
+add_entitlement("open-inherited", "receipt/computed-with-lineage: one CC-BY-4.0 input, and the receipt carries "
+                "CC-BY-4.0.", R_CONVERT, [R_FX])
+add_entitlement("stored-no-inputs", "A stored receipt has no input receipt: the rule does not constrain its licence.",
+                R_FX)
+add_entitlement("restricted-declared", "A restricted input whose licence the publisher declared for the function, "
+                "open at issued; the receipt carries it.",
+                computed([H_RESTRICTED], RESTRICTED_L, "Over a restricted input, declared."), [F_RESTRICTED],
+                declarations=OPEN_DECL)
+add_entitlement("licence-mismatch", "One CC-BY-4.0 input, but the receipt carries CC0-1.0.",
+                computed([H_FX], "CC0-1.0", "Over a CC-BY-4.0 input, claiming CC0-1.0."), [R_FX])
+add_entitlement("restricted-licence-mismatch", "A declared restricted input, but the receipt carries the open "
+                "CC-BY-4.0: the restricted licence wins.",
+                computed([H_RESTRICTED], "CC-BY-4.0", "Over a restricted input, claiming CC-BY-4.0."),
+                [F_RESTRICTED], declarations=OPEN_DECL)
+add_entitlement("restricted-undeclared", "A restricted input, and the publisher's key document declares nothing "
+                "for it.", computed([H_RESTRICTED], RESTRICTED_L, "Over a restricted input, undeclared."),
+                [F_RESTRICTED], declarations={"calc.example.net/other": [decl(RESTRICTED_L)]})
+add_entitlement("declaration-closed", "The declaration was closed before the receipt's issued.",
+                computed([H_RESTRICTED], RESTRICTED_L, "Over a restricted input, its declaration closed."),
+                [F_RESTRICTED], declarations={DECL_FN: [decl(RESTRICTED_L, T0, "2024-03-01T00:00:00.000000Z")]})
+add_entitlement("declaration-opens-later", "The declaration opens after the receipt's issued.",
+                computed([H_RESTRICTED], RESTRICTED_L, "Over a restricted input, declared too late."),
+                [F_RESTRICTED], declarations={DECL_FN: [decl(RESTRICTED_L, "2024-03-16T09:00:01.250001Z")]})
+F_SA, F_ODBL = fx_input("USD", SA_L), fx_input("GBP", "ODbL-1.0")
+add_entitlement("share-alike-conflict", "Two inputs under different share-alike licences: the mesh may not compute "
+                "the cell, whatever licence the receipt carries.",
+                computed([canon.receipt_hash(F_SA), canon.receipt_hash(F_ODBL)], SA_L, "Over two share-alike inputs."),
+                [F_SA, F_ODBL])
+F_M1, F_M2 = fx_input("USD", "CC0-1.0"), fx_input("GBP", SA_L)
+FX_SLICE = {"args": FX_ARGS | {"quote": "*"}, "fn": "fx_rate", "fn_hash": FX_HASH, "ns": RATES}
+MEMBERS = sorted([canon.receipt_hash(F_M1), canon.receipt_hash(F_M2)])
+ENTRY = canon.slice_entry(FX_SLICE, MEMBERS)
+add_entitlement("slice-members", "A slice entry: every member receipt counts as an input (CC0-1.0 and "
+                "CC-BY-SA-4.0), and the receipt carries CC-BY-SA-4.0.",
+                computed([ENTRY], SA_L, "Over a slice of two members."), [F_M1, F_M2],
+                manifests={ENTRY: text({"members": MEMBERS, "slice": FX_SLICE})})
+
+# Unrooted namespaces (2.5): names under .invalid, which never resolves.
+add("cell/unrooted-namespace", "cell", "spec-0.4.3: an unrooted namespace, local.invalid: a DNS name by 2.1 that "
+    "never resolves (RFC 6761).", text({"args": {}, "fn": "pi", "fn_hash": canon.function_hash(PI), "ns": "local.invalid"}))
+LOCAL = "local.invalid"
+R_LOCAL = receipt({"args": {}, "fn": "pi", "fn_hash": canon.function_hash(PI), "ns": LOCAL}, "number", "3.14159",
+                  "Pi to five places, recorded on this machine.", "local-2020", valid={})
+R_LOCAL["computed_by"] = f"{LOCAL}#{keypair_fields('local-2020')['key_id']}"
+R_LOCAL = signed(R_LOCAL, "local-2020")
+add_receipt("receipt/unrooted-key-supplied", "spec-0.4.3: a receipt of an unrooted namespace verifies where its "
+            "signer's key document is supplied out of band (9.4), as here; it is an ordinary receipt.",
+            R_LOCAL, "local-2020", keys={LOCAL: https_env(LOCAL, key_entry("local-2020", T0))})
+add_receipt("invalid/receipt-unrooted-no-key-document", "spec-0.4.3: the same receipt where its key document is "
+            "not supplied: local.invalid never resolves, so there are no keys.", R_LOCAL, "local-2020", "E_KEY_UNAVAILABLE",
+            keys={})
 
 
 def main():
