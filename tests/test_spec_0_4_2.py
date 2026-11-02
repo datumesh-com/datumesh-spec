@@ -448,7 +448,8 @@ class Text(unittest.TestCase):
                 self.assertIn(phrase, SPEC)
         for d in ("D70", "D71", "D72", "D73"):
             self.assertRegex(SPEC, rf"\| {d} \|")
-        self.assertIn("Status: draft, revision `spec-0.4.2`.", SPEC)
+        # Since spec-0.4.3 the status line names spec-0.4.3 (test_spec_0_4_3.py); this revision's
+        # entry stays in section 14.
 
 
 if __name__ == "__main__":

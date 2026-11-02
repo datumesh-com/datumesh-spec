@@ -7,7 +7,7 @@ needs git and that commit (a full clone).
 
 - Every spec-0.4.1 vector file and example exists at the same path and is byte-identical.
 - The reference tool of this revision reproduces every one of their expected results.
-- SPEC.md, units.md and README name the revision spec-0.4.2."""
+- SPEC.md keeps the spec-0.4.2 entry in section 14."""
 
 import json
 import shutil
@@ -47,10 +47,9 @@ class Migration042(unittest.TestCase):
                     self.assertEqual(canon.check_vector(json.loads(data)), [])
 
     def test_revision_strings(self):
-        self.assertIn("Status: draft, revision `spec-0.4.2`.", (ROOT / "SPEC.md").read_text(encoding="utf-8"))
+        # Since spec-0.4.3 the revision strings name spec-0.4.3 (test_migration_0_4_3.py); this
+        # revision's entry stays in section 14.
         self.assertIn("### spec-0.4.2", (ROOT / "SPEC.md").read_text(encoding="utf-8"))
-        self.assertIn("`spec-0.4.2`", (ROOT / "units.md").read_text(encoding="utf-8"))
-        self.assertIn("revision `spec-0.4.2`", (ROOT / "README.md").read_text(encoding="utf-8"))
 
 
 if __name__ == "__main__":
