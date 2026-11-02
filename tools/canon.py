@@ -1837,8 +1837,51 @@ def _is_scalar_arg(value):
     return isinstance(value, dict) and "value" in value
 
 
-def check_envelope_object(status, env, keyenv, request):
+_HEX64 = re.compile(r"[0-9a-f]{64}")
+
+
+def check_request(request):
+    """A request description (5.5, 5.6) is the caller's input: a malformed one is the caller's error,
+    a ValueError, never an E_* code (spec-0.4.2)."""
+    def bad(what):
+        raise ValueError(f"malformed request description: {what} (SPEC 5.5)")
+
+    if not isinstance(request, dict):
+        bad("not an object")
+    page = "slice_id" in request
+    allowed = {"slice_id", "asof", "fn_hash", "mesh", "after"} if page else {"cell_id", "asof", "job", "fn_hash", "mesh"}
+    if set(request) - allowed:
+        bad(f"unknown members {sorted(set(request) - allowed)}")
+    key = "slice_id" if page else "cell_id"
+    for name in (key, "fn_hash"):
+        if (name == key or name in request) and not (isinstance(request.get(name), str) and _HEX64.fullmatch(request[name])):
+            bad(f"{name} is 64 lowercase hex digits")
+    if "asof" in request and not (isinstance(request["asof"], str) and _is_instant(request["asof"])):
+        bad("asof is an instant")
+    if "job" in request and not (isinstance(request["job"], str) and _JOB.fullmatch(request["job"])):
+        bad("job is 32 to 64 lowercase hex digits")
+    if "mesh" in request:
+        try:
+            if not isinstance(request["mesh"], str):
+                raise DatumeshError("E_CANON_NAME", "not a string")
+            check_dns_name(request["mesh"], "request.mesh")
+        except DatumeshError:
+            bad("mesh is a DNS name")
+    if "after" in request:
+        if not isinstance(request["after"], dict):
+            bad("a cursor is an object")
+        for name, value in request["after"].items():
+            try:
+                shape_scalar(value, f"request.after.{name}")
+                check_scalar(value, f"request.after.{name}")
+            except DatumeshError:
+                bad(f"the cursor's {name} is not a typed scalar")
+
+
+def check_envelope_object(status, env, keyenv, request, _request_checked=False):
     """check_envelope on a parsed envelope (the items of a batch, 5.7, use it)."""
+    if not _request_checked:
+        check_request(request)
     if "slice_id" in request:
         return _check_slice_envelope(status, env, keyenv, request)
     _check_envelope_members(env)
@@ -1893,8 +1936,6 @@ def _check_slice_envelope(status, env, keyenv, request):
         fail("E_ENVELOPE", "fn_hash echoes another function than the slice's", "$.fn_hash")
     if "next" in env and "mesh" in request and _mesh_url_host(env["next"], "$.next", "next") != request["mesh"]:
         fail("E_ENVELOPE", "next names another host than the mesh asked", "$.next")
-    if "after" in request and not isinstance(request["after"], dict):
-        raise ValueError("a cursor is an object of typed scalars: a malformed request description (5.5)")
     previous = _key_tuple(s, request["after"], "request.after") if "after" in request else None
     results = []
     for i, member in enumerate(env["members"]):
@@ -1936,11 +1977,13 @@ def check_batch(status, body, keyenv, requests):
     request in request order, each {"envelope", "status"}; or a refusal of the whole batch, one
     envelope with its own status. Each item is checked as check_envelope against its request; a
     failing item is reported in its place, and does not fail the others."""
+    for request in requests:
+        check_request(request)
     batch = parse_json(body, keep_integer_text=True)
     if status != 200:
         if not isinstance(batch, dict) or batch.get("outcome") not in BATCH_REFUSALS:
             fail("E_ENVELOPE", "a batch is refused whole only by a refusal outcome", "$.outcome")
-        return {"outcome": check_envelope_object(status, batch, keyenv, {})["outcome"]}
+        return {"outcome": check_envelope_object(status, batch, keyenv, {}, _request_checked=True)["outcome"]}
     if not isinstance(batch, list) or len(batch) != len(requests):
         fail("E_ENVELOPE", "a batch response is an array with one item per request", "$")
     for i, item in enumerate(batch):

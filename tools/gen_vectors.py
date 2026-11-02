@@ -1694,6 +1694,11 @@ add_envelope("invalid/envelope-pin-not-echoed-bad-receipt", "The pin echo is che
              {"outcome": "ok", "receipt": R_FX | {"value": "1.0893"}, "trust": "primary"}, 200, "E_ENVELOPE",
              request=PIN_REQUEST)
 
+_ORDER_PAGE = slice_page([M(R_CHF | {"value": "1.0893"}), M(R_GBP) | {"status": 200}])
+add_envelope("invalid/envelope-slice-member-checks-in-order", "Each member is checked completely, its receipt included, "
+             "before the next: the first member's bad signature is reported, not the second member's stray status.",
+             _ORDER_PAGE, 200, "E_SIGNATURE", request=SLICE_REQUEST)
+
 # The versions endpoint (9.6).
 add("mesh/versions", "mesh", "The optional versions endpoint, a template with {cell}.", host=MESH_HOST,
     env=mesh_env(mesh_doc({"versions": f"{MB}/versions/{{cell}}"})))
