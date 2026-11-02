@@ -1817,13 +1817,20 @@ def _check_pin_echo(env, request):
 
 
 def _key_tuple(slice_obj, cell_args, path):
-    """The key of a slice member (15.13): its open and ranged arguments, ascending by name, each in
-    its type's order."""
+    """The key of a slice member (15.13): its open and ranged arguments, ascending by name, each as
+    (type, its place in the type's order). Other names (in a cursor) are ignored."""
     names = [n for n in keys_in_order(slice_obj["args"]) if not _is_scalar_arg(slice_obj["args"][n])]
     try:
-        return tuple(type_key(cell_args[n]["type"], cell_args[n]["value"]) for n in names)
+        return tuple((cell_args[n]["type"], type_key(cell_args[n]["type"], cell_args[n]["value"])) for n in names)
     except (KeyError, TypeError, DatumeshError):
         fail("E_ENVELOPE", "a key is the slice's open arguments, as typed scalars", path)
+
+
+def _key_after(key, previous, path):
+    """Whether key comes after previous; keys of other types cannot be ordered (E_ENVELOPE)."""
+    if [t for t, _ in key] != [t for t, _ in previous]:
+        fail("E_ENVELOPE", "a key of another type than the cursor's or the previous member's", path)
+    return tuple(k for _, k in key) > tuple(k for _, k in previous)
 
 
 def _is_scalar_arg(value):
@@ -1886,6 +1893,8 @@ def _check_slice_envelope(status, env, keyenv, request):
         fail("E_ENVELOPE", "fn_hash echoes another function than the slice's", "$.fn_hash")
     if "next" in env and "mesh" in request and _mesh_url_host(env["next"], "$.next", "next") != request["mesh"]:
         fail("E_ENVELOPE", "next names another host than the mesh asked", "$.next")
+    if "after" in request and not isinstance(request["after"], dict):
+        raise ValueError("a cursor is an object of typed scalars: a malformed request description (5.5)")
     previous = _key_tuple(s, request["after"], "request.after") if "after" in request else None
     results = []
     for i, member in enumerate(env["members"]):
@@ -1893,7 +1902,7 @@ def _check_slice_envelope(status, env, keyenv, request):
         _check_member_shape(member, path)
         got = _check_receipt_answer(member, keyenv, request, lambda r: is_slice_member(s, r), path)
         key = _key_tuple(s, member["receipt"]["cell"]["args"], path)
-        if previous is not None and not key > previous:
+        if previous is not None and not _key_after(key, previous, path):
             fail("E_ENVELOPE", "members are in strictly ascending key order, after the cursor", path)
         previous = key
         results.append(got)

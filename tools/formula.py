@@ -51,7 +51,8 @@ DEFINE_CODES = (
 FAULT_CODES = ("E_FORMULA_DIV_ZERO", "E_FORMULA_DOMAIN", "E_FORMULA_RANGE", "E_FORMULA_EMPTY",
                "E_FORMULA_ABSENT", "E_FORMULA_FUTURE")
 # Other evaluation outcomes: no value for missing data, and failures of the evaluation itself.
-EVAL_CODES = FAULT_CODES + ("E_FORMULA_NOT_COVERED", "E_FORMULA_BUDGET", "E_FORMULA_CYCLE", "E_FORMULA_DEPTH")
+EVAL_CODES = FAULT_CODES + ("E_FORMULA_NOT_COVERED", "E_FORMULA_BUDGET", "E_FORMULA_CYCLE", "E_FORMULA_DEPTH",
+                             "E_FORMULA_BLOB_UNAVAILABLE")  # spec-0.4.2: text_of without the content
 CODES = DEFINE_CODES + EVAL_CODES
 CATCHABLE = ("E_FORMULA_EMPTY", "E_FORMULA_ABSENT")
 
@@ -171,6 +172,8 @@ BUILTINS.update({
     "find": (("needle", "text"), ("start",), False),
     "text": (("x",), (), False),
     "fixed": (("x", "digits"), (), False),
+    "text_of": (("blob",), (), False),  # spec-0.4.2
+    "remove_chars": (("text", "chars"), (), False),  # spec-0.4.2
 })
 
 # Names reserved for later revisions: a call is E_FORMULA_UNSUPPORTED (SPEC 15.10, 15.7).
@@ -1940,6 +1943,15 @@ class Checker:
 
     b_lower = b_trim = b_upper
 
+    def b_text_of(self, node, scope, args, named):
+        self.kind_arg(args[0], scope, "blob", "the blob")
+        return Ty("string")
+
+    def b_remove_chars(self, node, scope, args, named):
+        self.kind_arg(args[0], scope, "string", "the text")
+        self.kind_arg(args[1], scope, "string", "the characters")
+        return Ty("string")
+
     def b_concat(self, node, scope, args, named):
         for a in args:
             self.kind_arg(a, scope, "string", "concat()")
@@ -2250,7 +2262,8 @@ class World:
     """functions: {fully qualified name: {"descriptor": d, "bound": instant}};
     receipts: stored receipts (signed). Evaluation is memoised per (cell, asof)."""
 
-    def __init__(self, functions, receipts=(), fuel=10_000_000, max_depth=2000):
+    def __init__(self, functions, receipts=(), fuel=10_000_000, max_depth=2000, blobs=None):
+        self.blobs = dict(blobs or {})  # spec-0.4.2: sha256 -> content, what the resolver can give
         self.functions = functions  # a binding, or a list of bindings of one name (spec-0.4.1 tests)
         self._bindings = {name: [(b["bound"], b["descriptor"], canon.function_hash(b["descriptor"]))
                                  for b in _bindings_of(f)] for name, f in functions.items()}
@@ -3192,6 +3205,34 @@ class Context:
         i = hay.find(needle, start - 1)
         return ("number", Dec.of_int(i + 1 if i >= 0 else 0))
 
+    def f_text_of(self, node, scope):
+        """spec-0.4.2: a text/plain blob's content as a string (15.7)."""
+        sha, length, media = self._s(node["args"][0], scope).split(":", 2)
+        if media != "text/plain":
+            fail("E_FORMULA_DOMAIN", f"text_of() reads text/plain blobs, not {media}")
+        content = self.world.blobs.get(sha)
+        if content is None or len(content) != int(length) or hashlib.sha256(content).hexdigest() != sha:
+            fail("E_FORMULA_BLOB_UNAVAILABLE", f"the content of blob {sha} is not available")
+        self.world.charge(1 + len(content) // 64)
+        try:
+            text = content.decode("utf-8")
+        except UnicodeDecodeError:
+            fail("E_FORMULA_DOMAIN", "the blob's content is not UTF-8")
+        s = text_result(text)
+        try:
+            canon.check_text(s, "$", "string")
+        except canon.DatumeshError:
+            fail("E_FORMULA_DOMAIN", "the blob's content is not a string (SPEC 3.5): a control or unassigned character")
+        return ("string", s)
+
+    def f_remove_chars(self, node, scope):
+        """spec-0.4.2: every code point of chars removed from the text, then NFC (15.7)."""
+        s = self._s(node["args"][0], scope)
+        chars = set(self._s(node["args"][1], scope))
+        out = text_result("".join(c for c in s if c not in chars))
+        self._charge_text(out)
+        return ("string", out)
+
     def f_text(self, node, scope):
         v = self.eval(node["args"][0], scope)
         if v[0] == "boolean":
@@ -3415,7 +3456,9 @@ assert FAULT_CODES == canon.FORMULA_FAULTS
 def world_of(spec, fuel=10_000_000):
     """A World from a vector's world: {"functions": {name: {"descriptor", "bound"}}, "receipts": [...],
     optionally "max_depth"}."""
-    return World(spec["functions"], spec.get("receipts", []), fuel=fuel, max_depth=spec.get("max_depth", 2000))
+    blobs = {h: bytes.fromhex(x) for h, x in spec.get("blobs", {}).items()}  # spec-0.4.2
+    return World(spec["functions"], spec.get("receipts", []), fuel=fuel, max_depth=spec.get("max_depth", 2000),
+                 blobs=blobs)
 
 
 def evaluate_vector(vec, world):

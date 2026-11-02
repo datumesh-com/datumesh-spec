@@ -1628,6 +1628,72 @@ add_batch("invalid/batch-status-fraction", "An item's status is written as an in
 add_batch("invalid/batch-refused-ok", "Only a refusal answers the whole batch.",
           {"outcome": "ok", "receipt": R_FX, "trust": "primary"}, "E_ENVELOPE", status=200)
 
+# text_of and remove_chars (15.7, the user's decision 3a): blob content from the resolver, by sha256.
+import formula as FM  # noqa: E402
+import hashlib  # noqa: E402
+import unicodedata  # noqa: E402
+
+DOC_FN = "data.example.org/doc"
+DOC = gen_formula.stored({"k": {"type": "string", "valid": False}}, ["k"], "blob")
+TEXT_FN = "calc.example.net/text"
+
+
+def text_vector(name, body, content=None, media="text/plain", stored=True, why=""):
+    g = FM.define(TEXT_FN, {"args": {}, "order": [], "returns": "string"}, body, {"functions": {DOC_FN: DOC}})
+    functions, receipts, blobs = {TEXT_FN: g}, [], {}
+    if content is not None:
+        value = f"{hashlib.sha256(content).hexdigest()}:{len(content)}:{media}"
+        functions[DOC_FN] = DOC
+        receipts.append(FM.stored_receipt(DOC, DOC_FN, {"k": S("a")}, {"type": "blob", "value": value},
+                                          "2026-02-01T00:00:00.000000Z"))
+        if stored:
+            blobs[hashlib.sha256(content).hexdigest()] = content.hex()
+    world = gen_formula.spec_of(functions, receipts) | {"blobs": blobs}
+    vec = {"kind": "formula-eval", "world": world, "cell": {"args": {}, "fn": TEXT_FN}, "asof": gen_formula.LATER}
+    got = FM.run_vector(vec)
+    error = got.get("error")
+    vid = f"formula-eval/{name}" if error is None else f"invalid/formula-eval-{name}"
+    add(vid, "formula-eval", f"{body}  {why}".strip(), None, error, world=world, cell=vec["cell"], asof=vec["asof"])
+    return got
+
+
+READ = 'text_of(data.example.org/doc(k: "a"))'
+HEBREW_MARKS = unicodedata.normalize("NFC", "".join(chr(c) for c in range(0x0591, 0x05C8)
+                                                    if c not in (0x05BE, 0x05C0, 0x05C3, 0x05C6)))
+POINTED = unicodedata.normalize("NFC", "בְּרֵאשִׁ֖ית בָּרָ֣א אֱלֹהִ֑ים ׀ אֵ֥ת־הַשָּׁמַ֖יִם וְאֵ֥ת הָאָֽרֶץ׃")
+text_vector("text-of", READ, b"In the beginning", why="The content of a text/plain blob, as a string.")
+text_vector("text-of-nfc", READ, unicodedata.normalize("NFD", "Zürich Hbf").encode(),
+            why="Decomposed content becomes NFC, as every string result.")
+text_vector("remove-chars", 'remove_chars("2024-03-15", "-")', why="Every code point of chars removed.")
+got = text_vector("hebrew-consonantal", f'remove_chars({READ}, "{HEBREW_MARKS}")', POINTED.encode(),
+                  why="Genesis 1:1, pointed and accented (with a paseq and a maqaf added), to consonantal text: the "
+                      "points and accents U+0591-U+05C7 removed, maqaf U+05BE, paseq U+05C0, sof pasuq U+05C3 and nun "
+                      "hafukha U+05C6 kept.")
+assert got["value"]["value"] == "בראשית ברא אלהים ׀ את־השמים ואת הארץ׃", got
+text_vector("text-of-media-type", READ, b"a,b\n", media="text/csv", why="text_of reads text/plain only.")
+text_vector("text-of-utf8", READ, b"\xff\xfe", why="Content that is not UTF-8.")
+text_vector("text-of-control", READ, b"line\n", why="A string has no control characters (3.5): a trailing LF.")
+text_vector("text-of-long", READ, b"a" * 1025, why="Over 1024 bytes.")
+text_vector("text-of-unavailable", READ, b"In the beginning", stored=False,
+            why="The resolver has no content for the blob: the evaluator's failure, not a fault.")
+add("invalid/formula-text-of-string", "formula", "text_of takes a blob.", 'text_of("In the beginning")',
+    "E_FORMULA_TYPE", env=gen_formula.env_for('text_of("x")', gen_formula.std_sig("string")))
+
+# Findings on 810761d (DEF-52 to DEF-56).
+add_envelope("invalid/envelope-slice-cursor-type", "A cursor whose key is of another type than the members' "
+             "cannot be ordered against.", slice_page([M(R_JPY)]), 200, "E_ENVELOPE",
+             request=dict(SLICE_REQUEST, after={"quote": {"type": "number", "value": "1"}}))
+add_envelope("invalid/envelope-slice-cursor-missing", "A cursor without the slice's open argument.",
+             slice_page([M(R_JPY)]), 200, "E_ENVELOPE", request=dict(SLICE_REQUEST, after={"base": S("EUR")}))
+add_envelope("envelope/slice-cursor-extra", "A cursor's other names are ignored.", slice_page([M(R_JPY)]), 200,
+             request=dict(SLICE_REQUEST, after={"quote": S("GBP"), "tenor": S("1M")}))
+add_envelope("invalid/envelope-slice-fn-hash", "A page's fn_hash is its slice's.",
+             slice_page([M(R_CHF)], fn_hash=CONVERT_HASH), 200, "E_ENVELOPE", request=SLICE_REQUEST)
+add_envelope("invalid/envelope-pin-not-echoed-bad-receipt", "The pin echo is checked before the receipt (step "
+             "3a): an unechoed pinned answer is E_ENVELOPE even when its receipt would not verify.",
+             {"outcome": "ok", "receipt": R_FX | {"value": "1.0893"}, "trust": "primary"}, 200, "E_ENVELOPE",
+             request=PIN_REQUEST)
+
 # The versions endpoint (9.6).
 add("mesh/versions", "mesh", "The optional versions endpoint, a template with {cell}.", host=MESH_HOST,
     env=mesh_env(mesh_doc({"versions": f"{MB}/versions/{{cell}}"})))

@@ -1,0 +1,86 @@
+{
+  "id": "invalid/formula-eval-text-of-control",
+  "kind": "formula-eval",
+  "description": "text_of(data.example.org/doc(k: \"a\"))  A string has no control characters (3.5): a trailing LF.",
+  "valid": false,
+  "world": {
+    "functions": {
+      "calc.example.net/text": {
+        "bound": "2026-01-01T00:00:00.000000Z",
+        "descriptor": {
+          "code": {
+            "body": "text_of(data.example.org/doc(k: \"a\"))\n",
+            "lang": "formula"
+          },
+          "inputs": [
+            "data.example.org/doc"
+          ],
+          "signature": {
+            "args": {},
+            "order": [],
+            "returns": "string"
+          }
+        }
+      },
+      "data.example.org/doc": {
+        "bound": "2026-01-01T00:00:00.000000Z",
+        "descriptor": {
+          "code": {
+            "body": "",
+            "lang": "stored"
+          },
+          "inputs": [],
+          "signature": {
+            "args": {
+              "k": {
+                "type": "string",
+                "valid": false
+              }
+            },
+            "returns": "blob",
+            "order": [
+              "k"
+            ]
+          }
+        }
+      }
+    },
+    "receipts": [
+      {
+        "asof": "2026-02-01T00:00:00.000000Z",
+        "cell": {
+          "args": {
+            "k": {
+              "type": "string",
+              "value": "a"
+            }
+          },
+          "fn": "doc",
+          "fn_hash": "ccd486ca718ba40cc1922ffca69d4f149a9da678213914cdfaeb63664430fede",
+          "ns": "data.example.org"
+        },
+        "computed_by": "data.example.org#efb20f82a7e15e96",
+        "inputs": [],
+        "issued": "2026-02-01T00:00:00.000000Z",
+        "licence": "CC-BY-4.0",
+        "proto": "datumesh/1",
+        "publisher": "data.example.org",
+        "summary": "A recorded value of doc.",
+        "tx": "2026-02-01T00:00:00.000000Z",
+        "type": "blob",
+        "valid": {},
+        "value": "c73b73af8851e9e91bc6b4dc12e7dace0a2bfb931c1d0b8b36ef367319f58cd1:5:text/plain",
+        "sig": "d540eb5a9630ce829d17e75ceacc028c4db37adc4af249f3b207ee068ab2c9dc6a51cc2d044aff9d44019713d2e7584b8454799cde215ab62f78eacb67a2a908"
+      }
+    ],
+    "blobs": {
+      "c73b73af8851e9e91bc6b4dc12e7dace0a2bfb931c1d0b8b36ef367319f58cd1": "6c696e650a"
+    }
+  },
+  "cell": {
+    "args": {},
+    "fn": "calc.example.net/text"
+  },
+  "asof": "2026-06-01T00:00:00.000000Z",
+  "error": "E_FORMULA_DOMAIN"
+}

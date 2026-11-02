@@ -1,0 +1,86 @@
+{
+  "id": "invalid/formula-eval-text-of-utf8",
+  "kind": "formula-eval",
+  "description": "text_of(data.example.org/doc(k: \"a\"))  Content that is not UTF-8.",
+  "valid": false,
+  "world": {
+    "functions": {
+      "calc.example.net/text": {
+        "bound": "2026-01-01T00:00:00.000000Z",
+        "descriptor": {
+          "code": {
+            "body": "text_of(data.example.org/doc(k: \"a\"))\n",
+            "lang": "formula"
+          },
+          "inputs": [
+            "data.example.org/doc"
+          ],
+          "signature": {
+            "args": {},
+            "order": [],
+            "returns": "string"
+          }
+        }
+      },
+      "data.example.org/doc": {
+        "bound": "2026-01-01T00:00:00.000000Z",
+        "descriptor": {
+          "code": {
+            "body": "",
+            "lang": "stored"
+          },
+          "inputs": [],
+          "signature": {
+            "args": {
+              "k": {
+                "type": "string",
+                "valid": false
+              }
+            },
+            "returns": "blob",
+            "order": [
+              "k"
+            ]
+          }
+        }
+      }
+    },
+    "receipts": [
+      {
+        "asof": "2026-02-01T00:00:00.000000Z",
+        "cell": {
+          "args": {
+            "k": {
+              "type": "string",
+              "value": "a"
+            }
+          },
+          "fn": "doc",
+          "fn_hash": "ccd486ca718ba40cc1922ffca69d4f149a9da678213914cdfaeb63664430fede",
+          "ns": "data.example.org"
+        },
+        "computed_by": "data.example.org#efb20f82a7e15e96",
+        "inputs": [],
+        "issued": "2026-02-01T00:00:00.000000Z",
+        "licence": "CC-BY-4.0",
+        "proto": "datumesh/1",
+        "publisher": "data.example.org",
+        "summary": "A recorded value of doc.",
+        "tx": "2026-02-01T00:00:00.000000Z",
+        "type": "blob",
+        "valid": {},
+        "value": "b3d510ef04275ca8e698e5b3cbb0ece3949ef9252f0cdc839e9ee347409a2209:2:text/plain",
+        "sig": "9f618eb7dc5ceab5856bea98124d616d92e75c8a89ffc88d1fb724b584f3d288c059a96eb7eb42d58ccd86631cf12d9e79de887e794be8f8c5396dcdc9b8e90c"
+      }
+    ],
+    "blobs": {
+      "b3d510ef04275ca8e698e5b3cbb0ece3949ef9252f0cdc839e9ee347409a2209": "fffe"
+    }
+  },
+  "cell": {
+    "args": {},
+    "fn": "calc.example.net/text"
+  },
+  "asof": "2026-06-01T00:00:00.000000Z",
+  "error": "E_FORMULA_DOMAIN"
+}

@@ -360,6 +360,14 @@
         "max_depth": {
           "type": "integer",
           "minimum": 1
+        },
+        "blobs": {
+          "type": "object",
+          "description": "spec-0.4.2: blob content the resolver can give, by SHA-256: lowercase hex of the bytes.",
+          "additionalProperties": {
+            "type": "string",
+            "pattern": "^([0-9a-f]{2})*$"
+          }
         }
       }
     },

@@ -159,7 +159,11 @@ def slice_case(i):
     if rng.random() < 0.5:
         request["mesh"] = "mesh.example.net"
     if rng.random() < 0.3:
-        request["after"] = {"quote": {"type": "string", "value": rng.choice(QUOTES)}}
+        request["after"] = rng.choice([{"quote": {"type": "string", "value": rng.choice(QUOTES)}},
+                                       {"quote": {"type": "string", "value": "GBP"}, "x": {"type": "string", "value": "1"}},
+                                       {"quote": {"type": "number", "value": "1"}}, {"base": {"type": "string", "value": "EUR"}}])
+    if rng.random() < 0.1:
+        env["fn_hash"] = rng.choice([H, H2])
     return {"id": f"slice-page/{i:04d}-{m}", "kind": "envelope", "description": "spec-0.4.2: slice pages",
             "valid": True, "input": json.dumps(env), "status": 200, "keys": KEYS, "request": request}
 

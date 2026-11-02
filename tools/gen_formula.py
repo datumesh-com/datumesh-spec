@@ -1752,6 +1752,8 @@ EXCEL = [  # (function, status, Excel formula, sample, Excel's documented result
     ("UPPER", "supported", '=UPPER("Zürich")', "", S("ZÜRICH"), 'upper("Zürich")', "string"),
     ("LOWER", "supported", '=LOWER("ÄBC")', "", S("äbc"), 'lower("ÄBC")', "string"),
     ("TRIM", "supported", '=TRIM("  a   b  ")', "", S("a b"), 'trim("  a   b  ")', "string"),
+    ("SUBSTITUTE", "partial", '=SUBSTITUTE("2024-03-15","-","")', "", S("20240315"), 'remove_chars("2024-03-15", "-")',
+     "string"),
     ("FIXED", "supported", "=FIXED(1234.567,1,TRUE)", "", S("1234.6"), "fixed(1234.567, 1)", "string"),
     ("IFERROR", "partial", "=IFERROR(A1/0,0)", A15, N("0"), f"if 0 = 0 then 0 else {SHEET}/a(1) / 0", "1"),
     ("IFNA", "partial", '=IFNA(XLOOKUP("screw",A2:A4,B2:B4),-1)', PRICES, N("-1"),

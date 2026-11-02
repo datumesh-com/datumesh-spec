@@ -1,0 +1,96 @@
+{
+  "id": "formula-eval/text-of",
+  "kind": "formula-eval",
+  "description": "text_of(data.example.org/doc(k: \"a\"))  The content of a text/plain blob, as a string.",
+  "valid": true,
+  "world": {
+    "functions": {
+      "calc.example.net/text": {
+        "bound": "2026-01-01T00:00:00.000000Z",
+        "descriptor": {
+          "code": {
+            "body": "text_of(data.example.org/doc(k: \"a\"))\n",
+            "lang": "formula"
+          },
+          "inputs": [
+            "data.example.org/doc"
+          ],
+          "signature": {
+            "args": {},
+            "order": [],
+            "returns": "string"
+          }
+        }
+      },
+      "data.example.org/doc": {
+        "bound": "2026-01-01T00:00:00.000000Z",
+        "descriptor": {
+          "code": {
+            "body": "",
+            "lang": "stored"
+          },
+          "inputs": [],
+          "signature": {
+            "args": {
+              "k": {
+                "type": "string",
+                "valid": false
+              }
+            },
+            "returns": "blob",
+            "order": [
+              "k"
+            ]
+          }
+        }
+      }
+    },
+    "receipts": [
+      {
+        "asof": "2026-02-01T00:00:00.000000Z",
+        "cell": {
+          "args": {
+            "k": {
+              "type": "string",
+              "value": "a"
+            }
+          },
+          "fn": "doc",
+          "fn_hash": "ccd486ca718ba40cc1922ffca69d4f149a9da678213914cdfaeb63664430fede",
+          "ns": "data.example.org"
+        },
+        "computed_by": "data.example.org#efb20f82a7e15e96",
+        "inputs": [],
+        "issued": "2026-02-01T00:00:00.000000Z",
+        "licence": "CC-BY-4.0",
+        "proto": "datumesh/1",
+        "publisher": "data.example.org",
+        "summary": "A recorded value of doc.",
+        "tx": "2026-02-01T00:00:00.000000Z",
+        "type": "blob",
+        "valid": {},
+        "value": "633d21a649b80004199165cd9a3ff23cba683e9ea66fc733ed06a9e48ba9db0e:16:text/plain",
+        "sig": "aa7c92bc4ca30bd21388e0e89012c3509534b3d1330020874ddb686133b24d7591c2f7d594eac60d91d3b3f8c2686090f4c028a4503dfa198f1cc45ee7e01a08"
+      }
+    ],
+    "blobs": {
+      "633d21a649b80004199165cd9a3ff23cba683e9ea66fc733ed06a9e48ba9db0e": "496e2074686520626567696e6e696e67"
+    }
+  },
+  "cell": {
+    "args": {},
+    "fn": "calc.example.net/text"
+  },
+  "asof": "2026-06-01T00:00:00.000000Z",
+  "receipt_hash": "296ff985190beb3b81a85762dca029565a179cfad86b677bcebd3dc078c06448",
+  "value": {
+    "type": "string",
+    "value": "In the beginning"
+  },
+  "lineage": [
+    "12a644254a916d3ec94fe75e71f5f7d248f332ab30c240a8745fc36a4100eea4"
+  ],
+  "tx": "2026-02-01T00:00:00.000000Z",
+  "receipt_asof": "2026-02-01T00:00:00.000000Z",
+  "fuel_used": 5
+}

@@ -1,0 +1,41 @@
+{
+  "id": "formula-eval/remove-chars",
+  "kind": "formula-eval",
+  "description": "remove_chars(\"2024-03-15\", \"-\")  Every code point of chars removed.",
+  "valid": true,
+  "world": {
+    "functions": {
+      "calc.example.net/text": {
+        "bound": "2026-01-01T00:00:00.000000Z",
+        "descriptor": {
+          "code": {
+            "body": "remove_chars(\"2024-03-15\", \"-\")\n",
+            "lang": "formula"
+          },
+          "inputs": [],
+          "signature": {
+            "args": {},
+            "order": [],
+            "returns": "string"
+          }
+        }
+      }
+    },
+    "receipts": [],
+    "blobs": {}
+  },
+  "cell": {
+    "args": {},
+    "fn": "calc.example.net/text"
+  },
+  "asof": "2026-06-01T00:00:00.000000Z",
+  "receipt_hash": "6ca8c39ed79097dc71bd255990f32d7482b0044821d33de0afc5a6ca0606934e",
+  "value": {
+    "type": "string",
+    "value": "20240315"
+  },
+  "lineage": [],
+  "tx": "0001-01-01T00:00:00.000000Z",
+  "receipt_asof": "0001-01-01T00:00:00.000000Z",
+  "fuel_used": 4
+}

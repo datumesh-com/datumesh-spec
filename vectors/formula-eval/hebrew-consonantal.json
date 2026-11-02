@@ -1,0 +1,96 @@
+{
+  "id": "formula-eval/hebrew-consonantal",
+  "kind": "formula-eval",
+  "description": "remove_chars(text_of(data.example.org/doc(k: \"a\")), \"ְֱֲֳִֵֶַָׇֹֺֻּֽֿׁׂ֑֖֛֢֣֤֥֦֧֪ׅ֚֭֮֒֓֔֕֗֘֙֜֝֞֟֠֡֨֩֫֬֯ׄ\")  Genesis 1:1, pointed and accented (with a paseq and a maqaf added), to consonantal text: the points and accents U+0591-U+05C7 removed, maqaf U+05BE, paseq U+05C0, sof pasuq U+05C3 and nun hafukha U+05C6 kept.",
+  "valid": true,
+  "world": {
+    "functions": {
+      "calc.example.net/text": {
+        "bound": "2026-01-01T00:00:00.000000Z",
+        "descriptor": {
+          "code": {
+            "body": "remove_chars(text_of(data.example.org/doc(k: \"a\")), \"ְֱֲֳִֵֶַָׇֹֺֻּֽֿׁׂ֑֖֛֢֣֤֥֦֧֪ׅ֚֭֮֒֓֔֕֗֘֙֜֝֞֟֠֡֨֩֫֬֯ׄ\")\n",
+            "lang": "formula"
+          },
+          "inputs": [
+            "data.example.org/doc"
+          ],
+          "signature": {
+            "args": {},
+            "order": [],
+            "returns": "string"
+          }
+        }
+      },
+      "data.example.org/doc": {
+        "bound": "2026-01-01T00:00:00.000000Z",
+        "descriptor": {
+          "code": {
+            "body": "",
+            "lang": "stored"
+          },
+          "inputs": [],
+          "signature": {
+            "args": {
+              "k": {
+                "type": "string",
+                "valid": false
+              }
+            },
+            "returns": "blob",
+            "order": [
+              "k"
+            ]
+          }
+        }
+      }
+    },
+    "receipts": [
+      {
+        "asof": "2026-02-01T00:00:00.000000Z",
+        "cell": {
+          "args": {
+            "k": {
+              "type": "string",
+              "value": "a"
+            }
+          },
+          "fn": "doc",
+          "fn_hash": "ccd486ca718ba40cc1922ffca69d4f149a9da678213914cdfaeb63664430fede",
+          "ns": "data.example.org"
+        },
+        "computed_by": "data.example.org#efb20f82a7e15e96",
+        "inputs": [],
+        "issued": "2026-02-01T00:00:00.000000Z",
+        "licence": "CC-BY-4.0",
+        "proto": "datumesh/1",
+        "publisher": "data.example.org",
+        "summary": "A recorded value of doc.",
+        "tx": "2026-02-01T00:00:00.000000Z",
+        "type": "blob",
+        "valid": {},
+        "value": "4fed8fde004dc600224773c8aca05b7120d07f421bdccb0113dc8c9cc2050428:128:text/plain",
+        "sig": "80f43e8e57888eb008453b2f0c4b5df0a31838ac0d0b54e50eefaf48d1cba3bebe336615355b8398447d7fd4d06e032ae1b5310052e017ce2da840999cad1c0f"
+      }
+    ],
+    "blobs": {
+      "4fed8fde004dc600224773c8aca05b7120d07f421bdccb0113dc8c9cc2050428": "d791d6b0d6bcd7a8d6b5d790d7a9d6b4d781d696d799d7aa20d791d6b8d6bcd7a8d6b8d6a3d79020d790d6b1d79cd6b9d794d6b4d691d799d79d20d78020d790d6b5d6a5d7aad6bed794d6b7d7a9d6b8d6bcd781d79ed6b7d696d799d6b4d79d20d795d6b0d790d6b5d6a5d7aa20d794d6b8d790d6b8d6bdd7a8d6b6d7a5d783"
+    }
+  },
+  "cell": {
+    "args": {},
+    "fn": "calc.example.net/text"
+  },
+  "asof": "2026-06-01T00:00:00.000000Z",
+  "receipt_hash": "c1a1290d03d8138896f80d665793c3f181b541ba83584afbe2fb30838aad65e3",
+  "value": {
+    "type": "string",
+    "value": "בראשית ברא אלהים ׀ את־השמים ואת הארץ׃"
+  },
+  "lineage": [
+    "6da36bb1d63e929f7d3884b69d00735b2ea7c46cbf90eeb8ac48c0e85d8abeb4"
+  ],
+  "tx": "2026-02-01T00:00:00.000000Z",
+  "receipt_asof": "2026-02-01T00:00:00.000000Z",
+  "fuel_used": 11
+}

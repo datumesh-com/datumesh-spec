@@ -1,0 +1,96 @@
+{
+  "id": "formula-eval/text-of-nfc",
+  "kind": "formula-eval",
+  "description": "text_of(data.example.org/doc(k: \"a\"))  Decomposed content becomes NFC, as every string result.",
+  "valid": true,
+  "world": {
+    "functions": {
+      "calc.example.net/text": {
+        "bound": "2026-01-01T00:00:00.000000Z",
+        "descriptor": {
+          "code": {
+            "body": "text_of(data.example.org/doc(k: \"a\"))\n",
+            "lang": "formula"
+          },
+          "inputs": [
+            "data.example.org/doc"
+          ],
+          "signature": {
+            "args": {},
+            "order": [],
+            "returns": "string"
+          }
+        }
+      },
+      "data.example.org/doc": {
+        "bound": "2026-01-01T00:00:00.000000Z",
+        "descriptor": {
+          "code": {
+            "body": "",
+            "lang": "stored"
+          },
+          "inputs": [],
+          "signature": {
+            "args": {
+              "k": {
+                "type": "string",
+                "valid": false
+              }
+            },
+            "returns": "blob",
+            "order": [
+              "k"
+            ]
+          }
+        }
+      }
+    },
+    "receipts": [
+      {
+        "asof": "2026-02-01T00:00:00.000000Z",
+        "cell": {
+          "args": {
+            "k": {
+              "type": "string",
+              "value": "a"
+            }
+          },
+          "fn": "doc",
+          "fn_hash": "ccd486ca718ba40cc1922ffca69d4f149a9da678213914cdfaeb63664430fede",
+          "ns": "data.example.org"
+        },
+        "computed_by": "data.example.org#efb20f82a7e15e96",
+        "inputs": [],
+        "issued": "2026-02-01T00:00:00.000000Z",
+        "licence": "CC-BY-4.0",
+        "proto": "datumesh/1",
+        "publisher": "data.example.org",
+        "summary": "A recorded value of doc.",
+        "tx": "2026-02-01T00:00:00.000000Z",
+        "type": "blob",
+        "valid": {},
+        "value": "7758dc99853067ed32434a47f98c1328f5af6df26daa232422671cbec163c0e0:12:text/plain",
+        "sig": "b301d712e055a87b63acb34d929f41e3de28bae76265a75fadbe89a2f8e008f935a874e25e56d405312c15ac8c455d651be9545d6647bc987ab509a5a5e1c906"
+      }
+    ],
+    "blobs": {
+      "7758dc99853067ed32434a47f98c1328f5af6df26daa232422671cbec163c0e0": "5a75cc887269636820486266"
+    }
+  },
+  "cell": {
+    "args": {},
+    "fn": "calc.example.net/text"
+  },
+  "asof": "2026-06-01T00:00:00.000000Z",
+  "receipt_hash": "bb1f0824b5a906055f3cfaf3d0f0cceed60bc19bac4b01cb58749838b64f8f06",
+  "value": {
+    "type": "string",
+    "value": "Zürich Hbf"
+  },
+  "lineage": [
+    "8ad4e201c812881046ed22e270c3c88e4dd1b2a3880943fab957eb26a347c8ce"
+  ],
+  "tx": "2026-02-01T00:00:00.000000Z",
+  "receipt_asof": "2026-02-01T00:00:00.000000Z",
+  "fuel_used": 5
+}
