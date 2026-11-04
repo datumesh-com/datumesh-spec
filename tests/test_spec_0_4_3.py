@@ -115,11 +115,25 @@ class Inherit(unittest.TestCase):
         self.assertEqual(inherit([RESTRICTED], {FN: [entry(OTHER_RESTRICTED)]}), (None, "not_declared"))
         self.assertEqual(inherit(["CC-BY-NC-4.0"], {FN: [entry("cc-by-nc-4.0")]}), (None, "not_declared"))
 
-    def test_restricted_wins_over_open(self):
+    def test_restricted_wins_over_public_domain_and_attribution(self):
         d = {FN: [entry(RESTRICTED)]}
-        self.assertEqual(inherit(["CC0-1.0", RESTRICTED, "CC-BY-SA-4.0"], d), (RESTRICTED, "declared"))
-        self.assertEqual(inherit(["CC-BY-SA-4.0", "ODbL-1.0", RESTRICTED], d), (RESTRICTED, "declared"))
+        self.assertEqual(inherit(["CC0-1.0", RESTRICTED, "CC-BY-4.0"], d), (RESTRICTED, "declared"))
+        self.assertEqual(inherit(["OGL-UK-3.0", RESTRICTED, "MIT", "PDDL-1.0"], d), (RESTRICTED, "declared"))
         self.assertEqual(inherit(["CC0-1.0", RESTRICTED]), (None, "not_declared"))
+
+    def test_restricted_with_share_alike_is_refused(self):
+        """The user's S2 b (2026-11-04): share-alike requires the result to carry it, a restricted
+        licence forbids that; refused whether or not the restricted licence is declared, and
+        share_alike_conflict comes before every restricted outcome."""
+        d = {FN: [entry(RESTRICTED), entry(OTHER_RESTRICTED)]}
+        for licences in (["CC-BY-SA-4.0", RESTRICTED], [RESTRICTED, "ODbL-1.0"], ["CC0-1.0", RESTRICTED, "CC-BY-SA-4.0"],
+                         ["CC-BY-SA-4.0", "ODbL-1.0", RESTRICTED], ["ODbL-1.0", "ODbL-1.0", RESTRICTED],
+                         ["CC-BY-SA-4.0", RESTRICTED, OTHER_RESTRICTED], ["CC-BY-NC-4.0", "CC-BY-SA-4.0"]):
+            for declarations in (d, {}, {FN: [entry(RESTRICTED, T0, T1)]}):
+                with self.subTest(licences=licences, declarations=declarations):
+                    self.assertEqual(inherit(licences, declarations), (None, "share_alike_conflict"))
+        # One share-alike id with open ones only is still that id.
+        self.assertEqual(inherit(["ODbL-1.0", "ODbL-1.0", "CC0-1.0"]), ("ODbL-1.0", "open"))
 
     def test_two_different_restricted_licences_are_refused(self):
         d = {FN: [entry(RESTRICTED), entry(OTHER_RESTRICTED)]}
@@ -255,6 +269,7 @@ class Entitlement(unittest.TestCase):
             "entitlement/declaration-closed": (False, "declaration_not_open"),
             "entitlement/declaration-opens-later": (False, "declaration_not_open"),
             "entitlement/share-alike-conflict": (False, "share_alike_conflict"),
+            "entitlement/restricted-with-share-alike": (False, "share_alike_conflict"),
         }
         for name, (entitled, reason) in expected.items():
             with self.subTest(name):
@@ -308,6 +323,11 @@ class LicenceVectors(unittest.TestCase):
             "licence/restricted-declaration-opens-later": "declaration_not_open",
             "licence/restricted-two-different": "restricted_conflict",
             "licence/unlisted-spdx-undeclared": "not_declared",
+            "licence/restricted-with-open-declared": "declared",
+            "licence/restricted-with-share-alike-conflict": "share_alike_conflict",
+            "licence/restricted-declared-with-share-alike": "share_alike_conflict",
+            "licence/restricted-undeclared-with-share-alike": "share_alike_conflict",
+            "licence/two-restricted-with-share-alike": "share_alike_conflict",
         }
         for name, reason in expected.items():
             with self.subTest(name):

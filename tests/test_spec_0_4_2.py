@@ -35,7 +35,8 @@ def code(fn, *args):
 
 class Codes(unittest.TestCase):
     def test_new_codes_after_e_mesh_doc(self):
-        self.assertEqual(canon.ERROR_CODES[-4:], ("E_JOB_UNKNOWN", "E_MESH_DOC", "E_SLICE_AT_CELL", "E_NAME_UNBOUND"))
+        i = canon.ERROR_CODES.index("E_JOB_UNKNOWN")  # spec-0.4.3 appends E_FOREIGN_UNAVAILABLE after them
+        self.assertEqual(canon.ERROR_CODES[i:i + 4], ("E_JOB_UNKNOWN", "E_MESH_DOC", "E_SLICE_AT_CELL", "E_NAME_UNBOUND"))
         for c in ("E_SLICE_AT_CELL", "E_NAME_UNBOUND"):
             self.assertRegex(SPEC, rf"\| `{c}` \|")
 
