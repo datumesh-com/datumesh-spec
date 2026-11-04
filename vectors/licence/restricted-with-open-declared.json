@@ -1,12 +1,12 @@
 {
   "id": "licence/restricted-with-open-declared",
   "kind": "licence",
-  "description": "spec-0.4.3: A restricted input with open ones: the restricted licence wins.",
+  "description": "spec-0.4.3: A declared restricted input with public-domain and attribution ones: the restricted licence wins.",
   "valid": true,
   "licences": [
     "CC0-1.0",
     "https://rates.example.org/licences/restricted",
-    "CC-BY-SA-4.0"
+    "CC-BY-4.0"
   ],
   "declarations": {
     "calc.example.net/convert": [

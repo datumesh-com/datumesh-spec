@@ -1196,6 +1196,23 @@ add_receipt("invalid/receipt-eval-unavailable-blob-mismatch", "No evaluation, th
             "replaces E_EVAL_UNAVAILABLE as an ordinary failure.",
             R_BLOB, "rates-2020", "E_BLOB_MISMATCH", blob_hex=CSV.replace(b"1.0892", b"1.0893").hex(),
             recompute={"descriptor": FILING, "inputs": {}})
+add_envelope("envelope/error-foreign-unavailable", "spec-0.4.3: the cell is of another mesh, which could not be "
+             "reached: E_FOREIGN_UNAVAILABLE, with 502 and the failure in detail.",
+             {"detail": "offline", "error": "E_FOREIGN_UNAVAILABLE", "outcome": "error"}, 502)
+add_envelope("envelope/error-foreign-unavailable-timeout", "spec-0.4.3: E_FOREIGN_UNAVAILABLE after a timeout.",
+             {"detail": "timeout", "error": "E_FOREIGN_UNAVAILABLE", "outcome": "error"}, 502)
+for name, body, status, why in [
+    ("status-500", {"detail": "offline", "error": "E_FOREIGN_UNAVAILABLE", "outcome": "error"}, 500,
+     "E_FOREIGN_UNAVAILABLE is answered with 502, not another 5xx."),
+    ("no-detail", {"error": "E_FOREIGN_UNAVAILABLE", "outcome": "error"}, 502, "E_FOREIGN_UNAVAILABLE carries detail."),
+    ("bad-detail", {"detail": "unreachable", "error": "E_FOREIGN_UNAVAILABLE", "outcome": "error"}, 502,
+     "detail is one of offline, network, dns, tls, timeout, refused."),
+    ("detail-other-code", {"detail": "network", "error": "E_EVAL_UNAVAILABLE", "outcome": "error"}, 502,
+     "Only E_FOREIGN_UNAVAILABLE carries detail."),
+    ("not-covered", {"error": "E_FOREIGN_UNAVAILABLE", "outcome": "not_covered"}, 404,
+     "E_FOREIGN_UNAVAILABLE is an error envelope's code, not not_covered's."),
+]:
+    add_envelope(f"invalid/envelope-foreign-unavailable-{name}", f"spec-0.4.3: {why}", body, status, "E_ENVELOPE")
 add_envelope("envelope/error-eval-unavailable", "A mesh that could not evaluate the cell reports E_EVAL_UNAVAILABLE, "
              "a code in 10.2.", {"error": "E_EVAL_UNAVAILABLE", "outcome": "error"}, 503)
 
@@ -1841,12 +1858,20 @@ for name, licences, declarations, why in [
      "Declared for another function of the same publisher: not for this one."),
     ("restricted-declared-other-licence", [RESTRICTED_L], {DECL_FN: [decl(OTHER_L)]},
      "A declaration names one exact licence string; another restricted licence is not declared."),
-    ("restricted-with-open-declared", ["CC0-1.0", RESTRICTED_L, "CC-BY-SA-4.0"], OPEN_DECL,
-     "A restricted input with open ones: the restricted licence wins."),
+    ("restricted-with-open-declared", ["CC0-1.0", RESTRICTED_L, "CC-BY-4.0"], OPEN_DECL,
+     "A declared restricted input with public-domain and attribution ones: the restricted licence wins."),
     ("restricted-with-open-undeclared", ["CC-BY-4.0", RESTRICTED_L], {},
      "A restricted input with open ones, undeclared: refused."),
     ("restricted-with-share-alike-conflict", ["CC-BY-SA-4.0", "ODbL-1.0", RESTRICTED_L], OPEN_DECL,
-     "A declared restricted input wins over open ones, two share-alike ids included."),
+     "Two share-alike ids and a declared restricted input: refused, share_alike_conflict (D75 as revised)."),
+    ("restricted-declared-with-share-alike", ["CC-BY-SA-4.0", RESTRICTED_L, "CC0-1.0"], OPEN_DECL,
+     "A declared restricted input with one share-alike input: refused. Share-alike requires the result to carry it, "
+     "a restricted licence forbids that, and no single licence satisfies both (D75 as revised)."),
+    ("restricted-undeclared-with-share-alike", ["ODbL-1.0", RESTRICTED_L], {},
+     "An undeclared restricted input with a share-alike one: share_alike_conflict, which comes before not_declared."),
+    ("two-restricted-with-share-alike", [OTHER_L, "CC-BY-SA-4.0", RESTRICTED_L], {},
+     "Two different restricted licences with a share-alike one: share_alike_conflict, which comes before "
+     "restricted_conflict."),
     ("restricted-two-different", [RESTRICTED_L, OTHER_L], {},
      "Two different restricted licences: a receipt carries one licence (D20), so the mesh refuses."),
     ("restricted-two-different-both-declared", [OTHER_L, RESTRICTED_L],
@@ -1920,6 +1945,12 @@ add_entitlement("share-alike-conflict", "Two inputs under different share-alike 
                 "the cell, whatever licence the receipt carries.",
                 computed([canon.receipt_hash(F_SA), canon.receipt_hash(F_ODBL)], SA_L, "Over two share-alike inputs."),
                 [F_SA, F_ODBL])
+F_SA_GBP = fx_input("GBP", SA_L)
+add_entitlement("restricted-with-share-alike", "A declared restricted input with a share-alike one: the mesh may not "
+                "compute the cell (D75 as revised), so a receipt carrying the restricted licence is not entitled.",
+                computed([H_RESTRICTED, canon.receipt_hash(F_SA_GBP)], RESTRICTED_L,
+                         "Over a restricted and a share-alike input."), [F_RESTRICTED, F_SA_GBP],
+                declarations=OPEN_DECL)
 F_M1, F_M2 = fx_input("USD", "CC0-1.0"), fx_input("GBP", SA_L)
 FX_SLICE = {"args": FX_ARGS | {"quote": "*"}, "fn": "fx_rate", "fn_hash": FX_HASH, "ns": RATES}
 MEMBERS = sorted([canon.receipt_hash(F_M1), canon.receipt_hash(F_M2)])

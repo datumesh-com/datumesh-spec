@@ -9,7 +9,9 @@
   arrays and objects, the limits crossed), each E_KEY_DOC or the document's key ids and
   declarations (9.2);
 - entitlement: computed receipts over stored inputs (and slices) of random licences, carrying
-  the licence the rule gives or another, under random declarations (10.3).
+  the licence the rule gives or another, under random declarations (10.3);
+- envelope: error envelopes with E_FOREIGN_UNAVAILABLE or another code, with and without detail
+  (one of the six, or not), with 502 or another status, or under another outcome (5.5).
 The reference tool signs; the libraries only run.
 
     python generate_043.py SPEC_REPO N SEED > spec043.jsonl
@@ -163,6 +165,18 @@ def entitlement_case(i):
     return vec
 
 
-for gen in (licence_case, keys_case, entitlement_case):
-    for i in range(N // 3 or 1):
+def foreign_case(i):
+    body = {"outcome": rng.choice(["error"] * 4 + ["not_covered", "bad_request"]),
+            "error": rng.choice(["E_FOREIGN_UNAVAILABLE"] * 3 + ["E_EVAL_UNAVAILABLE", "E_MESH_DOC"])}
+    if rng.random() < 0.8:
+        body["detail"] = rng.choice(list(canon.FOREIGN_DETAILS) * 2 + ["Offline", "", "unreachable", 1])
+    if rng.random() < 0.2:
+        body["fn_hash"] = "ab" * 32
+    status = rng.choice([502, 502, 502, 500, 503, 404, 400])
+    return {"id": f"foreign-fuzz/{i:04d}", "kind": "envelope", "description": "spec-0.4.3: E_FOREIGN_UNAVAILABLE",
+            "valid": True, "input": json.dumps(body), "status": status, "keys": {}, "request": {"cell_id": "a" * 64}}
+
+
+for gen in (licence_case, keys_case, entitlement_case, foreign_case):
+    for i in range(N // 4 or 1):
         print(json.dumps(gen(i)))

@@ -86,6 +86,7 @@ ERROR_CODES = (
     "E_MESH_DOC",
     "E_SLICE_AT_CELL",
     "E_NAME_UNBOUND",
+    "E_FOREIGN_UNAVAILABLE",  # spec-0.4.3: an envelope and resolution code, never a verification result
 )
 
 # Section 4.5 of SPEC.md.
@@ -1433,6 +1434,9 @@ def inherit_licence(licences, declarations, fn, issued, own):
     if not licences:
         return {"licence": own, "reason": "no_inputs"}
     restricted = sorted({x for x in licences if licence_tier(x) == RESTRICTED})
+    share_alike = {x for x in licences if licence_tier(x) == 3}
+    if share_alike and (len(share_alike) > 1 or restricted):  # spec-0.4.3, the user's S2 b
+        return {"licence": None, "reason": "share_alike_conflict"}
     if len(restricted) > 1:
         return {"licence": None, "reason": "restricted_conflict"}
     if restricted:
@@ -1444,8 +1448,6 @@ def inherit_licence(licences, declarations, fn, issued, own):
         return {"licence": restricted[0], "reason": "declared"}
     top = max(licence_tier(x) for x in licences)
     present = [x for x in LICENCE_TIERS[top - 1] if x in licences]
-    if top == 3 and len(present) > 1:
-        return {"licence": None, "reason": "share_alike_conflict"}
     return {"licence": present[-1], "reason": "open"}
 
 
@@ -1771,7 +1773,7 @@ ENVELOPE_MEMBERS = {  # outcome -> (required, optional)
     "unlicensed": (("outcome",), ("fn_hash",)),
     "payment_required": (("outcome", "quote"), ("fn_hash",)),
     "rate_limited": (("outcome", "retry_after_seconds"), ("fn_hash",)),
-    "error": (("error", "outcome"), ("fn_hash",)),
+    "error": (("error", "outcome"), ("detail", "fn_hash")),  # detail: E_FOREIGN_UNAVAILABLE's (spec-0.4.3)
     "bad_request": (("error", "outcome"), ("fn_hash",)),
     "pending": (("estimate_seconds", "job", "outcome", "poll", "request"), ()),
 }
@@ -1791,6 +1793,8 @@ URI_CODES = (
     "E_CANON_HEX",  # spec-0.4.2: a fn_hash= that is not 64 lowercase hex digits
 )
 # Codes a mesh reports about a request, never as an error (spec-0.4.1, spec-0.4.2).
+# spec-0.4.3: what an E_FOREIGN_UNAVAILABLE envelope's detail says failed (5.5).
+FOREIGN_DETAILS = ("offline", "network", "dns", "tls", "timeout", "refused")
 REQUEST_CODES = ("E_JOB_UNKNOWN", "E_SLICE_AT_CELL", "E_NAME_UNBOUND")
 _INTEGER = re.compile(r"0|[1-9][0-9]*")
 TRUST = ("primary", "verified", "unverified", "computed")  # computed since spec-0.4.2
@@ -1852,6 +1856,11 @@ def _check_envelope_members(env, members=None):
             fail("E_ENVELOPE", f"{env['error']!r} is not a code this outcome can carry", "$.error")
         if "fault" in env:
             fail("E_ENVELOPE", "not_covered carries fault or error, not both", "$.error")
+    # spec-0.4.3: E_FOREIGN_UNAVAILABLE carries detail, which no other envelope has.
+    if (env.get("error") == "E_FOREIGN_UNAVAILABLE") != ("detail" in env):
+        fail("E_ENVELOPE", "detail is present exactly with E_FOREIGN_UNAVAILABLE", "$.detail")
+    if "detail" in env and env["detail"] not in FOREIGN_DETAILS:
+        fail("E_ENVELOPE", f"detail is one of {', '.join(FOREIGN_DETAILS)}", "$.detail")
     if "fn_hash" in env:
         if not isinstance(env["fn_hash"], str) or not re.fullmatch(r"[0-9a-f]{64}", env["fn_hash"]):
             fail("E_ENVELOPE", "fn_hash is 64 lowercase hex digits", "$.fn_hash")
@@ -2019,6 +2028,14 @@ def check_request(request):
                 bad(f"the cursor's {name} is not a typed scalar")
 
 
+def _check_status(env, status):
+    """5.5 step 3: the status matches the outcome; E_FOREIGN_UNAVAILABLE is 502 (spec-0.4.3)."""
+    if status not in ENVELOPE_STATUS[env["outcome"]]:
+        fail("E_ENVELOPE", f"status {status} does not match outcome {env['outcome']}", "$.outcome")
+    if env.get("error") == "E_FOREIGN_UNAVAILABLE" and status != 502:
+        fail("E_ENVELOPE", "E_FOREIGN_UNAVAILABLE is answered with 502", "$.outcome")
+
+
 def check_envelope_object(status, env, keyenv, request, _request_checked=False):
     """check_envelope on a parsed envelope (the items of a batch, 5.7, use it)."""
     if not _request_checked:
@@ -2026,8 +2043,7 @@ def check_envelope_object(status, env, keyenv, request, _request_checked=False):
     if "slice_id" in request:
         return _check_slice_envelope(status, env, keyenv, request)
     _check_envelope_members(env)
-    if status not in ENVELOPE_STATUS[env["outcome"]]:
-        fail("E_ENVELOPE", f"status {status} does not match outcome {env['outcome']}", "$.outcome")
+    _check_status(env, status)
     result = {"outcome": env["outcome"]}
     if env.get("error") == "E_JOB_UNKNOWN" and "job" not in request:
         fail("E_ENVELOPE", "E_JOB_UNKNOWN answers a job URL only", "$.error")
@@ -2063,8 +2079,7 @@ def _check_slice_envelope(status, env, keyenv, request):
         _check_envelope_members(env)
         if env["outcome"] in ("ok", "stale", "pending"):
             fail("E_ENVELOPE", f"{env['outcome']} is not an answer of the slice endpoint", "$.outcome")
-    if status not in ENVELOPE_STATUS[env["outcome"]]:
-        fail("E_ENVELOPE", f"status {status} does not match outcome {env['outcome']}", "$.outcome")
+    _check_status(env, status)
     if env.get("error") == "E_JOB_UNKNOWN":
         fail("E_ENVELOPE", "E_JOB_UNKNOWN answers a job URL only", "$.error")
     _check_pin_echo(env, request)
