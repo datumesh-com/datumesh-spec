@@ -2454,12 +2454,13 @@ def _check_envelope_members(env, members=None):
         fail("E_ENVELOPE", "age_seconds is a non-negative integer", "$.age_seconds")
     if "error" in env:
         # bad_request: a URI code, E_SLICE_AT_CELL (spec-0.4.2), or E_JOB_UNKNOWN for a job URL
-        # (spec-0.4.1); not_covered: E_NAME_UNBOUND only (spec-0.4.2); error: any code of 10.2 but
+        # (spec-0.4.1); not_covered: E_NAME_UNBOUND (spec-0.4.2) or E_NAMESPACE_SUSPENDED (spec-0.5.0, a
+        # refused cross-mesh import); error: any code of 10.2 but
         # the client's E_ENVELOPE and the request codes.
         if env["outcome"] == "bad_request":
             allowed = URI_CODES + ("E_JOB_UNKNOWN", "E_SLICE_AT_CELL", "E_SHORT_ID_AMBIGUOUS")
         elif env["outcome"] == "not_covered":
-            allowed = ("E_NAME_UNBOUND",)
+            allowed = ("E_NAME_UNBOUND", "E_NAMESPACE_SUSPENDED")  # the latter since spec-0.5.0 (9.9)
         else:
             allowed = tuple(c for c in ERROR_CODES if c not in ("E_ENVELOPE", "E_DESCRIBE")
                             and c not in REQUEST_CODES and c not in DEFINE_WRITE_CODES)

@@ -197,9 +197,10 @@
         "E_SLICE_AT_CELL",
         "E_NAME_UNBOUND",
         "E_FOREIGN_UNAVAILABLE",
-        "E_SHORT_ID_AMBIGUOUS"
+        "E_SHORT_ID_AMBIGUOUS",
+        "E_NAMESPACE_SUSPENDED"
       ],
-      "description": "A code from SPEC.md 10.2 other than E_ENVELOPE; for bad_request, a URI parse code (E_CANON_HEX included, since spec-0.4.2), E_SLICE_AT_CELL, or at a job URL E_JOB_UNKNOWN (5.5); for not_covered, E_NAME_UNBOUND only; for error, none of E_JOB_UNKNOWN, E_SLICE_AT_CELL and E_NAME_UNBOUND. E_FOREIGN_UNAVAILABLE (spec-0.4.3) is an error envelope's only, with detail and HTTP 502."
+      "description": "A code from SPEC.md 10.2 other than E_ENVELOPE; for bad_request, a URI parse code (E_CANON_HEX included, since spec-0.4.2), E_SLICE_AT_CELL, or at a job URL E_JOB_UNKNOWN (5.5); for not_covered, E_NAME_UNBOUND only; for error, none of E_JOB_UNKNOWN, E_SLICE_AT_CELL and E_NAME_UNBOUND. E_FOREIGN_UNAVAILABLE (spec-0.4.3) is an error envelope's only, with detail and HTTP 502. Since spec-0.5.0 not_covered may also carry E_NAMESPACE_SUSPENDED (a refused cross-mesh import, 9.9), never error."
     },
     "detail": {
       "description": "spec-0.4.3: with E_FOREIGN_UNAVAILABLE only, and required with it: what failed in reaching the foreign mesh (SPEC.md 5.5).",
@@ -368,7 +369,10 @@
           "const": "not_covered"
         },
         "error": {
-          "const": "E_NAME_UNBOUND"
+          "enum": [
+            "E_NAME_UNBOUND",
+            "E_NAMESPACE_SUSPENDED"
+          ]
         }
       },
       "propertyNames": {
@@ -450,7 +454,8 @@
               "E_JOB_UNKNOWN",
               "E_SLICE_AT_CELL",
               "E_NAME_UNBOUND",
-              "E_SHORT_ID_AMBIGUOUS"
+              "E_SHORT_ID_AMBIGUOUS",
+              "E_NAMESPACE_SUSPENDED"
             ]
           }
         }

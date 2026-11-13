@@ -2444,6 +2444,14 @@ add("mesh/describe-endpoint", "mesh", "spec-0.5.0: the optional describe endpoin
     host=MESH_HOST, env=mesh_env(mesh_doc({"describe": f"{MB}/describe/{{id}}"})))
 
 
+# spec-0.5.0 (9.9, Q13 c): a cross-mesh import refused because the source namespace is suspended.
+add_envelope("envelope/not-covered-namespace-suspended", "spec-0.5.0: the mesh would import the cell from another "
+             "mesh, but the source namespace is suspended (9.9): not_covered with E_NAMESPACE_SUSPENDED.",
+             {"error": "E_NAMESPACE_SUSPENDED", "outcome": "not_covered"}, 404)
+add_envelope("invalid/envelope-namespace-suspended-in-error", "spec-0.5.0: E_NAMESPACE_SUSPENDED is never the code "
+             "of an error envelope: suspension is not the mesh's failure.",
+             {"error": "E_NAMESPACE_SUSPENDED", "outcome": "error"}, 500, "E_ENVELOPE")
+
 def main():
     if OUT.exists():
         shutil.rmtree(OUT)
