@@ -50,12 +50,22 @@ DEFINE_CODES = (
 )
 # Faults: deterministic properties of a cell; the cell has no value (not_covered with fault).
 FAULT_CODES = ("E_FORMULA_DIV_ZERO", "E_FORMULA_DOMAIN", "E_FORMULA_RANGE", "E_FORMULA_EMPTY",
-               "E_FORMULA_ABSENT", "E_FORMULA_FUTURE")
+               "E_FORMULA_ABSENT", "E_FORMULA_FUTURE",
+               # spec-0.5.0: a computed key not canonical under its argument's rule (Q6 b), a value
+               # outside the dispatch set (answer 5). E_FORMULA_KEY is also a define-time code.
+               "E_FORMULA_KEY", "E_FORMULA_DISPATCH_KEY")
 # Other evaluation outcomes: no value for missing data, and failures of the evaluation itself.
 EVAL_CODES = FAULT_CODES + ("E_FORMULA_NOT_COVERED", "E_FORMULA_BUDGET", "E_FORMULA_CYCLE", "E_FORMULA_DEPTH",
                              "E_FORMULA_BLOB_UNAVAILABLE")  # spec-0.4.2: text_of without the content
-CODES = DEFINE_CODES + EVAL_CODES
+CODES = tuple(dict.fromkeys(DEFINE_CODES + EVAL_CODES))  # E_FORMULA_KEY is both (spec-0.5.0)
 CATCHABLE = ("E_FORMULA_EMPTY", "E_FORMULA_ABSENT")
+
+
+def _no_value(e):
+    """A fault or E_FORMULA_NOT_COVERED: the cell has no value, memoized as a property of the cell. A
+    define-time code raised at evaluation (a rebound callee, 15.8) is the mesh's failure, even
+    E_FORMULA_KEY, which since spec-0.5.0 is also a fault."""
+    return e.code in FAULT_CODES + ("E_FORMULA_NOT_COVERED",) and not getattr(e, "define_time", False)
 
 
 class FormulaError(Exception):
@@ -990,6 +1000,8 @@ def _resolve_arg(tree, decl, env, normalisation=None):
             fail("E_FORMULA_KEY", f"not an object key (16.5): {e.detail}")
         if decoded["class"] not in decl["classes"]:
             fail("E_FORMULA_TYPE", f"a key of {decoded['class']} where {decl['classes']} is declared")
+    if normalisation is None and decl is not None:  # spec-0.5.0 (Q6 b): the argument's own rule
+        normalisation = decl.get("key_normalisation")
     if normalisation is not None and node["node"] == "str":
         try:
             canon.check_key_value(normalisation, node["value"])
@@ -1147,6 +1159,8 @@ def _resolve_method(tree, env):
     else:
         if m not in desc["methods"]:
             fail("E_FORMULA_METHOD", f"{cname} has no method {m}")
+        if m == desc.get("lookup"):  # spec-0.5.0 (Q10 a): it takes a label, not an object's keys
+            fail("E_FORMULA_METHOD", f"{m} is {cname}'s lookup: read it by its plain name, {cname}/{m}(label)")
         fq = f"{cname}/{m}"
         if pinned:
             callee = _pinned(env, desc["methods"][m])
@@ -1225,8 +1239,8 @@ def _resolve_dispatch(tree, env):
         desc = _class_of(env, c)
         if desc is None:
             fail("E_FORMULA_UNRESOLVED", f"{c} has no binding")
-        if m not in desc["methods"]:
-            fail("E_FORMULA_METHOD", f"{c} has no method {m}")
+        if m not in desc["methods"] or m == desc.get("lookup"):
+            fail("E_FORMULA_METHOD", f"{c} has no method {m} to dispatch to")
         fq = f"{c}/{m}"
         callee = _callee(env, fq)
         if callee is None:
@@ -2742,6 +2756,7 @@ class World:
                 try:
                     c = compile(body, env)
                 except FormulaError:
+                    first.define_time = True  # a define-time code at evaluation: the mesh's failure
                     raise first from None
             c.typing = dict(env["functions"].used)
             c.typing_asof = env["functions"].asof
@@ -2764,7 +2779,9 @@ class World:
                 self.compatible[key] = e
         if self.compatible[key] is not None:
             e = self.compatible[key]
-            raise FormulaError(e.code, f"{callee} as bound at this read: {e.detail}")
+            err = FormulaError(e.code, f"{callee} as bound at this read: {e.detail}")
+            err.define_time = True  # never a fault, though E_FORMULA_KEY is also one (spec-0.5.0)
+            raise err
 
     def stored_answer(self, fn_hash, cid, asof):
         versions = [r for r in self.by_hash.get(fn_hash, {}).get(cid, []) if r["tx"] <= asof and r["asof"] <= asof]
@@ -2815,7 +2832,7 @@ class World:
             except FormulaError as e:
                 # A fault holds from the faulted evaluation's latest input asof and binding start
                 # (8.2 rule 2, spec-0.4.1): a reader that catches it counts that among its candidates.
-                if e.code in FAULT_CODES + ("E_FORMULA_NOT_COVERED",) and getattr(e, "known", None) is None:
+                if _no_value(e) and getattr(e, "known", None) is None:
                     e.known = ctx.known()
                 raise
             if isinstance(value, (Ref, Mat)):
@@ -2823,7 +2840,7 @@ class World:
             receipt = ctx.receipt(cell, descriptor, value)
             self.evaluations += 1
         except FormulaError as e:
-            if e.code in FAULT_CODES + ("E_FORMULA_NOT_COVERED",):
+            if _no_value(e):
                 self.memo[key] = e
             raise
         finally:
@@ -2836,6 +2853,35 @@ class World:
 
 # ---------------------------------------------------------------------------
 # Evaluation (SPEC 15.12, 15.13)
+
+
+def check_keys(descriptor, args):
+    """spec-0.5.0 (Q6 b): a read's string arguments are canonical under their declared
+    key_normalisation; a computed one that is not faults with E_FORMULA_KEY (a property of the cell)."""
+    if descriptor is None:
+        return
+    decls = descriptor["signature"]["args"]
+    for name in canon.keys_in_order(args):
+        a, rule = args[name], decls.get(name, {}).get("key_normalisation")
+        if rule and isinstance(a, dict) and a.get("type") == "string":
+            try:
+                canon.check_key_value(rule, a["value"])
+            except canon.DatumeshError as e:
+                fail("E_FORMULA_KEY", f"the argument {name}: {e.detail}")
+
+
+def _keys_of(desc, keys):
+    """The decoded keys bind exactly the class's keys, each of its declared type (16.5)."""
+    if set(keys) != set(desc["keys"]):
+        return False
+    for k, decl in desc["keys"].items():
+        v = keys[k]
+        if "class" in decl:
+            if v.get("class") != decl["class"]:
+                return False
+        elif v.get("type") != decl["type"]:
+            return False
+    return True
 
 
 class Context:
@@ -2933,15 +2979,19 @@ class Context:
         raise AssertionError(node)
 
     def eval_dispatch(self, node, scope):
+        # spec-0.5.0 (answer 5): a value that is not the key of an object of a class in the set is a
+        # fault, E_FORMULA_DISPATCH_KEY; a class's method not the bound one stays the mesh's failure.
         key = self.eval(node["on"], scope)[1]
         try:
             decoded = canon.decode_key(key)
         except canon.DatumeshError as e:
-            fail("E_FORMULA_DISPATCH", f"the value is not an object key (16.5): {e.detail}")
+            fail("E_FORMULA_DISPATCH_KEY", f"the value is not an object key (16.5): {e.detail}")
         c = decoded["class"]
         if c not in node["classes"]:
-            fail("E_FORMULA_DISPATCH", f"{c} is not among the classes {node['classes']} the function dispatches to")
+            fail("E_FORMULA_DISPATCH_KEY", f"{c} is not among the classes {node['classes']} the function dispatches to")
         desc = self.world.classes_at(self.A).get(c)
+        if desc is not None and not _keys_of(desc, decoded["keys"]):
+            fail("E_FORMULA_DISPATCH_KEY", f"the value is not the key of an object of {c}: its keys differ")
         fq = f"{c}/{node['method']}"
         binding = self.world.binding(fq, self.A)
         if desc is None or desc["methods"].get(node["method"]) != binding[1]:
@@ -3014,6 +3064,7 @@ class Context:
             args = {name: typed(self.eval(a, scope)) for name, a in sorted(node["args"].items())}
             if "fn_hash" in node:  # spec-0.5.0: a pinned read, the print of super
                 self.world.charge(1)
+                check_keys(self.world.descriptor_by_hash(node["fn_hash"]), args)
                 answer = self.world.answer_pinned(fq, node["fn_hash"], args, self.A)
                 self.record(answer, fq)
                 return answer.value
@@ -3034,7 +3085,8 @@ class Context:
 
     def read_cell(self, fq, args, at=None):
         self.world.charge(1)
-        self.rely(fq, at or self.A)
+        b = self.rely(fq, at or self.A)
+        check_keys(b[0], args)
         try:
             answer = self.world.answer(fq, args, at or self.A)
         except FormulaError as e:
@@ -3062,6 +3114,7 @@ class Context:
                 obj_args[name] = {"hi": typed(p[2])["value"], "lo": typed(p[1])["value"], "type": p[1][0]}
             else:
                 obj_args[name] = typed(p[1])
+        check_keys(descriptor, {n: a for n, a in obj_args.items() if isinstance(a, dict) and "value" in a})
         obj = slice_object(fn_hash, ref.fq, obj_args)
         keys = [n for n in canon.keys_in_order(pattern) if pattern[n][0] != "val"]
         kinds = [descriptor["signature"]["args"][n]["type"] for n in keys]
@@ -3090,7 +3143,7 @@ class Context:
                 try:
                     a = world.answer(ref.fq, args, self.A)
                 except FormulaError as e:
-                    if e.code in FAULT_CODES + ("E_FORMULA_NOT_COVERED",):
+                    if _no_value(e):
                         self.faulted(e)
                         absent = FormulaError("E_FORMULA_ABSENT", f"a member of the slice over {ref.fq} has no value")
                         absent.known = getattr(e, "known", None)

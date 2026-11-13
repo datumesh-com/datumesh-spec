@@ -295,6 +295,22 @@ add("function/stored-fx-rate", "function",
 add("function/computed-convert", "function",
     "A computed function that declares one input function.", text(CONVERT))
 add("function/no-arguments", "function", "A function of no arguments.", text(PI))
+# spec-0.5.0 (Q6 b): key_normalisation on a string argument; absent means none, so none is not written.
+_KN = {"date": {"type": "date", "valid": True}, "isin": {"key_normalisation": "upper_ascii", "type": "string", "valid": False}}
+add("function/argument-key-normalisation", "function", "spec-0.5.0: a string argument may carry key_normalisation, "
+    "a rule of 16.4: every read of the function checks its values (5.8, 16.3).",
+    text({"code": {"body": "", "lang": "stored"}, "inputs": [],
+          "signature": {"args": _KN, "order": ["isin", "date"], "returns": {"type": "number", "unit": "1"}}}))
+add("invalid/function-key-normalisation-none", "function", "spec-0.5.0: an absent key_normalisation means none, so "
+    "none is never written: one spelling for each meaning.",
+    text({"code": {"body": "", "lang": "stored"}, "inputs": [],
+          "signature": {"args": dict(_KN, isin=dict(_KN["isin"], key_normalisation="none")), "order": ["isin", "date"],
+                        "returns": {"type": "number", "unit": "1"}}}), "E_SCHEMA")
+add("invalid/function-key-normalisation-number", "function", "spec-0.5.0: key_normalisation is for a string argument.",
+    text({"code": {"body": "", "lang": "stored"}, "inputs": [],
+          "signature": {"args": dict(_KN, n={"key_normalisation": "upper_ascii", "type": "number", "unit": "1",
+                                             "valid": False}),
+                        "order": ["isin", "date", "n"], "returns": {"type": "number", "unit": "1"}}}), "E_CANON_TYPE")
 add("invalid/function-inputs-unsorted", "function", "Declared inputs are a set: sorted, no duplicates.",
     text(CONVERT | {"inputs": ["z.example/b", "a.example/a"]}), "E_CANON_SET")
 add("invalid/function-inputs-alias", "function", "Declared inputs are fully qualified; a short alias is not a name.",
@@ -2102,6 +2118,7 @@ for name, fn, desc, error, why in [
 # normalisation (16.4), object keys (16.5).
 
 C_STR, C_DATE = {"type": "string", "valid": False}, {"type": "date", "valid": True}
+C_KEY = dict(C_STR, key_normalisation="upper_ascii")  # since Q6 b, a method's upper_ascii key argument
 C_RATE_UNIT = {"of": {"arg": "quote"}, "per": {"arg": "base"}}
 
 
@@ -2110,27 +2127,35 @@ def c_fn(args, order, returns, lang="stored", body="", inputs=()):
             "signature": {"args": args, "order": order, "returns": returns}}
 
 
-C_RATE = c_fn({"base": C_STR, "date": C_DATE, "quote": C_STR}, ["base", "quote", "date"],
+C_RATE = c_fn({"base": C_KEY, "date": C_DATE, "quote": C_KEY}, ["base", "quote", "date"],
               {"type": "number", "unit": C_RATE_UNIT})
-C_RATE_ALT = c_fn({"base": C_STR, "date": C_DATE, "quote": C_STR}, ["base", "quote", "date"],
+C_RATE_PLAIN = c_fn({"base": C_STR, "date": C_DATE, "quote": C_STR}, ["base", "quote", "date"],
+                    {"type": "number", "unit": C_RATE_UNIT})  # no rule: absent means none
+C_RATE_ALT = c_fn({"base": C_KEY, "date": C_DATE, "quote": C_KEY}, ["base", "quote", "date"],
                   {"type": "number", "unit": C_RATE_UNIT}, "expr", "a re-derived rate\n", ["rates.example.org/fx_pair/rate"])
-C_RATE_UNIT1 = c_fn({"base": C_STR, "date": C_DATE, "quote": C_STR}, ["base", "quote", "date"],
+C_RATE_UNIT1 = c_fn({"base": C_KEY, "date": C_DATE, "quote": C_KEY}, ["base", "quote", "date"],
                     {"type": "number", "unit": "1"}, "expr", "x\n")
-C_SAME = c_fn({"base": C_STR, "quote": C_STR}, ["base", "quote"], {"type": "string", "classes": ["iso.example.org/pair"]})
-C_SAME_SELF = c_fn({"base": C_STR, "quote": C_STR}, ["base", "quote"],
+C_SAME = c_fn({"base": C_KEY, "quote": C_KEY}, ["base", "quote"], {"type": "string", "classes": ["iso.example.org/pair"]})
+C_SAME_SELF = c_fn({"base": C_KEY, "quote": C_KEY}, ["base", "quote"],
                    {"type": "string", "classes": ["rates.example.org/fx_pair"]})
 C_EXISTS = c_fn({"base": C_STR, "quote": C_STR}, ["base", "quote"], "boolean")
-C_FIX = c_fn({"base": C_STR, "fixing": C_STR, "quote": C_STR}, ["base", "quote", "fixing"], "date")
+C_FIX = c_fn({"base": C_KEY, "fixing": C_STR, "quote": C_KEY}, ["base", "quote", "fixing"], "date")
 C_WRONG = c_fn({"pair": C_STR, "date": C_DATE}, ["pair", "date"], {"type": "number", "unit": "1"})
 C_IFACE_PRICE = c_fn({"date": C_DATE}, ["date"], {"type": "number", "unit": "1"}, "expr", "abstract\n")
-C_PRICE = c_fn({"base": C_STR, "date": C_DATE, "quote": C_STR}, ["base", "quote", "date"], {"type": "number", "unit": "1"},
+C_PRICE = c_fn({"base": C_KEY, "date": C_DATE, "quote": C_KEY}, ["base", "quote", "date"], {"type": "number", "unit": "1"},
                "expr", "a price\n")
+# Q10 a: lookup methods, a label to a key (of this class, of another, or taking the keys first).
+C_NAMED = c_fn({"label": C_STR}, ["label"], {"type": "string", "classes": ["rates.example.org/fx_pair"]})
+C_NAMED_OTHER = c_fn({"label": C_STR}, ["label"], {"type": "string", "classes": ["iso.example.org/pair"]})
+C_NAMED_KEYED = c_fn({"base": C_KEY, "label": C_STR, "quote": C_KEY}, ["base", "quote", "label"],
+                     {"type": "string", "classes": ["rates.example.org/fx_pair"]})
 H_ = canon.function_hash
 C_STEWARD = {"namespace": "rates.example.org", "process": "https://rates.example.org/classes/change"}
 C_UPPER = {"key_normalisation": "upper_ascii", "type": "string"}
 C_FX_PAIR = {"keys": {"base": C_UPPER, "quote": C_UPPER}, "methods": {"rate": H_(C_RATE)}, "order": ["base", "quote"],
              "steward": C_STEWARD}
-C_FUNCS = [C_RATE, C_RATE_ALT, C_RATE_UNIT1, C_SAME, C_SAME_SELF, C_EXISTS, C_FIX, C_WRONG, C_IFACE_PRICE, C_PRICE]
+C_FUNCS = [C_RATE, C_RATE_ALT, C_RATE_UNIT1, C_SAME, C_SAME_SELF, C_EXISTS, C_FIX, C_WRONG, C_IFACE_PRICE, C_PRICE,
+           C_RATE_PLAIN, C_NAMED, C_NAMED_OTHER, C_NAMED_KEYED]
 C_ENV = {"classes": [], "definer": "rates.example.org", "functions": C_FUNCS}
 C_PARENT = canon.define_class("rates.example.org/fx_pair", C_FX_PAIR, C_ENV)
 C_PARENT_FINAL = canon.define_class("rates.example.org/fx_pair", dict(C_FX_PAIR, final=True), C_ENV)
@@ -2229,6 +2254,25 @@ for vid, name, desc, env, error, why in [
      "A namespace defines classes under itself only: a non-owner cannot define (or override in) another's class."),
     ("invalid/class-implements-keyed", FX_N, dict(C_FX_PAIR, implements=[canon.class_hash(C_PARENT)]),
      dict(C_ENV, classes=[C_PARENT]), "E_CLASS_INTERFACE", "implements names interfaces: keyless classes."),
+    # Q6 b: a method's key arguments carry exactly the class's rule; absent means none.
+    ("class/keyed-none-ruleless-methods", FX_N, dict(C_FX_PAIR, keys={"base": {"key_normalisation": "none", "type": "string"},
+                                                                     "quote": {"key_normalisation": "none", "type": "string"}},
+                                                     methods={"rate": H_(C_RATE_PLAIN)}), C_ENV, None,
+     "Keys declared none over methods whose key arguments carry no rule: absent means none, so they match."),
+    ("invalid/class-method-normalisation", FX_N, dict(C_FX_PAIR, methods={"rate": H_(C_RATE_PLAIN)}), C_ENV,
+     "E_CLASS_METHOD", "A method's key arguments carry the class's rule for each key: rate lacks upper_ascii."),
+    # Q10 a: lookup names a method mapping a label to a key of this class.
+    ("class/lookup", FX_N, dict(C_FX_PAIR, lookup="named", methods={"named": H_(C_NAMED), "rate": H_(C_RATE)}), C_ENV,
+     None, "lookup names the method named: one string argument label, returning a key of this class; it is exempt "
+     "from taking the keys first."),
+    ("invalid/class-lookup-not-a-method", FX_N, dict(C_FX_PAIR, lookup="named"), C_ENV, "E_CLASS_MEMBER",
+     "lookup names a method of the class."),
+    ("invalid/class-lookup-signature", FX_N, dict(C_FX_PAIR, lookup="named", methods={"named": H_(C_NAMED_KEYED),
+                                                                                       "rate": H_(C_RATE)}), C_ENV,
+     "E_CLASS_MEMBER", "The lookup method takes exactly one string argument, label: not the keys."),
+    ("invalid/class-lookup-returns", FX_N, dict(C_FX_PAIR, lookup="named", methods={"named": H_(C_NAMED_OTHER),
+                                                                                     "rate": H_(C_RATE)}), C_ENV,
+     "E_CLASS_MEMBER", "The lookup method returns a key of this class."),
 ]:
     add(vid, "class", f"spec-0.5.0: {why}", text(desc), error, name=name, env=env)
 add("class/implements-interface", "class", "spec-0.5.0: a class implementing an interface: its price takes the keys "
@@ -2303,8 +2347,8 @@ CW_RATE_RET = {"type": "number", "unit": {"of": "USD", "per": "EUR"}}
 for name, source, s_, method_of, error, why in [
     ("this-outside-method", "this.rate(2026-03-16)", cw_sig(CW_RATE_RET), None, "E_FORMULA_RESERVED",
      "this is for the body of a method."),
-    ("no-such-method", f"{CW.FX}(EUR, USD).spot(2026-03-16)", cw_sig(CW_RATE_RET), None, "E_FORMULA_METHOD",
-     "fx_pair has no method spot."),
+    ("no-such-method", f"{CW.FX}(EUR, USD).points(2026-03-16)", cw_sig(CW_RATE_RET), None, "E_FORMULA_METHOD",
+     "fx_pair has no method points."),
     ("object-as-value", f"{CW.FX}(EUR, USD) = 1", cw_sig("boolean"), None, "E_FORMULA_METHOD",
      "An object is not a value: call one of its methods."),
     ("key-not-canonical", f'{CW.FX}("eur", "USD").rate(2026-03-16)', cw_sig(CW_RATE_RET), None, "E_FORMULA_KEY",
@@ -2322,6 +2366,10 @@ for name, source, s_, method_of, error, why in [
      "of super in a method body."),
     ("super-without-parent", "super.rate(date)", CW.RATE["signature"], CW.FX, "E_FORMULA_METHOD",
      "super needs a parent class."),
+    ("plain-key-literal", f'{CW.BOND}/price("xs0001", 2026-03-16)', cw_sig(CW_NUM), None, "E_FORMULA_KEY",
+     "A plain read is checked too: price's isin carries upper_ascii (Q6 b), so the literal is refused at define."),
+    ("lookup-as-method", f'{CW.FX}(EUR, USD).named("cable")', cw_sig({"type": "string", "classes": [CW.FX]}), None,
+     "E_FORMULA_METHOD", "fx_pair's lookup takes a label, not an object: it is read by its plain name."),
     ("dispatch-signatures", "i.rate(2026-03-16)", {"args": {"i": {"type": "string", "classes": [CW.CCY_PAIR, CW.FX],
                                                                   "valid": False}}, "order": ["i"],
                                                    "returns": CW_RATE_RET}, None, "E_FORMULA_DISPATCH",
@@ -2338,11 +2386,19 @@ import formula as _F  # noqa: E402
 CW_TODAY = _F.define("calc.example.net/today_eur_gbp", {"args": {}, "order": [], "returns":
                                                        {"type": "number", "unit": {"of": "GBP", "per": "EUR"}}},
                      "rates.example.org/fx_rate(EUR, GBP)", CW.env("calc.example.net/today_eur_gbp", None))
-CW_WORLD = CW.world_spec(CW_RECEIPTS, {"calc.example.net/today_eur_gbp": CW_TODAY})
+# Q6 b: a computed key argument not canonical under its rule faults at evaluation.
+CW_PRICE_LOWER = _F.define("calc.example.net/price_lower", {"args": {"date": CW.DATE, "isin": CW.STR},
+                                                             "order": ["isin", "date"], "returns": CW_NUM},
+                           f"{CW.BOND}/price(lower(isin), date)", CW.env("calc.example.net/price_lower", None))
+CW_WORLD = CW.world_spec(CW_RECEIPTS, {"calc.example.net/today_eur_gbp": CW_TODAY,
+                                       "calc.example.net/price_lower": CW_PRICE_LOWER})
 for name, fn, args, asof, error, why in [
     ("class-forward", f"{CW.FX}/forward", {"base": CW.S("EUR"), "date": CW.D(CW.DAY), "quote": CW.S("USD"),
                                            "tenor": CW.S("1M")}, CW.ASOF, None,
-     "fx_pair(EUR, USD).forward(1M, 2026-03-16): this.rate and two deposit rates; three inputs."),
+     "fx_pair(EUR, USD).forward(1M, 2026-03-16): this.spot (a method of its own class, read one way, itself "
+     "reading this.rate), this.rate and two deposit rates; four inputs."),
+    ("class-spot", f"{CW.FX}/spot", {"base": CW.S("EUR"), "date": CW.D(CW.DAY), "quote": CW.S("USD")}, CW.ASOF, None,
+     "fx_pair(EUR, USD).spot(2026-03-16): a method reading another method of its class through this, one way."),
     ("class-super", f"{CW.NDF}/rate", {"base": CW.S("EUR"), "date": CW.D(CW.DAY), "quote": CW.S("USD")}, CW.ASOF, None,
      "fx_ndf's rate overrides fx_pair's through super: a read pinned to the parent's function hash."),
     ("class-dispatch-bond", "calc.example.net/price_of", {"date": CW.D(CW.DAY),
@@ -2353,7 +2409,17 @@ for name, fn, args, asof, error, why in [
      CW.ASOF, None, "price_of dispatches price to swap: lineage names the swap's function."),
     ("class-dispatch-outside", "calc.example.net/price_of",
      {"date": CW.D(CW.DAY), "instrument": CW.S('rates.example.org/fx_pair(base:"EUR",quote:"USD")')}, CW.ASOF,
-     "E_FORMULA_DISPATCH", "A key of a class outside the dispatch set is refused."),
+     "E_FORMULA_DISPATCH_KEY", "A key of a class outside the dispatch set: a fault, not_covered with "
+     "E_FORMULA_DISPATCH_KEY (answer 5)."),
+    ("class-dispatch-malformed", "calc.example.net/price_of",
+     {"date": CW.D(CW.DAY), "instrument": CW.S('calc.example.net/bond(isin: "XS0001")')}, CW.ASOF,
+     "E_FORMULA_DISPATCH_KEY", "A malformed key encoding (a space) is not the key of any object: the same fault."),
+    ("class-dispatch-keys", "calc.example.net/price_of",
+     {"date": CW.D(CW.DAY), "instrument": CW.S('calc.example.net/bond(code:"XS0001")')}, CW.ASOF,
+     "E_FORMULA_DISPATCH_KEY", "A well-formed encoding naming bond with keys that are not bond's: the same fault."),
+    ("class-key-computed", "calc.example.net/price_lower", {"date": CW.D(CW.DAY), "isin": CW.S("XS0001")}, CW.ASOF,
+     "E_FORMULA_KEY", "bond/price(lower(isin), date): the computed isin is not canonical under upper_ascii, the rule "
+     "price's argument carries: a fault at evaluation (Q6 b)."),
     ("class-default-asof", "calc.example.net/today_eur_gbp", {}, "2026-03-16T18:00:00.000000Z", None,
      "rates.example.org/fx_rate(EUR, GBP): the date defaults to the evaluation asof's date."),
 ]:
@@ -2379,8 +2445,31 @@ for vid, call_text, env, error, why in [
      "An extension method of another namespace, called with its qualified name."),
     ("invalid/call-class-normalisation", f'{CW.FX}("eur", "USD").rate(2026-03-16)', CW.call_env(),
      "E_KEY_NORMALISATION", "A key not canonical under its normalisation is rejected."),
-    ("invalid/call-class-no-method", f"{CW.FX}(EUR, USD).spot(2026-03-16)", CW.call_env(), "E_NAME_UNBOUND",
+    ("invalid/call-class-no-method", f"{CW.FX}(EUR, USD).points(2026-03-16)", CW.call_env(), "E_NAME_UNBOUND",
      "The class has no such method."),
+    # Q1: a request has no variables; each argument is read by the declared type of its position.
+    ("call/class-unquoted", f"{CW.VERSE}(quran, 2, 1, 255).text(uthmani)", CW.call_env(), None,
+     "Unquoted request values, read by position: quran, 2 and uthmani are strings, 1 and 255 numbers; the same cell "
+     "as call/class-unquoted-quoted."),
+    ("call/class-unquoted-quoted", f'{CW.VERSE}("quran", "2", 1, 255).text("uthmani")', CW.call_env(), None,
+     "The quoted spelling of call/class-unquoted: one canonical call."),
+    ("call/class-unquoted-number-as-string", f"{CW.VERSE}/text(quran, 2, 1, 255, uthmani)", CW.call_env(), None,
+     "The token 2 in book, a string position, is the string \"2\"; in chapter, a number position, 1 is a number."),
+    ("invalid/call-class-unquoted-needs-quotes", f"{CW.VERSE}(quran, 2, 1, 255).text(ux-lc)", CW.call_env(),
+     "E_PARSE_URI", "An unquoted value is one token of the dialect: a string holding - (or a space, a comma, a "
+     "parenthesis, a quote) is quoted."),
+    ("invalid/call-class-unquoted-normalisation", f"{CW.FX}(eur, USD).rate(2026-03-16)", CW.call_env(),
+     "E_KEY_NORMALISATION", "An unquoted string is still checked against its key's normalisation."),
+    ("invalid/call-class-plain-normalisation", f"{CW.BOND}/price(xs0001, 2026-03-16)", CW.call_env(),
+     "E_KEY_NORMALISATION", "A plain read is checked against the rule its function's argument carries (Q6 b)."),
+    # Q10 a: a label names an object through the class's lookup, in requests only.
+    ("call/class-lookup", f"{CW.FX}[cable].rate(2026-03-16)?asof={CW.ASOF}", CW.call_env(lookups=CW.LOOKUPS), None,
+     "A label in brackets: fx_pair's lookup (named) read at cable as of the call's asof gives the key; resolved records "
+     "the label, the key and that instant."),
+    ("invalid/call-class-lookup-unknown-label", f"{CW.FX}[sterling].rate(2026-03-16)?asof={CW.ASOF}",
+     CW.call_env(lookups=CW.LOOKUPS), "E_NAME_UNBOUND", "The lookup has no value for the label as of the asof."),
+    ("invalid/call-class-lookup-none", f"{CW.VERSE}[kursi].text(uthmani)?asof={CW.ASOF}",
+     CW.call_env(lookups=CW.LOOKUPS), "E_NAME_UNBOUND", "verse has no lookup: a label names none of its objects."),
     ("invalid/call-class-without-method", f"{CW.FX}(EUR, USD)", CW.call_env(), "E_PARSE_URI",
      "A call of a class names a method: an object has no cell."),
 ]:
@@ -2397,6 +2486,16 @@ CW_RESOLVED = canon.parse_call("fx_rate(EUR, GBP)?asof=2026-03-16T18:00:00.00000
 add_envelope("envelope/resolved-short-call", "spec-0.5.0: the answer to a short call carries resolved: the full "
              "canonical call, each resolution, the alias snapshot (16.7).",
              {"outcome": "not_covered", "resolved": CW_RESOLVED}, 404)
+CW_LOOKUP_RESOLVED = canon.parse_call(f"{CW.FX}[cable].rate(2026-03-16)?asof={CW.ASOF}",
+                                     CW.call_env(lookups=CW.LOOKUPS))["resolved"]
+add_envelope("envelope/resolved-lookup", "spec-0.5.0: the answer to a call naming an object by a label carries the "
+             "lookup resolution: the label, the key and the snapshot instant of the lookup read (Q10 a).",
+             {"outcome": "not_covered", "resolved": CW_LOOKUP_RESOLVED}, 404)
+add_envelope("envelope/not-covered-fault-key", "spec-0.5.0: a computed key argument not canonical under its rule is "
+             "a fault (Q6 b): not_covered with E_FORMULA_KEY.", {"fault": "E_FORMULA_KEY", "outcome": "not_covered"}, 404)
+add_envelope("envelope/not-covered-fault-dispatch-key", "spec-0.5.0: a value outside the dispatch set is a fault "
+             "(answer 5): not_covered with E_FORMULA_DISPATCH_KEY.",
+             {"fault": "E_FORMULA_DISPATCH_KEY", "outcome": "not_covered"}, 404)
 add_envelope("envelope/shadows-reference-class", "spec-0.5.0: the mesh binds a class name to another hash than the "
              "reference class of that name, and says so (16.9).",
              {"outcome": "not_covered", "shadows": {"class": CW.FX, "reference": "ab" * 32}}, 404)
@@ -2405,7 +2504,12 @@ add_envelope("envelope/bad-request-short-id-ambiguous", "spec-0.5.0: a short id 
 for name, body, status, why in [
     ("resolved-kind", {"outcome": "not_covered", "resolved": dict(CW_RESOLVED, resolutions=[{"from": "x", "kind": "guess",
                                                                                           "to": "y"}])}, 404,
-     "A resolution's kind is alias, method, default or label."),
+     "A resolution's kind is alias, method, default or lookup."),
+    ("resolved-lookup-asof", {"outcome": "not_covered",
+                              "resolved": {"call": CW_LOOKUP_RESOLVED["call"],
+                                           "resolutions": [{k: v for k, v in r.items() if k != "asof"}
+                                                           for r in CW_LOOKUP_RESOLVED["resolutions"]]}}, 404,
+     "A lookup resolution carries asof, the instant its lookup cell was read as of."),
     ("resolved-member", {"outcome": "not_covered", "resolved": dict(CW_RESOLVED, note="x")}, 404,
      "resolved has call, resolutions and aliases_tx only."),
     ("shadows-hash", {"outcome": "not_covered", "shadows": {"class": CW.FX, "reference": "AB" * 32}}, 404,

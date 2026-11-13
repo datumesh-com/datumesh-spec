@@ -1,7 +1,7 @@
 {
   "id": "invalid/formula-eval-class-dispatch-outside",
   "kind": "formula-eval",
-  "description": "spec-0.5.0: A key of a class outside the dispatch set is refused.",
+  "description": "spec-0.5.0: A key of a class outside the dispatch set: a fault, not_covered with E_FORMULA_DISPATCH_KEY (answer 5).",
   "valid": false,
   "world": {
     "functions": {
@@ -21,7 +21,8 @@
               },
               "isin": {
                 "type": "string",
-                "valid": false
+                "valid": false,
+                "key_normalisation": "upper_ascii"
               }
             },
             "order": [
@@ -84,7 +85,8 @@
             "args": {
               "base": {
                 "type": "string",
-                "valid": false
+                "valid": false,
+                "key_normalisation": "upper_ascii"
               },
               "date": {
                 "type": "date",
@@ -92,7 +94,8 @@
               },
               "quote": {
                 "type": "string",
-                "valid": false
+                "valid": false,
+                "key_normalisation": "upper_ascii"
               },
               "via": {
                 "type": "string",
@@ -123,18 +126,20 @@
         "bound": "2026-01-01T00:00:00.000000Z",
         "descriptor": {
           "code": {
-            "body": "rates.example.org/fx_pair/rate(base: base, date: date, quote: quote) * (1 + rates.example.org/deposit(currency: quote, date: date, tenor: tenor)) / (1 + rates.example.org/deposit(currency: base, date: date, tenor: tenor))\n",
+            "body": "(rates.example.org/fx_pair/spot(base: base, date: date, quote: quote) + rates.example.org/fx_pair/rate(base: base, date: date, quote: quote)) / 2 * (1 + rates.example.org/deposit(currency: quote, date: date, tenor: tenor)) / (1 + rates.example.org/deposit(currency: base, date: date, tenor: tenor))\n",
             "lang": "formula"
           },
           "inputs": [
             "rates.example.org/deposit",
-            "rates.example.org/fx_pair/rate"
+            "rates.example.org/fx_pair/rate",
+            "rates.example.org/fx_pair/spot"
           ],
           "signature": {
             "args": {
               "base": {
                 "type": "string",
-                "valid": false
+                "valid": false,
+                "key_normalisation": "upper_ascii"
               },
               "date": {
                 "type": "date",
@@ -142,7 +147,8 @@
               },
               "quote": {
                 "type": "string",
-                "valid": false
+                "valid": false,
+                "key_normalisation": "upper_ascii"
               },
               "tenor": {
                 "type": "string",
@@ -169,11 +175,38 @@
           }
         }
       },
+      "calc.example.net/fx_ndf/named": {
+        "bound": "2026-01-01T00:00:00.000000Z",
+        "descriptor": {
+          "code": {
+            "body": "",
+            "lang": "stored"
+          },
+          "inputs": [],
+          "signature": {
+            "args": {
+              "label": {
+                "type": "string",
+                "valid": false
+              }
+            },
+            "order": [
+              "label"
+            ],
+            "returns": {
+              "type": "string",
+              "classes": [
+                "rates.example.org/fx_pair"
+              ]
+            }
+          }
+        }
+      },
       "calc.example.net/fx_ndf/rate": {
         "bound": "2026-01-01T00:00:00.000000Z",
         "descriptor": {
           "code": {
-            "body": "rates.example.org/fx_pair/rate@f041cf0f3eabaf4a611a6f57050dac8fb1f2e2cd5d6b6526913cff0847ef88df(base: base, date: date, quote: quote) * 1\n",
+            "body": "rates.example.org/fx_pair/rate@530bf86365ff4afb5a70196542d45f293fad5909026e015eddcfd866290f85b8(base: base, date: date, quote: quote) * 1\n",
             "lang": "formula"
           },
           "inputs": [
@@ -183,7 +216,8 @@
             "args": {
               "base": {
                 "type": "string",
-                "valid": false
+                "valid": false,
+                "key_normalisation": "upper_ascii"
               },
               "date": {
                 "type": "date",
@@ -191,7 +225,8 @@
               },
               "quote": {
                 "type": "string",
-                "valid": false
+                "valid": false,
+                "key_normalisation": "upper_ascii"
               }
             },
             "order": [
@@ -209,6 +244,84 @@
                   "arg": "base"
                 }
               }
+            }
+          }
+        }
+      },
+      "calc.example.net/fx_ndf/spot": {
+        "bound": "2026-01-01T00:00:00.000000Z",
+        "descriptor": {
+          "code": {
+            "body": "rates.example.org/fx_pair/rate(base: base, date: date, quote: quote)\n",
+            "lang": "formula"
+          },
+          "inputs": [
+            "rates.example.org/fx_pair/rate"
+          ],
+          "signature": {
+            "args": {
+              "base": {
+                "type": "string",
+                "valid": false,
+                "key_normalisation": "upper_ascii"
+              },
+              "date": {
+                "type": "date",
+                "valid": true
+              },
+              "quote": {
+                "type": "string",
+                "valid": false,
+                "key_normalisation": "upper_ascii"
+              }
+            },
+            "order": [
+              "base",
+              "quote",
+              "date"
+            ],
+            "returns": {
+              "type": "number",
+              "unit": {
+                "of": {
+                  "arg": "quote"
+                },
+                "per": {
+                  "arg": "base"
+                }
+              }
+            }
+          }
+        }
+      },
+      "calc.example.net/price_lower": {
+        "bound": "2026-01-01T00:00:00.000000Z",
+        "descriptor": {
+          "code": {
+            "body": "calc.example.net/bond/price(date: date, isin: lower(isin))\n",
+            "lang": "formula"
+          },
+          "inputs": [
+            "calc.example.net/bond/price"
+          ],
+          "signature": {
+            "args": {
+              "date": {
+                "type": "date",
+                "valid": true
+              },
+              "isin": {
+                "type": "string",
+                "valid": false
+              }
+            },
+            "order": [
+              "isin",
+              "date"
+            ],
+            "returns": {
+              "type": "number",
+              "unit": "1"
             }
           }
         }
@@ -266,7 +379,8 @@
               },
               "isin": {
                 "type": "string",
-                "valid": false
+                "valid": false,
+                "key_normalisation": "upper_ascii"
               }
             },
             "order": [
@@ -393,7 +507,8 @@
             "args": {
               "base": {
                 "type": "string",
-                "valid": false
+                "valid": false,
+                "key_normalisation": "upper_ascii"
               },
               "date": {
                 "type": "date",
@@ -401,7 +516,8 @@
               },
               "quote": {
                 "type": "string",
-                "valid": false
+                "valid": false,
+                "key_normalisation": "upper_ascii"
               },
               "via": {
                 "type": "string",
@@ -432,18 +548,20 @@
         "bound": "2026-01-01T00:00:00.000000Z",
         "descriptor": {
           "code": {
-            "body": "rates.example.org/fx_pair/rate(base: base, date: date, quote: quote) * (1 + rates.example.org/deposit(currency: quote, date: date, tenor: tenor)) / (1 + rates.example.org/deposit(currency: base, date: date, tenor: tenor))\n",
+            "body": "(rates.example.org/fx_pair/spot(base: base, date: date, quote: quote) + rates.example.org/fx_pair/rate(base: base, date: date, quote: quote)) / 2 * (1 + rates.example.org/deposit(currency: quote, date: date, tenor: tenor)) / (1 + rates.example.org/deposit(currency: base, date: date, tenor: tenor))\n",
             "lang": "formula"
           },
           "inputs": [
             "rates.example.org/deposit",
-            "rates.example.org/fx_pair/rate"
+            "rates.example.org/fx_pair/rate",
+            "rates.example.org/fx_pair/spot"
           ],
           "signature": {
             "args": {
               "base": {
                 "type": "string",
-                "valid": false
+                "valid": false,
+                "key_normalisation": "upper_ascii"
               },
               "date": {
                 "type": "date",
@@ -451,7 +569,8 @@
               },
               "quote": {
                 "type": "string",
-                "valid": false
+                "valid": false,
+                "key_normalisation": "upper_ascii"
               },
               "tenor": {
                 "type": "string",
@@ -478,6 +597,33 @@
           }
         }
       },
+      "rates.example.org/fx_pair/named": {
+        "bound": "2026-01-01T00:00:00.000000Z",
+        "descriptor": {
+          "code": {
+            "body": "",
+            "lang": "stored"
+          },
+          "inputs": [],
+          "signature": {
+            "args": {
+              "label": {
+                "type": "string",
+                "valid": false
+              }
+            },
+            "order": [
+              "label"
+            ],
+            "returns": {
+              "type": "string",
+              "classes": [
+                "rates.example.org/fx_pair"
+              ]
+            }
+          }
+        }
+      },
       "rates.example.org/fx_pair/rate": {
         "bound": "2026-01-01T00:00:00.000000Z",
         "descriptor": {
@@ -490,7 +636,8 @@
             "args": {
               "base": {
                 "type": "string",
-                "valid": false
+                "valid": false,
+                "key_normalisation": "upper_ascii"
               },
               "date": {
                 "type": "date",
@@ -498,7 +645,54 @@
               },
               "quote": {
                 "type": "string",
-                "valid": false
+                "valid": false,
+                "key_normalisation": "upper_ascii"
+              }
+            },
+            "order": [
+              "base",
+              "quote",
+              "date"
+            ],
+            "returns": {
+              "type": "number",
+              "unit": {
+                "of": {
+                  "arg": "quote"
+                },
+                "per": {
+                  "arg": "base"
+                }
+              }
+            }
+          }
+        }
+      },
+      "rates.example.org/fx_pair/spot": {
+        "bound": "2026-01-01T00:00:00.000000Z",
+        "descriptor": {
+          "code": {
+            "body": "rates.example.org/fx_pair/rate(base: base, date: date, quote: quote)\n",
+            "lang": "formula"
+          },
+          "inputs": [
+            "rates.example.org/fx_pair/rate"
+          ],
+          "signature": {
+            "args": {
+              "base": {
+                "type": "string",
+                "valid": false,
+                "key_normalisation": "upper_ascii"
+              },
+              "date": {
+                "type": "date",
+                "valid": true
+              },
+              "quote": {
+                "type": "string",
+                "valid": false,
+                "key_normalisation": "upper_ascii"
               }
             },
             "order": [
@@ -717,7 +911,7 @@
             }
           },
           "fn": "rate",
-          "fn_hash": "f041cf0f3eabaf4a611a6f57050dac8fb1f2e2cd5d6b6526913cff0847ef88df",
+          "fn_hash": "530bf86365ff4afb5a70196542d45f293fad5909026e015eddcfd866290f85b8",
           "ns": "rates.example.org/fx_pair"
         },
         "computed_by": "rates.example.org#69d6132b3eb2db9a",
@@ -736,7 +930,7 @@
           }
         },
         "value": "1.0892",
-        "sig": "72e903fe2d96d99a690f94fad889a97d0ea85075cc31d2e65f5159998289ed1d75776d02b17e7b7cee09308209bc86cdf3744704b0f0951835b0141570e7cf07"
+        "sig": "3be8c7527a3891b7bed9b0502c2a568b50b6447c5c6affb646f28426bb13f52032d37ac6ce7459a2590acc73548e39c1a8b544fd442e3ecd9afd4a1dfeb0aa0c"
       },
       {
         "asof": "2026-03-16T16:00:00.000000Z",
@@ -830,7 +1024,7 @@
             }
           },
           "fn": "price",
-          "fn_hash": "0c3fdade1ebb3b82fe24078cb75a132e6a36ea19e0b9febb0186797b05777f62",
+          "fn_hash": "cfd19943545bfdf719d1fa68047939522793afac49f4be05b476d3aefb8f7e4c",
           "ns": "calc.example.net/bond"
         },
         "computed_by": "calc.example.net#a06403c25203d202",
@@ -849,7 +1043,7 @@
           }
         },
         "value": "101.25",
-        "sig": "83c55ed61b4b06e3259c8bb189dea947723d488c1f04fa86df99f2378ef9bbd1e5a43678ff9ccaa905ccd85f136f04e336ade7a7d1e3966dff0b667867a67d02"
+        "sig": "361fd0db83a3740f790f41a616644b6d28cf69ead4b6b6561416effc533d666352a8161d4e77b3d9afb01bc998be8bd99581bb9f4c067a4d7761a5c36ed4030a"
       },
       {
         "asof": "2026-03-16T16:00:00.000000Z",
@@ -865,7 +1059,7 @@
             }
           },
           "fn": "price",
-          "fn_hash": "1a57b9e3773fa34ff849a735a627ef90dbe5432fa30c299d5934ad5e013b5985",
+          "fn_hash": "c76d38e2913a7a95f5db202f03b674384007684a6b3d936102d578470c12daa6",
           "ns": "calc.example.net/swap"
         },
         "computed_by": "calc.example.net#a06403c25203d202",
@@ -884,7 +1078,7 @@
           }
         },
         "value": "99.5",
-        "sig": "810148c65bbd824f48b2f2c549f04ab7d5010029536cc6ef2deda614def7f39cbabbe2686fbb5ac931e2330f137565ccd047ead0213d9d157b09b83c8ff0500d"
+        "sig": "375b5b097ca69e7d070bafcb15507af7db1f27f01b2306c04b734408b9da64b0c3c6c8ac95d374cdf469bb261ad30cb903e8d3b336ffc828761cdede02f9a602"
       },
       {
         "asof": "2026-03-16T16:00:00.000000Z",
@@ -937,7 +1131,7 @@
             }
           },
           "methods": {
-            "price": "0c3fdade1ebb3b82fe24078cb75a132e6a36ea19e0b9febb0186797b05777f62"
+            "price": "cfd19943545bfdf719d1fa68047939522793afac49f4be05b476d3aefb8f7e4c"
           },
           "order": [
             "isin"
@@ -966,16 +1160,18 @@
             }
           },
           "methods": {
-            "cross": "683f1189bb034f5f327eda3c6e2f6ebc8d1d7e7aa22fbe0e28ed2528262d0f8f",
-            "forward": "a9f7660da590ee0a4aa079b4dfd9a19580c30d0ef4385f5a6b8df86be7b98edd",
-            "rate": "7edfeea44f8bc1c0a89378bd010610a13a741daf42717263a2180ba738d8dfce"
+            "cross": "9979eda4fbd1644dae480ae76d5514bb3c96e7645e887400adf1cc182bb0c911",
+            "forward": "ec8b8bc5fa0e8df03b469926444fecb83648357a2f8d671b97be1d127d871562",
+            "named": "6dc1e80f305027d110b5160cf1090e2643c519f0a95840dbebc7fe910453a9ff",
+            "rate": "149f905063660748b8395f4c79e303e552114bd0fa31af5507140473ba3a5764",
+            "spot": "caf5b15becf80d7869d292e1d93a106f337d864742f570a3cfe1ca9c7f446b15"
           },
           "order": [
             "base",
             "quote",
             "fixing"
           ],
-          "parent": "e2d0d083fc70431cc54833f71fb75428b3989742838fe1f96b9c5bae22878c96",
+          "parent": "eadf96ccaeedb0a0c7fd5d1e287f526d00928956f4b69354ae69c46352bbfa86",
           "steward": {
             "namespace": "calc.example.net",
             "process": "https://calc.example.net/classes/change"
@@ -992,7 +1188,7 @@
             }
           },
           "methods": {
-            "price": "1a57b9e3773fa34ff849a735a627ef90dbe5432fa30c299d5934ad5e013b5985"
+            "price": "c76d38e2913a7a95f5db202f03b674384007684a6b3d936102d578470c12daa6"
           },
           "order": [
             "isin"
@@ -1060,9 +1256,11 @@
             }
           },
           "methods": {
-            "cross": "683f1189bb034f5f327eda3c6e2f6ebc8d1d7e7aa22fbe0e28ed2528262d0f8f",
-            "forward": "a9f7660da590ee0a4aa079b4dfd9a19580c30d0ef4385f5a6b8df86be7b98edd",
-            "rate": "f041cf0f3eabaf4a611a6f57050dac8fb1f2e2cd5d6b6526913cff0847ef88df"
+            "cross": "9979eda4fbd1644dae480ae76d5514bb3c96e7645e887400adf1cc182bb0c911",
+            "forward": "ec8b8bc5fa0e8df03b469926444fecb83648357a2f8d671b97be1d127d871562",
+            "named": "6dc1e80f305027d110b5160cf1090e2643c519f0a95840dbebc7fe910453a9ff",
+            "rate": "530bf86365ff4afb5a70196542d45f293fad5909026e015eddcfd866290f85b8",
+            "spot": "caf5b15becf80d7869d292e1d93a106f337d864742f570a3cfe1ca9c7f446b15"
           },
           "order": [
             "base",
@@ -1071,7 +1269,8 @@
           "steward": {
             "namespace": "rates.example.org",
             "process": "https://rates.example.org/classes/change"
-          }
+          },
+          "lookup": "named"
         }
       },
       "scripture.example.org/verse": {
@@ -1128,5 +1327,5 @@
     "fn": "calc.example.net/price_of"
   },
   "asof": "2026-06-01T00:00:00.000000Z",
-  "error": "E_FORMULA_DISPATCH"
+  "error": "E_FORMULA_DISPATCH_KEY"
 }

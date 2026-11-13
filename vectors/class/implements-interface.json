@@ -3,7 +3,7 @@
   "kind": "class",
   "description": "spec-0.5.0: a class implementing an interface: its price takes the keys first, then exactly the interface method's arguments, with its return type and unit.",
   "valid": true,
-  "input": "{\n  \"implements\": [\n    \"f641ca2c57b407eef423c9f621799bf4b268f486e15394f0f6ee53b356dc311b\"\n  ],\n  \"steward\": {\n    \"process\": \"https://rates.example.org/classes/change\",\n    \"namespace\": \"rates.example.org\"\n  },\n  \"order\": [\n    \"base\",\n    \"quote\"\n  ],\n  \"methods\": {\n    \"rate\": \"f041cf0f3eabaf4a611a6f57050dac8fb1f2e2cd5d6b6526913cff0847ef88df\",\n    \"price\": \"75197a01ca006b1b67a870114912ea9e5baeb1ade715e5daef80b7ff0973b914\"\n  },\n  \"keys\": {\n    \"quote\": {\n      \"type\": \"string\",\n      \"key_normalisation\": \"upper_ascii\"\n    },\n    \"base\": {\n      \"type\": \"string\",\n      \"key_normalisation\": \"upper_ascii\"\n    }\n  }\n}",
+  "input": "{\n  \"implements\": [\n    \"f641ca2c57b407eef423c9f621799bf4b268f486e15394f0f6ee53b356dc311b\"\n  ],\n  \"steward\": {\n    \"process\": \"https://rates.example.org/classes/change\",\n    \"namespace\": \"rates.example.org\"\n  },\n  \"order\": [\n    \"base\",\n    \"quote\"\n  ],\n  \"methods\": {\n    \"rate\": \"530bf86365ff4afb5a70196542d45f293fad5909026e015eddcfd866290f85b8\",\n    \"price\": \"9d3ec6b66a7d45b2a8d0d3046adc89144d689aba9b2a6f12948e143e8f894a31\"\n  },\n  \"keys\": {\n    \"quote\": {\n      \"type\": \"string\",\n      \"key_normalisation\": \"upper_ascii\"\n    },\n    \"base\": {\n      \"type\": \"string\",\n      \"key_normalisation\": \"upper_ascii\"\n    }\n  }\n}",
   "name": "rates.example.org/fx_pair",
   "env": {
     "classes": [
@@ -31,7 +31,8 @@
           "args": {
             "base": {
               "type": "string",
-              "valid": false
+              "valid": false,
+              "key_normalisation": "upper_ascii"
             },
             "date": {
               "type": "date",
@@ -39,7 +40,8 @@
             },
             "quote": {
               "type": "string",
-              "valid": false
+              "valid": false,
+              "key_normalisation": "upper_ascii"
             }
           },
           "order": [
@@ -72,7 +74,8 @@
           "args": {
             "base": {
               "type": "string",
-              "valid": false
+              "valid": false,
+              "key_normalisation": "upper_ascii"
             },
             "date": {
               "type": "date",
@@ -80,7 +83,8 @@
             },
             "quote": {
               "type": "string",
-              "valid": false
+              "valid": false,
+              "key_normalisation": "upper_ascii"
             }
           },
           "order": [
@@ -111,7 +115,8 @@
           "args": {
             "base": {
               "type": "string",
-              "valid": false
+              "valid": false,
+              "key_normalisation": "upper_ascii"
             },
             "date": {
               "type": "date",
@@ -119,7 +124,8 @@
             },
             "quote": {
               "type": "string",
-              "valid": false
+              "valid": false,
+              "key_normalisation": "upper_ascii"
             }
           },
           "order": [
@@ -143,11 +149,13 @@
           "args": {
             "base": {
               "type": "string",
-              "valid": false
+              "valid": false,
+              "key_normalisation": "upper_ascii"
             },
             "quote": {
               "type": "string",
-              "valid": false
+              "valid": false,
+              "key_normalisation": "upper_ascii"
             }
           },
           "order": [
@@ -172,11 +180,13 @@
           "args": {
             "base": {
               "type": "string",
-              "valid": false
+              "valid": false,
+              "key_normalisation": "upper_ascii"
             },
             "quote": {
               "type": "string",
-              "valid": false
+              "valid": false,
+              "key_normalisation": "upper_ascii"
             }
           },
           "order": [
@@ -225,7 +235,8 @@
           "args": {
             "base": {
               "type": "string",
-              "valid": false
+              "valid": false,
+              "key_normalisation": "upper_ascii"
             },
             "fixing": {
               "type": "string",
@@ -233,7 +244,8 @@
             },
             "quote": {
               "type": "string",
-              "valid": false
+              "valid": false,
+              "key_normalisation": "upper_ascii"
             }
           },
           "order": [
@@ -303,6 +315,40 @@
           "args": {
             "base": {
               "type": "string",
+              "valid": false,
+              "key_normalisation": "upper_ascii"
+            },
+            "date": {
+              "type": "date",
+              "valid": true
+            },
+            "quote": {
+              "type": "string",
+              "valid": false,
+              "key_normalisation": "upper_ascii"
+            }
+          },
+          "order": [
+            "base",
+            "quote",
+            "date"
+          ],
+          "returns": {
+            "type": "number",
+            "unit": "1"
+          }
+        }
+      },
+      {
+        "code": {
+          "body": "",
+          "lang": "stored"
+        },
+        "inputs": [],
+        "signature": {
+          "args": {
+            "base": {
+              "type": "string",
               "valid": false
             },
             "date": {
@@ -321,12 +367,103 @@
           ],
           "returns": {
             "type": "number",
-            "unit": "1"
+            "unit": {
+              "of": {
+                "arg": "quote"
+              },
+              "per": {
+                "arg": "base"
+              }
+            }
+          }
+        }
+      },
+      {
+        "code": {
+          "body": "",
+          "lang": "stored"
+        },
+        "inputs": [],
+        "signature": {
+          "args": {
+            "label": {
+              "type": "string",
+              "valid": false
+            }
+          },
+          "order": [
+            "label"
+          ],
+          "returns": {
+            "type": "string",
+            "classes": [
+              "rates.example.org/fx_pair"
+            ]
+          }
+        }
+      },
+      {
+        "code": {
+          "body": "",
+          "lang": "stored"
+        },
+        "inputs": [],
+        "signature": {
+          "args": {
+            "label": {
+              "type": "string",
+              "valid": false
+            }
+          },
+          "order": [
+            "label"
+          ],
+          "returns": {
+            "type": "string",
+            "classes": [
+              "iso.example.org/pair"
+            ]
+          }
+        }
+      },
+      {
+        "code": {
+          "body": "",
+          "lang": "stored"
+        },
+        "inputs": [],
+        "signature": {
+          "args": {
+            "base": {
+              "type": "string",
+              "valid": false,
+              "key_normalisation": "upper_ascii"
+            },
+            "label": {
+              "type": "string",
+              "valid": false
+            },
+            "quote": {
+              "type": "string",
+              "valid": false,
+              "key_normalisation": "upper_ascii"
+            }
+          },
+          "order": [
+            "base",
+            "quote",
+            "label"
+          ],
+          "returns": {
+            "type": "string",
+            "classes": [
+              "rates.example.org/fx_pair"
+            ]
           }
         }
       }
     ]
   },
-  "flattened": "{\"implements\":[\"f641ca2c57b407eef423c9f621799bf4b268f486e15394f0f6ee53b356dc311b\"],\"keys\":{\"base\":{\"key_normalisation\":\"upper_ascii\",\"type\":\"string\"},\"quote\":{\"key_normalisation\":\"upper_ascii\",\"type\":\"string\"}},\"methods\":{\"price\":\"75197a01ca006b1b67a870114912ea9e5baeb1ade715e5daef80b7ff0973b914\",\"rate\":\"f041cf0f3eabaf4a611a6f57050dac8fb1f2e2cd5d6b6526913cff0847ef88df\"},\"order\":[\"base\",\"quote\"],\"steward\":{\"namespace\":\"rates.example.org\",\"process\":\"https://rates.example.org/classes/change\"}}",
-  "class_hash": "5b94b371c247d9a96540b9770bd6c03b831fcb365a3b72553ac8b3ea5b715340"
+  "flattened": "{\"implements\":[\"f641ca2c57b407eef423c9f621799bf4b268f486e15394f0f6ee53b356dc311b\"],\"keys\":{\"base\":{\"key_normalisation\":\"upper_ascii\",\"type\":\"string\"},\"quote\":{\"key_normalisation\":\"upper_ascii\",\"type\":\"string\"}},\"methods\":{\"price\":\"9d3ec6b66a7d45b2a8d0d3046adc89144d689aba9b2a6f12948e143e8f894a31\",\"rate\":\"530bf86365ff4afb5a70196542d45f293fad5909026e015eddcfd866290f85b8\"},\"order\":[\"base\",\"quote\"],\"steward\":{\"namespace\":\"rates.example.org\",\"process\":\"https://rates.example.org/classes/change\"}}",
+  "class_hash": "460eac3771969375a3cef93857216b9a3c3b260b23fb33d8a1ae1a4989ca6693"
 }

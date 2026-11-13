@@ -105,6 +105,16 @@
               "default": {
                 "description": "Optional (spec-0.5.0): the evaluation asof, on a date or instant valid-time argument (SPEC.md 7, 16.7).",
                 "const": "asof"
+              },
+              "key_normalisation": {
+                "description": "Optional (spec-0.5.0): on a string argument without classes, the rule of 16.4 its values are canonical under; absent means none, so none is never written (SPEC.md 7, 16.4).",
+                "enum": [
+                  "upper_ascii",
+                  "nfc_strict",
+                  "arabic_skeleton",
+                  "hebrew_consonantal",
+                  "greek_unaccented"
+                ]
               }
             },
             "allOf": [
@@ -230,6 +240,25 @@
                     "type": {
                       "const": "string"
                     }
+                  }
+                }
+              },
+              {
+                "if": {
+                  "required": [
+                    "key_normalisation"
+                  ]
+                },
+                "then": {
+                  "properties": {
+                    "type": {
+                      "const": "string"
+                    }
+                  },
+                  "not": {
+                    "required": [
+                      "classes"
+                    ]
                   }
                 }
               },

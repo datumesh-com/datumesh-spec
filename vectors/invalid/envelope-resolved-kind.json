@@ -1,7 +1,7 @@
 {
   "id": "invalid/envelope-resolved-kind",
   "kind": "envelope",
-  "description": "spec-0.5.0: A resolution's kind is alias, method, default or label.",
+  "description": "spec-0.5.0: A resolution's kind is alias, method, default or lookup.",
   "valid": false,
   "input": "{\n  \"resolved\": {\n    \"aliases_tx\": \"2026-05-01T00:00:00.000000Z\",\n    \"resolutions\": [\n      {\n        \"to\": \"y\",\n        \"kind\": \"guess\",\n        \"from\": \"x\"\n      }\n    ],\n    \"call\": \"rates.example.org/fx_rate(base: \\\"EUR\\\", date: 2026-03-16, quote: \\\"GBP\\\")?asof=2026-03-16T18:00:00.000000Z\"\n  },\n  \"outcome\": \"not_covered\"\n}",
   "status": 404,

@@ -692,8 +692,12 @@ def shape_signature(sig, path):
         fail("E_SCHEMA", "expected an object", f"{path}.args")
     for name, decl in sig["args"].items():
         p = f"{path}.args.{name}"
-        _shape_object(decl, ("type", "valid"), ("classes", "default", "extent", "unit"), p)
+        _shape_object(decl, ("type", "valid"), ("classes", "default", "extent", "key_normalisation", "unit"), p)
         _shape_str(decl, "type", p)
+        # spec-0.5.0 (Q6 b): a rule of 16.4 other than none; absent means none, so "none" is not written
+        if "key_normalisation" in decl and decl["key_normalisation"] not in KEY_NORMALISATIONS[1:]:
+            fail("E_SCHEMA", "key_normalisation is a rule of 16.4 other than none (absent means none)",
+                 f"{p}.key_normalisation")
         if "classes" in decl and (not isinstance(decl["classes"], list)
                                   or not all(isinstance(c, str) for c in decl["classes"])):
             fail("E_SCHEMA", "classes is an array of class names", f"{p}.classes")
@@ -842,6 +846,8 @@ def check_function(desc, path="$"):
             _check_class_names(decl["classes"], f"{p}.classes")
         if "default" in decl and not (decl["valid"] and decl["type"] in ("date", "instant")):
             fail("E_CANON_TYPE", "the asof default is for a date or instant valid-time argument", f"{p}.default")
+        if "key_normalisation" in decl and (decl["type"] != "string" or "classes" in decl):
+            fail("E_CANON_TYPE", "key_normalisation is for a string argument without classes", f"{p}.key_normalisation")
         if "extent" in decl:
             check_extent(decl, f"{p}.extent")
     if "order" in desc["signature"]:
@@ -1629,7 +1635,7 @@ def check_key_value(rule, value, path="$"):
 
 
 CLASS_REQUIRED = ("keys", "methods", "order", "steward")
-CLASS_OPTIONAL = ("extent", "final", "implements", "inverse", "maps", "open", "parent")
+CLASS_OPTIONAL = ("extent", "final", "implements", "inverse", "lookup", "maps", "open", "parent")
 _ANY_URI = re.compile(r"[a-z][a-z0-9+.-]*:[!-~]+")
 
 
@@ -1658,6 +1664,8 @@ def shape_class(d, path="$"):
         _shape_str(d["steward"], k, f"{path}.steward")
     if "parent" in d:
         _shape_str(d, "parent", path)
+    if "lookup" in d:  # spec-0.5.0 (Q10 a)
+        _shape_str(d, "lookup", path)
     if "final" in d and d["final"] is not True:
         fail("E_SCHEMA", "final is true when present", f"{path}.final")
     for k in ("implements", "inverse", "maps", "open"):
@@ -1731,6 +1739,8 @@ def check_class(d, path="$"):
             check_name(a, f"{path}.inverse")
             if f"by_{a}" not in d["methods"]:
                 fail("E_CLASS_MEMBER", f"inverse {a!r} needs the method by_{a}", f"{path}.inverse")
+    if "lookup" in d and d["lookup"] not in d["methods"]:  # spec-0.5.0 (Q10 a): names a method of the class
+        fail("E_CLASS_MEMBER", f"lookup names a method: {d['lookup']!r}", f"{path}.lookup")
     if "extent" in d:
         for k in sorted(d["extent"]):
             check_hex(d["extent"][k], 64, f"{path}.extent.{k}")
@@ -1746,11 +1756,14 @@ def class_hash(flat):
     return sha256_hex(jcs(flat))
 
 
-def _key_matches(decl, arg):
-    """A method's leading argument declares the class key (16.2)."""
+def _key_matches(decl, arg, rule=False):
+    """A method's leading argument declares the class key (16.2); with rule (define, since Q6 b),
+    a string key's argument also carries exactly the key's normalisation, absent meaning none."""
     if "class" in decl:
         return arg["type"] == "string" and arg.get("classes") == [decl["class"]]
     if arg["type"] != decl["type"] or "classes" in arg:
+        return False
+    if rule and decl["type"] == "string" and arg.get("key_normalisation", "none") != decl["key_normalisation"]:
         return False
     return decl["type"] != "number" or arg.get("unit") == decl.get("unit")
 
@@ -1760,8 +1773,9 @@ def _leading_keys(fd, keys, order, path, what):
     if "order" not in sig or sig["order"][:len(order)] != order:
         fail("E_CLASS_METHOD", f"{what} takes the class keys {order} first, by signature.order", path)
     for k in order:
-        if not _key_matches(keys[k], sig["args"][k]):
-            fail("E_CLASS_METHOD", f"{what}: argument {k} does not declare the key {k}", path)
+        if not _key_matches(keys[k], sig["args"][k], rule=True):
+            fail("E_CLASS_METHOD", f"{what}: argument {k} does not declare the key {k} (its type, unit and "
+                 "key_normalisation)", path)
 
 
 def _without_keys(sig, order):
@@ -1816,6 +1830,14 @@ def define_class(name, desc, env):
         fd = functions.get(flat["methods"][m])
         if fd is None:
             fail("E_CLASS_METHOD", f"no descriptor for the method {m}", p)
+        if m == flat.get("lookup"):  # spec-0.5.0 (Q10 a): label -> key of this class, exempt from keys first
+            sig = fd["signature"]
+            label = sig["args"].get("label")
+            if sig.get("order") != ["label"] or set(sig["args"]) != {"label"} or label["type"] != "string" \
+                    or label["valid"] or "classes" in label or sig["returns"] != {"type": "string", "classes": [name]}:
+                fail("E_CLASS_MEMBER", f"the lookup method {m} takes exactly one string argument label and returns "
+                     "a key of this class", p)
+            continue
         if parent is not None and m in parent["methods"]:
             n = 0  # an inherited method takes the parent's keys it was defined with: a prefix of its order
             while n < len(parent["order"]) and parent["order"][n] in fd["signature"]["args"]:
@@ -2398,7 +2420,7 @@ URI_CODES = (
     "E_CANON_HEX",  # spec-0.4.2: a fn_hash= that is not 64 lowercase hex digits
 )
 # Codes a mesh reports about a request, never as an error (spec-0.4.1, spec-0.4.2).
-RESOLUTION_KINDS = ("alias", "default", "label", "method")  # spec-0.5.0 (16.7)
+RESOLUTION_KINDS = ("alias", "default", "lookup", "method")  # spec-0.5.0 (16.7); lookup (Q10 a) carries asof
 # spec-0.4.3: what an E_FOREIGN_UNAVAILABLE envelope's detail says failed (5.5).
 FOREIGN_DETAILS = ("offline", "network", "dns", "tls", "timeout", "refused")
 REQUEST_CODES = ("E_JOB_UNKNOWN", "E_SLICE_AT_CELL", "E_NAME_UNBOUND", "E_SHORT_ID_AMBIGUOUS")
@@ -2415,7 +2437,8 @@ def _is_instant(text):
         return False
 # The faults a not_covered envelope may carry (SPEC 5.5, 15.11): a computed cell with no value.
 FORMULA_FAULTS = ("E_FORMULA_DIV_ZERO", "E_FORMULA_DOMAIN", "E_FORMULA_RANGE", "E_FORMULA_EMPTY",
-                  "E_FORMULA_ABSENT", "E_FORMULA_FUTURE")
+                  "E_FORMULA_ABSENT", "E_FORMULA_FUTURE",
+                  "E_FORMULA_KEY", "E_FORMULA_DISPATCH_KEY")  # spec-0.5.0: Q6 b, answer 5
 
 
 def _seconds(value):
@@ -2475,10 +2498,13 @@ def _check_envelope_members(env, members=None):
                 or not isinstance(r["resolutions"], list):
             fail("E_ENVELOPE", "resolved is {call, resolutions, aliases_tx?}", "$.resolved")
         for x in r["resolutions"]:
-            if not isinstance(x, dict) or set(x) != {"from", "kind", "to"} \
-                    or not all(isinstance(x[k], str) for k in x) or x["kind"] not in RESOLUTION_KINDS:
-                fail("E_ENVELOPE", "a resolution is {from, kind, to}, kind alias, method, default or label",
-                     "$.resolved.resolutions")
+            # a lookup resolution also has asof, the instant its lookup cell was read as of (Q10 a)
+            members = {"from", "kind", "to"} | ({"asof"} if isinstance(x, dict) and x.get("kind") == "lookup" else set())
+            if not isinstance(x, dict) or set(x) != members \
+                    or not all(isinstance(x[k], str) for k in x) or x["kind"] not in RESOLUTION_KINDS \
+                    or ("asof" in x and not _is_instant(x["asof"])):
+                fail("E_ENVELOPE", "a resolution is {from, kind, to}, kind alias, method, default or lookup; a "
+                     "lookup's also has asof, an instant", "$.resolved.resolutions")
         if "aliases_tx" in r and (not isinstance(r["aliases_tx"], str) or not _is_instant(r["aliases_tx"])):
             fail("E_ENVELOPE", "aliases_tx is an instant", "$.resolved.aliases_tx")
     if "shadows" in env:  # spec-0.5.0 (16.9)
@@ -2814,7 +2840,12 @@ def parse_call(text, env):
     env: {"functions": {name: descriptor} (the names bound as of the request's asof), "aliases":
     {alias: name}, "descriptors": [descriptors the mesh has, for a pinned call]; since spec-0.5.0
     "classes": {class name: flattened class descriptor}, "aliases_tx": the instant of the alias
-    snapshot, "now": the mesh's now, for a default when the call has no asof}."""
+    snapshot, "now": the mesh's now, for a default or a lookup when the call has no asof, "lookups":
+    {class name: {label: key encoding}}, the cells of each class's lookup method as of the call's
+    asof (Q10 a)}.
+
+    Since spec-0.5.0 (Q1) a request has no variables: every argument is read by the declared type of
+    its position (_call_read), and an unquoted value is a single token of the dialect."""
     import formula
     if not isinstance(text, str):
         fail("E_PARSE_URI", "a call is text")
@@ -2824,7 +2855,7 @@ def parse_call(text, env):
         tokens = formula.tokenize(text[:q])
     except formula.FormulaError as e:
         fail(_CALL_LEXER_CODES.get(e.code, "E_PARSE_URI"), f"not a call: {e}")
-    callee, args, method = _call_tree(tokens)
+    callee, args, method, label = _call_tree(tokens)
     asof = None
     if rest:
         if not rest.startswith("?asof=") or "&" in rest:
@@ -2837,11 +2868,16 @@ def parse_call(text, env):
     functions = env.get("functions") or {}
     classes = env.get("classes") or {}
     pin = callee.pin
+    if label is not None and (fq not in classes or pin is not None):
+        fail("E_PARSE_URI", "a label [..] names an object of a class (16.7)")
     if fq in classes and pin is None:  # spec-0.5.0: an object, then its method (16.3)
         if method is None:
             fail("E_PARSE_URI", f"{fq} is a class: a call of it names a method")
         desc = classes[fq]
-        keys = _call_keys(fq, desc, args, env)
+        if label is not None:  # spec-0.5.0 (Q10 a): the object a label names, through the class's lookup
+            keys = _call_lookup(fq, desc, label, asof, env, resolutions)
+        else:
+            keys = _call_keys(fq, desc, args, env)
         mname, mtok, margs = method
         if mtok.kind == "QNAME":
             mfq = mtok.value
@@ -2856,6 +2892,8 @@ def parse_call(text, env):
         else:
             if mname not in desc["methods"]:
                 fail("E_NAME_UNBOUND", f"{fq} has no method {mname}")
+            if mname == desc.get("lookup"):
+                fail("E_PARSE_URI", f"{mname} is {fq}'s lookup: it takes a label, not an object")
             mfq = f"{fq}/{mname}"
             if mfq not in functions or function_hash(functions[mfq]) != desc["methods"][mname]:
                 fail("E_NAME_UNBOUND", f"{mfq} is not bound to the method {mname} of {fq}")
@@ -2866,7 +2904,7 @@ def parse_call(text, env):
                     break
                 key_names.append(k)
         resolutions.append({"from": f"{fq}(...).{mname}", "kind": "method", "to": mfq})
-        bound = {k: keys[k] for k in key_names}
+        bound = {k: ("typed", keys[k]) for k in key_names}
         order = [n for n in descriptor["signature"].get("order", []) if n not in key_names]
         bound.update(_call_bind(mfq, descriptor, order, margs, set(key_names)))
         fq, pin = mfq, None
@@ -2893,29 +2931,20 @@ def parse_call(text, env):
             if at is None:
                 fail("E_ARG_MISSING", f"{fq} needs {name}: its asof default needs an asof")
             value = at if declared[name]["type"] == "instant" else at[:10]
-            bound[name] = (declared[name]["type"], value)
+            bound[name] = ("typed", {"type": declared[name]["type"], "value": value})
             resolutions.append({"from": name, "kind": "default", "to": value})
             continue
         fail("E_ARG_MISSING", f"{fq} needs {name} (an open argument is written *)")
     ref_args = {}
     for name in keys_in_order(bound):
-        kind, value = bound[name]
-        type_ = declared[name]["type"]
         p = f"call.{name}"
-        if kind == "open":
-            ref_args[name] = SLICE
+        kind, value = bound[name]
+        if kind == "typed":
+            ref_args[name] = value
+            if value["type"] == "string" and declared[name].get("key_normalisation"):  # Q6 b
+                check_key_value(declared[name]["key_normalisation"], value["value"], p)
             continue
-        if kind == "object":
-            if not declared[name].get("classes") or value["class"] not in declared[name]["classes"]:
-                fail("E_CANON_TYPE", f"an object of {value['class']} for {name}", p)
-            kind, value = "string", encode_decoded(_call_object(value, env))
-        accepts = {"number": ("number",), "string": ("string", "blob"), "date": ("date",), "instant": ("instant",),
-                   "boolean": ("boolean",)}[kind]
-        if type_ not in accepts:
-            fail("E_CANON_TYPE", f"a {kind} literal for a {type_} argument", p)
-        if type_ != "boolean":
-            check_lexical(type_, value, p)
-        ref_args[name] = {"type": type_, "value": value}
+        ref_args[name] = _call_read(bound[name], declared[name], p, env)
     ns, fn = fq.rsplit("/", 1)
     ref = {"args": ref_args, "fn": fn, "ns": ns}
     if pin is not None:
@@ -2975,14 +3004,61 @@ def _call_bind(fq, descriptor, order, args, taken):
                 fail("E_ARG_UNKNOWN", f"{fq} has no argument {name!r}")
         if name in bound or name in taken:
             fail("E_CANON_ARG_DUPLICATE", f"{name} is given twice")
-        if value[0] == "keylit":
-            value = ("string", value[1])
         bound[name] = value
     return bound
 
 
+def _key_position(decl):
+    """A class key declaration as the declaration of a request position (5.8)."""
+    if "class" in decl:
+        return {"type": "string", "classes": [decl["class"]]}
+    return decl
+
+
+def _call_read(raw, decl, path, env):
+    """A request value read by the declared type of its position (5.8; spec-0.5.0, Q1): a quoted
+    string is a string; an unquoted token is that string in a string position, that literal in a
+    number, date, instant or boolean position; in a class-typed position the value is a key encoding
+    (an object, or a quoted encoding). Returns the typed scalar, or "*"."""
+    kind, value = raw
+    if kind == "open":
+        return SLICE
+    type_ = decl["type"]
+    classes = decl.get("classes")
+    if classes:
+        if kind == "object":
+            if value["class"] not in classes:
+                fail("E_CANON_TYPE", f"an object of {value['class']} where {classes} is declared", path)
+            text = encode_decoded(_call_object(value, env))
+        elif kind == "quoted":
+            decoded = decode_key(value)
+            if decoded["class"] not in classes:
+                fail("E_CANON_TYPE", f"a key of {decoded['class']} where {classes} is declared", path)
+            text = value
+        else:
+            fail("E_CANON_TYPE", f"a key of {classes} is an object or a quoted key encoding", path)
+        check_lexical("string", text, path)
+        return {"type": "string", "value": text}
+    if kind == "object":
+        fail("E_CANON_TYPE", f"an object for a {type_} argument", path)
+    if type_ in ("string", "blob"):
+        text = value if kind == "quoted" else value[1]
+    elif kind == "token" and value[0] == type_ and type_ in ("number", "date", "instant"):
+        text = value[1]
+    elif kind == "token" and type_ == "boolean" and value in (("word", "true"), ("word", "false")):
+        return {"type": "boolean", "value": value[1] == "true"}
+    else:
+        written = "a quoted string" if kind == "quoted" else f"the token {value[1]!r}"
+        fail("E_CANON_TYPE", f"{written} for a {type_} argument", path)
+    check_lexical(type_, text, path)
+    if type_ == "string" and decl.get("key_normalisation"):  # a key's rule, or a function's (Q6 b)
+        check_key_value(decl["key_normalisation"], text, path)
+    return {"type": type_, "value": text}
+
+
 def _call_keys(fq, desc, args, env):
-    """An object's keys in a call (16.3): each key bound once, literals checked by its normalisation."""
+    """An object's keys in a call (16.3): each key bound once and read by its type, a string key
+    checked by its normalisation. Returns {key: typed scalar}."""
     keys = {}
     order = desc["order"]
     for i, (label, value) in enumerate(args):
@@ -2996,20 +3072,9 @@ def _call_keys(fq, desc, args, env):
                 fail("E_ARG_UNKNOWN", f"{fq} has no key {name!r}")
         if name in keys:
             fail("E_CANON_ARG_DUPLICATE", f"{name} is given twice")
-        decl = desc["keys"][name]
         if value[0] == "open":
             fail("E_PARSE_URI", "an object binds every key")
-        if value[0] == "keylit":
-            value = ("string", value[1])
-        if "class" in decl:
-            if value[0] != "object" or value[1]["class"] != decl["class"]:
-                fail("E_CANON_TYPE", f"the key {name} is an object of {decl['class']}", f"call.{name}")
-            value = ("string", encode_decoded(_call_object(value[1], env)))
-        elif value[0] != decl["type"]:
-            fail("E_CANON_TYPE", f"a {value[0]} literal for the {decl['type']} key {name}", f"call.{name}")
-        elif decl["type"] == "string":
-            check_key_value(decl["key_normalisation"], value[1], f"call.{name}")
-        keys[name] = value
+        keys[name] = _call_read(value, _key_position(desc["keys"][name]), f"call.{name}", env)
     for name in keys_in_order(desc["keys"]):
         if name not in keys:
             fail("E_ARG_MISSING", f"{fq} needs its key {name}")
@@ -3023,15 +3088,34 @@ def _call_object(raw, env):
         fail("E_NAME_UNBOUND", f"{raw['class']} is not a class of this mesh")
     desc = classes[raw["class"]]
     keys = _call_keys(raw["class"], desc, raw["keys"], env)
-    out = {}
-    for k, (kind, value) in keys.items():
-        decl = desc["keys"][k]
-        if "class" not in decl and kind != decl["type"]:
-            fail("E_CANON_TYPE", f"a {kind} literal for the {decl['type']} key {k}", f"call.{k}")
-        out[k] = decode_key(value) if "class" in decl else {"type": decl["type"], "value": value}
-        if "class" not in decl and decl["type"] != "boolean":
-            check_lexical(decl["type"], value, f"call.{k}")
+    out = {k: decode_key(v["value"]) if "class" in desc["keys"][k] else v for k, v in keys.items()}
     return {"class": raw["class"], "keys": out}
+
+
+def _call_lookup(fq, desc, label, asof, env, resolutions):
+    """The keys of the object a label names (spec-0.5.0, Q10 a): the class's lookup method read at
+    the label, as of the call's asof (the mesh's now when it has none). Returns {key: typed scalar}."""
+    functions = env.get("functions") or {}
+    m = desc.get("lookup")
+    if m is None:
+        fail("E_NAME_UNBOUND", f"{fq} has no lookup: a label names none of its objects")
+    lfq = f"{fq}/{m}"
+    if lfq not in functions or function_hash(functions[lfq]) != desc["methods"][m]:
+        fail("E_NAME_UNBOUND", f"{lfq} is not bound to the lookup method of {fq}")
+    text = _call_read(label, functions[lfq]["signature"]["args"]["label"], "call.label", env)["value"]
+    at = asof or env.get("now")
+    if at is None:
+        fail("E_ARG_MISSING", "a lookup is read as of the call's asof, or the mesh's now")
+    table = (env.get("lookups") or {}).get(fq) or {}
+    if text not in table:
+        fail("E_NAME_UNBOUND", f"{fq}'s lookup has no value for the label {text!r} as of {at}")
+    key = table[text]
+    decoded = decode_key(key)
+    if decoded["class"] != fq or set(decoded["keys"]) != set(desc["keys"]):
+        fail("E_KEY_ENCODING", f"the lookup's value is not a key of {fq}")
+    resolutions.append({"asof": at, "from": text, "kind": "lookup", "to": key})
+    return {k: {"type": "string", "value": encode_decoded(v)} if "class" in v else v
+            for k, v in decoded["keys"].items()}
 
 
 def _call_literal(kind, value):
@@ -3053,8 +3137,10 @@ def _canonical_call(fq, pin, ref_args, asof):
 
 
 def _call_tree(tokens):
-    """The callee token, [(label or None, (kind, value))] and an optional method (name, token, args) of
-    a call; E_PARSE_URI otherwise. A value is a literal, "*", a key literal (spec-0.5.0) or an object."""
+    """The callee token, [(label or None, value)], an optional method (name, token, args) and an
+    optional label of a call; E_PARSE_URI otherwise. A value is ("quoted", text), ("token", (lexical
+    kind, text)) for an unquoted token (spec-0.5.0, Q1: number, date, instant, period or word),
+    ("open", None) for "*", or ("object", {...})."""
     def bad(detail="not a call of literals"):
         fail("E_PARSE_URI", detail)
 
@@ -3068,7 +3154,7 @@ def _call_tree(tokens):
 
     def is_callee(k=0):
         t = at(k)
-        return t.kind in ("QNAME", "ALIAS") or (t.kind == "WORD" and punct("(", k + 1)
+        return t.kind in ("QNAME", "ALIAS") or (t.kind == "WORD" and (punct("(", k + 1) or punct("[", k + 1))
                                                 and t.text.lower() not in ("true", "false"))
 
     def arg_list():
@@ -3094,29 +3180,28 @@ def _call_tree(tokens):
             if punct(")"):
                 pos[0] += 1
                 return args
-            bad()
+            bad("an unquoted value is one token: quote a string holding other characters")
 
-    def value():
+    def value(objects=True):
         tok = at()
         if tok.kind == "STR":
-            v = ("string", tok.value)
+            v = ("quoted", tok.value)
         elif tok.kind == "DATE":
-            v = ("date", tok.value)
+            v = ("token", ("date", tok.value))
         elif tok.kind == "INSTANT":
-            v = ("instant", tok.value)
+            v = ("token", ("instant", tok.value))
         elif tok.kind == "NUM" and tok.unit is None:
-            v = ("number", tok.value)
+            v = ("token", ("number", tok.value))
         elif tok.kind == "PUNCT" and tok.text == "-" and at(1).kind == "NUM" and at(1).unit is None:
             pos[0] += 1
-            v = ("number", "-" + at().value)
-        elif tok.kind == "WORD" and tok.text in ("true", "false"):
-            v = ("boolean", tok.text == "true")
-        elif tok.kind == "PUNCT" and tok.text == "*":
+            v = ("token", ("number", "-" + at().value))
+        elif tok.kind == "PERIOD":
+            v = ("token", ("period", tok.value))
+        elif tok.kind == "WORD" and not punct("(", 1):  # a value, never an alias (Q1)
+            v = ("token", ("word", tok.text))
+        elif tok.kind == "PUNCT" and tok.text == "*" and objects:
             v = ("open", None)
-        elif tok.kind == "PERIOD" or (tok.kind == "WORD" and any(c.isupper() for c in tok.text)
-                                      and not punct("(", 1)):
-            v = ("keylit", tok.value if tok.kind == "PERIOD" else tok.text)
-        elif tok.kind == "QNAME" and punct("(", 1):  # an object literal in a class-typed position
+        elif tok.kind == "QNAME" and punct("(", 1) and objects:  # an object literal in a class-typed position
             name = tok.value
             pos[0] += 1
             inner = arg_list()
@@ -3130,7 +3215,16 @@ def _call_tree(tokens):
         bad("a call begins with a function name, a class name, an @alias or a bare name")
     callee = at()
     pos[0] += 1
-    args = arg_list()
+    label = None
+    if punct("["):
+        pos[0] += 1  # spec-0.5.0 (Q10 a): N[label], the object a label names (requests only)
+        label = value(objects=False)
+        if not punct("]"):
+            bad("a label is one value in brackets: N[label]")
+        pos[0] += 1
+        args = None
+    else:
+        args = arg_list()
     method = None
     if at().kind == "DOT":
         pos[0] += 1
@@ -3141,7 +3235,11 @@ def _call_tree(tokens):
         method = (t.text if t.kind == "WORD" else t.value, t, arg_list())
     if at().kind != "EOF":
         bad("nothing follows a call but ?asof=")
-    return callee, args, method
+    if label is not None and method is None:
+        bad("a label names an object: call one of its methods")
+    return callee, args, method, label
+
+
 # ---------------------------------------------------------------------------
 # Vector checking (SPEC.md section 11).
 

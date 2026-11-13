@@ -96,7 +96,7 @@
     },
     "env": {
       "type": "object",
-      "description": "A key environment (keys vectors); for mesh vectors (spec-0.4.1) {keys, mesh}, each the HTTPS result for one document; or a formula vector's environment: name, signature, functions, aliases. For call vectors (spec-0.4.2): {functions, aliases, descriptors}."
+      "description": "A key environment (keys vectors); for mesh vectors (spec-0.4.1) {keys, mesh}, each the HTTPS result for one document; or a formula vector's environment: name, signature, functions, aliases. For call vectors (spec-0.4.2): {functions, aliases, descriptors}, and since spec-0.5.0 classes, aliases_tx, now and lookups (class name to {label: key encoding})."
     },
     "keypair": {
       "type": "object",

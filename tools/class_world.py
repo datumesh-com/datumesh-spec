@@ -1,9 +1,11 @@
 # SPDX-License-Identifier: Apache-2.0
 """The classes of the spec-0.5.0 vectors (SPEC.md section 16), built from the live seed shapes.
 
-- `rates.example.org/fx_pair` (keys base, quote: upper_ascii): `rate` (the stored fx_rate), `cross`
-  (a formula over two rates) and `forward` (a formula over the spot rate and two deposit rates, its
-  inputs derived by the parser).
+- `rates.example.org/fx_pair` (keys base, quote: upper_ascii): `rate` (the stored fx_rate), `spot`
+  (a formula reading this.rate), `cross` (a formula over two rates), `forward` (a formula over
+  this.spot, this.rate and two deposit rates, its inputs derived by the parser: one-way reads within
+  the class, answer 11) and `named`, its `lookup` (label -> key, Q10 a). Since Q6 b every method's
+  key arguments carry upper_ascii, the class's rule.
 - `scripture.example.org/verse` (keys corpus, book, chapter, verse): `text` (the stored verse_text, a
   blob), `consonantal` (strip_niqqud: remove_chars(text_of(this.text(edition)), ...)) and `next`
   (returns a key of verse).
@@ -29,6 +31,7 @@ DATE = {"type": "date", "valid": True}
 ONE = {"type": "number", "unit": "1", "valid": False}
 RATE_UNIT = {"of": {"arg": "quote"}, "per": {"arg": "base"}}
 UPPER = {"key_normalisation": "upper_ascii", "type": "string"}
+UKEY = dict(STR, key_normalisation="upper_ascii")  # a method's argument for an upper_ascii key (Q6 b)
 NONE = {"key_normalisation": "none", "type": "string"}
 H = canon.function_hash
 HEBREW_MARKS = unicodedata.normalize("NFC", "".join(chr(c) for c in range(0x0591, 0x05C8)
@@ -51,7 +54,11 @@ def steward(ns):
     return {"namespace": ns, "process": f"https://{ns.split('/')[0]}/classes/change"}
 
 
-RATE = stored({"base": STR, "date": DATE, "quote": STR}, ["base", "quote", "date"], {"type": "number", "unit": RATE_UNIT})
+RATE = stored({"base": UKEY, "date": DATE, "quote": UKEY}, ["base", "quote", "date"], {"type": "number", "unit": RATE_UNIT})
+# fx_pair's lookup (Q10 a): a label to a key of fx_pair, its recorded cells the alias table.
+NAMED = stored({"label": STR}, ["label"], {"type": "string", "classes": ["rates.example.org/fx_pair"]})
+LOOKUPS = {"rates.example.org/fx_pair": {"cable": 'rates.example.org/fx_pair(base:"GBP",quote:"USD")',
+                                         "fiber": 'rates.example.org/fx_pair(base:"EUR",quote:"USD")'}}
 DEPOSIT = stored({"currency": STR, "date": DATE, "tenor": STR}, ["currency", "tenor", "date"],
                  {"type": "number", "unit": "1"})
 # fx_rate with an asof default on its date (16.7): fx_rate(EUR, GBP) reads the rate as of the evaluation asof.
@@ -65,23 +72,26 @@ NEXT = stored({"book": STR, "chapter": ONE, "corpus": STR, "verse": ONE}, ["corp
               {"type": "string", "classes": [VERSE]})
 CCY_ARG = {"type": "string", "classes": [CURRENCY], "valid": False}
 RATE2 = stored({"base": CCY_ARG, "date": DATE, "quote": CCY_ARG}, ["base", "quote", "date"], {"type": "number", "unit": "1"})
-PRICE_ARGS = {"date": DATE, "isin": STR}
+PRICE_ARGS = {"date": DATE, "isin": UKEY}
 BOND_PRICE = stored(PRICE_ARGS, ["isin", "date"], {"type": "number", "unit": "1"})
-SWAP_PRICE = dict(stored({"date": DATE, "isin": STR}, ["isin", "date"], {"type": "number", "unit": "1"}),
+SWAP_PRICE = dict(stored({"date": DATE, "isin": UKEY}, ["isin", "date"], {"type": "number", "unit": "1"}),
                   code={"body": "swap prices\n", "lang": "stored"})  # another hash: a table of its own
 INSTRUMENT = {"type": "string", "classes": [BOND, SWAP], "valid": False}
 EXTRA_CARRY = stored({"base": STR, "date": DATE, "quote": STR}, ["base", "quote", "date"], {"type": "number", "unit": "1"})
 
 
 def fx_class(methods):
-    return {"keys": {"base": UPPER, "quote": UPPER}, "methods": methods, "order": ["base", "quote"],
-            "steward": steward("rates.example.org")}
+    d = {"keys": {"base": UPPER, "quote": UPPER}, "methods": methods, "order": ["base", "quote"],
+         "steward": steward("rates.example.org")}
+    if "named" in methods:
+        d["lookup"] = "named"
+    return d
 
 
 def build():
     """Every function, class and binding of the scenario: {"functions": {name: descriptor},
     "classes": {name: flattened class descriptor}}."""
-    functions = {f"{FX}/rate": RATE, "rates.example.org/deposit": DEPOSIT, "rates.example.org/fx_rate": FX_RATE_D,
+    functions = {f"{FX}/rate": RATE, f"{FX}/named": NAMED, "rates.example.org/deposit": DEPOSIT, "rates.example.org/fx_rate": FX_RATE_D,
                  f"{VERSE}/text": TEXT, f"{VERSE}/next": NEXT, f"{CCY_PAIR}/rate": RATE2, f"{BOND}/price": BOND_PRICE,
                  f"{SWAP}/price": SWAP_PRICE, "calc.example.net/fx_extra/carry": EXTRA_CARRY}
     classes = {}
@@ -98,17 +108,22 @@ def build():
         functions[name] = d
         return d
 
-    # fx_pair: rate first, then cross and forward, which read rate through this and through objects.
-    classes[FX] = fx_class({"rate": H(RATE)})
-    cross = define(f"{FX}/cross", {"args": {"base": STR, "date": DATE, "quote": STR, "via": STR},
+    # fx_pair: rate and named first, then spot over this.rate, then cross (rate through objects) and
+    # forward (this.spot and this.rate): one-way reads within the class, by name (answer 11).
+    classes[FX] = fx_class({"named": H(NAMED), "rate": H(RATE)})
+    spot = define(f"{FX}/spot", {"args": {"base": UKEY, "date": DATE, "quote": UKEY}, "order": ["base", "quote", "date"],
+                                 "returns": {"type": "number", "unit": RATE_UNIT}}, "this.rate(date)", FX)
+    classes[FX] = fx_class({"named": H(NAMED), "rate": H(RATE), "spot": H(spot)})
+    cross = define(f"{FX}/cross", {"args": {"base": UKEY, "date": DATE, "quote": UKEY, "via": STR},
                                    "order": ["base", "quote", "via", "date"], "returns": {"type": "number", "unit": RATE_UNIT}},
                    f"{FX}(base, via).rate(date) * {FX}(via, quote).rate(date)", FX)
-    forward = define(f"{FX}/forward", {"args": {"base": STR, "date": DATE, "quote": STR, "tenor": STR},
+    forward = define(f"{FX}/forward", {"args": {"base": UKEY, "date": DATE, "quote": UKEY, "tenor": STR},
                                        "order": ["base", "quote", "tenor", "date"],
                                        "returns": {"type": "number", "unit": RATE_UNIT}},
-                     "this.rate(date) * (1 + rates.example.org/deposit(quote, tenor, date)) / "
+                     "(this.spot(date) + this.rate(date)) / 2 * (1 + rates.example.org/deposit(quote, tenor, date)) / "
                      "(1 + rates.example.org/deposit(base, tenor, date))", FX)
-    classes[FX] = canon.define_class(FX, fx_class({"cross": H(cross), "forward": H(forward), "rate": H(RATE)}),
+    classes[FX] = canon.define_class(FX, fx_class({"cross": H(cross), "forward": H(forward), "named": H(NAMED),
+                                                   "rate": H(RATE), "spot": H(spot)}),
                                      {"functions": list(functions.values()), "definer": "rates.example.org"})
     # verse: text, next, then consonantal over this.text.
     verse_desc = {"keys": VERSE_KEYS, "methods": {"next": H(NEXT), "text": H(TEXT)},
@@ -165,8 +180,10 @@ def env(name, sig, method_of=None, aliases=None):
     return e
 
 
-def call_env(aliases=None, aliases_tx=None, now=None):
+def call_env(aliases=None, aliases_tx=None, now=None, lookups=None):
     e = {"aliases": aliases or {}, "classes": dict(SCENARIO["classes"]), "functions": dict(SCENARIO["functions"])}
+    if lookups:
+        e["lookups"] = lookups
     if aliases_tx:
         e["aliases_tx"] = aliases_tx
     if now:

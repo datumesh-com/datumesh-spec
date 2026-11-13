@@ -221,7 +221,9 @@
         "E_FORMULA_RANGE",
         "E_FORMULA_EMPTY",
         "E_FORMULA_ABSENT",
-        "E_FORMULA_FUTURE"
+        "E_FORMULA_FUTURE",
+        "E_FORMULA_KEY",
+        "E_FORMULA_DISPATCH_KEY"
       ]
     },
     "resolved": {
@@ -261,8 +263,31 @@
                 "enum": [
                   "alias",
                   "default",
-                  "label",
+                  "lookup",
                   "method"
+                ]
+              },
+              "asof": {
+                "description": "spec-0.5.0 (Q10 a): for a lookup only, the instant its lookup cell was read as of.",
+                "$ref": "defs.schema.json#/$defs/instant"
+              }
+            },
+            "if": {
+              "properties": {
+                "kind": {
+                  "const": "lookup"
+                }
+              }
+            },
+            "then": {
+              "required": [
+                "asof"
+              ]
+            },
+            "else": {
+              "not": {
+                "required": [
+                  "asof"
                 ]
               }
             }

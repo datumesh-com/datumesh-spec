@@ -17,9 +17,11 @@
         }
       },
       "methods": {
-        "cross": "683f1189bb034f5f327eda3c6e2f6ebc8d1d7e7aa22fbe0e28ed2528262d0f8f",
-        "forward": "a9f7660da590ee0a4aa079b4dfd9a19580c30d0ef4385f5a6b8df86be7b98edd",
-        "rate": "f041cf0f3eabaf4a611a6f57050dac8fb1f2e2cd5d6b6526913cff0847ef88df"
+        "cross": "9979eda4fbd1644dae480ae76d5514bb3c96e7645e887400adf1cc182bb0c911",
+        "forward": "ec8b8bc5fa0e8df03b469926444fecb83648357a2f8d671b97be1d127d871562",
+        "named": "6dc1e80f305027d110b5160cf1090e2643c519f0a95840dbebc7fe910453a9ff",
+        "rate": "530bf86365ff4afb5a70196542d45f293fad5909026e015eddcfd866290f85b8",
+        "spot": "caf5b15becf80d7869d292e1d93a106f337d864742f570a3cfe1ca9c7f446b15"
       },
       "order": [
         "base",
@@ -28,7 +30,8 @@
       "steward": {
         "namespace": "rates.example.org",
         "process": "https://rates.example.org/classes/change"
-      }
+      },
+      "lookup": "named"
     },
     "scripture.example.org/verse": {
       "keys": {
