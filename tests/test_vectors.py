@@ -103,12 +103,10 @@ class Coverage(unittest.TestCase):
             {v["code"] for v in VECTORS if "code" in v}
         # E_JOB_UNKNOWN (spec-0.4.1), E_SLICE_AT_CELL and E_NAME_UNBOUND (spec-0.4.2) are a mesh's
         # answers about a request, never a client's failure: they appear in valid envelope vectors.
-        # E_FOREIGN_UNAVAILABLE (spec-0.4.3) is a mesh's or resolver's answer in an error envelope.
-        used |= (set(canon.REQUEST_CODES) | {"E_FOREIGN_UNAVAILABLE"}) & {
+        # E_FOREIGN_UNAVAILABLE (spec-0.4.3) is a mesh's or resolver's answer in an error envelope;
+        # E_NAMESPACE_SUSPENDED (spec-0.5.0) a write refusal, carried by not_covered for a refused import.
+        used |= (set(canon.REQUEST_CODES) | {"E_FOREIGN_UNAVAILABLE", "E_NAMESPACE_SUSPENDED"}) & {
             json.loads(v["input"]).get("error") for v in VECTORS if v["kind"] == "envelope" and v["valid"]}
-        # E_NAMESPACE_SUSPENDED (spec-0.5.0) is a write refusal; the spec has no write answer format
-        # yet, so no vector kind can carry it.
-        used.add("E_NAMESPACE_SUSPENDED")
         self.assertEqual(set(canon.ERROR_CODES) - used, set())
         self.assertEqual(used - set(canon.ERROR_CODES), set())
 
