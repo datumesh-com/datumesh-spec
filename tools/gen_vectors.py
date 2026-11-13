@@ -33,7 +33,7 @@ OUTPUT_FIELDS = ("object", "canonical", "sha256", "https", "key_id", "key_ids", 
                  # spec-0.4.3: key document declarations, licence inheritance, entitlement
                  "declarations", "licence", "reason", "entitled",
                  # spec-0.5.0: classes
-                 "decoded")
+                 "decoded", "flattened", "class_hash")
 
 
 # Vectors from spec-0.1.1 whose bytes changed in spec-0.2.0, and why. tests/test_migration.py
@@ -2279,6 +2279,117 @@ for name, enc, error, why in [
 ]:
     vid = f"key/{name}" if error is None else f"invalid/key-{name}"
     add(vid, "key", f"spec-0.5.0: {why}", enc, error)
+
+
+# spec-0.5.0, classes: method calls (16.3), dispatch (16.6), defaults and short calls (16.7).
+import class_world as CW  # noqa: E402
+
+CW_E = "calc.example.net/e"
+EQUIVALENT = CW.EQUIVALENT
+
+
+def cw_sig(returns):
+    return {"args": {}, "order": [], "returns": returns}
+
+
+for name, call_src, plain_src, ret, aliases in EQUIVALENT:
+    env = CW.env(CW_E, cw_sig(ret), aliases=aliases)
+    add(f"formula/class-{name}", "formula", f"spec-0.5.0: {call_src}  (a method call: the same AST as the plain read "
+        f"formula/class-{name}-plain)", call_src, env=env)
+    add(f"formula/class-{name}-plain", "formula", f"spec-0.5.0: {plain_src}  (the plain read of formula/class-{name})",
+        plain_src, env=env)
+CW_NUM = {"type": "number", "unit": "1"}
+CW_RATE_RET = {"type": "number", "unit": {"of": "USD", "per": "EUR"}}
+for name, source, s_, method_of, error, why in [
+    ("this-outside-method", "this.rate(2026-03-16)", cw_sig(CW_RATE_RET), None, "E_FORMULA_RESERVED",
+     "this is for the body of a method."),
+    ("no-such-method", f"{CW.FX}(EUR, USD).spot(2026-03-16)", cw_sig(CW_RATE_RET), None, "E_FORMULA_METHOD",
+     "fx_pair has no method spot."),
+    ("object-as-value", f"{CW.FX}(EUR, USD) = 1", cw_sig("boolean"), None, "E_FORMULA_METHOD",
+     "An object is not a value: call one of its methods."),
+    ("key-not-canonical", f'{CW.FX}("eur", "USD").rate(2026-03-16)', cw_sig(CW_RATE_RET), None, "E_FORMULA_KEY",
+     "A literal key is canonical under its normalisation (upper_ascii): rejected, never repaired."),
+    ("key-literal-number", f'{CW.VERSE}(Tanakh, "Gen", One, 1).text("uxlc")', cw_sig("blob"), None, "E_FORMULA_TYPE",
+     "A key literal is a string: not a number key."),
+    ("method-on-value", 'rates.example.org/deposit("EUR", "1M", 2026-03-16).rate()', cw_sig(CW_NUM), None,
+     "E_FORMULA_RESERVED", "A method is called on an object, or on an expression whose classes are declared."),
+    ("extension-without-keys", f'{CW.FX}(EUR, USD).calc.example.net/price_of(2026-03-16)', cw_sig(CW_NUM), None,
+     "E_FORMULA_METHOD", "An extension method takes the class keys first."),
+    ("object-outside-classes", f'calc.example.net/price_of(instrument: {CW.FX}(EUR, USD), date: 2026-03-16)',
+     cw_sig(CW_NUM), None, "E_FORMULA_TYPE", "An object of a class the argument does not declare."),
+    ("pin-in-body", f'{CW.FX}/rate@{canon.function_hash(CW.RATE)}(base: "EUR", quote: "USD", date: 2026-03-16)',
+     cw_sig(CW_RATE_RET), None, "E_FORMULA_PLACEMENT", "A pinned read stays a request form, except as the print "
+     "of super in a method body."),
+    ("super-without-parent", "super.rate(date)", CW.RATE["signature"], CW.FX, "E_FORMULA_METHOD",
+     "super needs a parent class."),
+    ("dispatch-signatures", "i.rate(2026-03-16)", {"args": {"i": {"type": "string", "classes": [CW.CCY_PAIR, CW.FX],
+                                                                  "valid": False}}, "order": ["i"],
+                                                   "returns": CW_RATE_RET}, None, "E_FORMULA_DISPATCH",
+     "Bounded dispatch needs one signature for the method in every class of the set."),
+]:
+    add(f"invalid/formula-class-{name}", "formula", f"spec-0.5.0: {source}  ({why})", source, error,
+        env=CW.env(CW_E, s_, method_of))
+
+CW_RECEIPTS = [CW.rate_receipt("EUR", "USD", "1.0892"), CW.deposit_receipt("USD", "1M", "0.0045"),
+               CW.deposit_receipt("EUR", "1M", "0.0031"), CW.price_receipt(CW.BOND, "XS0001", "101.25"),
+               CW.price_receipt(CW.SWAP, "XS0002", "99.5"),
+               CW.rate_receipt("EUR", "GBP", "0.8556", fq="rates.example.org/fx_rate", descriptor=CW.FX_RATE_D)]
+import formula as _F  # noqa: E402
+CW_TODAY = _F.define("calc.example.net/today_eur_gbp", {"args": {}, "order": [], "returns":
+                                                       {"type": "number", "unit": {"of": "GBP", "per": "EUR"}}},
+                     "rates.example.org/fx_rate(EUR, GBP)", CW.env("calc.example.net/today_eur_gbp", None))
+CW_WORLD = CW.world_spec(CW_RECEIPTS, {"calc.example.net/today_eur_gbp": CW_TODAY})
+for name, fn, args, asof, error, why in [
+    ("class-forward", f"{CW.FX}/forward", {"base": CW.S("EUR"), "date": CW.D(CW.DAY), "quote": CW.S("USD"),
+                                           "tenor": CW.S("1M")}, CW.ASOF, None,
+     "fx_pair(EUR, USD).forward(1M, 2026-03-16): this.rate and two deposit rates; three inputs."),
+    ("class-super", f"{CW.NDF}/rate", {"base": CW.S("EUR"), "date": CW.D(CW.DAY), "quote": CW.S("USD")}, CW.ASOF, None,
+     "fx_ndf's rate overrides fx_pair's through super: a read pinned to the parent's function hash."),
+    ("class-dispatch-bond", "calc.example.net/price_of", {"date": CW.D(CW.DAY),
+                                                          "instrument": CW.S('calc.example.net/bond(isin:"XS0001")')},
+     CW.ASOF, None, "price_of dispatches price to bond: lineage names the bond's function."),
+    ("class-dispatch-swap", "calc.example.net/price_of", {"date": CW.D(CW.DAY),
+                                                          "instrument": CW.S('calc.example.net/swap(isin:"XS0002")')},
+     CW.ASOF, None, "price_of dispatches price to swap: lineage names the swap's function."),
+    ("class-dispatch-outside", "calc.example.net/price_of",
+     {"date": CW.D(CW.DAY), "instrument": CW.S('rates.example.org/fx_pair(base:"EUR",quote:"USD")')}, CW.ASOF,
+     "E_FORMULA_DISPATCH", "A key of a class outside the dispatch set is refused."),
+    ("class-default-asof", "calc.example.net/today_eur_gbp", {}, "2026-03-16T18:00:00.000000Z", None,
+     "rates.example.org/fx_rate(EUR, GBP): the date defaults to the evaluation asof's date."),
+]:
+    vid = f"formula-eval/{name}" if error is None else f"invalid/formula-eval-{name}"
+    add(vid, "formula-eval", f"spec-0.5.0: {why}", None, error, world=CW_WORLD, cell={"args": args, "fn": fn},
+        asof=asof)
+
+CW_SHORT_ENV = CW.call_env(aliases={"fx_rate": "rates.example.org/fx_rate"}, aliases_tx="2026-05-01T00:00:00.000000Z")
+CW_OLD_ENV = CW.call_env(aliases={"fx_rate": f"{CW.FX}/rate"}, aliases_tx="2026-01-01T00:00:00.000000Z")
+for vid, call_text, env, error, why in [
+    ("call/class-method", f"{CW.FX}(EUR, USD).rate(2026-03-16)", CW.call_env(), None,
+     "A method call: the same cell URI as call/class-method-plain."),
+    ("call/class-method-plain", f'{CW.FX}/rate("EUR", "USD", 2026-03-16)', CW.call_env(), None,
+     "The plain call of call/class-method."),
+    ("call/class-short", "fx_rate(EUR, GBP)?asof=2026-03-16T18:00:00.000000Z", CW_SHORT_ENV, None,
+     "A short call: a bare name through the alias map, key literals, the date defaulting to the asof's date; the "
+     "resolved member records each resolution and the alias snapshot."),
+    ("call/class-short-old-snapshot", "fx_rate(EUR, GBP, 2026-03-16)?asof=2026-03-16T18:00:00.000000Z", CW_OLD_ENV,
+     None, "The same short name under an older alias snapshot resolves to another function."),
+    ("call/class-typed-key", f"{CW.CCY_PAIR}({CW.CURRENCY}(EUR), {CW.CURRENCY}(USD)).rate(2026-03-16)", CW.call_env(),
+     None, "Class-typed keys: each object's key encoding as the cell argument."),
+    ("call/class-extension", f"{CW.FX}(EUR, USD).calc.example.net/fx_extra/carry(2026-03-16)", CW.call_env(), None,
+     "An extension method of another namespace, called with its qualified name."),
+    ("invalid/call-class-normalisation", f'{CW.FX}("eur", "USD").rate(2026-03-16)', CW.call_env(),
+     "E_KEY_NORMALISATION", "A key not canonical under its normalisation is rejected."),
+    ("invalid/call-class-no-method", f"{CW.FX}(EUR, USD).spot(2026-03-16)", CW.call_env(), "E_NAME_UNBOUND",
+     "The class has no such method."),
+    ("invalid/call-class-without-method", f"{CW.FX}(EUR, USD)", CW.call_env(), "E_PARSE_URI",
+     "A call of a class names a method: an object has no cell."),
+]:
+    if error is None:
+        got = canon.parse_call(call_text, env)
+        extra = {"resolved": got["resolved"]} if "resolved" in got else {}
+        add(vid, "call", f"spec-0.5.0: {why}", call_text, env=env, **extra)
+    else:
+        add(vid, "call", f"spec-0.5.0: {why}", call_text, error, env=env)
 
 
 def main():

@@ -1,0 +1,810 @@
+{
+  "id": "call/class-method",
+  "kind": "call",
+  "description": "spec-0.5.0: A method call: the same cell URI as call/class-method-plain.",
+  "valid": true,
+  "input": "rates.example.org/fx_pair(EUR, USD).rate(2026-03-16)",
+  "env": {
+    "aliases": {},
+    "classes": {
+      "rates.example.org/fx_pair": {
+        "keys": {
+          "base": {
+            "key_normalisation": "upper_ascii",
+            "type": "string"
+          },
+          "quote": {
+            "key_normalisation": "upper_ascii",
+            "type": "string"
+          }
+        },
+        "methods": {
+          "cross": "683f1189bb034f5f327eda3c6e2f6ebc8d1d7e7aa22fbe0e28ed2528262d0f8f",
+          "forward": "a9f7660da590ee0a4aa079b4dfd9a19580c30d0ef4385f5a6b8df86be7b98edd",
+          "rate": "f041cf0f3eabaf4a611a6f57050dac8fb1f2e2cd5d6b6526913cff0847ef88df"
+        },
+        "order": [
+          "base",
+          "quote"
+        ],
+        "steward": {
+          "namespace": "rates.example.org",
+          "process": "https://rates.example.org/classes/change"
+        }
+      },
+      "scripture.example.org/verse": {
+        "keys": {
+          "book": {
+            "key_normalisation": "none",
+            "type": "string"
+          },
+          "chapter": {
+            "type": "number",
+            "unit": "1"
+          },
+          "corpus": {
+            "key_normalisation": "none",
+            "type": "string"
+          },
+          "verse": {
+            "type": "number",
+            "unit": "1"
+          }
+        },
+        "methods": {
+          "next": "b1ac6b5277d7f60634d52ffe86e028881fb58867563a5aeabc4db14eb7ddb277",
+          "text": "69deb6c63ff08317dad3c81fcc4b1081225a0c884ae0112b0b919c371f9b5801",
+          "consonantal": "e282ef070dd110da1146e5ce83264596b424c67c069c1239c651b3d280a1bc4e"
+        },
+        "order": [
+          "corpus",
+          "book",
+          "chapter",
+          "verse"
+        ],
+        "steward": {
+          "namespace": "scripture.example.org",
+          "process": "https://scripture.example.org/classes/change"
+        }
+      },
+      "iso.example.org/currency": {
+        "keys": {
+          "code": {
+            "key_normalisation": "upper_ascii",
+            "type": "string"
+          }
+        },
+        "methods": {},
+        "order": [
+          "code"
+        ],
+        "steward": {
+          "namespace": "iso.example.org",
+          "process": "https://iso.example.org/classes/change"
+        }
+      },
+      "rates.example.org/ccy_pair": {
+        "keys": {
+          "base": {
+            "class": "iso.example.org/currency"
+          },
+          "quote": {
+            "class": "iso.example.org/currency"
+          }
+        },
+        "methods": {
+          "rate": "b17e3073c533d9f1adc77cd89a580e4db5f5a0fe8290821812893b17adab7061"
+        },
+        "order": [
+          "base",
+          "quote"
+        ],
+        "steward": {
+          "namespace": "rates.example.org",
+          "process": "https://rates.example.org/classes/change"
+        }
+      },
+      "calc.example.net/bond": {
+        "keys": {
+          "isin": {
+            "key_normalisation": "upper_ascii",
+            "type": "string"
+          }
+        },
+        "methods": {
+          "price": "0c3fdade1ebb3b82fe24078cb75a132e6a36ea19e0b9febb0186797b05777f62"
+        },
+        "order": [
+          "isin"
+        ],
+        "steward": {
+          "namespace": "calc.example.net",
+          "process": "https://calc.example.net/classes/change"
+        }
+      },
+      "calc.example.net/swap": {
+        "keys": {
+          "isin": {
+            "key_normalisation": "upper_ascii",
+            "type": "string"
+          }
+        },
+        "methods": {
+          "price": "1a57b9e3773fa34ff849a735a627ef90dbe5432fa30c299d5934ad5e013b5985"
+        },
+        "order": [
+          "isin"
+        ],
+        "steward": {
+          "namespace": "calc.example.net",
+          "process": "https://calc.example.net/classes/change"
+        }
+      },
+      "calc.example.net/fx_ndf": {
+        "keys": {
+          "base": {
+            "key_normalisation": "upper_ascii",
+            "type": "string"
+          },
+          "quote": {
+            "key_normalisation": "upper_ascii",
+            "type": "string"
+          },
+          "fixing": {
+            "key_normalisation": "none",
+            "type": "string"
+          }
+        },
+        "methods": {
+          "cross": "683f1189bb034f5f327eda3c6e2f6ebc8d1d7e7aa22fbe0e28ed2528262d0f8f",
+          "forward": "a9f7660da590ee0a4aa079b4dfd9a19580c30d0ef4385f5a6b8df86be7b98edd",
+          "rate": "7edfeea44f8bc1c0a89378bd010610a13a741daf42717263a2180ba738d8dfce"
+        },
+        "order": [
+          "base",
+          "quote",
+          "fixing"
+        ],
+        "parent": "e2d0d083fc70431cc54833f71fb75428b3989742838fe1f96b9c5bae22878c96",
+        "steward": {
+          "namespace": "calc.example.net",
+          "process": "https://calc.example.net/classes/change"
+        }
+      }
+    },
+    "functions": {
+      "rates.example.org/fx_pair/rate": {
+        "code": {
+          "body": "",
+          "lang": "stored"
+        },
+        "inputs": [],
+        "signature": {
+          "args": {
+            "base": {
+              "type": "string",
+              "valid": false
+            },
+            "date": {
+              "type": "date",
+              "valid": true
+            },
+            "quote": {
+              "type": "string",
+              "valid": false
+            }
+          },
+          "order": [
+            "base",
+            "quote",
+            "date"
+          ],
+          "returns": {
+            "type": "number",
+            "unit": {
+              "of": {
+                "arg": "quote"
+              },
+              "per": {
+                "arg": "base"
+              }
+            }
+          }
+        }
+      },
+      "rates.example.org/deposit": {
+        "code": {
+          "body": "",
+          "lang": "stored"
+        },
+        "inputs": [],
+        "signature": {
+          "args": {
+            "currency": {
+              "type": "string",
+              "valid": false
+            },
+            "date": {
+              "type": "date",
+              "valid": true
+            },
+            "tenor": {
+              "type": "string",
+              "valid": false
+            }
+          },
+          "order": [
+            "currency",
+            "tenor",
+            "date"
+          ],
+          "returns": {
+            "type": "number",
+            "unit": "1"
+          }
+        }
+      },
+      "rates.example.org/fx_rate": {
+        "code": {
+          "body": "",
+          "lang": "stored"
+        },
+        "inputs": [],
+        "signature": {
+          "args": {
+            "base": {
+              "type": "string",
+              "valid": false
+            },
+            "date": {
+              "type": "date",
+              "valid": true,
+              "default": "asof"
+            },
+            "quote": {
+              "type": "string",
+              "valid": false
+            }
+          },
+          "order": [
+            "base",
+            "quote",
+            "date"
+          ],
+          "returns": {
+            "type": "number",
+            "unit": {
+              "of": {
+                "arg": "quote"
+              },
+              "per": {
+                "arg": "base"
+              }
+            }
+          }
+        }
+      },
+      "scripture.example.org/verse/text": {
+        "code": {
+          "body": "",
+          "lang": "stored"
+        },
+        "inputs": [],
+        "signature": {
+          "args": {
+            "book": {
+              "type": "string",
+              "valid": false
+            },
+            "chapter": {
+              "type": "number",
+              "unit": "1",
+              "valid": false
+            },
+            "corpus": {
+              "type": "string",
+              "valid": false
+            },
+            "edition": {
+              "type": "string",
+              "valid": false
+            },
+            "verse": {
+              "type": "number",
+              "unit": "1",
+              "valid": false
+            }
+          },
+          "order": [
+            "corpus",
+            "book",
+            "chapter",
+            "verse",
+            "edition"
+          ],
+          "returns": "blob"
+        }
+      },
+      "scripture.example.org/verse/next": {
+        "code": {
+          "body": "",
+          "lang": "stored"
+        },
+        "inputs": [],
+        "signature": {
+          "args": {
+            "book": {
+              "type": "string",
+              "valid": false
+            },
+            "chapter": {
+              "type": "number",
+              "unit": "1",
+              "valid": false
+            },
+            "corpus": {
+              "type": "string",
+              "valid": false
+            },
+            "verse": {
+              "type": "number",
+              "unit": "1",
+              "valid": false
+            }
+          },
+          "order": [
+            "corpus",
+            "book",
+            "chapter",
+            "verse"
+          ],
+          "returns": {
+            "type": "string",
+            "classes": [
+              "scripture.example.org/verse"
+            ]
+          }
+        }
+      },
+      "rates.example.org/ccy_pair/rate": {
+        "code": {
+          "body": "",
+          "lang": "stored"
+        },
+        "inputs": [],
+        "signature": {
+          "args": {
+            "base": {
+              "type": "string",
+              "classes": [
+                "iso.example.org/currency"
+              ],
+              "valid": false
+            },
+            "date": {
+              "type": "date",
+              "valid": true
+            },
+            "quote": {
+              "type": "string",
+              "classes": [
+                "iso.example.org/currency"
+              ],
+              "valid": false
+            }
+          },
+          "order": [
+            "base",
+            "quote",
+            "date"
+          ],
+          "returns": {
+            "type": "number",
+            "unit": "1"
+          }
+        }
+      },
+      "calc.example.net/bond/price": {
+        "code": {
+          "body": "",
+          "lang": "stored"
+        },
+        "inputs": [],
+        "signature": {
+          "args": {
+            "date": {
+              "type": "date",
+              "valid": true
+            },
+            "isin": {
+              "type": "string",
+              "valid": false
+            }
+          },
+          "order": [
+            "isin",
+            "date"
+          ],
+          "returns": {
+            "type": "number",
+            "unit": "1"
+          }
+        }
+      },
+      "calc.example.net/swap/price": {
+        "code": {
+          "body": "swap prices\n",
+          "lang": "stored"
+        },
+        "inputs": [],
+        "signature": {
+          "args": {
+            "date": {
+              "type": "date",
+              "valid": true
+            },
+            "isin": {
+              "type": "string",
+              "valid": false
+            }
+          },
+          "order": [
+            "isin",
+            "date"
+          ],
+          "returns": {
+            "type": "number",
+            "unit": "1"
+          }
+        }
+      },
+      "calc.example.net/fx_extra/carry": {
+        "code": {
+          "body": "",
+          "lang": "stored"
+        },
+        "inputs": [],
+        "signature": {
+          "args": {
+            "base": {
+              "type": "string",
+              "valid": false
+            },
+            "date": {
+              "type": "date",
+              "valid": true
+            },
+            "quote": {
+              "type": "string",
+              "valid": false
+            }
+          },
+          "order": [
+            "base",
+            "quote",
+            "date"
+          ],
+          "returns": {
+            "type": "number",
+            "unit": "1"
+          }
+        }
+      },
+      "rates.example.org/fx_pair/cross": {
+        "code": {
+          "body": "rates.example.org/fx_pair/rate(base: base, date: date, quote: via) * rates.example.org/fx_pair/rate(base: via, date: date, quote: quote)\n",
+          "lang": "formula"
+        },
+        "inputs": [
+          "rates.example.org/fx_pair/rate"
+        ],
+        "signature": {
+          "args": {
+            "base": {
+              "type": "string",
+              "valid": false
+            },
+            "date": {
+              "type": "date",
+              "valid": true
+            },
+            "quote": {
+              "type": "string",
+              "valid": false
+            },
+            "via": {
+              "type": "string",
+              "valid": false
+            }
+          },
+          "order": [
+            "base",
+            "quote",
+            "via",
+            "date"
+          ],
+          "returns": {
+            "type": "number",
+            "unit": {
+              "of": {
+                "arg": "quote"
+              },
+              "per": {
+                "arg": "base"
+              }
+            }
+          }
+        }
+      },
+      "rates.example.org/fx_pair/forward": {
+        "code": {
+          "body": "rates.example.org/fx_pair/rate(base: base, date: date, quote: quote) * (1 + rates.example.org/deposit(currency: quote, date: date, tenor: tenor)) / (1 + rates.example.org/deposit(currency: base, date: date, tenor: tenor))\n",
+          "lang": "formula"
+        },
+        "inputs": [
+          "rates.example.org/deposit",
+          "rates.example.org/fx_pair/rate"
+        ],
+        "signature": {
+          "args": {
+            "base": {
+              "type": "string",
+              "valid": false
+            },
+            "date": {
+              "type": "date",
+              "valid": true
+            },
+            "quote": {
+              "type": "string",
+              "valid": false
+            },
+            "tenor": {
+              "type": "string",
+              "valid": false
+            }
+          },
+          "order": [
+            "base",
+            "quote",
+            "tenor",
+            "date"
+          ],
+          "returns": {
+            "type": "number",
+            "unit": {
+              "of": {
+                "arg": "quote"
+              },
+              "per": {
+                "arg": "base"
+              }
+            }
+          }
+        }
+      },
+      "scripture.example.org/verse/consonantal": {
+        "code": {
+          "body": "remove_chars(text_of(scripture.example.org/verse/text(book: book, chapter: chapter, corpus: corpus, edition: edition, verse: verse)), \"ְֱֲֳִֵֶַָׇֹֺֻּֽֿׁׂ֑֖֛֢֣֤֥֦֧֪ׅ֚֭֮֒֓֔֕֗֘֙֜֝֞֟֠֡֨֩֫֬֯ׄ\")\n",
+          "lang": "formula"
+        },
+        "inputs": [
+          "scripture.example.org/verse/text"
+        ],
+        "signature": {
+          "args": {
+            "book": {
+              "type": "string",
+              "valid": false
+            },
+            "chapter": {
+              "type": "number",
+              "unit": "1",
+              "valid": false
+            },
+            "corpus": {
+              "type": "string",
+              "valid": false
+            },
+            "edition": {
+              "type": "string",
+              "valid": false
+            },
+            "verse": {
+              "type": "number",
+              "unit": "1",
+              "valid": false
+            }
+          },
+          "order": [
+            "corpus",
+            "book",
+            "chapter",
+            "verse",
+            "edition"
+          ],
+          "returns": "string"
+        }
+      },
+      "calc.example.net/price_of": {
+        "code": {
+          "body": "instrument.price(date: date)\n",
+          "lang": "formula"
+        },
+        "inputs": [
+          "calc.example.net/bond/price",
+          "calc.example.net/swap/price"
+        ],
+        "signature": {
+          "args": {
+            "date": {
+              "type": "date",
+              "valid": true
+            },
+            "instrument": {
+              "type": "string",
+              "classes": [
+                "calc.example.net/bond",
+                "calc.example.net/swap"
+              ],
+              "valid": false
+            }
+          },
+          "order": [
+            "instrument",
+            "date"
+          ],
+          "returns": {
+            "type": "number",
+            "unit": "1"
+          }
+        }
+      },
+      "calc.example.net/fx_ndf/rate": {
+        "code": {
+          "body": "rates.example.org/fx_pair/rate@f041cf0f3eabaf4a611a6f57050dac8fb1f2e2cd5d6b6526913cff0847ef88df(base: base, date: date, quote: quote) * 1\n",
+          "lang": "formula"
+        },
+        "inputs": [
+          "rates.example.org/fx_pair/rate"
+        ],
+        "signature": {
+          "args": {
+            "base": {
+              "type": "string",
+              "valid": false
+            },
+            "date": {
+              "type": "date",
+              "valid": true
+            },
+            "quote": {
+              "type": "string",
+              "valid": false
+            }
+          },
+          "order": [
+            "base",
+            "quote",
+            "date"
+          ],
+          "returns": {
+            "type": "number",
+            "unit": {
+              "of": {
+                "arg": "quote"
+              },
+              "per": {
+                "arg": "base"
+              }
+            }
+          }
+        }
+      },
+      "calc.example.net/fx_ndf/cross": {
+        "code": {
+          "body": "rates.example.org/fx_pair/rate(base: base, date: date, quote: via) * rates.example.org/fx_pair/rate(base: via, date: date, quote: quote)\n",
+          "lang": "formula"
+        },
+        "inputs": [
+          "rates.example.org/fx_pair/rate"
+        ],
+        "signature": {
+          "args": {
+            "base": {
+              "type": "string",
+              "valid": false
+            },
+            "date": {
+              "type": "date",
+              "valid": true
+            },
+            "quote": {
+              "type": "string",
+              "valid": false
+            },
+            "via": {
+              "type": "string",
+              "valid": false
+            }
+          },
+          "order": [
+            "base",
+            "quote",
+            "via",
+            "date"
+          ],
+          "returns": {
+            "type": "number",
+            "unit": {
+              "of": {
+                "arg": "quote"
+              },
+              "per": {
+                "arg": "base"
+              }
+            }
+          }
+        }
+      },
+      "calc.example.net/fx_ndf/forward": {
+        "code": {
+          "body": "rates.example.org/fx_pair/rate(base: base, date: date, quote: quote) * (1 + rates.example.org/deposit(currency: quote, date: date, tenor: tenor)) / (1 + rates.example.org/deposit(currency: base, date: date, tenor: tenor))\n",
+          "lang": "formula"
+        },
+        "inputs": [
+          "rates.example.org/deposit",
+          "rates.example.org/fx_pair/rate"
+        ],
+        "signature": {
+          "args": {
+            "base": {
+              "type": "string",
+              "valid": false
+            },
+            "date": {
+              "type": "date",
+              "valid": true
+            },
+            "quote": {
+              "type": "string",
+              "valid": false
+            },
+            "tenor": {
+              "type": "string",
+              "valid": false
+            }
+          },
+          "order": [
+            "base",
+            "quote",
+            "tenor",
+            "date"
+          ],
+          "returns": {
+            "type": "number",
+            "unit": {
+              "of": {
+                "arg": "quote"
+              },
+              "per": {
+                "arg": "base"
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "resolved": {
+    "call": "rates.example.org/fx_pair/rate(base: \"EUR\", date: 2026-03-16, quote: \"USD\")",
+    "resolutions": [
+      {
+        "from": "rates.example.org/fx_pair(...).rate",
+        "kind": "method",
+        "to": "rates.example.org/fx_pair/rate"
+      }
+    ]
+  },
+  "uri": "cell://rates.example.org/fx_pair/rate?base=EUR&date=2026-03-16&quote=USD"
+}

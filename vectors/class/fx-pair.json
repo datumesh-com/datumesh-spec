@@ -315,6 +315,6 @@
       }
     ]
   },
-  "canonical": "{\"keys\":{\"base\":{\"key_normalisation\":\"upper_ascii\",\"type\":\"string\"},\"quote\":{\"key_normalisation\":\"upper_ascii\",\"type\":\"string\"}},\"methods\":{\"rate\":\"f041cf0f3eabaf4a611a6f57050dac8fb1f2e2cd5d6b6526913cff0847ef88df\"},\"order\":[\"base\",\"quote\"],\"steward\":{\"namespace\":\"rates.example.org\",\"process\":\"https://rates.example.org/classes/change\"}}",
-  "sha256": "48c2c14a162bebcbef32f52b78ea671e65c8d6ed9bf49a8bc875752f761b9c1f"
+  "flattened": "{\"keys\":{\"base\":{\"key_normalisation\":\"upper_ascii\",\"type\":\"string\"},\"quote\":{\"key_normalisation\":\"upper_ascii\",\"type\":\"string\"}},\"methods\":{\"rate\":\"f041cf0f3eabaf4a611a6f57050dac8fb1f2e2cd5d6b6526913cff0847ef88df\"},\"order\":[\"base\",\"quote\"],\"steward\":{\"namespace\":\"rates.example.org\",\"process\":\"https://rates.example.org/classes/change\"}}",
+  "class_hash": "48c2c14a162bebcbef32f52b78ea671e65c8d6ed9bf49a8bc875752f761b9c1f"
 }

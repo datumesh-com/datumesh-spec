@@ -401,6 +401,6 @@
       }
     ]
   },
-  "canonical": "{\"keys\":{\"base\":{\"key_normalisation\":\"upper_ascii\",\"type\":\"string\"},\"fixing\":{\"key_normalisation\":\"none\",\"type\":\"string\"},\"quote\":{\"key_normalisation\":\"upper_ascii\",\"type\":\"string\"}},\"methods\":{\"fixing_date\":\"1a90312f7fb6266b29b3a03d9f5fe337aa2f8cd31e842ba6965a95bdb60a6539\",\"rate\":\"2244600096fe1a129189a479bc190432fd2e178d3e45f71368439e216dce4898\"},\"order\":[\"base\",\"quote\",\"fixing\"],\"parent\":\"48c2c14a162bebcbef32f52b78ea671e65c8d6ed9bf49a8bc875752f761b9c1f\",\"steward\":{\"namespace\":\"calc.example.net\",\"process\":\"https://calc.example.net/classes\"}}",
-  "sha256": "3437c72b39afa2f9db86d2d8801d1f589edd9e08a8c8d6cdd847e720fa9c5589"
+  "flattened": "{\"keys\":{\"base\":{\"key_normalisation\":\"upper_ascii\",\"type\":\"string\"},\"fixing\":{\"key_normalisation\":\"none\",\"type\":\"string\"},\"quote\":{\"key_normalisation\":\"upper_ascii\",\"type\":\"string\"}},\"methods\":{\"fixing_date\":\"1a90312f7fb6266b29b3a03d9f5fe337aa2f8cd31e842ba6965a95bdb60a6539\",\"rate\":\"2244600096fe1a129189a479bc190432fd2e178d3e45f71368439e216dce4898\"},\"order\":[\"base\",\"quote\",\"fixing\"],\"parent\":\"48c2c14a162bebcbef32f52b78ea671e65c8d6ed9bf49a8bc875752f761b9c1f\",\"steward\":{\"namespace\":\"calc.example.net\",\"process\":\"https://calc.example.net/classes\"}}",
+  "class_hash": "3437c72b39afa2f9db86d2d8801d1f589edd9e08a8c8d6cdd847e720fa9c5589"
 }

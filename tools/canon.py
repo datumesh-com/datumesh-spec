@@ -2698,19 +2698,22 @@ _CALL_LEXER_CODES = {"E_FORMULA_NUMBER": "E_CANON_NUMBER", "E_FORMULA_STRING": "
 
 
 def parse_call(text, env):
-    """A call (5.8) -> {"uri": its cell URI}. env: {"functions": {name: descriptor} (the names bound
-    as of the request's asof), "aliases": {alias: name}, "descriptors": [descriptors the mesh has,
-    for a pinned call]}."""
+    """A call (5.8) -> {"uri": its cell URI, "resolved": what the call resolved (5.5, 16.7)}.
+
+    env: {"functions": {name: descriptor} (the names bound as of the request's asof), "aliases":
+    {alias: name}, "descriptors": [descriptors the mesh has, for a pinned call]; since spec-0.5.0
+    "classes": {class name: flattened class descriptor}, "aliases_tx": the instant of the alias
+    snapshot, "now": the mesh's now, for a default when the call has no asof}."""
     import formula
     if not isinstance(text, str):
         fail("E_PARSE_URI", "a call is text")
-    end = text.rfind(")")
-    rest = text[end + 1:] if end >= 0 else ""
+    q = _call_query_start(text)
+    rest = text[q:]
     try:
-        tokens = formula.tokenize(text[:end + 1] if end >= 0 else text)
+        tokens = formula.tokenize(text[:q])
     except formula.FormulaError as e:
         fail(_CALL_LEXER_CODES.get(e.code, "E_PARSE_URI"), f"not a call: {e}")
-    callee, args = _call_tree(tokens)
+    callee, args, method = _call_tree(tokens)
     asof = None
     if rest:
         if not rest.startswith("?asof=") or "&" in rest:
@@ -2718,25 +2721,135 @@ def parse_call(text, env):
         asof = rest[len("?asof="):]
     if asof is not None:
         check_instant(asof, "call.asof")
-    if callee.kind == "ALIAS":
-        aliases = env.get("aliases") or {}
-        if callee.value not in aliases:
-            fail("E_NAME_UNBOUND", f"@{callee.value} is not an alias of this mesh")
-        fq = aliases[callee.value]
-    else:
-        fq = callee.value
+    resolutions = []
+    fq = _call_name(callee, env, resolutions)
     functions = env.get("functions") or {}
-    if callee.pin is not None:
-        found = [d for d in list(env.get("descriptors") or []) + list(functions.values()) if function_hash(d) == callee.pin]
-        if not found:
-            fail("E_FN_UNAVAILABLE", f"no descriptor with hash {callee.pin}")
-        descriptor = found[0]
+    classes = env.get("classes") or {}
+    pin = callee.pin
+    if fq in classes and pin is None:  # spec-0.5.0: an object, then its method (16.3)
+        if method is None:
+            fail("E_PARSE_URI", f"{fq} is a class: a call of it names a method")
+        desc = classes[fq]
+        keys = _call_keys(fq, desc, args, env)
+        mname, mtok, margs = method
+        if mtok.kind == "QNAME":
+            mfq = mtok.value
+            if mfq not in functions:
+                fail("E_NAME_UNBOUND", f"{mfq} is not bound")
+            descriptor = functions[mfq]
+            sig = descriptor["signature"]
+            if sig.get("order", [])[:len(desc["order"])] != desc["order"] or not all(
+                    _key_matches(desc["keys"][k], sig["args"][k]) for k in desc["order"]):
+                fail("E_ARG_UNKNOWN", f"{mfq} does not take the keys of {fq} first")
+            key_names = list(desc["order"])
+        else:
+            if mname not in desc["methods"]:
+                fail("E_NAME_UNBOUND", f"{fq} has no method {mname}")
+            mfq = f"{fq}/{mname}"
+            if mfq not in functions or function_hash(functions[mfq]) != desc["methods"][mname]:
+                fail("E_NAME_UNBOUND", f"{mfq} is not bound to the method {mname} of {fq}")
+            descriptor = functions[mfq]
+            key_names = []
+            for k in desc["order"]:
+                if k not in descriptor["signature"]["args"]:
+                    break
+                key_names.append(k)
+        resolutions.append({"from": f"{fq}(...).{mname}", "kind": "method", "to": mfq})
+        bound = {k: keys[k] for k in key_names}
+        order = [n for n in descriptor["signature"].get("order", []) if n not in key_names]
+        bound.update(_call_bind(mfq, descriptor, order, margs, set(key_names)))
+        fq, pin = mfq, None
     else:
-        if fq not in functions:
-            fail("E_NAME_UNBOUND", f"{fq} is not bound")
-        descriptor = functions[fq]
-    signature = descriptor["signature"]
-    declared, order = signature["args"], signature.get("order")
+        if method is not None:
+            fail("E_PARSE_URI", "a method is called on an object: a class read")
+        if pin is not None:
+            found = [d for d in list(env.get("descriptors") or []) + list(functions.values())
+                     if function_hash(d) == pin]
+            if not found:
+                fail("E_FN_UNAVAILABLE", f"no descriptor with hash {pin}")
+            descriptor = found[0]
+        else:
+            if fq not in functions:
+                fail("E_NAME_UNBOUND", f"{fq} is not bound")
+            descriptor = functions[fq]
+        bound = _call_bind(fq, descriptor, descriptor["signature"].get("order"), args, set())
+    declared = descriptor["signature"]["args"]
+    for name in keys_in_order(declared):
+        if name in bound:
+            continue
+        if declared[name].get("default") == "asof":  # spec-0.5.0 (16.7)
+            at = asof or env.get("now")
+            if at is None:
+                fail("E_ARG_MISSING", f"{fq} needs {name}: its asof default needs an asof")
+            value = at if declared[name]["type"] == "instant" else at[:10]
+            bound[name] = (declared[name]["type"], value)
+            resolutions.append({"from": name, "kind": "default", "to": value})
+            continue
+        fail("E_ARG_MISSING", f"{fq} needs {name} (an open argument is written *)")
+    ref_args = {}
+    for name in keys_in_order(bound):
+        kind, value = bound[name]
+        type_ = declared[name]["type"]
+        p = f"call.{name}"
+        if kind == "open":
+            ref_args[name] = SLICE
+            continue
+        if kind == "object":
+            if not declared[name].get("classes") or value["class"] not in declared[name]["classes"]:
+                fail("E_CANON_TYPE", f"an object of {value['class']} for {name}", p)
+            kind, value = "string", encode_decoded(_call_object(value, env))
+        accepts = {"number": ("number",), "string": ("string", "blob"), "date": ("date",), "instant": ("instant",),
+                   "boolean": ("boolean",)}[kind]
+        if type_ not in accepts:
+            fail("E_CANON_TYPE", f"a {kind} literal for a {type_} argument", p)
+        if type_ != "boolean":
+            check_lexical(type_, value, p)
+        ref_args[name] = {"type": type_, "value": value}
+    ns, fn = fq.rsplit("/", 1)
+    ref = {"args": ref_args, "fn": fn, "ns": ns}
+    if pin is not None:
+        ref["fn_hash"] = pin
+    if asof is not None:
+        ref["asof"] = asof
+    out = {"uri": format_uri(ref)}
+    if resolutions:
+        resolved = {"call": _canonical_call(fq, pin, ref_args, asof), "resolutions": resolutions}
+        if any(r["kind"] == "alias" for r in resolutions) and env.get("aliases_tx"):
+            resolved["aliases_tx"] = env["aliases_tx"]
+        out["resolved"] = resolved
+    return out
+
+
+def _call_query_start(text):
+    """Where ?asof= begins: after the last ) outside strings, or the end."""
+    end, in_str, i = -1, False, 0
+    while i < len(text):
+        c = text[i]
+        if c == '"':
+            in_str = not in_str
+        elif c == ")" and not in_str:
+            end = i
+        i += 1
+    return end + 1 if end >= 0 else len(text)
+
+
+def _call_name(tok, env, resolutions):
+    aliases = env.get("aliases") or {}
+    if tok.kind == "ALIAS":
+        if tok.value not in aliases:
+            fail("E_NAME_UNBOUND", f"@{tok.value} is not an alias of this mesh")
+        resolutions.append({"from": "@" + tok.value, "kind": "alias", "to": aliases[tok.value]})
+        return aliases[tok.value]
+    if tok.kind == "WORD":  # spec-0.5.0: a bare name resolves through the alias map (16.7)
+        if tok.text not in aliases:
+            fail("E_NAME_UNBOUND", f"{tok.text} is not in the alias map")
+        resolutions.append({"from": tok.text, "kind": "alias", "to": aliases[tok.text]})
+        return aliases[tok.text]
+    return tok.value
+
+
+def _call_bind(fq, descriptor, order, args, taken):
+    declared = descriptor["signature"]["args"]
     bound = {}
     for i, (label, value) in enumerate(args):
         if label is None:
@@ -2749,99 +2862,175 @@ def parse_call(text, env):
             name = label
             if name not in declared:
                 fail("E_ARG_UNKNOWN", f"{fq} has no argument {name!r}")
-        if name in bound:
+        if name in bound or name in taken:
             fail("E_CANON_ARG_DUPLICATE", f"{name} is given twice")
+        if value[0] == "keylit":
+            value = ("string", value[1])
         bound[name] = value
-    for name in keys_in_order(declared):
-        if name not in bound:
-            fail("E_ARG_MISSING", f"{fq} needs {name} (an open argument is written *)")
-    ref_args = {}
-    for name, (kind, value) in bound.items():
-        type_ = declared[name]["type"]
-        p = f"call.{name}"
-        if kind == "open":
-            ref_args[name] = SLICE
-            continue
-        accepts = {"number": ("number",), "string": ("string", "blob"), "date": ("date",), "instant": ("instant",),
-                   "boolean": ("boolean",)}[kind]
-        if type_ not in accepts:
-            fail("E_CANON_TYPE", f"a {kind} literal for a {type_} argument", p)
-        if type_ != "boolean":
-            check_lexical(type_, value, p)
-        ref_args[name] = {"type": type_, "value": value}
-    ns, fn = fq.rsplit("/", 1)
-    ref = {"args": ref_args, "fn": fn, "ns": ns}
-    if callee.pin is not None:
-        ref["fn_hash"] = callee.pin
-    if asof is not None:
-        ref["asof"] = asof
-    return {"uri": format_uri(ref)}
+    return bound
+
+
+def _call_keys(fq, desc, args, env):
+    """An object's keys in a call (16.3): each key bound once, literals checked by its normalisation."""
+    keys = {}
+    order = desc["order"]
+    for i, (label, value) in enumerate(args):
+        if label is None:
+            if i >= len(order):
+                fail("E_ARG_UNKNOWN", f"{fq} has {len(order)} keys")
+            name = order[i]
+        else:
+            name = label
+            if name not in desc["keys"]:
+                fail("E_ARG_UNKNOWN", f"{fq} has no key {name!r}")
+        if name in keys:
+            fail("E_CANON_ARG_DUPLICATE", f"{name} is given twice")
+        decl = desc["keys"][name]
+        if value[0] == "open":
+            fail("E_PARSE_URI", "an object binds every key")
+        if value[0] == "keylit":
+            value = ("string", value[1])
+        if "class" in decl:
+            if value[0] != "object" or value[1]["class"] != decl["class"]:
+                fail("E_CANON_TYPE", f"the key {name} is an object of {decl['class']}", f"call.{name}")
+            value = ("string", encode_decoded(_call_object(value[1], env)))
+        elif value[0] != decl["type"]:
+            fail("E_CANON_TYPE", f"a {value[0]} literal for the {decl['type']} key {name}", f"call.{name}")
+        elif decl["type"] == "string":
+            check_key_value(decl["key_normalisation"], value[1], f"call.{name}")
+        keys[name] = value
+    for name in keys_in_order(desc["keys"]):
+        if name not in keys:
+            fail("E_ARG_MISSING", f"{fq} needs its key {name}")
+    return keys
+
+
+def _call_object(raw, env):
+    """An object literal of a call as a decoded object key (16.5)."""
+    classes = env.get("classes") or {}
+    if raw["class"] not in classes:
+        fail("E_NAME_UNBOUND", f"{raw['class']} is not a class of this mesh")
+    desc = classes[raw["class"]]
+    keys = _call_keys(raw["class"], desc, raw["keys"], env)
+    out = {}
+    for k, (kind, value) in keys.items():
+        decl = desc["keys"][k]
+        if "class" not in decl and kind != decl["type"]:
+            fail("E_CANON_TYPE", f"a {kind} literal for the {decl['type']} key {k}", f"call.{k}")
+        out[k] = decode_key(value) if "class" in decl else {"type": decl["type"], "value": value}
+        if "class" not in decl and decl["type"] != "boolean":
+            check_lexical(decl["type"], value, f"call.{k}")
+    return {"class": raw["class"], "keys": out}
+
+
+def _call_literal(kind, value):
+    if kind == "string":
+        return '"' + value.replace('"', '""') + '"'
+    if kind == "boolean":
+        return "true" if value else "false"
+    return value
+
+
+def _canonical_call(fq, pin, ref_args, asof):
+    """The full canonical call (16.7): the full name, every argument labelled in ascending order."""
+    parts = []
+    for name in keys_in_order(ref_args):
+        a = ref_args[name]
+        parts.append(f"{name}: *" if a == SLICE else f"{name}: {_call_literal(a['type'] if a['type'] != 'blob' else 'string', a['value'])}")
+    head = fq + (f"@{pin}" if pin else "")
+    return f"{head}({', '.join(parts)})" + (f"?asof={asof}" if asof else "")
 
 
 def _call_tree(tokens):
-    """The callee token and [(label or None, (kind, value))] of a call; E_PARSE_URI otherwise."""
+    """The callee token, [(label or None, (kind, value))] and an optional method (name, token, args) of
+    a call; E_PARSE_URI otherwise. A value is a literal, "*", a key literal (spec-0.5.0) or an object."""
     def bad(detail="not a call of literals"):
         fail("E_PARSE_URI", detail)
 
-    i = 0
+    pos = [0]
 
     def at(k=0):
-        return tokens[min(i + k, len(tokens) - 1)]
+        return tokens[min(pos[0] + k, len(tokens) - 1)]
 
     def punct(text, k=0):
         return at(k).kind == "PUNCT" and at(k).text == text
 
-    callee = at()
-    if callee.kind not in ("QNAME", "ALIAS"):
-        bad("a call begins with a function name or an @alias")
-    i += 1
-    if not punct("("):
-        bad("a call has its arguments in parentheses")
-    i += 1
-    args, labelled = [], False
-    if punct(")"):
-        i += 1
-    else:
+    def is_callee(k=0):
+        t = at(k)
+        return t.kind in ("QNAME", "ALIAS") or (t.kind == "WORD" and punct("(", k + 1)
+                                                and t.text.lower() not in ("true", "false"))
+
+    def arg_list():
+        if not punct("("):
+            bad("a call has its arguments in parentheses")
+        pos[0] += 1
+        args, labelled = [], False
+        if punct(")"):
+            pos[0] += 1
+            return args
         while True:
             label = None
             if at().kind == "WORD" and punct(":", 1):
                 label = at().text
                 labelled = True
-                i += 2
+                pos[0] += 2
             elif labelled:
                 bad("positional arguments come before labelled ones")
-            tok = at()
-            if tok.kind == "STR":
-                value = ("string", tok.value)
-            elif tok.kind == "DATE":
-                value = ("date", tok.value)
-            elif tok.kind == "INSTANT":
-                value = ("instant", tok.value)
-            elif tok.kind == "NUM" and tok.unit is None:
-                value = ("number", tok.value)
-            elif tok.kind == "PUNCT" and tok.text == "-" and at(1).kind == "NUM" and at(1).unit is None:
-                i += 1
-                value = ("number", "-" + at().value)
-            elif tok.kind == "WORD" and tok.text in ("true", "false"):
-                value = ("boolean", tok.text == "true")
-            elif tok.kind == "PUNCT" and tok.text == "*":
-                value = ("open", None)
-            else:
-                bad()
-            i += 1
-            args.append((label, value))
+            args.append((label, value()))
             if punct(","):
-                i += 1
+                pos[0] += 1
                 continue
             if punct(")"):
-                i += 1
-                break
+                pos[0] += 1
+                return args
             bad()
+
+    def value():
+        tok = at()
+        if tok.kind == "STR":
+            v = ("string", tok.value)
+        elif tok.kind == "DATE":
+            v = ("date", tok.value)
+        elif tok.kind == "INSTANT":
+            v = ("instant", tok.value)
+        elif tok.kind == "NUM" and tok.unit is None:
+            v = ("number", tok.value)
+        elif tok.kind == "PUNCT" and tok.text == "-" and at(1).kind == "NUM" and at(1).unit is None:
+            pos[0] += 1
+            v = ("number", "-" + at().value)
+        elif tok.kind == "WORD" and tok.text in ("true", "false"):
+            v = ("boolean", tok.text == "true")
+        elif tok.kind == "PUNCT" and tok.text == "*":
+            v = ("open", None)
+        elif tok.kind == "PERIOD" or (tok.kind == "WORD" and any(c.isupper() for c in tok.text)
+                                      and not punct("(", 1)):
+            v = ("keylit", tok.value if tok.kind == "PERIOD" else tok.text)
+        elif tok.kind == "QNAME" and punct("(", 1):  # an object literal in a class-typed position
+            name = tok.value
+            pos[0] += 1
+            inner = arg_list()
+            return ("object", {"class": name, "keys": inner, "raw": True})
+        else:
+            bad()
+        pos[0] += 1
+        return v
+
+    if not is_callee():
+        bad("a call begins with a function name, a class name, an @alias or a bare name")
+    callee = at()
+    pos[0] += 1
+    args = arg_list()
+    method = None
+    if at().kind == "DOT":
+        pos[0] += 1
+        t = at()
+        if t.kind not in ("WORD", "QNAME") or not punct("(", 1):
+            bad("a method is .name(...) or .<qualified name>(...)")
+        pos[0] += 1
+        method = (t.text if t.kind == "WORD" else t.value, t, arg_list())
     if at().kind != "EOF":
         bad("nothing follows a call but ?asof=")
-    return callee, args
-
-
+    return callee, args, method
 # ---------------------------------------------------------------------------
 # Vector checking (SPEC.md section 11).
 
@@ -2890,8 +3079,7 @@ def run_vector(vec):
             return out
         if kind == "class":  # spec-0.5.0 (16.2)
             flat = define_class(vec["name"], parse_json(vector_input(vec)), vec.get("env", {}))
-            canonical = jcs(flat)
-            return {"canonical": canonical.decode(), "sha256": sha256_hex(canonical)}
+            return {"flattened": jcs(flat).decode(), "class_hash": class_hash(flat)}
         if kind == "normalisation":  # spec-0.5.0 (16.4)
             check_key_value(vec["rule"], vec["text"])
             return {}
@@ -2968,7 +3156,7 @@ OUTPUT_FIELDS = ("canonical", "sha256", "object", "uri", "https", "key_id", "key
                  "asof_dependent", "value", "lineage", "tx", "receipt_asof", "fuel_used", "results",
                  "bindings", "endpoints",
                  "declarations", "licence", "reason", "entitled",  # spec-0.4.3
-                 "decoded")  # spec-0.5.0
+                 "decoded", "resolved", "flattened", "class_hash")  # spec-0.5.0
 
 
 def check_vector(vec):

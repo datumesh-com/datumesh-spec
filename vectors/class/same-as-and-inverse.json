@@ -315,6 +315,6 @@
       }
     ]
   },
-  "canonical": "{\"extent\":{\"exists\":\"282855ae2560a5ce1e194e7318465cb75c8dcf8dff5bfd0148fd76022c906b98\"},\"inverse\":[\"isin\"],\"keys\":{\"base\":{\"key_normalisation\":\"upper_ascii\",\"type\":\"string\"},\"quote\":{\"key_normalisation\":\"upper_ascii\",\"type\":\"string\"}},\"methods\":{\"by_isin\":\"45a26ee88dc288b7db3e2450392a35eef472cfd92cf2e1069b05ff6070a70b33\",\"rate\":\"f041cf0f3eabaf4a611a6f57050dac8fb1f2e2cd5d6b6526913cff0847ef88df\",\"same_as\":\"58130e2c0b4bfb120498ba2bb5d851e482e7a34af45dd20423379bb8bf60f664\"},\"order\":[\"base\",\"quote\"],\"steward\":{\"namespace\":\"rates.example.org\",\"process\":\"https://rates.example.org/classes/change\"}}",
-  "sha256": "2ed81bb0c9e65e88c6dcb8e1a03ce6bfd32809701e132bfa9d2efd1cb47736e9"
+  "flattened": "{\"extent\":{\"exists\":\"282855ae2560a5ce1e194e7318465cb75c8dcf8dff5bfd0148fd76022c906b98\"},\"inverse\":[\"isin\"],\"keys\":{\"base\":{\"key_normalisation\":\"upper_ascii\",\"type\":\"string\"},\"quote\":{\"key_normalisation\":\"upper_ascii\",\"type\":\"string\"}},\"methods\":{\"by_isin\":\"45a26ee88dc288b7db3e2450392a35eef472cfd92cf2e1069b05ff6070a70b33\",\"rate\":\"f041cf0f3eabaf4a611a6f57050dac8fb1f2e2cd5d6b6526913cff0847ef88df\",\"same_as\":\"58130e2c0b4bfb120498ba2bb5d851e482e7a34af45dd20423379bb8bf60f664\"},\"order\":[\"base\",\"quote\"],\"steward\":{\"namespace\":\"rates.example.org\",\"process\":\"https://rates.example.org/classes/change\"}}",
+  "class_hash": "2ed81bb0c9e65e88c6dcb8e1a03ce6bfd32809701e132bfa9d2efd1cb47736e9"
 }

@@ -315,6 +315,6 @@
       }
     ]
   },
-  "canonical": "{\"keys\":{},\"methods\":{\"price\":\"f5bd96afcf9c6ba0584e6c2849da89c5513d921e9d61c4e092983cb05a14257b\"},\"order\":[],\"steward\":{\"namespace\":\"rates.example.org\",\"process\":\"https://rates.example.org/classes/change\"}}",
-  "sha256": "f641ca2c57b407eef423c9f621799bf4b268f486e15394f0f6ee53b356dc311b"
+  "flattened": "{\"keys\":{},\"methods\":{\"price\":\"f5bd96afcf9c6ba0584e6c2849da89c5513d921e9d61c4e092983cb05a14257b\"},\"order\":[],\"steward\":{\"namespace\":\"rates.example.org\",\"process\":\"https://rates.example.org/classes/change\"}}",
+  "class_hash": "f641ca2c57b407eef423c9f621799bf4b268f486e15394f0f6ee53b356dc311b"
 }

@@ -46,6 +46,7 @@ DEFINE_CODES = (
     "E_FORMULA_UNBOUNDED", "E_FORMULA_SLICE_BOUND", "E_FORMULA_METRIC", "E_FORMULA_ALONG", "E_FORMULA_JOIN",
     "E_FORMULA_LAMBDA_PARAM", "E_FORMULA_LAMBDA_READ", "E_FORMULA_ENUM", "E_FORMULA_TX_ARG",
     "E_FORMULA_UNSUPPORTED", "E_FORMULA_INPUTS", "E_FORMULA_NOT_CANONICAL",
+    "E_FORMULA_METHOD", "E_FORMULA_DISPATCH", "E_FORMULA_KEY",  # spec-0.5.0: classes (16.3, 16.6)
 )
 # Faults: deterministic properties of a cell; the cell has no value (not_covered with fault).
 FAULT_CODES = ("E_FORMULA_DIV_ZERO", "E_FORMULA_DOMAIN", "E_FORMULA_RANGE", "E_FORMULA_EMPTY",
@@ -345,7 +346,10 @@ def tokenize(source):
                 fail("E_FORMULA_NUMBER", f"not a canonical number: {text} (SPEC 3.1)")
             unit = None
             if "." not in text and end < n and source[end] in "DMY" and (end + 1 >= n or not _word_char(source[end + 1])):
-                fail("E_FORMULA_RESERVED", f"{text}{source[end]} is reserved for period keys (1.3b)")
+                # spec-0.5.0: a period key literal (16.3); outside a key position it stays reserved
+                tokens.append(Token("PERIOD", source[i:end + 1], i, source[i:end + 1]))
+                i = end + 1
+                continue
             j = end
             while j < n and source[j] in " \t":
                 j += 1
@@ -618,8 +622,19 @@ class Parser:
 
     def postfix(self):
         p = self.primary()
-        if self.peek().kind == "DOT":
-            fail("E_FORMULA_RESERVED", "'.' after an expression is reserved for methods (1.3b)")
+        while self.peek().kind == "DOT":  # spec-0.5.0: method calls (16.3)
+            self.advance()
+            tok = self.peek()
+            if tok.kind == "WORD" and self.is_p("(", 1):
+                self.advance()
+                p = ("method", p, tok.text, False, self.read_args())
+            elif tok.kind == "QNAME" and self.is_p("(", 1):
+                if tok.pin is not None:
+                    fail("E_FORMULA_PLACEMENT", "an extension method is not pinned")
+                self.advance()
+                p = ("method", p, tok.value, True, self.read_args())
+            else:
+                fail("E_FORMULA_SYNTAX", f"a method call is .name(...) or .<qualified name>(...), at {tok.pos}")
         if self.is_p("("):
             fail("E_FORMULA_DYNAMIC_NAME", "only a name can be called")
         return p
@@ -659,8 +674,14 @@ class Parser:
             return e
         if k == "PUNCT" and tok.text in ("*", "["):
             fail("E_FORMULA_PLACEMENT", "* and ranges are arguments of a read only")
+        if k == "PERIOD":  # spec-0.5.0: a period key literal (16.3)
+            self.advance()
+            return ("period", tok.value)
         if k == "WORD":
             w = tok.text.lower()
+            if tok.text in RESERVED and self.peek(1).kind == "DOT":  # spec-0.5.0: this.m(), super.m()
+                self.advance()
+                return (tok.text,)
             if w in RESERVED:
                 fail("E_FORMULA_RESERVED", f"{tok.text} is reserved")
             if self.is_p("(", 1):
@@ -821,6 +842,29 @@ def _callee(env, fq):
     return env.get("functions", {}).get(fq)
 
 
+def _pinned(env, fn_hash):
+    """The descriptor of a function hash, for a pinned read (super, 16.3)."""
+    if env is None:
+        return None
+    if callable(env.get("by_hash")):
+        return env["by_hash"](fn_hash)
+    functions = env.get("functions", {})
+    candidates = list(env.get("descriptors", [])) + (list(functions.values()) if isinstance(functions, dict) else [])
+    for d in candidates:
+        if canon.function_hash(d) == fn_hash:
+            return d
+    return None
+
+
+def _classes(env):
+    return (env or {}).get("classes") or {}
+
+
+def _class_of(env, fq):
+    """The class descriptor a name is bound to, or None (16.1)."""
+    return _classes(env).get(fq)
+
+
 def resolve(tree, env):
     k = tree[0]
     if k == "num":
@@ -840,9 +884,15 @@ def resolve(tree, env):
         name = _variable_name(tree[1])
         return {"node": "let", "name": name, "value": resolve(tree[2], env), "body": resolve(tree[3], env)}
     if k == "read":
+        if tree[1] is not None and _class_of(env, tree[1]) is not None:
+            fail("E_FORMULA_METHOD", f"{tree[1]} is a class: an object is not a value, call one of its methods")
         return _resolve_read(tree, env)
     if k == "call":
         return _resolve_call(tree[1], tree[2], env)
+    if k == "method":  # spec-0.5.0 (16.3)
+        return _resolve_method(tree, env)
+    if k == "period":
+        fail("E_FORMULA_RESERVED", f"{tree[1]} is a period key literal: an argument of a string key or parameter only")
     if k == "lambda":
         fail("E_FORMULA_PLACEMENT", "a lambda is only an argument of map or filter")
     raise AssertionError(tree)
@@ -867,8 +917,10 @@ def _label_name(word):
 def _resolve_read(tree, env):
     _, fq, alias, args = tree[:4]
     if len(tree) > 4:
-        fail("E_FORMULA_PLACEMENT", "a function pinned by hash (name@<fn_hash>) is a request form (SPEC 5.8), "
-             "not part of a body")
+        if not (env or {}).get("allow_pins"):
+            fail("E_FORMULA_PLACEMENT", "a function pinned by hash (name@<fn_hash>) is a request form (SPEC 5.8), "
+                 "not part of a body")
+        return _resolve_pinned(fq, tree[4], args, env)
     if alias is not None:
         aliases = (env or {}).get("aliases", {})
         if alias not in aliases:
@@ -899,12 +951,301 @@ def _resolve_read(tree, env):
         elif arg[0] == "range":
             bound[name] = {"node": "range", "lo": resolve(arg[1], env), "hi": resolve(arg[2], env)}
         else:
-            bound[name] = resolve(arg, env)
+            bound[name] = _resolve_arg(arg, callee["signature"]["args"][name] if callee is not None else None, env)
     if callee is not None:
-        for name in canon.keys_in_order(callee["signature"]["args"]):
-            if name not in bound:
-                fail("E_FORMULA_ARG_MISSING", f"{fq} needs {name} (an open argument is written *)")
+        _fill_defaults(fq, callee, bound)
     return {"node": "read", "fn": fq, "args": bound}
+
+
+# -- classes (spec-0.5.0, SPEC 16.3, 16.6, 16.7)
+
+
+def _is_key_literal(tree):
+    """A key literal (16.3): a word with a capital letter that is not a keyword, or a period (1M)."""
+    if tree[0] == "period":
+        return True
+    return tree[0] == "var" and any(c.isupper() for c in tree[1]) and tree[1].lower() not in KEYWORDS \
+        and tree[1] not in RESERVED
+
+
+def _resolve_arg(tree, decl, env, normalisation=None):
+    """An argument bound to a declared parameter: key literals are strings there (16.3), and an object
+    literal in a class-typed position is its key encoding (16.5)."""
+    if decl is not None and _is_key_literal(tree):
+        if decl["type"] != "string":
+            fail("E_FORMULA_TYPE", f"the key literal {tree[1]} is a string; this argument is a {decl['type']}")
+        node = {"node": "str", "value": tree[1]}
+    elif decl is not None and decl.get("classes") and tree[0] == "read" and tree[1] is not None \
+            and _class_of(env, tree[1]) is not None:
+        if tree[1] not in decl["classes"]:
+            fail("E_FORMULA_TYPE", f"an object of {tree[1]} where {decl['classes']} is declared")
+        obj = _resolve_object(tree, env)
+        node = {"node": "str", "value": _encode_object(obj)}
+    else:
+        node = resolve(tree, env)
+    if decl is not None and decl.get("classes") and node["node"] == "str":
+        try:
+            decoded = canon.decode_key(node["value"])
+        except canon.DatumeshError as e:
+            fail("E_FORMULA_KEY", f"not an object key (16.5): {e.detail}")
+        if decoded["class"] not in decl["classes"]:
+            fail("E_FORMULA_TYPE", f"a key of {decoded['class']} where {decl['classes']} is declared")
+    if normalisation is not None and node["node"] == "str":
+        try:
+            canon.check_key_value(normalisation, node["value"])
+        except canon.DatumeshError as e:
+            fail("E_FORMULA_KEY", f"a literal key (16.4): {e.detail}")
+    return node
+
+
+def _fill_defaults(fq, callee, bound, skip=()):
+    """Unbound arguments: the asof default (16.7, 7), then E_FORMULA_ARG_MISSING."""
+    for name in canon.keys_in_order(callee["signature"]["args"]):
+        if name in bound or name in skip:
+            continue
+        decl = callee["signature"]["args"][name]
+        if decl.get("default") == "asof":
+            asof = {"node": "call", "fn": "asof", "args": [], "named": {}}
+            bound[name] = asof if decl["type"] == "instant" else {"node": "call", "fn": "date_of", "args": [asof],
+                                                                  "named": {}}
+            continue
+        fail("E_FORMULA_ARG_MISSING", f"{fq} needs {name} (an open argument is written *)")
+
+
+def _encode_object(obj):
+    """The key encoding of an object all of whose keys are literals (16.5)."""
+    name, desc, keys = obj
+    out = {}
+    for k, node in keys.items():
+        decl = desc["keys"][k]
+        if node["node"] == "str" and "class" in decl:
+            out[k] = canon.decode_key(node["value"])
+        elif node["node"] in ("str", "date", "instant"):
+            out[k] = {"type": decl.get("type", "string"), "value": node["value"]}
+        elif node["node"] == "num" and "unit" not in node:
+            out[k] = {"type": "number", "value": node["value"]}
+        elif node["node"] == "bool":
+            out[k] = {"type": "boolean", "value": node["value"]}
+        elif node["node"] == "op" and node["op"] == "neg" and node["args"][0]["node"] == "num":
+            out[k] = {"type": "number", "value": "-" + node["args"][0]["value"]}
+        else:
+            fail("E_FORMULA_PLACEMENT", f"an object in a class-typed key or argument has literal keys ({k})")
+    return canon.encode_key(name, out)
+
+
+def _key_decl(decl):
+    """A class key declaration as a parameter declaration."""
+    if "class" in decl:
+        return {"type": "string", "classes": [decl["class"]], "valid": False}
+    return dict(decl, valid=False)
+
+
+def _resolve_object(tree, env):
+    """A read of a class name: an object (16.3). Returns (class name, descriptor, {key: node})."""
+    _, fq, alias, args = tree[:4]
+    if alias is not None:
+        aliases = (env or {}).get("aliases", {})
+        if alias not in aliases:
+            fail("E_FORMULA_ALIAS", f"@{alias} is not in the alias map")
+        fq = aliases[alias]
+    if len(tree) > 4:
+        fail("E_FORMULA_PLACEMENT", "an object is not pinned in a body")
+    desc = _class_of(env, fq)
+    if desc is None:
+        fail("E_FORMULA_UNRESOLVED", f"{fq} has no binding")
+    order = desc["order"]
+    keys = {}
+    positional = [a for label, a in args if label is None]
+    if len(positional) > len(order):
+        fail("E_FORMULA_ARITY", f"{fq} has {len(order)} keys")
+    for i, (label, arg) in enumerate(args):
+        name = order[i] if label is None else _label_name(label)
+        if name in keys:
+            fail("E_FORMULA_ARG_DUPLICATE", f"{name} is bound twice")
+        if name not in desc["keys"]:
+            fail("E_FORMULA_ARG_UNKNOWN", f"{fq} has no key {name}")
+        if arg[0] in ("open", "range"):
+            fail("E_FORMULA_PLACEMENT", "an object binds every key: there are no slices of objects")
+        decl = desc["keys"][name]
+        keys[name] = _resolve_arg(arg, _key_decl(decl), env, decl.get("key_normalisation"))
+    for name in canon.keys_in_order(desc["keys"]):
+        if name not in keys:
+            fail("E_FORMULA_ARG_MISSING", f"{fq} needs its key {name}")
+    return (fq, desc, keys)
+
+
+def _method_object(recv, env):
+    """The receiver of a method call when it is an object known statically: an object read, this, or
+    super. Returns (class name, descriptor, {key: node}, parent-pinned) or None."""
+    if recv in (("this",), ("super",)):
+        name = (env or {}).get("method_of")
+        if name is None or _class_of(env, name) is None:
+            fail("E_FORMULA_RESERVED", f"{recv[0]} is for the body of a method (16.3)")
+        desc = _class_of(env, name)
+        sig_args = env["signature"]["args"]
+        keys = {k: {"node": "var", "name": k} for k in desc["order"] if k in sig_args}
+        if recv == ("super",):
+            parent = desc.get("parent")
+            pname = next((n for n, d in _classes(env).items() if canon.class_hash(d) == parent), None)
+            if pname is None:
+                fail("E_FORMULA_METHOD", "super needs the parent class")
+            return (pname, _class_of(env, pname), keys, True)
+        return (name, desc, keys, False)
+    if recv[0] == "read" and recv[1] is not None and _class_of(env, recv[1]) is not None:
+        fq, desc, keys = _resolve_object(recv, env)
+        return (fq, desc, keys, False)
+    if recv[0] == "read" and recv[2] is not None:
+        alias = recv[2]
+        fq = (env or {}).get("aliases", {}).get(alias)
+        if fq is not None and _class_of(env, fq) is not None:
+            fq, desc, keys = _resolve_object(recv, env)
+            return (fq, desc, keys, False)
+    return None
+
+
+def _bind_method_args(fq, callee, key_names, keys, args, env):
+    sig = callee["signature"]
+    order = sig.get("order", [])
+    rest = [n for n in order if n not in key_names]
+    bound = dict(keys)
+    positional = [a for label, a in args if label is None]
+    if len(positional) > len(rest):
+        fail("E_FORMULA_ARITY", f"{fq} takes {len(rest)} arguments after its keys")
+    for i, (label, arg) in enumerate(args):
+        name = rest[i] if label is None else _label_name(label)
+        if name in bound:
+            fail("E_FORMULA_ARG_DUPLICATE", f"{name} is bound twice (a key comes from the object)")
+        if name not in sig["args"]:
+            fail("E_FORMULA_ARG_UNKNOWN", f"{fq} has no argument {name}")
+        if arg[0] == "open":
+            bound[name] = {"node": "open"}
+        elif arg[0] == "range":
+            bound[name] = {"node": "range", "lo": resolve(arg[1], env), "hi": resolve(arg[2], env)}
+        else:
+            bound[name] = _resolve_arg(arg, sig["args"][name], env)
+    _fill_defaults(fq, callee, bound, skip=key_names)
+    return bound
+
+
+def _resolve_method(tree, env):
+    """obj.m(args): a read of the method's function with the object's keys first (16.3); on an
+    expression of declared classes, a dispatch (16.6)."""
+    _, recv, m, qualified, args = tree
+    obj = _method_object(recv, env)
+    if obj is None:
+        return _resolve_dispatch(tree, env)
+    cname, desc, keys, pinned = obj
+    if qualified:  # an extension method: a function whose first arguments are the class keys
+        fq = m
+        callee = _callee(env, fq)
+        if callee is None:
+            fail("E_FORMULA_UNRESOLVED", f"{fq} has no binding")
+        if "order" not in callee["signature"] or callee["signature"]["order"][:len(desc["order"])] != desc["order"] \
+                or not all(canon._key_matches(desc["keys"][k], callee["signature"]["args"][k]) for k in desc["order"]):
+            fail("E_FORMULA_METHOD", f"{fq} does not take the keys of {cname} first: not an extension method")
+        key_names = list(desc["order"])
+    else:
+        if m not in desc["methods"]:
+            fail("E_FORMULA_METHOD", f"{cname} has no method {m}")
+        fq = f"{cname}/{m}"
+        if pinned:
+            callee = _pinned(env, desc["methods"][m])
+            if callee is None:
+                fail("E_FORMULA_UNRESOLVED", f"no descriptor for {fq}@{desc['methods'][m]}")
+        else:
+            callee = _callee(env, fq)
+            if callee is None:
+                fail("E_FORMULA_UNRESOLVED", f"{fq} has no binding")
+            if fq != (env or {}).get("name") and canon.function_hash(callee) != desc["methods"][m]:
+                fail("E_FORMULA_METHOD", f"{fq} is not bound to the method {m} of {cname}")
+        key_names = []
+        for k in desc["order"]:
+            if k not in callee["signature"]["args"]:
+                break
+            key_names.append(k)
+    missing = [k for k in key_names if k not in keys]
+    if missing:
+        fail("E_FORMULA_METHOD", f"{fq} takes the key {missing[0]}, which this method's own arguments lack")
+    bound = _bind_method_args(fq, callee, key_names, {k: keys[k] for k in key_names}, args, env)
+    node = {"node": "read", "fn": fq, "args": bound}
+    if pinned:
+        if any(a["node"] in ("open", "range") for a in bound.values()):
+            fail("E_FORMULA_PLACEMENT", "super reads a single cell")
+        node["fn_hash"] = desc["methods"][m]
+    return node
+
+
+def _resolve_pinned(fq, fn_hash, args, env):
+    """A pinned read in a body: the print of super (16.3), accepted where pins are allowed."""
+    callee = _pinned(env, fn_hash)
+    if callee is None:
+        fail("E_FORMULA_UNRESOLVED", f"no descriptor for {fq}@{fn_hash}")
+    order = callee["signature"].get("order", [])
+    bound = {}
+    for i, (label, arg) in enumerate(args):
+        name = order[i] if label is None else _label_name(label)
+        if name in bound or name not in callee["signature"]["args"] or arg[0] in ("open", "range"):
+            fail("E_FORMULA_PLACEMENT", "a pinned read binds each argument once, to a single cell")
+        bound[name] = _resolve_arg(arg, callee["signature"]["args"][name], env)
+    _fill_defaults(fq, callee, bound)
+    return {"node": "read", "fn": fq, "args": bound, "fn_hash": fn_hash}
+
+
+def _static_classes(node, env):
+    """The classes an expression's object key is of, when declared (16.6), or None."""
+    if node["node"] == "var":
+        decl = ((env or {}).get("signature") or {}).get("args", {}).get(node["name"])
+        return decl.get("classes") if decl else None
+    if node["node"] == "read":
+        callee = _pinned(env, node["fn_hash"]) if "fn_hash" in node else _callee(env, node["fn"])
+        ret = callee["signature"]["returns"] if callee else None
+        return ret.get("classes") if isinstance(ret, dict) else None
+    if node["node"] == "dispatch":
+        callee = _callee(env, f"{node['classes'][0]}/{node['method']}")
+        ret = callee["signature"]["returns"] if callee else None
+        return ret.get("classes") if isinstance(ret, dict) else None
+    if node["node"] == "str":
+        try:
+            return [canon.decode_key(node["value"])["class"]]
+        except canon.DatumeshError:
+            return None
+    return None
+
+
+def _resolve_dispatch(tree, env):
+    _, recv, m, qualified, args = tree
+    on = resolve(recv, env)
+    classes = _static_classes(on, env)
+    if classes is None:
+        fail("E_FORMULA_RESERVED", "'.' after an expression that is not an object (16.3)")
+    if qualified:
+        fail("E_FORMULA_METHOD", "an extension method is called on an object written out, not on a key value")
+    shape, first = None, None
+    for c in classes:
+        desc = _class_of(env, c)
+        if desc is None:
+            fail("E_FORMULA_UNRESOLVED", f"{c} has no binding")
+        if m not in desc["methods"]:
+            fail("E_FORMULA_METHOD", f"{c} has no method {m}")
+        fq = f"{c}/{m}"
+        callee = _callee(env, fq)
+        if callee is None:
+            fail("E_FORMULA_UNRESOLVED", f"{fq} has no binding")
+        if canon.function_hash(callee) != desc["methods"][m]:
+            fail("E_FORMULA_METHOD", f"{fq} is not bound to the method {m} of {c}")
+        keys = [k for k in desc["order"] if k in callee["signature"]["args"]]
+        this_shape = canon._without_keys(callee["signature"], keys)
+        if shape is None:
+            shape, first = this_shape, (fq, callee, keys)
+        elif this_shape != shape:
+            fail("E_FORMULA_DISPATCH", f"{m} has another signature in {c}: a dispatch needs one")
+    fq, callee, keys = first
+    bound = _bind_method_args(fq, callee, keys, {}, args, env)
+    for k in keys:
+        bound.pop(k, None)
+    if any(a["node"] in ("open", "range") for a in bound.values()):
+        fail("E_FORMULA_PLACEMENT", "a dispatched method reads a single cell")
+    return {"node": "dispatch", "on": on, "method": m, "classes": list(classes), "args": bound}
 
 
 def _resolve_call(name, args, env):
@@ -1070,7 +1411,11 @@ def _p(node, need=0):
                 parts.append(f"{name}: [{_p(a['lo'])}..{_p(a['hi'])}]")
             else:
                 parts.append(f"{name}: {_p(a)}")
-        return f"{node['fn']}({', '.join(parts)})"
+        pin = f"@{node['fn_hash']}" if "fn_hash" in node else ""  # spec-0.5.0: the print of super
+        return f"{node['fn']}{pin}({', '.join(parts)})"
+    if k == "dispatch":  # spec-0.5.0 (16.6)
+        parts = [f"{name}: {_p(node['args'][name])}" for name in canon.keys_in_order(node["args"])]
+        return f"{_wrap(node['on'], PRIMARY)}.{node['method']}({', '.join(parts)})"
     if k == "call":
         name = node["fn"]
         parts = [_p(a) for a in node["args"]]
@@ -1219,6 +1564,8 @@ class Checker:
         ty = self.check(ast, self.own_scope())
         returns = self.sig["returns"]
         rtype = returns if isinstance(returns, str) else returns["type"]
+        if isinstance(returns, dict) and "classes" in returns:
+            returns = rtype  # spec-0.5.0: an object key is a string
         if ty.is_slice():
             fail("E_FORMULA_SLICE_VALUE", "a function returns a scalar, not a slice")
         if ty.kind != rtype:
@@ -1278,7 +1625,38 @@ class Checker:
             return self.check_read(node, scope)
         if k == "call":
             return self.check_call(node, scope)
+        if k == "dispatch":  # spec-0.5.0 (16.6)
+            return self.check_dispatch(node, scope)
         raise AssertionError(node)
+
+    def check_dispatch(self, node, scope):
+        if self.lambda_depth:
+            fail("E_FORMULA_LAMBDA_READ", "no cell reads inside a lambda: join another slice instead")
+        on = self.scalar(node["on"], scope, "an object key")
+        if on.kind != "string":
+            fail("E_FORMULA_TYPE", "a method is called on an object key, a string")
+        first = None
+        for c in node["classes"]:
+            fq = f"{c}/{node['method']}"
+            callee = _callee(self.env, fq)
+            if callee is None:
+                fail("E_FORMULA_UNRESOLVED", f"{fq} has no binding")
+            self.inputs.add(fq)
+            first = first or callee
+        sig = first["signature"]
+        bind = self.bind_unit(node["args"], scope)
+        for name in canon.keys_in_order(node["args"]):
+            decl = sig["args"][name]
+            t = self.scalar(node["args"][name], scope, "an argument")
+            self.expect_arg(t, decl["type"], decl_unit(decl["unit"], bind) if decl["type"] == "number" else None,
+                            f"{node['method']}({name})")
+        returns = sig["returns"]
+        if isinstance(returns, str) or "classes" in returns:
+            return Ty(returns if isinstance(returns, str) else returns["type"])
+        u = decl_unit(returns["unit"], bind)
+        if u is None:
+            fail("E_FORMULA_UNIT_UNKNOWN", f"the unit of {node['method']}'s value cannot be determined statically")
+        return NUM(u)
 
     def unit_atom(self, node, scope):
         """The unit atom a string expression denotes statically, or None."""
@@ -1457,7 +1835,7 @@ class Checker:
         if self.lambda_depth:
             fail("E_FORMULA_LAMBDA_READ", "no cell reads inside a lambda: join another slice instead")
         fq = node["fn"]
-        callee = _callee(self.env, fq)
+        callee = _pinned(self.env, node["fn_hash"]) if "fn_hash" in node else _callee(self.env, fq)
         if callee is None:
             fail("E_FORMULA_UNRESOLVED", f"{fq} has no binding")
         self.inputs.add(fq)
@@ -1505,6 +1883,8 @@ class Checker:
         returns = sig["returns"]
         if isinstance(returns, str):
             elem = Ty(returns)
+        elif "classes" in returns:  # spec-0.5.0: an object key, a string
+            elem = Ty("string")
         else:
             u = decl_unit(returns["unit"], bind)
             if u is None:
@@ -2262,8 +2642,9 @@ class World:
     """functions: {fully qualified name: {"descriptor": d, "bound": instant}};
     receipts: stored receipts (signed). Evaluation is memoised per (cell, asof)."""
 
-    def __init__(self, functions, receipts=(), fuel=10_000_000, max_depth=2000, blobs=None):
+    def __init__(self, functions, receipts=(), fuel=10_000_000, max_depth=2000, blobs=None, classes=None):
         self.blobs = dict(blobs or {})  # spec-0.4.2: sha256 -> content, what the resolver can give
+        self.classes = {n: _bindings_of(c) for n, c in (classes or {}).items()}  # spec-0.5.0
         self.functions = functions  # a binding, or a list of bindings of one name (spec-0.4.1 tests)
         self._bindings = {name: [(b["bound"], b["descriptor"], canon.function_hash(b["descriptor"]))
                                  for b in _bindings_of(f)] for name, f in functions.items()}
@@ -2311,7 +2692,40 @@ class World:
 
     def env_at(self, fq, asof, descriptor, override=None):
         return {"name": fq, "signature": descriptor["signature"],
-                "functions": _BoundAt(self, asof, override), "aliases": {}}
+                "functions": _BoundAt(self, asof, override), "aliases": {},
+                "classes": self.classes_at(asof), "by_hash": self.descriptor_by_hash, "allow_pins": True}
+
+    def classes_at(self, asof):
+        """spec-0.5.0: the class descriptors bound as of asof."""
+        out = {}
+        for name, bindings in self.classes.items():
+            begun = [b for b in bindings if b["bound"] <= asof]
+            if begun:
+                out[name] = begun[-1]["descriptor"]
+        return out
+
+    def descriptor_by_hash(self, fn_hash):
+        """spec-0.5.0: a descriptor by its hash, for a pinned read (the print of super)."""
+        for bindings in self._bindings.values():
+            for bound, d, h in bindings:
+                if h == fn_hash:
+                    return d
+        return None
+
+    def answer_pinned(self, fq, fn_hash, args, asof):
+        """A pinned read: the cell of the function with that hash, under the name read (16.3)."""
+        d = self.descriptor_by_hash(fn_hash)
+        if d is None:
+            fail("E_FORMULA_UNRESOLVED", f"no descriptor for {fq}@{fn_hash}")
+        saved = self._bindings.get(fq)
+        self._bindings[fq] = [(MIN_INSTANT, d, fn_hash)]
+        try:
+            return self.answer(fq, args, asof)
+        finally:
+            if saved is None:
+                del self._bindings[fq]
+            else:
+                self._bindings[fq] = saved
 
     def compiled_for(self, fq, descriptor, fn_hash, start, asof):
         """The body typed for an evaluation as of asof (SPEC 15.8): against the callees bound as of
@@ -2514,7 +2928,34 @@ class Context:
             return self.eval_read(node, scope)
         if k == "call":
             return getattr(self, "f_" + node["fn"])(node, scope)
+        if k == "dispatch":  # spec-0.5.0 (16.6)
+            return self.eval_dispatch(node, scope)
         raise AssertionError(node)
+
+    def eval_dispatch(self, node, scope):
+        key = self.eval(node["on"], scope)[1]
+        try:
+            decoded = canon.decode_key(key)
+        except canon.DatumeshError as e:
+            fail("E_FORMULA_DISPATCH", f"the value is not an object key (16.5): {e.detail}")
+        c = decoded["class"]
+        if c not in node["classes"]:
+            fail("E_FORMULA_DISPATCH", f"{c} is not among the classes {node['classes']} the function dispatches to")
+        desc = self.world.classes_at(self.A).get(c)
+        fq = f"{c}/{node['method']}"
+        binding = self.world.binding(fq, self.A)
+        if desc is None or desc["methods"].get(node["method"]) != binding[1]:
+            fail("E_FORMULA_DISPATCH", f"{fq} is not bound to the method {node['method']} of {c}")
+        sig = binding[0]["signature"]["args"]
+        args = {}
+        for k in desc["order"]:
+            if k not in sig:
+                break
+            v = decoded["keys"][k]
+            args[k] = {"type": "string", "value": canon.encode_decoded(v)} if "class" in v else v
+        for name, a in sorted(node["args"].items()):
+            args[name] = typed(self.eval(a, scope))
+        return self.read_cell(fq, args)
 
     def scalar(self, node, scope):
         return self.eval(node, scope)
@@ -2571,6 +3012,11 @@ class Context:
         fq = node["fn"]
         if not ty.is_slice():
             args = {name: typed(self.eval(a, scope)) for name, a in sorted(node["args"].items())}
+            if "fn_hash" in node:  # spec-0.5.0: a pinned read, the print of super
+                self.world.charge(1)
+                answer = self.world.answer_pinned(fq, node["fn_hash"], args, self.A)
+                self.record(answer, fq)
+                return answer.value
             return self.read_cell(fq, args)
         pattern = {}
         for name in canon.keys_in_order(node["args"]):
@@ -3458,7 +3904,7 @@ def world_of(spec, fuel=10_000_000):
     optionally "max_depth"}."""
     blobs = {h: bytes.fromhex(x) for h, x in spec.get("blobs", {}).items()}  # spec-0.4.2
     return World(spec["functions"], spec.get("receipts", []), fuel=fuel, max_depth=spec.get("max_depth", 2000),
-                 blobs=blobs)
+                 blobs=blobs, classes=spec.get("classes"))
 
 
 def evaluate_vector(vec, world):

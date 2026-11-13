@@ -327,6 +327,6 @@
       }
     ]
   },
-  "canonical": "{\"implements\":[\"f641ca2c57b407eef423c9f621799bf4b268f486e15394f0f6ee53b356dc311b\"],\"keys\":{\"base\":{\"key_normalisation\":\"upper_ascii\",\"type\":\"string\"},\"quote\":{\"key_normalisation\":\"upper_ascii\",\"type\":\"string\"}},\"methods\":{\"price\":\"75197a01ca006b1b67a870114912ea9e5baeb1ade715e5daef80b7ff0973b914\",\"rate\":\"f041cf0f3eabaf4a611a6f57050dac8fb1f2e2cd5d6b6526913cff0847ef88df\"},\"order\":[\"base\",\"quote\"],\"steward\":{\"namespace\":\"rates.example.org\",\"process\":\"https://rates.example.org/classes/change\"}}",
-  "sha256": "5b94b371c247d9a96540b9770bd6c03b831fcb365a3b72553ac8b3ea5b715340"
+  "flattened": "{\"implements\":[\"f641ca2c57b407eef423c9f621799bf4b268f486e15394f0f6ee53b356dc311b\"],\"keys\":{\"base\":{\"key_normalisation\":\"upper_ascii\",\"type\":\"string\"},\"quote\":{\"key_normalisation\":\"upper_ascii\",\"type\":\"string\"}},\"methods\":{\"price\":\"75197a01ca006b1b67a870114912ea9e5baeb1ade715e5daef80b7ff0973b914\",\"rate\":\"f041cf0f3eabaf4a611a6f57050dac8fb1f2e2cd5d6b6526913cff0847ef88df\"},\"order\":[\"base\",\"quote\"],\"steward\":{\"namespace\":\"rates.example.org\",\"process\":\"https://rates.example.org/classes/change\"}}",
+  "class_hash": "5b94b371c247d9a96540b9770bd6c03b831fcb365a3b72553ac8b3ea5b715340"
 }

@@ -374,6 +374,10 @@
             "type": "string",
             "pattern": "^([0-9a-f]{2})*$"
           }
+        },
+        "classes": {
+          "type": "object",
+          "description": "spec-0.5.0: class bindings, name to {descriptor, bound}."
         }
       }
     },
@@ -607,6 +611,22 @@
         "keys"
       ],
       "description": "spec-0.5.0, key vectors: the decoded object key (16.5)."
+    },
+    "resolved": {
+      "type": "object",
+      "required": [
+        "call",
+        "resolutions"
+      ],
+      "description": "spec-0.5.0, call vectors: what a short call resolved (16.7), as the envelope's resolved member carries it."
+    },
+    "flattened": {
+      "type": "string",
+      "description": "spec-0.5.0, class vectors: the canonical bytes of the flattened class descriptor (16.2)."
+    },
+    "class_hash": {
+      "$ref": "defs.schema.json#/$defs/hex64",
+      "description": "spec-0.5.0, class vectors: the class hash."
     }
   },
   "oneOf": [

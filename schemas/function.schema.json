@@ -93,6 +93,18 @@
                     }
                   }
                 ]
+              },
+              "classes": {
+                "description": "Optional (spec-0.5.0): on a string argument, the classes whose object key it holds (SPEC.md 7, 16.5).",
+                "type": "array",
+                "minItems": 1,
+                "items": {
+                  "$ref": "defs.schema.json#/$defs/functionName"
+                }
+              },
+              "default": {
+                "description": "Optional (spec-0.5.0): the evaluation asof, on a date or instant valid-time argument (SPEC.md 7, 16.7).",
+                "const": "asof"
               }
             },
             "allOf": [
@@ -206,12 +218,46 @@
                     }
                   }
                 }
+              },
+              {
+                "if": {
+                  "required": [
+                    "classes"
+                  ]
+                },
+                "then": {
+                  "properties": {
+                    "type": {
+                      "const": "string"
+                    }
+                  }
+                }
+              },
+              {
+                "if": {
+                  "required": [
+                    "default"
+                  ]
+                },
+                "then": {
+                  "properties": {
+                    "type": {
+                      "enum": [
+                        "date",
+                        "instant"
+                      ]
+                    },
+                    "valid": {
+                      "const": true
+                    }
+                  }
+                }
               }
             ]
           }
         },
         "returns": {
-          "description": "A type name, except number, which is {\"type\": \"number\", \"unit\": ...} (SPEC.md 7, D23).",
+          "description": "A type name, except number, which is {\"type\": \"number\", \"unit\": ...} (SPEC.md 7, D23). Since spec-0.5.0 also {\"type\": \"string\", \"classes\": [...]}: an object key (16.5).",
           "anyOf": [
             {
               "$ref": "defs.schema.json#/$defs/type",
@@ -232,6 +278,26 @@
                 },
                 "unit": {
                   "$ref": "defs.schema.json#/$defs/unit"
+                }
+              }
+            },
+            {
+              "type": "object",
+              "required": [
+                "classes",
+                "type"
+              ],
+              "additionalProperties": false,
+              "properties": {
+                "classes": {
+                  "type": "array",
+                  "minItems": 1,
+                  "items": {
+                    "$ref": "defs.schema.json#/$defs/functionName"
+                  }
+                },
+                "type": {
+                  "const": "string"
                 }
               }
             }
