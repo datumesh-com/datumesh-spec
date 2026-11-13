@@ -100,6 +100,8 @@ ERROR_CODES = (
     "E_CLASS_OWNER",
     "E_KEY_NORMALISATION",
     "E_KEY_ENCODING",
+    "E_SHORT_ID_AMBIGUOUS",  # spec-0.5.0: a mesh's answer about a request (16.8)
+    "E_DESCRIBE",  # spec-0.5.0: a describe answer breaks 16.8 (a client's check)
 )
 # spec-0.5.0: define and write codes, never verification results and never in a read envelope.
 DEFINE_WRITE_CODES = ("E_UNROOTED_INPUT", "E_NAMESPACE_SUSPENDED", "E_CLASS_MEMBER", "E_CLASS_PARENT",
@@ -1969,6 +1971,91 @@ def decode_key(text):
     return decoded
 
 
+def _object_call(class_name, keys):
+    parts = []
+    for k in keys_in_order(keys):
+        v = keys[k]
+        parts.append(f"{k}: {_call_literal(v['type'] if v['type'] != 'blob' else 'string', v['value'])}")
+    return f"{class_name}({', '.join(parts)})"
+
+
+def describe_class(name, desc, functions, descriptions=None):
+    """The describe answer for a class (16.8)."""
+    methods = {}
+    keys = set(desc["keys"])
+    for m in keys_in_order(desc["methods"]):
+        fd = next((d for d in functions.values() if function_hash(d) == desc["methods"][m]), None)
+        sig = fd["signature"]
+        entry = {"args": {a: d for a, d in sig["args"].items() if a not in keys}, "fn": f"{name}/{m}",
+                 "fn_hash": desc["methods"][m], "returns": sig["returns"]}
+        if descriptions and m in descriptions:
+            entry["description"] = descriptions[m]
+        methods[m] = entry
+    return {"class": name, "class_hash": class_hash(desc), "descriptor": desc, "kind": "class", "methods": methods}
+
+
+def describe_object(name, desc, keys, same_as=None):
+    """The describe answer for an object (16.8)."""
+    obj = object_of(name, class_hash(desc), keys)
+    oid = object_id(obj)
+    out = {"call": _object_call(name, keys), "kind": "object", "methods": keys_in_order(desc["methods"]),
+           "object": obj, "object_id": oid, "short_id": short_id(oid)}
+    if same_as:
+        out["same_as"] = list(same_as)
+    return out
+
+
+@_as_error("E_DESCRIBE")
+def check_describe(doc, classes=None):
+    """A describe answer (16.8): its shape and what its schema cannot state. E_DESCRIBE otherwise."""
+    if not isinstance(doc, dict) or doc.get("kind") not in ("class", "object"):
+        fail("E_DESCRIBE", "a describe answer is of kind class or object")
+    if doc["kind"] == "class":
+        _shape_object(doc, ("class", "class_hash", "descriptor", "kind", "methods"), (), "$")
+        check_function_name(doc["class"], "$.class")
+        check_class(doc["descriptor"], "$.descriptor")
+        if doc["class_hash"] != class_hash(doc["descriptor"]):
+            fail("E_DESCRIBE", "class_hash is the descriptor's hash", "$.class_hash")
+        methods = doc["methods"]
+        if not isinstance(methods, dict) or set(methods) != set(doc["descriptor"]["methods"]):
+            fail("E_DESCRIBE", "methods lists exactly the descriptor's methods", "$.methods")
+        for m in keys_in_order(methods):
+            e = methods[m]
+            _shape_object(e, ("args", "fn", "fn_hash", "returns"), ("description",), f"$.methods.{m}")
+            if e["fn"] != f"{doc['class']}/{m}" or e["fn_hash"] != doc["descriptor"]["methods"][m]:
+                fail("E_DESCRIBE", f"method {m} is {doc['class']}/{m} with the descriptor's hash", f"$.methods.{m}")
+            if "description" in e:
+                _shape_str(e, "description", f"$.methods.{m}")
+                check_text(e["description"], f"$.methods.{m}.description", "summary")
+        return doc
+    _shape_object(doc, ("call", "kind", "methods", "object", "object_id", "short_id"), ("same_as",), "$")
+    obj = doc["object"]
+    _shape_object(obj, ("class", "class_hash", "keys"), (), "$.object")
+    check_function_name(obj["class"], "$.object.class")
+    check_hex(obj["class_hash"], 64, "$.object.class_hash")
+    shape_args(obj["keys"], "$.object.keys")
+    check_args(obj["keys"], "$.object.keys")
+    if doc["object_id"] != object_id(obj):
+        fail("E_DESCRIBE", "object_id is the object's id", "$.object_id")
+    if doc["short_id"] != short_id(doc["object_id"]):
+        fail("E_DESCRIBE", "short_id is the first 12 hex digits of the object id", "$.short_id")
+    if doc["call"] != _object_call(obj["class"], obj["keys"]):
+        fail("E_DESCRIBE", "call is the object's canonical call", "$.call")
+    if not isinstance(doc["methods"], list) or doc["methods"] != keys_in_order(set(doc["methods"])):
+        fail("E_DESCRIBE", "methods is the ascending list of method names", "$.methods")
+    desc = (classes or {}).get(obj["class"])
+    if desc is not None and class_hash(desc) == obj["class_hash"]:
+        if doc["methods"] != keys_in_order(desc["methods"]) or set(obj["keys"]) != set(desc["keys"]):
+            fail("E_DESCRIBE", "the object's keys and methods are its class's", "$.methods")
+    for i, k in enumerate(doc.get("same_as", [])):
+        if not isinstance(k, str):
+            fail("E_DESCRIBE", "same_as holds object keys", "$.same_as")
+        decode_key(k)
+    if "same_as" in doc and not doc["same_as"]:
+        fail("E_DESCRIBE", "same_as is absent rather than empty", "$.same_as")
+    return doc
+
+
 def object_of(class_name, chash, keys):
     """The object (16.5): a class name, its class hash and its key tuple. Never stored."""
     return {"class": class_name, "class_hash": chash, "keys": keys}
@@ -1990,6 +2077,7 @@ MESH_ENDPOINTS = {  # endpoint -> its placeholders (each exactly once)
     "blob": ("sha256",), "cell": ("cell",), "cells": (), "descriptor": ("hash",), "explain": ("cell",), "find": (),
     "jobs": ("job",), "manifest": ("slice_id", "members_hash"), "receipt": ("hash",), "slice": ("cell",), "verify": (),
     "versions": ("cell",),  # spec-0.4.2, optional
+    "describe": ("id",),  # spec-0.5.0, optional (16.8)
 }
 MESH_REQUIRED = ("cell", "descriptor", "jobs", "manifest", "receipt")
 
@@ -2282,13 +2370,15 @@ def _superseded(r, recompute, keyenv):
 # not signed; only the receipt inside it is verified.
 
 ENVELOPE_MEMBERS = {  # outcome -> (required, optional)
-    "ok": (("outcome", "receipt", "trust"), ("fn_hash", "reason", "superseded_by")),
-    "stale": (("age_seconds", "outcome", "receipt", "trust"), ("fn_hash", "reason", "superseded_by")),
-    "not_covered": (("outcome",), ("error", "fault", "fn_hash")),
-    "unlicensed": (("outcome",), ("fn_hash",)),
-    "payment_required": (("outcome", "quote"), ("fn_hash",)),
+    "ok": (("outcome", "receipt", "trust"), ("fn_hash", "reason", "resolved", "shadows", "superseded_by")),
+    "stale": (("age_seconds", "outcome", "receipt", "trust"), ("fn_hash", "reason", "resolved", "shadows",
+                                                               "superseded_by")),
+    "not_covered": (("outcome",), ("error", "fault", "fn_hash", "resolved", "shadows")),
+    "unlicensed": (("outcome",), ("fn_hash", "resolved", "shadows")),
+    "payment_required": (("outcome", "quote"), ("fn_hash", "resolved", "shadows")),
     "rate_limited": (("outcome", "retry_after_seconds"), ("fn_hash",)),
-    "error": (("error", "outcome"), ("detail", "fn_hash")),  # detail: E_FOREIGN_UNAVAILABLE's (spec-0.4.3)
+    # detail: E_FOREIGN_UNAVAILABLE's (spec-0.4.3); resolved and shadows (spec-0.5.0, 16.7, 16.9)
+    "error": (("error", "outcome"), ("detail", "fn_hash", "resolved", "shadows")),
     "bad_request": (("error", "outcome"), ("fn_hash",)),
     "pending": (("estimate_seconds", "job", "outcome", "poll", "request"), ()),
 }
@@ -2308,9 +2398,10 @@ URI_CODES = (
     "E_CANON_HEX",  # spec-0.4.2: a fn_hash= that is not 64 lowercase hex digits
 )
 # Codes a mesh reports about a request, never as an error (spec-0.4.1, spec-0.4.2).
+RESOLUTION_KINDS = ("alias", "default", "label", "method")  # spec-0.5.0 (16.7)
 # spec-0.4.3: what an E_FOREIGN_UNAVAILABLE envelope's detail says failed (5.5).
 FOREIGN_DETAILS = ("offline", "network", "dns", "tls", "timeout", "refused")
-REQUEST_CODES = ("E_JOB_UNKNOWN", "E_SLICE_AT_CELL", "E_NAME_UNBOUND")
+REQUEST_CODES = ("E_JOB_UNKNOWN", "E_SLICE_AT_CELL", "E_NAME_UNBOUND", "E_SHORT_ID_AMBIGUOUS")
 _INTEGER = re.compile(r"0|[1-9][0-9]*")
 TRUST = ("primary", "verified", "unverified", "computed")  # computed since spec-0.4.2
 _JOB = re.compile(r"[0-9a-f]{32,64}")
@@ -2366,16 +2457,35 @@ def _check_envelope_members(env, members=None):
         # (spec-0.4.1); not_covered: E_NAME_UNBOUND only (spec-0.4.2); error: any code of 10.2 but
         # the client's E_ENVELOPE and the request codes.
         if env["outcome"] == "bad_request":
-            allowed = URI_CODES + ("E_JOB_UNKNOWN", "E_SLICE_AT_CELL")
+            allowed = URI_CODES + ("E_JOB_UNKNOWN", "E_SLICE_AT_CELL", "E_SHORT_ID_AMBIGUOUS")
         elif env["outcome"] == "not_covered":
             allowed = ("E_NAME_UNBOUND",)
         else:
-            allowed = tuple(c for c in ERROR_CODES
-                            if c != "E_ENVELOPE" and c not in REQUEST_CODES and c not in DEFINE_WRITE_CODES)
+            allowed = tuple(c for c in ERROR_CODES if c not in ("E_ENVELOPE", "E_DESCRIBE")
+                            and c not in REQUEST_CODES and c not in DEFINE_WRITE_CODES)
         if env["error"] not in allowed:
             fail("E_ENVELOPE", f"{env['error']!r} is not a code this outcome can carry", "$.error")
         if "fault" in env:
             fail("E_ENVELOPE", "not_covered carries fault or error, not both", "$.error")
+    if "resolved" in env:  # spec-0.5.0 (16.7): what a short call resolved
+        r = env["resolved"]
+        if not isinstance(r, dict) or set(r) - {"aliases_tx", "call", "resolutions"} or "call" not in r \
+                or "resolutions" not in r or not isinstance(r["call"], str) or not r["call"] \
+                or not isinstance(r["resolutions"], list):
+            fail("E_ENVELOPE", "resolved is {call, resolutions, aliases_tx?}", "$.resolved")
+        for x in r["resolutions"]:
+            if not isinstance(x, dict) or set(x) != {"from", "kind", "to"} \
+                    or not all(isinstance(x[k], str) for k in x) or x["kind"] not in RESOLUTION_KINDS:
+                fail("E_ENVELOPE", "a resolution is {from, kind, to}, kind alias, method, default or label",
+                     "$.resolved.resolutions")
+        if "aliases_tx" in r and (not isinstance(r["aliases_tx"], str) or not _is_instant(r["aliases_tx"])):
+            fail("E_ENVELOPE", "aliases_tx is an instant", "$.resolved.aliases_tx")
+    if "shadows" in env:  # spec-0.5.0 (16.9)
+        sh = env["shadows"]
+        if not isinstance(sh, dict) or set(sh) != {"class", "reference"} or not isinstance(sh["class"], str) \
+                or not isinstance(sh["reference"], str) or not re.fullmatch(r"[0-9a-f]{64}", sh["reference"]):
+            fail("E_ENVELOPE", "shadows is {class, reference}", "$.shadows")
+        check_function_name(sh["class"], "$.shadows.class")
     # spec-0.4.3: E_FOREIGN_UNAVAILABLE carries detail, which no other envelope has.
     if (env.get("error") == "E_FOREIGN_UNAVAILABLE") != ("detail" in env):
         fail("E_ENVELOPE", "detail is present exactly with E_FOREIGN_UNAVAILABLE", "$.detail")
@@ -3082,6 +3192,9 @@ def run_vector(vec):
             return {"flattened": jcs(flat).decode(), "class_hash": class_hash(flat)}
         if kind == "normalisation":  # spec-0.5.0 (16.4)
             check_key_value(vec["rule"], vec["text"])
+            return {}
+        if kind == "describe":  # spec-0.5.0 (16.8)
+            check_describe(parse_json(vector_input(vec)), vec.get("classes"))
             return {}
         if kind == "key":  # spec-0.5.0 (16.5)
             return {"decoded": decode_key(vec["input"])}

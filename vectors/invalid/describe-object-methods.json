@@ -1,0 +1,70 @@
+{
+  "id": "invalid/describe-object-methods",
+  "kind": "describe",
+  "description": "spec-0.5.0: An object's methods are its class's.",
+  "valid": false,
+  "input": "{\n  \"same_as\": [\n    \"bible.example.org/passage(osis:\\\"Gen.1.1\\\")\"\n  ],\n  \"short_id\": \"23185273656a\",\n  \"object_id\": \"23185273656a260e628a19e624304212504b065267b4cf551c961639fc18556c\",\n  \"object\": {\n    \"keys\": {\n      \"verse\": {\n        \"value\": \"1\",\n        \"type\": \"number\"\n      },\n      \"corpus\": {\n        \"value\": \"tanakh\",\n        \"type\": \"string\"\n      },\n      \"chapter\": {\n        \"value\": \"1\",\n        \"type\": \"number\"\n      },\n      \"book\": {\n        \"value\": \"Gen\",\n        \"type\": \"string\"\n      }\n    },\n    \"class_hash\": \"da35ace3d0349fedaf8d749bd6c372a9ad95bdb8b918b91f08e91d5721a2a2e6\",\n    \"class\": \"scripture.example.org/verse\"\n  },\n  \"methods\": [\n    \"text\"\n  ],\n  \"kind\": \"object\",\n  \"call\": \"scripture.example.org/verse(book: \\\"Gen\\\", chapter: 1, corpus: \\\"tanakh\\\", verse: 1)\"\n}",
+  "classes": {
+    "rates.example.org/fx_pair": {
+      "keys": {
+        "base": {
+          "key_normalisation": "upper_ascii",
+          "type": "string"
+        },
+        "quote": {
+          "key_normalisation": "upper_ascii",
+          "type": "string"
+        }
+      },
+      "methods": {
+        "cross": "683f1189bb034f5f327eda3c6e2f6ebc8d1d7e7aa22fbe0e28ed2528262d0f8f",
+        "forward": "a9f7660da590ee0a4aa079b4dfd9a19580c30d0ef4385f5a6b8df86be7b98edd",
+        "rate": "f041cf0f3eabaf4a611a6f57050dac8fb1f2e2cd5d6b6526913cff0847ef88df"
+      },
+      "order": [
+        "base",
+        "quote"
+      ],
+      "steward": {
+        "namespace": "rates.example.org",
+        "process": "https://rates.example.org/classes/change"
+      }
+    },
+    "scripture.example.org/verse": {
+      "keys": {
+        "book": {
+          "key_normalisation": "none",
+          "type": "string"
+        },
+        "chapter": {
+          "type": "number",
+          "unit": "1"
+        },
+        "corpus": {
+          "key_normalisation": "none",
+          "type": "string"
+        },
+        "verse": {
+          "type": "number",
+          "unit": "1"
+        }
+      },
+      "methods": {
+        "next": "b1ac6b5277d7f60634d52ffe86e028881fb58867563a5aeabc4db14eb7ddb277",
+        "text": "69deb6c63ff08317dad3c81fcc4b1081225a0c884ae0112b0b919c371f9b5801",
+        "consonantal": "e282ef070dd110da1146e5ce83264596b424c67c069c1239c651b3d280a1bc4e"
+      },
+      "order": [
+        "corpus",
+        "book",
+        "chapter",
+        "verse"
+      ],
+      "steward": {
+        "namespace": "scripture.example.org",
+        "process": "https://scripture.example.org/classes/change"
+      }
+    }
+  },
+  "error": "E_DESCRIBE"
+}

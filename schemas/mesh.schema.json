@@ -133,6 +133,17 @@
             }
           ],
           "description": "spec-0.4.2, optional: the versions of a stored cell (versions.schema.json)."
+        },
+        "describe": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/url"
+            },
+            {
+              "pattern": "\\{id\\}"
+            }
+          ],
+          "description": "spec-0.5.0, optional: describe answers (16.8)."
         }
       },
       "description": "Endpoint templates: each known endpoint has exactly its placeholders, once each (9.6)."

@@ -8,7 +8,11 @@
   naming an unrooted mesh, a rooted one, or none (5.5);
 - licence: the inheritance rule's arguments, some malformed (8.5);
 - entitlement: computed receipts whose inputs or manifests are missing, of another hash or not
-  signature-valid (10.3).
+  signature-valid (10.3);
+- key: object key encodings (16.5), nested and of every type, some mutated (spaces, order, quotes,
+  number forms, a missing parenthesis);
+- normalisation: string key values in Latin, Hebrew, Greek and Arabic, pointed or not, under each rule
+  of 16.4.
 
     python generate_050.py SPEC_REPO N SEED > spec050.jsonl
 """
@@ -133,6 +137,43 @@ def entitlement_case(i):
     return vec
 
 
-for gen in (mesh_case, poll_case, licence_case, entitlement_case):
-    for i in range(N // 4 or 1):
+VALUES = [{"type": "string", "value": "EUR"}, {"type": "string", "value": 'say "hi"'},
+          {"type": "number", "value": "-1.5"}, {"type": "number", "value": "255"},
+          {"type": "date", "value": "2024-03-15"}, {"type": "instant", "value": "2024-03-15T16:00:00.000000Z"},
+          {"type": "boolean", "value": True}]
+
+
+def key_case(i):
+    def obj(depth):
+        keys = {}
+        for k in rng.sample(["base", "book", "code", "quote", "verse", "x"], rng.randint(0, 3)):
+            keys[k] = obj(depth + 1) if depth < 2 and rng.random() < 0.25 else rng.choice(VALUES)
+        return {"class": rng.choice(["iso.example.org/currency", "rates.example.org/fx_pair", "a.example/k"]),
+                "keys": keys}
+    text = canon.encode_decoded(obj(0))
+    m = rng.randrange(6)
+    if m == 1:
+        text = text.replace(":", ": ", 1)
+    elif m == 2:
+        text = text.replace('"', "", 2)
+    elif m == 3:
+        text = text[:-1]
+    elif m == 4:
+        text = text.replace("255", "0255")
+    return {"id": f"key-fuzz/{i:04d}-{m}", "kind": "key", "description": "spec-0.5.0: key encodings", "valid": True,
+            "input": text}
+
+
+TEXTS = ["EUR", "eur", "1M", "Zürich", "New  York", "a\u200db", "בראשית", "בְּרֵאשִׁית", "λογος", "λόγος",
+         "بسم ٱلله", "بِسْمِ ٱللَّهِ", "اللـه", "", " x"]
+
+
+def normalisation_case(i):
+    import json as _json
+    return {"id": f"normalisation-fuzz/{i:04d}", "kind": "normalisation", "description": "spec-0.5.0: key values",
+            "valid": True, "rule": rng.choice(canon.KEY_NORMALISATIONS), "text": _json.loads('"' + rng.choice(TEXTS) + '"')}
+
+
+for gen in (mesh_case, poll_case, licence_case, entitlement_case, key_case, normalisation_case):
+    for i in range(N // 6 or 1):
         print(json.dumps(gen(i)))

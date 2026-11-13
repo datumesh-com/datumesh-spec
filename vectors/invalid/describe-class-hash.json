@@ -1,0 +1,70 @@
+{
+  "id": "invalid/describe-class-hash",
+  "kind": "describe",
+  "description": "spec-0.5.0: class_hash is the descriptor's hash.",
+  "valid": false,
+  "input": "{\n  \"methods\": {\n    \"rate\": {\n      \"description\": \"The reference rate: units of quote per unit of base.\",\n      \"returns\": {\n        \"unit\": {\n          \"per\": {\n            \"arg\": \"base\"\n          },\n          \"of\": {\n            \"arg\": \"quote\"\n          }\n        },\n        \"type\": \"number\"\n      },\n      \"fn_hash\": \"f041cf0f3eabaf4a611a6f57050dac8fb1f2e2cd5d6b6526913cff0847ef88df\",\n      \"fn\": \"rates.example.org/fx_pair/rate\",\n      \"args\": {\n        \"date\": {\n          \"valid\": true,\n          \"type\": \"date\"\n        }\n      }\n    },\n    \"forward\": {\n      \"returns\": {\n        \"unit\": {\n          \"per\": {\n            \"arg\": \"base\"\n          },\n          \"of\": {\n            \"arg\": \"quote\"\n          }\n        },\n        \"type\": \"number\"\n      },\n      \"fn_hash\": \"a9f7660da590ee0a4aa079b4dfd9a19580c30d0ef4385f5a6b8df86be7b98edd\",\n      \"fn\": \"rates.example.org/fx_pair/forward\",\n      \"args\": {\n        \"tenor\": {\n          \"valid\": false,\n          \"type\": \"string\"\n        },\n        \"date\": {\n          \"valid\": true,\n          \"type\": \"date\"\n        }\n      }\n    },\n    \"cross\": {\n      \"returns\": {\n        \"unit\": {\n          \"per\": {\n            \"arg\": \"base\"\n          },\n          \"of\": {\n            \"arg\": \"quote\"\n          }\n        },\n        \"type\": \"number\"\n      },\n      \"fn_hash\": \"683f1189bb034f5f327eda3c6e2f6ebc8d1d7e7aa22fbe0e28ed2528262d0f8f\",\n      \"fn\": \"rates.example.org/fx_pair/cross\",\n      \"args\": {\n        \"via\": {\n          \"valid\": false,\n          \"type\": \"string\"\n        },\n        \"date\": {\n          \"valid\": true,\n          \"type\": \"date\"\n        }\n      }\n    }\n  },\n  \"kind\": \"class\",\n  \"descriptor\": {\n    \"steward\": {\n      \"process\": \"https://rates.example.org/classes/change\",\n      \"namespace\": \"rates.example.org\"\n    },\n    \"order\": [\n      \"base\",\n      \"quote\"\n    ],\n    \"methods\": {\n      \"rate\": \"f041cf0f3eabaf4a611a6f57050dac8fb1f2e2cd5d6b6526913cff0847ef88df\",\n      \"forward\": \"a9f7660da590ee0a4aa079b4dfd9a19580c30d0ef4385f5a6b8df86be7b98edd\",\n      \"cross\": \"683f1189bb034f5f327eda3c6e2f6ebc8d1d7e7aa22fbe0e28ed2528262d0f8f\"\n    },\n    \"keys\": {\n      \"quote\": {\n        \"type\": \"string\",\n        \"key_normalisation\": \"upper_ascii\"\n      },\n      \"base\": {\n        \"type\": \"string\",\n        \"key_normalisation\": \"upper_ascii\"\n      }\n    }\n  },\n  \"class_hash\": \"abababababababababababababababababababababababababababababababab\",\n  \"class\": \"rates.example.org/fx_pair\"\n}",
+  "classes": {
+    "rates.example.org/fx_pair": {
+      "keys": {
+        "base": {
+          "key_normalisation": "upper_ascii",
+          "type": "string"
+        },
+        "quote": {
+          "key_normalisation": "upper_ascii",
+          "type": "string"
+        }
+      },
+      "methods": {
+        "cross": "683f1189bb034f5f327eda3c6e2f6ebc8d1d7e7aa22fbe0e28ed2528262d0f8f",
+        "forward": "a9f7660da590ee0a4aa079b4dfd9a19580c30d0ef4385f5a6b8df86be7b98edd",
+        "rate": "f041cf0f3eabaf4a611a6f57050dac8fb1f2e2cd5d6b6526913cff0847ef88df"
+      },
+      "order": [
+        "base",
+        "quote"
+      ],
+      "steward": {
+        "namespace": "rates.example.org",
+        "process": "https://rates.example.org/classes/change"
+      }
+    },
+    "scripture.example.org/verse": {
+      "keys": {
+        "book": {
+          "key_normalisation": "none",
+          "type": "string"
+        },
+        "chapter": {
+          "type": "number",
+          "unit": "1"
+        },
+        "corpus": {
+          "key_normalisation": "none",
+          "type": "string"
+        },
+        "verse": {
+          "type": "number",
+          "unit": "1"
+        }
+      },
+      "methods": {
+        "next": "b1ac6b5277d7f60634d52ffe86e028881fb58867563a5aeabc4db14eb7ddb277",
+        "text": "69deb6c63ff08317dad3c81fcc4b1081225a0c884ae0112b0b919c371f9b5801",
+        "consonantal": "e282ef070dd110da1146e5ce83264596b424c67c069c1239c651b3d280a1bc4e"
+      },
+      "order": [
+        "corpus",
+        "book",
+        "chapter",
+        "verse"
+      ],
+      "steward": {
+        "namespace": "scripture.example.org",
+        "process": "https://scripture.example.org/classes/change"
+      }
+    }
+  },
+  "error": "E_DESCRIBE"
+}

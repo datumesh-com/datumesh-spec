@@ -1,0 +1,65 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://datumesh.com/schemas/1/describe-object.schema.json",
+  "title": "Datumesh describe answer: an object",
+  "description": "SPEC.md 16.8, spec-0.5.0. Unsigned, the mesh's statement. object_id, short_id and call follow from object: checked by the procedure (E_DESCRIBE), not here.",
+  "type": "object",
+  "required": [
+    "call",
+    "kind",
+    "methods",
+    "object",
+    "object_id",
+    "short_id"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "kind": {
+      "const": "object"
+    },
+    "call": {
+      "type": "string",
+      "minLength": 1
+    },
+    "methods": {
+      "type": "array",
+      "items": {
+        "$ref": "defs.schema.json#/$defs/name"
+      }
+    },
+    "object": {
+      "type": "object",
+      "required": [
+        "class",
+        "class_hash",
+        "keys"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "class": {
+          "$ref": "defs.schema.json#/$defs/functionName"
+        },
+        "class_hash": {
+          "$ref": "defs.schema.json#/$defs/hex64"
+        },
+        "keys": {
+          "$ref": "defs.schema.json#/$defs/args"
+        }
+      }
+    },
+    "object_id": {
+      "$ref": "defs.schema.json#/$defs/hex64"
+    },
+    "short_id": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{12}$"
+    },
+    "same_as": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string"
+      }
+    }
+  }
+}

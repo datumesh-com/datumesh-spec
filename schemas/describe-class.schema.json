@@ -1,0 +1,64 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://datumesh.com/schemas/1/describe-class.schema.json",
+  "title": "Datumesh describe answer: a class",
+  "description": "SPEC.md 16.8, spec-0.5.0. Unsigned, the mesh's statement. class_hash is the descriptor's hash and the method table lists exactly the descriptor's methods: checked by the procedure (E_DESCRIBE), not here.",
+  "type": "object",
+  "required": [
+    "class",
+    "class_hash",
+    "descriptor",
+    "kind",
+    "methods"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "kind": {
+      "const": "class"
+    },
+    "class": {
+      "$ref": "defs.schema.json#/$defs/functionName"
+    },
+    "class_hash": {
+      "$ref": "defs.schema.json#/$defs/hex64"
+    },
+    "descriptor": {
+      "type": "object",
+      "required": [
+        "keys",
+        "methods",
+        "order",
+        "steward"
+      ]
+    },
+    "methods": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "required": [
+          "args",
+          "fn",
+          "fn_hash",
+          "returns"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "args": {
+            "type": "object"
+          },
+          "fn": {
+            "$ref": "defs.schema.json#/$defs/functionName"
+          },
+          "fn_hash": {
+            "$ref": "defs.schema.json#/$defs/hex64"
+          },
+          "returns": {},
+          "description": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    }
+  }
+}

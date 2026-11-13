@@ -2392,6 +2392,58 @@ for vid, call_text, env, error, why in [
         add(vid, "call", f"spec-0.5.0: {why}", call_text, error, env=env)
 
 
+# spec-0.5.0, classes: resolved and shadows (16.7, 16.9), describe and short ids (16.8).
+CW_RESOLVED = canon.parse_call("fx_rate(EUR, GBP)?asof=2026-03-16T18:00:00.000000Z", CW_SHORT_ENV)["resolved"]
+add_envelope("envelope/resolved-short-call", "spec-0.5.0: the answer to a short call carries resolved: the full "
+             "canonical call, each resolution, the alias snapshot (16.7).",
+             {"outcome": "not_covered", "resolved": CW_RESOLVED}, 404)
+add_envelope("envelope/shadows-reference-class", "spec-0.5.0: the mesh binds a class name to another hash than the "
+             "reference class of that name, and says so (16.9).",
+             {"outcome": "not_covered", "shadows": {"class": CW.FX, "reference": "ab" * 32}}, 404)
+add_envelope("envelope/bad-request-short-id-ambiguous", "spec-0.5.0: a short id naming more than one cell or object "
+             "is a bad_request (16.8).", {"error": "E_SHORT_ID_AMBIGUOUS", "outcome": "bad_request"}, 400)
+for name, body, status, why in [
+    ("resolved-kind", {"outcome": "not_covered", "resolved": dict(CW_RESOLVED, resolutions=[{"from": "x", "kind": "guess",
+                                                                                          "to": "y"}])}, 404,
+     "A resolution's kind is alias, method, default or label."),
+    ("resolved-member", {"outcome": "not_covered", "resolved": dict(CW_RESOLVED, note="x")}, 404,
+     "resolved has call, resolutions and aliases_tx only."),
+    ("shadows-hash", {"outcome": "not_covered", "shadows": {"class": CW.FX, "reference": "AB" * 32}}, 404,
+     "shadows names the reference class by its hash."),
+    ("short-id-in-error", {"error": "E_SHORT_ID_AMBIGUOUS", "outcome": "error"}, 500,
+     "E_SHORT_ID_AMBIGUOUS is a bad_request's code."),
+]:
+    add_envelope(f"invalid/envelope-{name}", f"spec-0.5.0: {why}", body, status, "E_ENVELOPE")
+
+CW_CLASS_ANSWER = canon.describe_class(CW.FX, CW.SCENARIO["classes"][CW.FX], CW.SCENARIO["functions"],
+                                       {"rate": "The reference rate: units of quote per unit of base."})
+CW_OBJECT_ANSWER = canon.describe_object(CW.VERSE, CW.SCENARIO["classes"][CW.VERSE],
+                                         {"book": CW.S("Gen"), "chapter": CW.N("1"), "corpus": CW.S("tanakh"),
+                                          "verse": CW.N("1")}, same_as=['bible.example.org/passage(osis:"Gen.1.1")'])
+CW_DESCRIBE_CLASSES = {CW.FX: CW.SCENARIO["classes"][CW.FX], CW.VERSE: CW.SCENARIO["classes"][CW.VERSE]}
+for name, doc, error, why in [
+    ("describe/class", CW_CLASS_ANSWER, None, "The describe answer for a class: the flattened descriptor and the "
+     "method table, each method's function, arguments after the keys, return and unit, and a description."),
+    ("describe/object", CW_OBJECT_ANSWER, None, "The describe answer for an object: the object, its id and short id, "
+     "its call form, its methods, a same_as link."),
+    ("invalid/describe-class-hash", dict(CW_CLASS_ANSWER, class_hash="ab" * 32), "E_DESCRIBE",
+     "class_hash is the descriptor's hash."),
+    ("invalid/describe-class-methods", dict(CW_CLASS_ANSWER, methods={k: v for k, v in CW_CLASS_ANSWER["methods"].items()
+                                                                      if k != "cross"}), "E_DESCRIBE",
+     "The method table lists every method of the descriptor."),
+    ("invalid/describe-object-id", dict(CW_OBJECT_ANSWER, object_id="ab" * 32), "E_DESCRIBE",
+     "object_id is the object's id."),
+    ("invalid/describe-short-id", dict(CW_OBJECT_ANSWER, short_id=CW_OBJECT_ANSWER["object_id"][:11]), "E_DESCRIBE",
+     "The short id is the first 12 hex digits of the id."),
+    ("invalid/describe-object-methods", dict(CW_OBJECT_ANSWER, methods=["text"]), "E_DESCRIBE",
+     "An object's methods are its class's."),
+    ("invalid/describe-kind", dict(CW_OBJECT_ANSWER, kind="instance"), "E_DESCRIBE", "kind is class or object."),
+]:
+    add(name, "describe", f"spec-0.5.0: {why}", text(doc), error, classes=CW_DESCRIBE_CLASSES)
+add("mesh/describe-endpoint", "mesh", "spec-0.5.0: the optional describe endpoint, a template with {id} (16.8).",
+    host=MESH_HOST, env=mesh_env(mesh_doc({"describe": f"{MB}/describe/{{id}}"})))
+
+
 def main():
     if OUT.exists():
         shutil.rmtree(OUT)

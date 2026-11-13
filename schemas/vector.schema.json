@@ -41,7 +41,8 @@
         "define",
         "class",
         "normalisation",
-        "key"
+        "key",
+        "describe"
       ]
     },
     "description": {
@@ -627,6 +628,10 @@
     "class_hash": {
       "$ref": "defs.schema.json#/$defs/hex64",
       "description": "spec-0.5.0, class vectors: the class hash."
+    },
+    "classes": {
+      "type": "object",
+      "description": "spec-0.5.0, describe vectors: the class descriptors the answer is checked against, by name."
     }
   },
   "oneOf": [
