@@ -1,0 +1,22 @@
+{
+  "id": "invalid/mesh-unrooted-http-not-loopback",
+  "kind": "mesh",
+  "description": "spec-0.5.0: http:// is allowed on a loopback address only, even for an unrooted host.",
+  "valid": false,
+  "host": "local.invalid",
+  "env": {
+    "keys": {
+      "https": {
+        "status": 200,
+        "body": "{\n  \"host\": \"local.invalid\",\n  \"keys\": [\n    {\n      \"alg\": \"ed25519\",\n      \"id\": \"0e05f0539f8628b6\",\n      \"public\": \"7d13d1d5b350d11b6badf505e6f319ada2425ed324651acb8760f813d85d55eb\",\n      \"valid_from\": \"2020-01-01T00:00:00.000000Z\"\n    }\n  ],\n  \"proto\": \"datumesh/1\"\n}"
+      }
+    },
+    "mesh": {
+      "https": {
+        "status": 200,
+        "body": "{\n  \"bindings\": \"http://192.168.1.20:8471/bindings\",\n  \"endpoints\": {\n    \"blob\": \"http://192.168.1.20:8471/blob/{sha256}\",\n    \"cell\": \"http://192.168.1.20:8471/cell/{cell}\",\n    \"cells\": \"http://192.168.1.20:8471/cells\",\n    \"descriptor\": \"http://192.168.1.20:8471/descriptor/{hash}\",\n    \"explain\": \"http://192.168.1.20:8471/explain/{cell}\",\n    \"find\": \"http://192.168.1.20:8471/find\",\n    \"jobs\": \"http://192.168.1.20:8471/jobs/{job}\",\n    \"manifest\": \"http://192.168.1.20:8471/manifest/{slice_id}/{members_hash}\",\n    \"receipt\": \"http://192.168.1.20:8471/receipt/{hash}\",\n    \"slice\": \"http://192.168.1.20:8471/slice/{cell}\",\n    \"verify\": \"http://192.168.1.20:8471/verify\"\n  },\n  \"host\": \"local.invalid\",\n  \"proto\": \"datumesh/1\"\n}"
+      }
+    }
+  },
+  "error": "E_MESH_DOC"
+}

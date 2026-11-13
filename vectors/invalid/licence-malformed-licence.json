@@ -1,0 +1,15 @@
+{
+  "id": "invalid/licence-malformed-licence",
+  "kind": "licence",
+  "description": "spec-0.5.0: The rule is defined for licences by 8.1: \"MIT License\" (a space) is not one, so it is rejected, not taken as restricted.",
+  "valid": false,
+  "licences": [
+    "CC0-1.0",
+    "MIT License"
+  ],
+  "declarations": {},
+  "fn": "calc.example.net/convert",
+  "issued": "2024-03-16T09:00:00.000000Z",
+  "mesh_licence": "CC-BY-4.0",
+  "error": "E_CANON_LICENCE"
+}

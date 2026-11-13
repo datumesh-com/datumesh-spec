@@ -1400,7 +1400,13 @@ def resolve_key_document(host, env):
 
 
 def is_unrooted(namespace):
-    """A namespace whose host is under .invalid (SPEC.md 2.5): it never resolves."""
+    """A namespace whose host is under .invalid (SPEC.md 2.5): it never resolves.
+
+    Takes a namespace by 2.3 (so a host, or a full function name, which is a namespace followed by
+    a name); anything else is E_CANON_NAME (spec-0.5.0: RS-45, JS 59)."""
+    if not isinstance(namespace, str):
+        fail("E_CANON_NAME", "a namespace is a string")
+    check_namespace(namespace, "$")
     return namespace.split("/")[0].rsplit(".", 1)[-1] == "invalid"
 
 
@@ -1431,6 +1437,12 @@ def inherit_licence(licences, declarations, fn, issued, own):
     declarations: the function's publisher's key document declarations (9.2); fn: the function's full
     name; issued: the receipt's issued; own: the mesh's own licence. Returns {"licence", "reason"}:
     licence None means the mesh may not compute the cell (an unlicensed answer, 5.5)."""
+    # spec-0.5.0 (JS 56): the rule is defined for licences by 8.1, a function name and an instant.
+    for i, licence in enumerate(licences):
+        check_licence(licence, f"$.licences[{i}]")
+    check_function_name(fn, "$.fn")
+    check_instant(issued, "$.issued")
+    check_licence(own, "$.mesh_licence")
     if not licences:
         return {"licence": own, "reason": "no_inputs"}
     restricted = sorted({x for x in licences if licence_tier(x) == RESTRICTED})
@@ -1460,6 +1472,8 @@ def check_entitlement(receipt, licences, keydoc):
     host = receipt["cell"]["ns"].split("/")[0]
     if not isinstance(keydoc, dict) or keydoc.get("host") != host:
         raise ValueError(f"the entitlement check takes the key document of the publisher's host {host}")
+    if licences and not receipt["inputs"]:  # spec-0.5.0 (JS 58)
+        raise ValueError("input licences given for a receipt that has no inputs")
     fn = receipt["cell"]["ns"] + "/" + receipt["cell"]["fn"]
     rule = inherit_licence(licences, keydoc.get("declarations", {}), fn, receipt["issued"], receipt["licence"])
     if rule["licence"] is None:
@@ -1469,17 +1483,27 @@ def check_entitlement(receipt, licences, keydoc):
     return {"entitled": True, "reason": rule["reason"]}
 
 
-def input_licences(receipt, receipts, manifests):
-    """The licences of a receipt's input receipts, slice members included, in inputs order.
+def input_licences(receipt, receipts, manifests, keyenv=None):
+    """The licences of a receipt's input receipts, slice members included, in inputs order (10.3).
 
     receipts: receipt hash -> receipt JSON text; manifests: slice entry -> manifest JSON text, as a
-    recompute object's (11). A missing or mismatching one is a malformed vector (ValueError)."""
+    recompute object's (11). Each input is obtained as 10.1 step 7.5 obtains it, with its codes
+    (spec-0.5.0: RS-44, DEF-57, JS 57): a receipt not supplied, or of another hash,
+    E_INPUT_UNAVAILABLE; one that is not signature-valid (verified when keyenv is given),
+    E_INPUT_INVALID; a manifest not supplied, or of another slice or members, E_INPUT_UNAVAILABLE,
+    and a malformed one its own code. Declared inputs, membership and times are verification's."""
     def get(h):
         if h not in receipts:
-            raise ValueError(f"no input receipt {h}")
-        r = parse_json(receipts[h])
+            fail("E_INPUT_UNAVAILABLE", f"input receipt {h} not available", "$.inputs")
+        try:
+            if keyenv is not None:
+                verify_receipt(receipts[h], keyenv)
+            r = parse_json(receipts[h].encode("utf-8") if isinstance(receipts[h], str) else receipts[h])
+            check_receipt_form(r)
+        except DatumeshError as e:
+            fail("E_INPUT_INVALID", f"input {h}: {e}", "$.inputs")
         if receipt_hash(r) != h:
-            raise ValueError(f"the receipt given for {h} has another hash")
+            fail("E_INPUT_UNAVAILABLE", f"supplied receipt does not hash to {h}", "$.inputs")
         return r["licence"]
     out = []
     for entry in receipt["inputs"]:
@@ -1487,11 +1511,12 @@ def input_licences(receipt, receipts, manifests):
             out.append(get(entry))
             continue
         if entry not in manifests:
-            raise ValueError(f"no manifest for {entry}")
-        m = parse_json(manifests[entry])
+            fail("E_INPUT_UNAVAILABLE", f"no manifest for {entry}", "$.inputs")
+        text = manifests[entry]
+        m = parse_json(text.encode("utf-8") if isinstance(text, str) else text)
         check_manifest(m)
         if slice_entry(m["slice"], m["members"]) != entry:
-            raise ValueError(f"the manifest given for {entry} is another slice's")
+            fail("E_INPUT_UNAVAILABLE", f"the manifest given for {entry} is another slice's", "$.inputs")
         out.extend(get(h) for h in m["members"])
     return out
 
@@ -1518,11 +1543,38 @@ def _retrieved(env, code, no_body):
     return https["body"]
 
 
+# spec-0.5.0 (the user's decision B3 b): for an unrooted host, mesh-document URLs, poll and next may be
+# http:// on a loopback address only, with an optional port; rooted hosts stay https-only.
+_LOOPBACK_URL = re.compile(r"(http://(?:127\.0\.0\.1|\[::1\]|localhost)(?::([1-9][0-9]{0,4}))?)/[!-~]*")
+
+
+def loopback_origin(value):
+    """The origin http://<loopback>[:<port>] of a loopback URL (SPEC.md 9.6, spec-0.5.0), or None."""
+    m = _LOOPBACK_URL.fullmatch(value) if isinstance(value, str) else None
+    if not m or len(value) > LIMITS["licence_url"] or (m.group(2) and int(m.group(2)) > 65535):
+        return None
+    return m.group(1)
+
+
 def _mesh_url(value, host, path):
+    """A URL of host's mesh document; returns its origin. For an unrooted host, also a loopback one."""
+    if is_unrooted(host):
+        origin = loopback_origin(value)
+        if origin:
+            return origin
     if not isinstance(value, str) or not _URL.fullmatch(value) or len(value) > LIMITS["licence_url"]:
-        fail("E_MESH_DOC", "an https URL of at most 512 characters", path)
+        fail("E_MESH_DOC", "an https URL of at most 512 characters (or, for an unrooted host, a loopback http URL)",
+             path)
     if not value.startswith(f"https://{host}/"):
         fail("E_MESH_DOC", f"a URL on this host: it begins https://{host}/", path)
+    return f"https://{host}"
+
+
+def _one_origin(origins, origin, path):
+    """Every URL of a mesh document has the first one's origin (spec-0.5.0)."""
+    if origins and origin != origins[0]:
+        fail("E_MESH_DOC", f"every URL of the document has one origin, {origins[0]}", path)
+    origins.append(origin)
 
 
 def resolve_mesh(host, env):
@@ -1557,7 +1609,8 @@ def resolve_mesh(host, env):
         fail("E_MESH_DOC", "the key document and the mesh document disagree on proto", "$.proto")
     parse_key_doc(key_text, host)  # 5. the key document's own rules (9.2): E_KEY_DOC
     # 6. the mesh document's members; unknown members are ignored
-    _mesh_url(mesh.get("bindings"), host, "$.bindings")
+    origins = []
+    _one_origin(origins, _mesh_url(mesh.get("bindings"), host, "$.bindings"), "$.bindings")
     endpoints = mesh.get("endpoints")
     if not isinstance(endpoints, dict):
         fail("E_MESH_DOC", "endpoints is an object", "$.endpoints")
@@ -1569,7 +1622,7 @@ def resolve_mesh(host, env):
         if name not in MESH_ENDPOINTS:
             continue
         value = endpoints[name]
-        _mesh_url(value, host, f"$.endpoints.{name}")
+        _one_origin(origins, _mesh_url(value, host, f"$.endpoints.{name}"), f"$.endpoints.{name}")
         # Every { and } belongs to one of the endpoint's placeholders, each once (spec-0.4.1).
         rest = value
         for placeholder in MESH_ENDPOINTS[name]:
@@ -1819,7 +1872,11 @@ def _seconds(value):
 
 
 def _mesh_url_host(value, path, what):
-    """An https URL (at most 512 characters) whose host is a DNS name: https://<DNS name>/... ."""
+    """An https URL (at most 512 characters) whose host is a DNS name: https://<DNS name>/... ; returns
+    the host. Since spec-0.5.0 also a loopback http URL, returned as ("loopback", origin): whether the
+    request allows one (an unrooted mesh asked) is _check_own_url's."""
+    if loopback_origin(value):
+        return ("loopback", loopback_origin(value))
     if not isinstance(value, str) or not _URL.fullmatch(value) or len(value) > LIMITS["licence_url"]:
         fail("E_ENVELOPE", f"{what} is an https URL", path)
     host = value[len("https://"):].split("/", 1)[0]
@@ -1892,8 +1949,8 @@ def _check_envelope_members(env, members=None):
             fail("E_ENVELOPE", "job is 32 to 64 lowercase hex digits", "$.job")
     if "poll" in env:
         poll = env["poll"]
-        if not isinstance(poll, str) or not _URL.fullmatch(poll) or len(poll) > LIMITS["licence_url"] \
-                or not poll.endswith("/jobs/" + str(env.get("job"))):
+        if not isinstance(poll, str) or not (_URL.fullmatch(poll) or loopback_origin(poll)) \
+                or len(poll) > LIMITS["licence_url"] or not poll.endswith("/jobs/" + str(env.get("job"))):
             fail("E_ENVELOPE", "poll is the https URL of the job: .../jobs/<job>", "$.poll")
         # spec-0.4.1 (DEF-51): https://, a DNS name (2.1), then the path. Whether it is the host
         # asked is checked against the request's mesh, when the caller gives it (spec-0.4.2).
@@ -2028,6 +2085,17 @@ def check_request(request):
                 bad(f"the cursor's {name} is not a typed scalar")
 
 
+def _check_own_url(value, request, path, what):
+    """poll and next against the request (5.5 step 3a, 5.6): on the host asked when it is known; a
+    loopback http URL only when the request names an unrooted mesh (spec-0.5.0)."""
+    host = _mesh_url_host(value, path, what)
+    if isinstance(host, tuple):
+        if not ("mesh" in request and is_unrooted(request["mesh"])):
+            fail("E_ENVELOPE", f"a loopback {what} answers only a request to an unrooted mesh", path)
+    elif "mesh" in request and host != request["mesh"]:
+        fail("E_ENVELOPE", f"{what} names another host than the mesh asked", path)
+
+
 def _check_status(env, status):
     """5.5 step 3: the status matches the outcome; E_FOREIGN_UNAVAILABLE is 502 (spec-0.4.3)."""
     if status not in ENVELOPE_STATUS[env["outcome"]]:
@@ -2057,8 +2125,7 @@ def check_envelope_object(status, env, keyenv, request, _request_checked=False):
             fail("E_ENVELOPE", "the pending envelope echoes another request", "$.request")
         if "job" in request and env["job"] != request["job"]:
             fail("E_ENVELOPE", "the pending envelope is for another job than the one polled", "$.job")
-        if "mesh" in request and _mesh_url_host(env["poll"], "$.poll", "poll") != request["mesh"]:
-            fail("E_ENVELOPE", "poll names another host than the mesh asked", "$.poll")
+        _check_own_url(env["poll"], request, "$.poll", "poll")
     if "receipt" in env:
         result = _check_receipt_answer(
             env, keyenv, request, lambda r: sha256_hex(jcs(r["cell"])) == request["cell_id"])
@@ -2090,8 +2157,8 @@ def _check_slice_envelope(status, env, keyenv, request):
         fail("E_ENVELOPE", "the page is of another slice than the one requested", "$.slice")
     if "fn_hash" in env and env["fn_hash"] != s.get("fn_hash"):
         fail("E_ENVELOPE", "fn_hash echoes another function than the slice's", "$.fn_hash")
-    if "next" in env and "mesh" in request and _mesh_url_host(env["next"], "$.next", "next") != request["mesh"]:
-        fail("E_ENVELOPE", "next names another host than the mesh asked", "$.next")
+    if "next" in env:
+        _check_own_url(env["next"], request, "$.next", "next")
     previous = _key_tuple(s, request["after"], "request.after") if "after" in request else None
     results = []
     for i, member in enumerate(env["members"]):
@@ -2362,12 +2429,13 @@ def run_vector(vec):
             return inherit_licence(vec["licences"], vec.get("declarations", {}), vec["fn"], vec["issued"],
                                    vec["mesh_licence"])
         if kind == "entitlement":  # spec-0.4.3: the entitlement check (10.3)
+            # spec-0.5.0 (RS-44, DEF-57, JS 57): R through step 6 with its own codes, then L as step 7.5
+            # obtains it, with its codes, then K.
+            verify_receipt(vector_input(vec), vec["keys"])
             r = parse_json(vector_input(vec))
-            for text in [vector_input(vec)] + [t.encode("utf-8") for t in vec.get("receipts", {}).values()]:
-                verify_receipt(text, vec["keys"])  # the receipts are signature-valid (10.3)
+            licences = input_licences(r, vec.get("receipts", {}), vec.get("manifests", {}), vec["keys"])
             host = r["cell"]["ns"].split("/")[0]
             keydoc = resolve_key_document(host, vec["keys"].get(host))
-            licences = input_licences(r, vec.get("receipts", {}), vec.get("manifests", {}))
             return check_entitlement(r, licences, keydoc)
         if kind == "unit":
             obj = parse_json(vector_input(vec))

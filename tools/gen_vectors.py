@@ -1976,6 +1976,99 @@ add_receipt("invalid/receipt-unrooted-no-key-document", "spec-0.4.3: the same re
             keys={})
 
 
+# ---------------------------------------------------------------------------
+# spec-0.5.0, part one: loopback URLs of unrooted hosts (9.6, 5.5, 5.6); the library findings
+# (8.5's arguments, 10.3's collection of L).
+
+U_HOST = "local.invalid"
+
+
+def u_mesh_doc(base, **over):
+    eps = {k: v.replace(MB + "/", base) for k, v in MESH_ENDPOINTS.items()}
+    eps.update({k: v for k, v in over.items() if k != "bindings"})
+    return {"bindings": over.get("bindings", base + "bindings"), "endpoints": eps, "host": U_HOST,
+            "proto": canon.PROTO}
+
+
+U_KEYS = {"host": U_HOST, "keys": [key_entry("local-2020", T0)], "proto": canon.PROTO}
+for name, doc, keys, host, error, why in [
+    ("mesh/unrooted-loopback-port", u_mesh_doc("http://127.0.0.1:8471/"), U_KEYS, U_HOST, None,
+     "An unrooted host's mesh document on http://127.0.0.1 with a port: a loopback address, allowed for an "
+     "unrooted host only. Its key document is supplied out of band (2.5), as this env does."),
+    ("mesh/unrooted-loopback-ipv6", u_mesh_doc("http://[::1]/"), U_KEYS, U_HOST, None,
+     "An unrooted host's mesh document on http://[::1], without a port."),
+    ("mesh/unrooted-loopback-localhost", u_mesh_doc("http://localhost/"), U_KEYS, U_HOST, None,
+     "An unrooted host's mesh document on http://localhost."),
+    ("invalid/mesh-unrooted-http-not-loopback", u_mesh_doc("http://192.168.1.20:8471/"), U_KEYS, U_HOST, "E_MESH_DOC",
+     "http:// is allowed on a loopback address only, even for an unrooted host."),
+    ("invalid/mesh-rooted-http-loopback", mesh_doc({k: v.replace(MB, "http://127.0.0.1") for k, v in MESH_ENDPOINTS.items()},
+                                                   bindings="http://127.0.0.1/bindings"),
+     None, MESH_HOST, "E_MESH_DOC", "A rooted host stays https-only: loopback http is for unrooted hosts."),
+    ("invalid/mesh-unrooted-two-loopback-origins", u_mesh_doc("http://127.0.0.1:8471/", jobs="http://localhost:8471/jobs/{job}"),
+     U_KEYS, U_HOST, "E_MESH_DOC", "Every URL of a mesh document has one origin: 127.0.0.1 and localhost are two."),
+    ("invalid/mesh-unrooted-https-and-loopback", u_mesh_doc("http://127.0.0.1:8471/", bindings=f"https://{U_HOST}/bindings"),
+     U_KEYS, U_HOST, "E_MESH_DOC", "One origin: the host's https URLs and a loopback origin do not mix."),
+    ("invalid/mesh-unrooted-loopback-port-zero", u_mesh_doc("http://127.0.0.1:0/"), U_KEYS, U_HOST, "E_MESH_DOC",
+     "A port is 1 to 65535, without leading zeros."),
+]:
+    add(name, "mesh", f"spec-0.5.0: {why}", host=host, error=error, env=mesh_env(doc, keys))
+
+U_REQUEST = dict(FX_REQUEST, mesh=U_HOST)
+LOOP_POLL = f"http://127.0.0.1:8471/jobs/{JOB}"
+add_envelope("envelope/pending-poll-loopback-unrooted", "spec-0.5.0: a pending envelope's poll on a loopback http "
+             "address, answering a request to an unrooted mesh (the request names it).",
+             pending(poll=LOOP_POLL), 202, request=U_REQUEST)
+for name, poll, request, why in [
+    ("pending-poll-loopback-rooted", LOOP_POLL, dict(FX_REQUEST, mesh="mesh.example"),
+     "A loopback poll answering a request to a rooted mesh: rooted hosts stay https-only."),
+    ("pending-poll-loopback-no-mesh", LOOP_POLL, FX_REQUEST,
+     "A loopback poll is accepted only when the request names an unrooted mesh; this one names none."),
+    ("pending-poll-http-not-loopback", f"http://192.168.1.20:8471/jobs/{JOB}", U_REQUEST,
+     "http:// on an address that is not loopback, even for an unrooted mesh."),
+]:
+    add_envelope(f"invalid/envelope-{name}", f"spec-0.5.0: {why}", pending(poll=poll), 202, "E_ENVELOPE", request=request)
+LOOP_NEXT = "http://localhost:8471/slice/rates.example.org/fx_rate?base=EUR&date=2024-03-15&quote=*&after=JPY"
+add_envelope("envelope/slice-next-loopback-unrooted", "spec-0.5.0: a slice page's next on a loopback http address, "
+             "answering a request to an unrooted mesh.", slice_page([M(R_JPY)], next=LOOP_NEXT), 200,
+             request=dict(SLICE_REQUEST, mesh=U_HOST))
+add_envelope("invalid/envelope-slice-next-loopback-rooted", "spec-0.5.0: a loopback next answering a request to a "
+             "rooted mesh.", slice_page([M(R_JPY)], next=LOOP_NEXT), 200, "E_ENVELOPE",
+             request=dict(SLICE_REQUEST, mesh="mesh.example"))
+
+# 8.5: the rule's arguments are checked (JS 56).
+for name, licences, fn, issued, error, why in [
+    ("malformed-licence", ["CC0-1.0", "MIT License"], DECL_FN, ISSUED_L, "E_CANON_LICENCE",
+     "The rule is defined for licences by 8.1: \"MIT License\" (a space) is not one, so it is rejected, not taken "
+     "as restricted."),
+    ("bad-fn", ["MIT"], "convert", ISSUED_L, "E_CANON_NAME", "fn is a full function name (2.3)."),
+    ("bad-issued", ["MIT"], DECL_FN, "2024-03-16", "E_CANON_INSTANT", "issued is an instant (3.3)."),
+]:
+    add(f"invalid/licence-{name}", "licence", f"spec-0.5.0: {why}", error=error, licences=licences, declarations={},
+        fn=fn, issued=issued, mesh_licence="CC-BY-4.0")
+
+# 10.3: L is collected as step 7.5 obtains the inputs, with its codes (RS-44, DEF-57, JS 57).
+R_SLICED = computed([ENTRY], SA_L, "Over a slice of two members.")
+E_KEYS = {RATES: RATES_ENV, CALC: CALC_ENV}
+for name, r, receipts, manifests, error, why in [
+    ("input-missing", R_CONVERT, {}, None, "E_INPUT_UNAVAILABLE", "The input receipt is not supplied."),
+    ("input-other-hash", R_CONVERT, {H_FX: text(R_FX_GBP)}, None, "E_INPUT_UNAVAILABLE",
+     "The receipt supplied for the input has another hash."),
+    ("input-bad-signature", R_CONVERT, {H_FX: text(R_FX | {"value": "1.0893"})}, None, "E_INPUT_INVALID",
+     "The input receipt supplied is not signature-valid."),
+    ("manifest-missing", R_SLICED, {canon.receipt_hash(x): text(x) for x in (F_M1, F_M2)}, None,
+     "E_INPUT_UNAVAILABLE", "The manifest of the slice entry is not supplied."),
+    ("member-missing", R_SLICED, {canon.receipt_hash(F_M1): text(F_M1)},
+     {ENTRY: text({"members": MEMBERS, "slice": FX_SLICE})}, "E_INPUT_UNAVAILABLE",
+     "A member receipt of the slice is not supplied."),
+    ("receipt-bad-signature", R_CONVERT | {"licence": "CC0-1.0"}, {H_FX: text(R_FX)}, None, "E_SIGNATURE",
+     "R itself is verified through step 6 first, with its own codes."),
+]:
+    extra = {"keys": E_KEYS, "receipts": receipts}
+    if manifests:
+        extra["manifests"] = manifests
+    add(f"invalid/entitlement-{name}", "entitlement", f"spec-0.5.0: {why}", text(r), error, **extra)
+
+
 def main():
     if OUT.exists():
         shutil.rmtree(OUT)

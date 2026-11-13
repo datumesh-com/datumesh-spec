@@ -81,9 +81,16 @@
     },
     "poll": {
       "type": "string",
-      "pattern": "^https://[a-z0-9-]+(\\.[a-z0-9-]+)+/([!-~]*/)?jobs/[0-9a-f]{32,64}$",
       "maxLength": 512,
-      "description": "For pending: the URL of the job, https://, a DNS name (no port, no userinfo), then a path ending /jobs/<job> with this envelope's job (checked by the procedure in 5.5). Whether the host is the one asked is the client's check."
+      "description": "For pending: the URL of the job, https://, a DNS name (no port, no userinfo), then a path ending /jobs/<job> with this envelope's job (checked by the procedure in 5.5). Whether the host is the one asked is the client's check. Since spec-0.5.0 also a loopback http URL, accepted only for a request naming an unrooted mesh (checked by the procedure).",
+      "anyOf": [
+        {
+          "pattern": "^https://[a-z0-9-]+(\\.[a-z0-9-]+)+/([!-~]*/)?jobs/[0-9a-f]{32,64}$"
+        },
+        {
+          "pattern": "^http://(127\\.0\\.0\\.1|\\[::1\\]|localhost)(:[1-9][0-9]{0,4})?/([!-~]*/)?jobs/[0-9a-f]{32,64}$"
+        }
+      ]
     },
     "request": {
       "type": "object",
@@ -129,9 +136,16 @@
     },
     "next": {
       "type": "string",
-      "pattern": "^https://[a-z0-9-]+(\\.[a-z0-9-]+)+/",
       "maxLength": 512,
-      "description": "spec-0.4.2, slice pages: the URL of the following page, on the mesh's host; absent on the last page."
+      "description": "spec-0.4.2, slice pages: the URL of the following page, on the mesh's host; absent on the last page. Since spec-0.5.0 also a loopback http URL, for a request naming an unrooted mesh.",
+      "anyOf": [
+        {
+          "pattern": "^https://[a-z0-9-]+(\\.[a-z0-9-]+)+/"
+        },
+        {
+          "pattern": "^http://(127\\.0\\.0\\.1|\\[::1\\]|localhost)(:[1-9][0-9]{0,4})?/"
+        }
+      ]
     },
     "error": {
       "enum": [

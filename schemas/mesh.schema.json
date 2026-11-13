@@ -141,8 +141,16 @@
   "$defs": {
     "url": {
       "type": "string",
-      "pattern": "^https://[!-~]+$",
-      "maxLength": 512
+      "anyOf": [
+        {
+          "pattern": "^https://[!-~]+$"
+        },
+        {
+          "pattern": "^http://(127\\.0\\.0\\.1|\\[::1\\]|localhost)(:[1-9][0-9]{0,4})?/[!-~]*$"
+        }
+      ],
+      "maxLength": 512,
+      "description": "An https URL on the host; or, since spec-0.5.0 and for an unrooted host only, a loopback http URL (SPEC.md 9.6). One origin for every URL of the document, and the host rules, are checked by the procedure, not here."
     }
   }
 }

@@ -1,0 +1,35 @@
+{
+  "id": "mesh/unrooted-loopback-ipv6",
+  "kind": "mesh",
+  "description": "spec-0.5.0: An unrooted host's mesh document on http://[::1], without a port.",
+  "valid": true,
+  "host": "local.invalid",
+  "env": {
+    "keys": {
+      "https": {
+        "status": 200,
+        "body": "{\n  \"host\": \"local.invalid\",\n  \"keys\": [\n    {\n      \"alg\": \"ed25519\",\n      \"id\": \"0e05f0539f8628b6\",\n      \"public\": \"7d13d1d5b350d11b6badf505e6f319ada2425ed324651acb8760f813d85d55eb\",\n      \"valid_from\": \"2020-01-01T00:00:00.000000Z\"\n    }\n  ],\n  \"proto\": \"datumesh/1\"\n}"
+      }
+    },
+    "mesh": {
+      "https": {
+        "status": 200,
+        "body": "{\n  \"bindings\": \"http://[::1]/bindings\",\n  \"endpoints\": {\n    \"blob\": \"http://[::1]/blob/{sha256}\",\n    \"cell\": \"http://[::1]/cell/{cell}\",\n    \"cells\": \"http://[::1]/cells\",\n    \"descriptor\": \"http://[::1]/descriptor/{hash}\",\n    \"explain\": \"http://[::1]/explain/{cell}\",\n    \"find\": \"http://[::1]/find\",\n    \"jobs\": \"http://[::1]/jobs/{job}\",\n    \"manifest\": \"http://[::1]/manifest/{slice_id}/{members_hash}\",\n    \"receipt\": \"http://[::1]/receipt/{hash}\",\n    \"slice\": \"http://[::1]/slice/{cell}\",\n    \"verify\": \"http://[::1]/verify\"\n  },\n  \"host\": \"local.invalid\",\n  \"proto\": \"datumesh/1\"\n}"
+      }
+    }
+  },
+  "bindings": "http://[::1]/bindings",
+  "endpoints": {
+    "blob": "http://[::1]/blob/{sha256}",
+    "cell": "http://[::1]/cell/{cell}",
+    "cells": "http://[::1]/cells",
+    "descriptor": "http://[::1]/descriptor/{hash}",
+    "explain": "http://[::1]/explain/{cell}",
+    "find": "http://[::1]/find",
+    "jobs": "http://[::1]/jobs/{job}",
+    "manifest": "http://[::1]/manifest/{slice_id}/{members_hash}",
+    "receipt": "http://[::1]/receipt/{hash}",
+    "slice": "http://[::1]/slice/{cell}",
+    "verify": "http://[::1]/verify"
+  }
+}

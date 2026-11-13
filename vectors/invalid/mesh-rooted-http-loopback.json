@@ -1,0 +1,22 @@
+{
+  "id": "invalid/mesh-rooted-http-loopback",
+  "kind": "mesh",
+  "description": "spec-0.5.0: A rooted host stays https-only: loopback http is for unrooted hosts.",
+  "valid": false,
+  "host": "mesh.example.org",
+  "env": {
+    "keys": {
+      "https": {
+        "status": 200,
+        "body": "{\n  \"host\": \"mesh.example.org\",\n  \"keys\": [\n    {\n      \"alg\": \"ed25519\",\n      \"id\": \"f7ec60a92abf4774\",\n      \"public\": \"ccd4faa3a0b8338bc796d3bfc30bda2f6e87d336a576b70dc9d47cbfe0e8830f\",\n      \"valid_from\": \"2020-01-01T00:00:00.000000Z\"\n    }\n  ],\n  \"proto\": \"datumesh/1\"\n}"
+      }
+    },
+    "mesh": {
+      "https": {
+        "status": 200,
+        "body": "{\n  \"bindings\": \"http://127.0.0.1/bindings\",\n  \"endpoints\": {\n    \"blob\": \"http://127.0.0.1/blob/{sha256}\",\n    \"cell\": \"http://127.0.0.1/cell/{cell}\",\n    \"cells\": \"http://127.0.0.1/cells\",\n    \"descriptor\": \"http://127.0.0.1/descriptor/{hash}\",\n    \"explain\": \"http://127.0.0.1/explain/{cell}\",\n    \"find\": \"http://127.0.0.1/find\",\n    \"jobs\": \"http://127.0.0.1/jobs/{job}\",\n    \"manifest\": \"http://127.0.0.1/manifest/{slice_id}/{members_hash}\",\n    \"receipt\": \"http://127.0.0.1/receipt/{hash}\",\n    \"slice\": \"http://127.0.0.1/slice/{cell}\",\n    \"verify\": \"http://127.0.0.1/verify\"\n  },\n  \"host\": \"mesh.example.org\",\n  \"proto\": \"datumesh/1\"\n}"
+      }
+    }
+  },
+  "error": "E_MESH_DOC"
+}

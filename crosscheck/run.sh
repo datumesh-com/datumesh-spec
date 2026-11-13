@@ -17,13 +17,15 @@
 #   libraries of spec-0.4.1: the spec-0.4.1 vectors only, and the spec-0.4.2 set (pins, trust
 #   computed, slice pages, batches) by the reference alone, twice. LIBS=0.4.2 checks libraries of
 #   spec-0.4.2: the spec-0.4.2 vectors only, and the spec-0.4.3 set (licence inheritance, key
-#   document declarations, entitlement) by the reference alone, twice. LIBS=0.4.3 (the default)
-#   runs every set through every library.
+#   document declarations, entitlement) by the reference alone, twice. LIBS=0.4.3 checks libraries
+#   of spec-0.4.3: the spec-0.4.3 vectors only, and the spec-0.5.0 set (loopback URLs, the
+#   inheritance rule's arguments, collecting L) by the reference alone, twice. LIBS=0.5.0 (the
+#   default) runs every set through every library.
 #   FORMULA_RUNNER="<command reading vector lines on stdin>" adds an implementation of the formula
 #   dialect (the Rust datumesh-formula crate) to the formula set; without it the reference runs
 #   that set twice, which checks its determinism.
 set -eu
-LIBS=${LIBS:-0.4.3}
+LIBS=${LIBS:-0.5.0}
 N=${1:-1000}
 SEED=${2:-7}
 SPEC=$(cd "$(dirname "$0")/.." && pwd)
@@ -48,6 +50,7 @@ run_py "python generate.py /spec $N $SEED > cases.jsonl && python uri_cases.py /
   && python generate_041.py /spec $N $SEED > spec041.jsonl \
   && python generate_042.py /spec $N $SEED > spec042.jsonl \
   && python generate_043.py /spec $N $SEED > spec043.jsonl \
+  && python generate_050.py /spec $N $SEED > spec050.jsonl \
   && python -c 'import json,pathlib,sys; [print(json.dumps(json.loads(p.read_text()))) for p in sorted(pathlib.Path(sys.argv[1]).rglob(\"*.json\"))]' /spec/vectors > vectors.jsonl"
 if [ "$LIBS" = "0.3" ]; then  # only the spec-0.3.0 vectors, which those libraries implement
   git -C "$SPEC" ls-tree -r --name-only 3bac3d4 -- vectors | sed 's#^vectors/##; s#\.json$##' > "$WORK/ids-0.3.0.txt"
@@ -65,14 +68,19 @@ elif [ "$LIBS" = "0.4.2" ]; then  # only the spec-0.4.2 vectors (fc870ab, tagged
   git -C "$SPEC" ls-tree -r --name-only fc870ab -- vectors | sed 's#^vectors/##; s#\.json$##' > "$WORK/ids-0.4.2.txt"
   run_py "python -c 'import json,sys; ids=set(open(\"ids-0.4.2.txt\").read().split()); [print(l, end=\"\") for l in open(\"vectors.jsonl\") if json.loads(l)[\"id\"] in ids]' > v.jsonl && mv v.jsonl vectors.jsonl"
   SETS="vectors cases cases-02 envelopes uri-cases slices spec041 spec042"
-else
+elif [ "$LIBS" = "0.4.3" ]; then  # only the spec-0.4.3 vectors (99123b2, tagged spec-0.4.3)
+  git -C "$SPEC" ls-tree -r --name-only 99123b2 -- vectors | sed 's#^vectors/##; s#\.json$##' > "$WORK/ids-0.4.3.txt"
+  run_py "python -c 'import json,sys; ids=set(open(\"ids-0.4.3.txt\").read().split()); [print(l, end=\"\") for l in open(\"vectors.jsonl\") if json.loads(l)[\"id\"] in ids]' > v.jsonl && mv v.jsonl vectors.jsonl"
   SETS="vectors cases cases-02 envelopes uri-cases slices spec041 spec042 spec043"
+else
+  SETS="vectors cases cases-02 envelopes uri-cases slices spec041 spec042 spec043 spec050"
 fi
 run_py "python canon_runner.py /spec < slices.jsonl > slices.ref.jsonl && python canon_runner.py /spec < formula.jsonl > formula.ref.jsonl \
   && python canon_runner.py /spec < formula.jsonl > formula.ref2.jsonl \
   && python canon_runner.py /spec < spec041.jsonl > spec041.ref.jsonl && python canon_runner.py /spec < spec041.jsonl > spec041.ref2.jsonl \
   && python canon_runner.py /spec < spec042.jsonl > spec042.ref.jsonl && python canon_runner.py /spec < spec042.jsonl > spec042.ref2.jsonl \
-  && python canon_runner.py /spec < spec043.jsonl > spec043.ref.jsonl && python canon_runner.py /spec < spec043.jsonl > spec043.ref2.jsonl"
+  && python canon_runner.py /spec < spec043.jsonl > spec043.ref.jsonl && python canon_runner.py /spec < spec043.jsonl > spec043.ref2.jsonl \
+  && python canon_runner.py /spec < spec050.jsonl > spec050.ref.jsonl && python canon_runner.py /spec < spec050.jsonl > spec050.ref2.jsonl"
 run_py "for f in $SETS; do python canon_runner.py /spec < \$f.jsonl > \$f.ref.jsonl; done"
 docker run --rm -v "$WORK":/w -w /w python:3.10-slim sh -c \
   "pip -q install pynacl==1.5.0 2>/dev/null; for f in $SETS; do PYTHONPATH=py/src python py/tools/run_vectors.py < \$f.jsonl > \$f.py.jsonl; done"
@@ -85,8 +93,9 @@ docker run --rm -v "$WORK":/w -w /w/rs rust:1.99 sh -c \
 COMPARED="vectors cases cases-02 envelopes"
 [ "$LIBS" = "0.3" ] || COMPARED="$COMPARED slices"
 [ "$LIBS" = "0.3" ] || [ "$LIBS" = "0.4" ] || COMPARED="$COMPARED spec041"
-[ "$LIBS" = "0.4.2" ] || [ "$LIBS" = "0.4.3" ] && COMPARED="$COMPARED spec042"
-[ "$LIBS" = "0.4.3" ] && COMPARED="$COMPARED spec043"
+[ "$LIBS" = "0.4.2" ] || [ "$LIBS" = "0.4.3" ] || [ "$LIBS" = "0.5.0" ] && COMPARED="$COMPARED spec042"
+[ "$LIBS" = "0.4.3" ] || [ "$LIBS" = "0.5.0" ] && COMPARED="$COMPARED spec043"
+[ "$LIBS" = "0.5.0" ] && COMPARED="$COMPARED spec050"
 for f in $COMPARED; do
   echo "== $f"
   run_py "python compare.py python=$f.py.jsonl javascript=$f.js.jsonl javascript-cjs=$f.cjs.jsonl rust=$f.rs.jsonl reference=$f.ref.jsonl"
@@ -107,11 +116,15 @@ if [ "$LIBS" = "0.3" ] || [ "$LIBS" = "0.4" ]; then
   echo "== spec041 (reference only)"
   run_py "python compare.py reference=spec041.ref.jsonl reference-again=spec041.ref2.jsonl"
 fi
-if [ "$LIBS" != "0.4.2" ] && [ "$LIBS" != "0.4.3" ]; then
+if [ "$LIBS" != "0.4.2" ] && [ "$LIBS" != "0.4.3" ] && [ "$LIBS" != "0.5.0" ]; then
   echo "== spec042 (reference only)"
   run_py "python compare.py reference=spec042.ref.jsonl reference-again=spec042.ref2.jsonl"
 fi
-if [ "$LIBS" != "0.4.3" ]; then
+if [ "$LIBS" != "0.4.3" ] && [ "$LIBS" != "0.5.0" ]; then
   echo "== spec043 (reference only)"
   run_py "python compare.py reference=spec043.ref.jsonl reference-again=spec043.ref2.jsonl"
+fi
+if [ "$LIBS" != "0.5.0" ]; then
+  echo "== spec050 (reference only)"
+  run_py "python compare.py reference=spec050.ref.jsonl reference-again=spec050.ref2.jsonl"
 fi

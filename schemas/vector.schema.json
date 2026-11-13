@@ -488,14 +488,14 @@
     },
     "bindings": {
       "type": "string",
-      "pattern": "^https://",
-      "description": "spec-0.4.1, mesh vectors: the bindings URL."
+      "pattern": "^https?://",
+      "description": "spec-0.4.1, mesh vectors: the bindings URL. Since spec-0.5.0 a loopback http URL for an unrooted host."
     },
     "endpoints": {
       "type": "object",
       "additionalProperties": {
         "type": "string",
-        "pattern": "^https://"
+        "pattern": "^https?://"
       },
       "description": "spec-0.4.1, mesh vectors: the known endpoint templates; unknown members are dropped."
     },
@@ -514,9 +514,9 @@
     "licences": {
       "type": "array",
       "items": {
-        "$ref": "defs.schema.json#/$defs/licence"
+        "type": "string"
       },
-      "description": "spec-0.4.3, licence vectors: the licences of the input receipts, slice members included; repeats allowed."
+      "description": "spec-0.4.3, licence vectors: the licences of the input receipts, slice members included; repeats allowed. Since spec-0.5.0 an invalid vector may hold a string that is not a licence (8.5)."
     },
     "declarations": {
       "description": "spec-0.4.3: for licence vectors, the function's publisher's declarations (an input; absent or {} when there are none, {} allowed here only); for keys vectors, the document's declarations (an output).",
@@ -531,16 +531,16 @@
       ]
     },
     "fn": {
-      "$ref": "defs.schema.json#/$defs/functionName",
-      "description": "spec-0.4.3, licence vectors: the computed function's full name."
+      "type": "string",
+      "description": "spec-0.4.3, licence vectors: the computed function's full name. A full function name, except in invalid vectors (spec-0.5.0)."
     },
     "issued": {
-      "$ref": "defs.schema.json#/$defs/instant",
-      "description": "spec-0.4.3, licence vectors: the receipt's issued."
+      "type": "string",
+      "description": "spec-0.4.3, licence vectors: the receipt's issued. An instant, except in invalid vectors (spec-0.5.0)."
     },
     "mesh_licence": {
-      "$ref": "defs.schema.json#/$defs/licence",
-      "description": "spec-0.4.3, licence vectors: the mesh's own licence, for a cell with no input receipt."
+      "type": "string",
+      "description": "spec-0.4.3, licence vectors: the mesh's own licence, for a cell with no input receipt. A licence, except in invalid vectors (spec-0.5.0)."
     },
     "licence": {
       "description": "spec-0.4.3, licence vectors: the result's licence (8.5), or null when the mesh may not compute the cell (an unlicensed answer).",

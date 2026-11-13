@@ -1,0 +1,14 @@
+{
+  "id": "invalid/licence-bad-issued",
+  "kind": "licence",
+  "description": "spec-0.5.0: issued is an instant (3.3).",
+  "valid": false,
+  "licences": [
+    "MIT"
+  ],
+  "declarations": {},
+  "fn": "calc.example.net/convert",
+  "issued": "2024-03-16",
+  "mesh_licence": "CC-BY-4.0",
+  "error": "E_CANON_INSTANT"
+}

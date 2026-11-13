@@ -1,0 +1,35 @@
+{
+  "id": "mesh/unrooted-loopback-port",
+  "kind": "mesh",
+  "description": "spec-0.5.0: An unrooted host's mesh document on http://127.0.0.1 with a port: a loopback address, allowed for an unrooted host only. Its key document is supplied out of band (2.5), as this env does.",
+  "valid": true,
+  "host": "local.invalid",
+  "env": {
+    "keys": {
+      "https": {
+        "status": 200,
+        "body": "{\n  \"host\": \"local.invalid\",\n  \"keys\": [\n    {\n      \"alg\": \"ed25519\",\n      \"id\": \"0e05f0539f8628b6\",\n      \"public\": \"7d13d1d5b350d11b6badf505e6f319ada2425ed324651acb8760f813d85d55eb\",\n      \"valid_from\": \"2020-01-01T00:00:00.000000Z\"\n    }\n  ],\n  \"proto\": \"datumesh/1\"\n}"
+      }
+    },
+    "mesh": {
+      "https": {
+        "status": 200,
+        "body": "{\n  \"bindings\": \"http://127.0.0.1:8471/bindings\",\n  \"endpoints\": {\n    \"blob\": \"http://127.0.0.1:8471/blob/{sha256}\",\n    \"cell\": \"http://127.0.0.1:8471/cell/{cell}\",\n    \"cells\": \"http://127.0.0.1:8471/cells\",\n    \"descriptor\": \"http://127.0.0.1:8471/descriptor/{hash}\",\n    \"explain\": \"http://127.0.0.1:8471/explain/{cell}\",\n    \"find\": \"http://127.0.0.1:8471/find\",\n    \"jobs\": \"http://127.0.0.1:8471/jobs/{job}\",\n    \"manifest\": \"http://127.0.0.1:8471/manifest/{slice_id}/{members_hash}\",\n    \"receipt\": \"http://127.0.0.1:8471/receipt/{hash}\",\n    \"slice\": \"http://127.0.0.1:8471/slice/{cell}\",\n    \"verify\": \"http://127.0.0.1:8471/verify\"\n  },\n  \"host\": \"local.invalid\",\n  \"proto\": \"datumesh/1\"\n}"
+      }
+    }
+  },
+  "bindings": "http://127.0.0.1:8471/bindings",
+  "endpoints": {
+    "blob": "http://127.0.0.1:8471/blob/{sha256}",
+    "cell": "http://127.0.0.1:8471/cell/{cell}",
+    "cells": "http://127.0.0.1:8471/cells",
+    "descriptor": "http://127.0.0.1:8471/descriptor/{hash}",
+    "explain": "http://127.0.0.1:8471/explain/{cell}",
+    "find": "http://127.0.0.1:8471/find",
+    "jobs": "http://127.0.0.1:8471/jobs/{job}",
+    "manifest": "http://127.0.0.1:8471/manifest/{slice_id}/{members_hash}",
+    "receipt": "http://127.0.0.1:8471/receipt/{hash}",
+    "slice": "http://127.0.0.1:8471/slice/{cell}",
+    "verify": "http://127.0.0.1:8471/verify"
+  }
+}
