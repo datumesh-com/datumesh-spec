@@ -2069,6 +2069,32 @@ for name, r, receipts, manifests, error, why in [
     add(f"invalid/entitlement-{name}", "entitlement", f"spec-0.5.0: {why}", text(r), error, **extra)
 
 
+# spec-0.5.0: define (2.5): a rooted function may not read an unrooted one (E_UNROOTED_INPUT).
+def define_desc(*inputs):
+    return {"code": {"body": "", "lang": "expr"}, "inputs": list(inputs),
+            "signature": {"args": {}, "returns": {"type": "number", "unit": "1"}}}
+
+
+for name, fn, desc, error, why in [
+    ("define/rooted-reads-rooted", "calc.example.net/convert", CONVERT, None, "A rooted function reading a rooted one."),
+    ("define/unrooted-reads-unrooted", "local.invalid/notes/total", define_desc("local.invalid/notes/fx"), None,
+     "An unrooted function reading an unrooted one."),
+    ("define/unrooted-reads-rooted", "local.invalid/convert", define_desc("rates.example.org/fx_rate"), None,
+     "An unrooted function may read a rooted one."),
+    ("invalid/define-rooted-reads-unrooted", "calc.example.net/total", define_desc("local.invalid/fx"),
+     "E_UNROOTED_INPUT", "A rooted function may not read an unrooted one (2.5)."),
+    ("invalid/define-rooted-reads-unrooted-path", "calc.example.net/total",
+     define_desc("agent-7.local.invalid/notes/fx", "rates.example.org/fx_rate"), "E_UNROOTED_INPUT",
+     "Any host under .invalid is unrooted, with path segments too."),
+    ("invalid/define-bad-name", "total", define_desc("rates.example.org/fx_rate"), "E_CANON_NAME",
+     "The name defined under is a full function name (2.3), checked first."),
+    ("invalid/define-bad-descriptor-first", "calc.example.net/total",
+     define_desc("z.example/b", "local.invalid/a"), "E_CANON_SET",
+     "The descriptor is checked (section 7) before the rule of 2.5: unsorted inputs."),
+]:
+    add(name, "define", f"spec-0.5.0: {why}", text(desc), error, name=fn)
+
+
 def main():
     if OUT.exists():
         shutil.rmtree(OUT)

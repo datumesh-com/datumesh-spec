@@ -37,7 +37,8 @@
         "call",
         "batch",
         "licence",
-        "entitlement"
+        "entitlement",
+        "define"
       ]
     },
     "description": {
@@ -583,6 +584,10 @@
         "type": "string"
       },
       "description": "spec-0.4.3, entitlement vectors: slice entry to manifest JSON text."
+    },
+    "name": {
+      "type": "string",
+      "description": "spec-0.5.0, define vectors: the full name the descriptor is defined under (a full function name, except in invalid vectors)."
     }
   },
   "oneOf": [

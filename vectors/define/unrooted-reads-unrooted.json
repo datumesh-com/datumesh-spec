@@ -1,0 +1,10 @@
+{
+  "id": "define/unrooted-reads-unrooted",
+  "kind": "define",
+  "description": "spec-0.5.0: An unrooted function reading an unrooted one.",
+  "valid": true,
+  "input": "{\n  \"signature\": {\n    \"returns\": {\n      \"unit\": \"1\",\n      \"type\": \"number\"\n    },\n    \"args\": {}\n  },\n  \"inputs\": [\n    \"local.invalid/notes/fx\"\n  ],\n  \"code\": {\n    \"lang\": \"expr\",\n    \"body\": \"\"\n  }\n}",
+  "name": "local.invalid/notes/total",
+  "canonical": "{\"code\":{\"body\":\"\",\"lang\":\"expr\"},\"inputs\":[\"local.invalid/notes/fx\"],\"signature\":{\"args\":{},\"returns\":{\"type\":\"number\",\"unit\":\"1\"}}}",
+  "sha256": "93b6b4cde2dfe3c878c1d80920165acc111031c8e6e1f157e63bf17124631ae2"
+}

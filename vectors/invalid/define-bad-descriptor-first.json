@@ -1,0 +1,9 @@
+{
+  "id": "invalid/define-bad-descriptor-first",
+  "kind": "define",
+  "description": "spec-0.5.0: The descriptor is checked (section 7) before the rule of 2.5: unsorted inputs.",
+  "valid": false,
+  "input": "{\n  \"signature\": {\n    \"returns\": {\n      \"unit\": \"1\",\n      \"type\": \"number\"\n    },\n    \"args\": {}\n  },\n  \"inputs\": [\n    \"z.example/b\",\n    \"local.invalid/a\"\n  ],\n  \"code\": {\n    \"lang\": \"expr\",\n    \"body\": \"\"\n  }\n}",
+  "name": "calc.example.net/total",
+  "error": "E_CANON_SET"
+}

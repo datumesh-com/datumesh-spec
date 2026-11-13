@@ -87,7 +87,11 @@ ERROR_CODES = (
     "E_SLICE_AT_CELL",
     "E_NAME_UNBOUND",
     "E_FOREIGN_UNAVAILABLE",  # spec-0.4.3: an envelope and resolution code, never a verification result
+    "E_UNROOTED_INPUT",  # spec-0.5.0: define's (2.5)
+    "E_NAMESPACE_SUSPENDED",  # spec-0.5.0: a write refusal (9.9)
 )
+# spec-0.5.0: define and write codes, never verification results and never in a read envelope.
+DEFINE_WRITE_CODES = ("E_UNROOTED_INPUT", "E_NAMESPACE_SUSPENDED")
 
 # Section 4.5 of SPEC.md.
 LIMITS = {
@@ -1399,6 +1403,21 @@ def resolve_key_document(host, env):
 # Unrooted namespaces, licence inheritance and entitlement (SPEC.md 2.5, 8.5, 10.3; spec-0.4.3).
 
 
+def check_define(name, desc):
+    """What a mesh's define checks of 7 and 2.5 (spec-0.5.0; the define vector kind): the full name,
+    then the descriptor (section 7), then that a function under a rooted namespace reads no function
+    under an unrooted one (E_UNROOTED_INPUT, at the first such input). Formula descriptors have the
+    define-time rules of 15.6 too, which the formula kind tests."""
+    check_function_name(name, "$.name")
+    check_function(desc, "$")
+    if not is_unrooted(name):
+        for i, read in enumerate(desc["inputs"]):
+            if is_unrooted(read):
+                fail("E_UNROOTED_INPUT", f"a rooted function may not read the unrooted {read}", f"$.inputs[{i}]")
+    canonical = jcs(desc)
+    return {"canonical": canonical.decode(), "sha256": sha256_hex(canonical)}
+
+
 def is_unrooted(namespace):
     """A namespace whose host is under .invalid (SPEC.md 2.5): it never resolves.
 
@@ -1908,7 +1927,8 @@ def _check_envelope_members(env, members=None):
         elif env["outcome"] == "not_covered":
             allowed = ("E_NAME_UNBOUND",)
         else:
-            allowed = tuple(c for c in ERROR_CODES if c != "E_ENVELOPE" and c not in REQUEST_CODES)
+            allowed = tuple(c for c in ERROR_CODES
+                            if c != "E_ENVELOPE" and c not in REQUEST_CODES and c not in DEFINE_WRITE_CODES)
         if env["error"] not in allowed:
             fail("E_ENVELOPE", f"{env['error']!r} is not a code this outcome can carry", "$.error")
         if "fault" in env:
@@ -2425,6 +2445,8 @@ def run_vector(vec):
             if doc["declarations"]:  # spec-0.4.3
                 out["declarations"] = doc["declarations"]
             return out
+        if kind == "define":  # spec-0.5.0
+            return check_define(vec["name"], parse_json(vector_input(vec)))
         if kind == "licence":  # spec-0.4.3: licence inheritance (8.5)
             return inherit_licence(vec["licences"], vec.get("declarations", {}), vec["fn"], vec["issued"],
                                    vec["mesh_licence"])
