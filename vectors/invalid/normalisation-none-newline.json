@@ -1,0 +1,9 @@
+{
+  "id": "invalid/normalisation-none-newline",
+  "kind": "normalisation",
+  "description": "spec-0.5.0: none: A line feed is a control character: refused by 3.5. (16.4; JS-2, RS-d, PY-5)",
+  "valid": false,
+  "rule": "none",
+  "text": "a\nb",
+  "error": "E_CANON_STRING"
+}

@@ -1,0 +1,9 @@
+{
+  "id": "invalid/normalisation-nfc-strict-nbsp",
+  "kind": "normalisation",
+  "description": "spec-0.5.0: nfc_strict: A White_Space character other than U+0020 (here U+00A0). (16.4; JS-2, RS-d, PY-5)",
+  "valid": false,
+  "rule": "nfc_strict",
+  "text": "New York",
+  "error": "E_KEY_NORMALISATION"
+}

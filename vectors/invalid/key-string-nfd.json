@@ -1,0 +1,8 @@
+{
+  "id": "invalid/key-string-nfd",
+  "kind": "key",
+  "description": "spec-0.5.0: A string value that is not NFC. (16.5; PY-4, RS-f)",
+  "valid": false,
+  "input": "a.example.org/k(s:\"é\")",
+  "error": "E_KEY_ENCODING"
+}

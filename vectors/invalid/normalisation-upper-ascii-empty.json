@@ -1,0 +1,9 @@
+{
+  "id": "invalid/normalisation-upper-ascii-empty",
+  "kind": "normalisation",
+  "description": "spec-0.5.0: upper_ascii: Every rule but none rejects the empty string. (16.4; JS-2, RS-d, PY-5)",
+  "valid": false,
+  "rule": "upper_ascii",
+  "text": "",
+  "error": "E_KEY_NORMALISATION"
+}

@@ -1,0 +1,9 @@
+{
+  "id": "invalid/normalisation-none-tab",
+  "kind": "normalisation",
+  "description": "spec-0.5.0: none: A tab is a control character: refused by 3.5 under every rule. (16.4; JS-2, RS-d, PY-5)",
+  "valid": false,
+  "rule": "none",
+  "text": "a\tb",
+  "error": "E_CANON_STRING"
+}

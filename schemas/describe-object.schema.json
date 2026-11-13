@@ -23,6 +23,7 @@
     },
     "methods": {
       "type": "array",
+      "uniqueItems": true,
       "items": {
         "$ref": "defs.schema.json#/$defs/name"
       }
@@ -57,6 +58,7 @@
     "same_as": {
       "type": "array",
       "minItems": 1,
+      "uniqueItems": true,
       "items": {
         "type": "string"
       }

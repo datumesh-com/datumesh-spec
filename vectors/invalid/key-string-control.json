@@ -1,0 +1,8 @@
+{
+  "id": "invalid/key-string-control",
+  "kind": "key",
+  "description": "spec-0.5.0: A string value with a control character. (16.5; PY-4, RS-f)",
+  "valid": false,
+  "input": "a.example.org/k(s:\"a\tb\")",
+  "error": "E_KEY_ENCODING"
+}

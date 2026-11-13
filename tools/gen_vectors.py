@@ -33,7 +33,7 @@ OUTPUT_FIELDS = ("object", "canonical", "sha256", "https", "key_id", "key_ids", 
                  # spec-0.4.3: key document declarations, licence inheritance, entitlement
                  "declarations", "licence", "reason", "entitled",
                  # spec-0.5.0: classes
-                 "decoded", "flattened", "class_hash")
+                 "decoded", "flattened", "class_hash", "object_id")
 
 
 # Vectors from spec-0.1.1 whose bytes changed in spec-0.2.0, and why. tests/test_migration.py
@@ -2555,6 +2555,145 @@ add_envelope("envelope/not-covered-namespace-suspended", "spec-0.5.0: the mesh w
 add_envelope("invalid/envelope-namespace-suspended-in-error", "spec-0.5.0: E_NAMESPACE_SUSPENDED is never the code "
              "of an error envelope: suspension is not the mesh's failure.",
              {"error": "E_NAMESPACE_SUSPENDED", "outcome": "error"}, 500, "E_ENVELOPE")
+
+
+# spec-0.5.0: clarifications from the verifier libraries (BRIEF-spec-0.5.0-clarifications).
+# Points 1 and 2 (5.5): the codes an error envelope may not carry; the key codes are bad_request's.
+add_envelope("envelope/bad-request-key-normalisation", "spec-0.5.0: a call's string not canonical under its key's or "
+             "its argument's normalisation is a bad_request (5.5, 5.8; RS-b, PY-1).",
+             {"error": "E_KEY_NORMALISATION", "outcome": "bad_request"}, 400)
+add_envelope("envelope/bad-request-key-encoding", "spec-0.5.0: a malformed key encoding in a call's class-typed "
+             "position is a bad_request (5.5, 5.8, 16.5; RS-b, PY-1).",
+             {"error": "E_KEY_ENCODING", "outcome": "bad_request"}, 400)
+for name, c, why in [
+    ("key-normalisation-in-error", "E_KEY_NORMALISATION", "E_KEY_NORMALISATION is a request code: bad_request, never "
+     "error."),
+    ("key-encoding-in-error", "E_KEY_ENCODING", "E_KEY_ENCODING is a request code: bad_request, never error."),
+    ("class-code-in-error", "E_CLASS_METHOD", "The eight class codes are define's: no error envelope carries them."),
+    ("describe-in-error", "E_DESCRIBE", "E_DESCRIBE is a client's code, like E_ENVELOPE: no error envelope carries it."),
+]:
+    add_envelope(f"invalid/envelope-{name}", f"spec-0.5.0: {why} (5.5; JS-1, RS-a, PY-2)", {"error": c, "outcome": "error"},
+                 500, "E_ENVELOPE")
+
+# Point 3 (16.4, 3.5): a key value is first a string value; none is any such string, the empty one included.
+for name, rule, value, error, why in [
+    ("none-empty", "none", "", None, "none accepts any string valid by 3.5, the empty string included."),
+    ("none-tab", "none", "a\tb", "E_CANON_STRING", "A tab is a control character: refused by 3.5 under every rule."),
+    ("none-newline", "none", "a\nb", "E_CANON_STRING", "A line feed is a control character: refused by 3.5."),
+    ("none-nul", "none", "a\x00b", "E_CANON_STRING", "NUL is a control character: refused by 3.5."),
+    ("none-nfd", "none", unicodedata.normalize("NFD", "Zürich"), "E_CANON_STRING",
+     "A string that is not NFC is refused by 3.5, never normalised, under none too."),
+    ("nfc-strict-nbsp", "nfc_strict", "New York", "E_KEY_NORMALISATION",
+     "A White_Space character other than U+0020 (here U+00A0)."),
+    ("upper-ascii-empty", "upper_ascii", "", "E_KEY_NORMALISATION", "Every rule but none rejects the empty string."),
+]:
+    vid = f"normalisation/{name}" if error is None else f"invalid/normalisation-{name}"
+    add(vid, "normalisation", f"spec-0.5.0: {rule}: {why} (16.4; JS-2, RS-d, PY-5)", error=error, rule=rule, text=value)
+
+# Point 4 (7): an unknown rule and "none" are E_SCHEMA on a function argument, whatever its type (the
+# structure is checked first); an empty classes is E_CANON_SET.
+for name, args, order, returns, error, why in [
+    ("key-normalisation-unknown", dict(_KN, isin=dict(_KN["isin"], key_normalisation="lowercase")), ["isin", "date"],
+     {"type": "number", "unit": "1"}, "E_SCHEMA", "An unknown rule on a function argument is E_SCHEMA (E_CLASS_MEMBER "
+     "only in a class key)."),
+    ("key-normalisation-none-number", dict(_KN, n={"key_normalisation": "none", "type": "number", "unit": "1",
+                                                   "valid": False}), ["isin", "date", "n"],
+     {"type": "number", "unit": "1"}, "E_SCHEMA", "\"none\" on a number argument: the structure is checked first, so "
+     "E_SCHEMA, not E_CANON_TYPE."),
+    ("classes-empty", {"pair": {"classes": [], "type": "string", "valid": False}}, ["pair"], "string", "E_CANON_SET",
+     "An empty classes is E_CANON_SET."),
+    ("returns-classes-empty", {"s": {"type": "string", "valid": False}}, ["s"], {"classes": [], "type": "string"},
+     "E_CANON_SET", "An empty returned classes is E_CANON_SET."),
+]:
+    add(f"invalid/function-{name}", "function", f"spec-0.5.0: {why} (7; JS-3, RS-g)",
+        text({"code": {"body": "", "lang": "stored"}, "inputs": [],
+              "signature": {"args": args, "order": order, "returns": returns}}), error)
+
+# Point 5 (16.8): the describe check, step by step.
+CW_EUR, CW_USD = 'iso.example.org/currency(code:"EUR")', 'iso.example.org/currency(code:"USD")'
+CW_HELD = {CW.FX: CW.SCENARIO["classes"][CW.FX], CW.VERSE: CW.SCENARIO["classes"][CW.VERSE],
+           CW.CCY_PAIR: CW.SCENARIO["classes"][CW.CCY_PAIR]}
+CW_FX_FUNCS = [CW.SCENARIO["functions"][f"{CW.FX}/{m}"] for m in sorted(CW.SCENARIO["classes"][CW.FX]["methods"])]
+CW_PASSAGES = ['bible.example.org/passage(osis:"Gen.1.1")', 'bible.example.org/passage(osis:"Gen.1.2")']
+CW_VERSE_KEYS = {"book": CW.S("Gen"), "chapter": CW.N("1"), "corpus": CW.S("tanakh"), "verse": CW.N("1")}
+
+
+def cw_method(answer, m, **change):
+    return dict(answer, methods=dict(answer["methods"], **{m: dict(answer["methods"][m], **change)}))
+
+
+def cw_object(cls, keys, **kw):
+    return canon.describe_object(cls, CW.SCENARIO["classes"][cls], keys, **kw)
+
+
+CW_PASSAGE_OBJ = canon.object_of("bible.example.org/passage", "cd" * 32, {"osis": CW.S("Gen.1.1")})
+CW_PASSAGE_ID = canon.object_id(CW_PASSAGE_OBJ)
+CW_NOT_HELD = {"call": 'bible.example.org/passage(osis: "Gen.1.1")', "kind": "object", "methods": ["text"],
+               "object": CW_PASSAGE_OBJ, "object_id": CW_PASSAGE_ID, "short_id": CW_PASSAGE_ID[:12]}
+for name, doc, error, why, extra in [
+    ("invalid/describe-not-json", '{"kind": "object",', "E_PARSE_JSON",
+     "Step 1: the answer parses as strict JSON, with 6.1's codes, not E_DESCRIBE.", {}),
+    ("invalid/describe-duplicate-member", '{"kind": "class", "kind": "class"}', "E_PARSE_DUPLICATE_KEY",
+     "Step 1: a member repeated is 6.1's E_PARSE_DUPLICATE_KEY.", {}),
+    ("invalid/describe-class-not-string", dict(CW_CLASS_ANSWER, **{"class": True}), "E_DESCRIBE",
+     "Step 2: class is a class name, a string (RS-j).", {}),
+    ("invalid/describe-description-empty", cw_method(CW_CLASS_ANSWER, "rate", description=""), "E_DESCRIBE",
+     "Step 2: a description is 1 to 1024 bytes.", {}),
+    ("invalid/describe-same-as-unsorted", cw_object(CW.VERSE, CW_VERSE_KEYS, same_as=CW_PASSAGES[::-1]), "E_DESCRIBE",
+     "Step 2: same_as is ascending and unique.", {}),
+    ("invalid/describe-same-as-duplicate", cw_object(CW.VERSE, CW_VERSE_KEYS, same_as=CW_PASSAGES[:1] * 2),
+     "E_DESCRIBE", "Step 2: same_as is ascending and unique: no key twice.", {}),
+    ("describe/object-not-held", CW_NOT_HELD, None, "Step 4: a class not held (found by class_hash): only the answer's "
+     "internal consistency is checked, its ids, short id and call form.", {}),
+    ("invalid/describe-object-not-held-call", dict(CW_NOT_HELD, call='bible.example.org/passage(osis: Gen.1.1)'),
+     "E_DESCRIBE", "Step 3: with no class held, the call form is still checked.", {}),
+    ("invalid/describe-object-key-names", cw_object(CW.VERSE, {k: v for k, v in CW_VERSE_KEYS.items() if k != "verse"}),
+     "E_DESCRIBE", "Step 5: the object's key names are the held class's.", {}),
+    ("invalid/describe-object-key-type", cw_object(CW.VERSE, dict(CW_VERSE_KEYS, chapter=CW.S("1"))), "E_DESCRIBE",
+     "Step 5: each key value has its declared type (chapter is a number).", {}),
+    ("invalid/describe-object-key-normalisation", cw_object(CW.FX, {"base": CW.S("eur"), "quote": CW.S("USD")}),
+     "E_DESCRIBE", "Step 5: a string key value is canonical under its key's normalisation (upper_ascii).", {}),
+    ("describe/object-class-typed-key", cw_object(CW.CCY_PAIR, {"base": CW.S(CW_EUR), "quote": CW.S(CW_USD)}), None,
+     "A class-typed key in the object JSON is the typed string scalar of its key encoding; in the call form, the "
+     "quoted encoding (16.5).", {}),
+    ("describe/class-functions", CW_CLASS_ANSWER, None, "Step 6: with the method functions held, each method's args "
+     "(after the keys) and returns are its function's.", {"functions": CW_FX_FUNCS}),
+    ("invalid/describe-class-args", cw_method(CW_CLASS_ANSWER, "rate", args={}), "E_DESCRIBE",
+     "Step 6: rate's args are not its function's arguments after the keys.", {"functions": CW_FX_FUNCS}),
+    ("invalid/describe-class-returns", cw_method(CW_CLASS_ANSWER, "rate", returns={"type": "number", "unit": "1"}),
+     "E_DESCRIBE", "Step 6: rate's returns is not its function's.", {"functions": CW_FX_FUNCS}),
+    ("describe/class-args-unchecked", cw_method(CW_CLASS_ANSWER, "rate", args={}), None,
+     "Step 6 needs the method functions: without them args and returns are not checked.", {}),
+]:
+    add(name, "describe", f"spec-0.5.0: {why} (16.8; JS-4, RS-f, PY-6)", doc if isinstance(doc, str) else text(doc),
+        error, classes=CW_HELD, **extra)
+
+# Points 6 and 7 (16.5): the object of a nested key; limits and codes inside an encoding.
+add("key/nested-object", "key", "spec-0.5.0: a key with class-typed keys, given its class hash: the object holds each "
+    "class-typed key as the typed string scalar of its encoding, and its object id follows (16.5; JS-5, RS-e, PY-3).",
+    f"{CW.CCY_PAIR}(base:{CW_EUR},quote:{CW_USD})", class_hash=canon.class_hash(CW.SCENARIO["classes"][CW.CCY_PAIR]))
+_AT = 'a.example.org/k(s:"")'
+for name, enc, error, why in [
+    ("at-limit", 'a.example.org/k(s:"' + "x" * (1024 - len(_AT)) + '")', None,
+     "An encoding of exactly 1024 bytes: one string value at its limit."),
+    ("too-long", 'a.example.org/k(s:"' + "x" * (1025 - len(_AT)) + '")', "E_KEY_ENCODING",
+     "An encoding of 1025 bytes: one string value is at most 1024 bytes (3.5)."),
+    ("date-calendar", "a.example.org/k(d:2024-02-30)", "E_KEY_ENCODING", "A date that is not a calendar day."),
+    ("string-nfd", 'a.example.org/k(s:"' + unicodedata.normalize("NFD", "é") + '")', "E_KEY_ENCODING",
+     "A string value that is not NFC."),
+    ("string-control", 'a.example.org/k(s:"a\tb")', "E_KEY_ENCODING", "A string value with a control character."),
+]:
+    add(f"key/{name}" if error is None else f"invalid/key-{name}", "key", f"spec-0.5.0: {why} (16.5; PY-4, RS-f)",
+        enc, error)
+
+# Point 8 (16.1): a lookup method taking the class keys is E_CLASS_MEMBER.
+C_NAMED_KEYS_ONLY = c_fn({"base": C_KEY, "quote": C_KEY}, ["base", "quote"],
+                         {"type": "string", "classes": ["rates.example.org/fx_pair"]})
+add("invalid/class-lookup-keys-only", "class", "spec-0.5.0: the lookup method takes exactly one string argument "
+    "label, never the class keys: E_CLASS_MEMBER, not E_CLASS_METHOD (16.1; JS-6).",
+    text(dict(C_FX_PAIR, lookup="named", methods={"named": H_(C_NAMED_KEYS_ONLY), "rate": H_(C_RATE)})), "E_CLASS_MEMBER",
+    name=FX_N, env=dict(C_ENV, functions=C_FUNCS + [C_NAMED_KEYS_ONLY]))
+
 
 def main():
     if OUT.exists():

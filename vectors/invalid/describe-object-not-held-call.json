@@ -1,0 +1,94 @@
+{
+  "id": "invalid/describe-object-not-held-call",
+  "kind": "describe",
+  "description": "spec-0.5.0: Step 3: with no class held, the call form is still checked. (16.8; JS-4, RS-f, PY-6)",
+  "valid": false,
+  "input": "{\n  \"short_id\": \"870aff208328\",\n  \"object_id\": \"870aff2083282f801c4ac163ab7493013ab9c979cbd2158acd237816fa4c97e0\",\n  \"object\": {\n    \"keys\": {\n      \"osis\": {\n        \"value\": \"Gen.1.1\",\n        \"type\": \"string\"\n      }\n    },\n    \"class_hash\": \"cdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\",\n    \"class\": \"bible.example.org/passage\"\n  },\n  \"methods\": [\n    \"text\"\n  ],\n  \"kind\": \"object\",\n  \"call\": \"bible.example.org/passage(osis: Gen.1.1)\"\n}",
+  "classes": {
+    "rates.example.org/fx_pair": {
+      "keys": {
+        "base": {
+          "key_normalisation": "upper_ascii",
+          "type": "string"
+        },
+        "quote": {
+          "key_normalisation": "upper_ascii",
+          "type": "string"
+        }
+      },
+      "methods": {
+        "cross": "9979eda4fbd1644dae480ae76d5514bb3c96e7645e887400adf1cc182bb0c911",
+        "forward": "ec8b8bc5fa0e8df03b469926444fecb83648357a2f8d671b97be1d127d871562",
+        "named": "6dc1e80f305027d110b5160cf1090e2643c519f0a95840dbebc7fe910453a9ff",
+        "rate": "530bf86365ff4afb5a70196542d45f293fad5909026e015eddcfd866290f85b8",
+        "spot": "caf5b15becf80d7869d292e1d93a106f337d864742f570a3cfe1ca9c7f446b15"
+      },
+      "order": [
+        "base",
+        "quote"
+      ],
+      "steward": {
+        "namespace": "rates.example.org",
+        "process": "https://rates.example.org/classes/change"
+      },
+      "lookup": "named"
+    },
+    "scripture.example.org/verse": {
+      "keys": {
+        "book": {
+          "key_normalisation": "none",
+          "type": "string"
+        },
+        "chapter": {
+          "type": "number",
+          "unit": "1"
+        },
+        "corpus": {
+          "key_normalisation": "none",
+          "type": "string"
+        },
+        "verse": {
+          "type": "number",
+          "unit": "1"
+        }
+      },
+      "methods": {
+        "next": "b1ac6b5277d7f60634d52ffe86e028881fb58867563a5aeabc4db14eb7ddb277",
+        "text": "69deb6c63ff08317dad3c81fcc4b1081225a0c884ae0112b0b919c371f9b5801",
+        "consonantal": "e282ef070dd110da1146e5ce83264596b424c67c069c1239c651b3d280a1bc4e"
+      },
+      "order": [
+        "corpus",
+        "book",
+        "chapter",
+        "verse"
+      ],
+      "steward": {
+        "namespace": "scripture.example.org",
+        "process": "https://scripture.example.org/classes/change"
+      }
+    },
+    "rates.example.org/ccy_pair": {
+      "keys": {
+        "base": {
+          "class": "iso.example.org/currency"
+        },
+        "quote": {
+          "class": "iso.example.org/currency"
+        }
+      },
+      "methods": {
+        "rate": "b17e3073c533d9f1adc77cd89a580e4db5f5a0fe8290821812893b17adab7061"
+      },
+      "order": [
+        "base",
+        "quote"
+      ],
+      "steward": {
+        "namespace": "rates.example.org",
+        "process": "https://rates.example.org/classes/change"
+      }
+    }
+  },
+  "error": "E_DESCRIBE"
+}

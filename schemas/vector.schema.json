@@ -70,7 +70,19 @@
       "$ref": "defs.schema.json#/$defs/hex64"
     },
     "object": {
-      "$ref": "cell-ref.schema.json"
+      "description": "uri vectors: the cell reference; since spec-0.5.0, key vectors given class_hash: the object (16.5).",
+      "anyOf": [
+        {
+          "$ref": "cell-ref.schema.json"
+        },
+        {
+          "$ref": "describe-object.schema.json#/properties/object"
+        }
+      ]
+    },
+    "object_id": {
+      "$ref": "defs.schema.json#/$defs/hex64",
+      "description": "spec-0.5.0, key vectors given class_hash: the object id (16.5)."
     },
     "https": {
       "type": "string",
@@ -627,11 +639,18 @@
     },
     "class_hash": {
       "$ref": "defs.schema.json#/$defs/hex64",
-      "description": "spec-0.5.0, class vectors: the class hash."
+      "description": "spec-0.5.0, class vectors: the class hash; key vectors: the decoded class's hash, an input (16.5)."
     },
     "classes": {
       "type": "object",
-      "description": "spec-0.5.0, describe vectors: the class descriptors the answer is checked against, by name."
+      "description": "spec-0.5.0, describe vectors: the flattened class descriptors the client holds, by name; a held class is found by its hash (16.8)."
+    },
+    "functions": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      },
+      "description": "spec-0.5.0, describe vectors: the method function descriptors the client holds (16.8 step 6)."
     }
   },
   "oneOf": [

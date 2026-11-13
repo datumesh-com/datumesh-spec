@@ -1,0 +1,46 @@
+{
+  "id": "key/nested-object",
+  "kind": "key",
+  "description": "spec-0.5.0: a key with class-typed keys, given its class hash: the object holds each class-typed key as the typed string scalar of its encoding, and its object id follows (16.5; JS-5, RS-e, PY-3).",
+  "valid": true,
+  "input": "rates.example.org/ccy_pair(base:iso.example.org/currency(code:\"EUR\"),quote:iso.example.org/currency(code:\"USD\"))",
+  "class_hash": "7dec090c2573450e6e9ee022f0d3c128529afa551c7f9bf47e949f0bfb2937c4",
+  "object": {
+    "class": "rates.example.org/ccy_pair",
+    "class_hash": "7dec090c2573450e6e9ee022f0d3c128529afa551c7f9bf47e949f0bfb2937c4",
+    "keys": {
+      "base": {
+        "type": "string",
+        "value": "iso.example.org/currency(code:\"EUR\")"
+      },
+      "quote": {
+        "type": "string",
+        "value": "iso.example.org/currency(code:\"USD\")"
+      }
+    }
+  },
+  "decoded": {
+    "class": "rates.example.org/ccy_pair",
+    "keys": {
+      "base": {
+        "class": "iso.example.org/currency",
+        "keys": {
+          "code": {
+            "type": "string",
+            "value": "EUR"
+          }
+        }
+      },
+      "quote": {
+        "class": "iso.example.org/currency",
+        "keys": {
+          "code": {
+            "type": "string",
+            "value": "USD"
+          }
+        }
+      }
+    }
+  },
+  "object_id": "fcb2180650816aab6614bc0fd855fdec3301e41eab5a6bbcea0970f3cb7a590a"
+}

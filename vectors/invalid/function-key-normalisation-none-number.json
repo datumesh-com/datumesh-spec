@@ -1,0 +1,8 @@
+{
+  "id": "invalid/function-key-normalisation-none-number",
+  "kind": "function",
+  "description": "spec-0.5.0: \"none\" on a number argument: the structure is checked first, so E_SCHEMA, not E_CANON_TYPE. (7; JS-3, RS-g)",
+  "valid": false,
+  "input": "{\n  \"signature\": {\n    \"returns\": {\n      \"unit\": \"1\",\n      \"type\": \"number\"\n    },\n    \"order\": [\n      \"isin\",\n      \"date\",\n      \"n\"\n    ],\n    \"args\": {\n      \"n\": {\n        \"valid\": false,\n        \"unit\": \"1\",\n        \"type\": \"number\",\n        \"key_normalisation\": \"none\"\n      },\n      \"isin\": {\n        \"valid\": false,\n        \"type\": \"string\",\n        \"key_normalisation\": \"upper_ascii\"\n      },\n      \"date\": {\n        \"valid\": true,\n        \"type\": \"date\"\n      }\n    }\n  },\n  \"inputs\": [],\n  \"code\": {\n    \"lang\": \"stored\",\n    \"body\": \"\"\n  }\n}",
+  "error": "E_SCHEMA"
+}

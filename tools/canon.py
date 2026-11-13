@@ -1601,23 +1601,30 @@ _ARABIC_MARKS = [(0x0610, 0x061A), (0x064B, 0x065F), (0x0670, 0x0670), (0x06D6, 
                  (0x06EA, 0x06ED), (0x0640, 0x0640)]
 
 
+# nfc_strict (16.4): the White_Space characters of Unicode 15.1 other than U+0020 and the controls
+# (U+0009-U+000D, U+0085), which 3.5 already refuses.
+_WHITE_SPACE = frozenset("\u00a0\u1680\u2000\u2001\u2002\u2003\u2004\u2005\u2006\u2007\u2008\u2009\u200a"
+                         "\u2028\u2029\u202f\u205f\u3000")
+
+
 def check_key_value(rule, value, path="$"):
-    """A string key value is canonical under its key normalisation (16.4); never repaired."""
+    """A string key value is canonical under its key normalisation (16.4); never repaired. It is first a
+    string value (3.5, with its codes), whatever the rule; every rule but none rejects the empty string."""
     def bad(why):
         fail("E_KEY_NORMALISATION", f"not canonical under {rule}: {why}", path)
+    if rule not in KEY_NORMALISATIONS:
+        fail("E_CLASS_MEMBER", f"unknown key normalisation {rule!r}", path)
+    check_text(value, path, "string")
     if rule == "none":
         return
     if value == "":
         bad("empty")
-    if unicodedata.normalize("NFC", value) != value:
-        bad("not NFC")
     if rule == "upper_ascii":
         if any(not ("\x21" <= c <= "\x7e") or "a" <= c <= "z" for c in value):
             bad("printable ASCII without lowercase letters or spaces")
     elif rule == "nfc_strict":
         for c in value:
-            cat = unicodedata.category(c)
-            if cat in ("Cf", "Zl", "Zp") or (cat == "Zs" and c != " ") or c in "\t\n\r":
+            if unicodedata.category(c) == "Cf" or c in _WHITE_SPACE:
                 bad(f"U+{ord(c):04X}")
         if value != value.strip(" ") or "  " in value:
             bad("leading, trailing or repeated spaces")
@@ -1630,8 +1637,6 @@ def check_key_value(rule, value, path="$"):
     elif rule == "arabic_skeleton":
         if any(lo <= ord(c) <= hi for c in value for lo, hi in _ARABIC_MARKS):
             bad("Arabic marks or tatweel")
-    else:
-        fail("E_CLASS_MEMBER", f"unknown key normalisation {rule!r}", path)
 
 
 CLASS_REQUIRED = ("keys", "methods", "order", "steward")
@@ -1908,6 +1913,10 @@ def decode_key(text):
         fail("E_KEY_ENCODING", f"{why}: {text!r}")
     if not isinstance(text, str):
         bad("not a string")
+    try:  # the encoding is one string value (3.5): no control, NFC, at most 1024 bytes as a whole
+        check_text(text, "$", "string")
+    except DatumeshError as e:
+        bad(f"the encoding breaks 3.5 ({e.code})")
     pos = [0]
 
     def obj():
@@ -2027,55 +2036,143 @@ def describe_object(name, desc, keys, same_as=None):
     return out
 
 
+def _shape_text(value, path, limit="string"):
+    """A string member valid by 3.5: E_SCHEMA when it is not a string."""
+    if not isinstance(value, str):
+        fail("E_SCHEMA", "expected a string", path)
+    check_text(value, path, limit)
+
+
+def _value_of_key(decl, value, path):
+    """An object's key value against its class's key declaration (16.5, 16.8): its type, and for a
+    string key its normalisation; a class-typed key the typed string scalar of a key of that class."""
+    if "class" in decl:
+        if value["type"] != "string" or decode_key(value["value"])["class"] != decl["class"]:
+            fail("E_DESCRIBE", f"a key of {decl['class']}, as a typed string scalar", path)
+        return
+    if value["type"] != decl["type"]:
+        fail("E_DESCRIBE", f"a {decl['type']} key", path)
+    if decl["type"] == "string":
+        check_key_value(decl["key_normalisation"], value["value"], path)
+
+
 @_as_error("E_DESCRIBE")
-def check_describe(doc, classes=None):
-    """A describe answer (16.8): its shape and what its schema cannot state. E_DESCRIBE otherwise."""
+def check_describe(doc, classes=None, functions=None):
+    """A describe answer (16.8), parsed (step 1, the caller's, with 6.1's codes), checked in the order
+    of 16.8: 2 shape, 3 internal consistency, 4 the held class, found by class_hash among `classes`
+    (flattened descriptors, by name; the name is not compared), 5 against it, 6 against the held method
+    functions (`functions`, descriptors), when given. Every failure is E_DESCRIBE."""
+    # 2. Shape.
     if not isinstance(doc, dict) or doc.get("kind") not in ("class", "object"):
         fail("E_DESCRIBE", "a describe answer is of kind class or object")
     if doc["kind"] == "class":
         _shape_object(doc, ("class", "class_hash", "descriptor", "kind", "methods"), (), "$")
+        _shape_text(doc["class"], "$.class")
         check_function_name(doc["class"], "$.class")
+        _shape_text(doc["class_hash"], "$.class_hash")
+        check_hex(doc["class_hash"], 64, "$.class_hash")
+        shape_class(doc["descriptor"], "$.descriptor")
+        if not isinstance(doc["methods"], dict):
+            fail("E_DESCRIBE", "methods is an object", "$.methods")
+        for m in keys_in_order(doc["methods"]):
+            e, p = doc["methods"][m], f"$.methods.{m}"
+            _shape_object(e, ("args", "fn", "fn_hash", "returns"), ("description",), p)
+            _shape_text(e["fn"], f"{p}.fn")
+            _shape_text(e["fn_hash"], f"{p}.fn_hash")
+            if not isinstance(e["args"], dict):
+                fail("E_DESCRIBE", "args is an object", f"{p}.args")
+            if "description" in e:
+                _shape_text(e["description"], f"{p}.description")
+                if e["description"] == "":
+                    fail("E_DESCRIBE", "a description is 1 to 1024 bytes", f"{p}.description")
+        # 3. Consistency.
         check_class(doc["descriptor"], "$.descriptor")
         if doc["class_hash"] != class_hash(doc["descriptor"]):
             fail("E_DESCRIBE", "class_hash is the descriptor's hash", "$.class_hash")
         methods = doc["methods"]
-        if not isinstance(methods, dict) or set(methods) != set(doc["descriptor"]["methods"]):
+        if set(methods) != set(doc["descriptor"]["methods"]):
             fail("E_DESCRIBE", "methods lists exactly the descriptor's methods", "$.methods")
         for m in keys_in_order(methods):
             e = methods[m]
-            _shape_object(e, ("args", "fn", "fn_hash", "returns"), ("description",), f"$.methods.{m}")
             if e["fn"] != f"{doc['class']}/{m}" or e["fn_hash"] != doc["descriptor"]["methods"][m]:
                 fail("E_DESCRIBE", f"method {m} is {doc['class']}/{m} with the descriptor's hash", f"$.methods.{m}")
-            if "description" in e:
-                _shape_str(e, "description", f"$.methods.{m}")
-                check_text(e["description"], f"$.methods.{m}.description", "summary")
+        # 4. The held class.
+        held = {class_hash(d): d for d in (classes or {}).values()}.get(doc["class_hash"])
+        if held is None:
+            return doc
+        # 5. Against it: the descriptor byte for byte after canonicalisation.
+        if jcs(doc["descriptor"]) != jcs(held):
+            fail("E_DESCRIBE", "descriptor is the held flattened descriptor", "$.descriptor")
+        # 6. Against the held method functions, for each method whose descriptor is held.
+        fns = {function_hash(f): f for f in (functions or [])}
+        keys = set(held["keys"])
+        for m in keys_in_order(methods):
+            fd = fns.get(methods[m]["fn_hash"])
+            if fd is None:
+                continue
+            sig = fd["signature"]
+            if methods[m]["args"] != {a: d for a, d in sig["args"].items() if a not in keys} \
+                    or methods[m]["returns"] != sig["returns"]:
+                fail("E_DESCRIBE", f"method {m}: args and returns are its function's, after the keys",
+                     f"$.methods.{m}")
         return doc
     _shape_object(doc, ("call", "kind", "methods", "object", "object_id", "short_id"), ("same_as",), "$")
     obj = doc["object"]
     _shape_object(obj, ("class", "class_hash", "keys"), (), "$.object")
+    _shape_text(obj["class"], "$.object.class")
     check_function_name(obj["class"], "$.object.class")
+    _shape_text(obj["class_hash"], "$.object.class_hash")
     check_hex(obj["class_hash"], 64, "$.object.class_hash")
     shape_args(obj["keys"], "$.object.keys")
+    if SLICE in obj["keys"].values():
+        fail("E_DESCRIBE", "an object binds every key to a typed scalar", "$.object.keys")
     check_args(obj["keys"], "$.object.keys")
+    _shape_text(doc["object_id"], "$.object_id")
+    check_hex(doc["object_id"], 64, "$.object_id")
+    _shape_text(doc["short_id"], "$.short_id")
+    check_hex(doc["short_id"], 12, "$.short_id")
+    _shape_text(doc["call"], "$.call", "body")
+    if not isinstance(doc["methods"], list) or not all(isinstance(m, str) for m in doc["methods"]):
+        fail("E_DESCRIBE", "methods is an array of method names", "$.methods")
+    for m in doc["methods"]:
+        check_name(m, "$.methods")
+    check_set(doc["methods"], "$.methods")
+    if "same_as" in doc:
+        same = doc["same_as"]
+        if not isinstance(same, list) or not same or not all(isinstance(k, str) for k in same):
+            fail("E_DESCRIBE", "same_as is a non-empty array of object keys", "$.same_as")
+        check_set(same, "$.same_as")
+        for k in same:
+            decode_key(k)
+    # 3. Consistency.
     if doc["object_id"] != object_id(obj):
         fail("E_DESCRIBE", "object_id is the object's id", "$.object_id")
     if doc["short_id"] != short_id(doc["object_id"]):
         fail("E_DESCRIBE", "short_id is the first 12 hex digits of the object id", "$.short_id")
     if doc["call"] != _object_call(obj["class"], obj["keys"]):
         fail("E_DESCRIBE", "call is the object's canonical call", "$.call")
-    if not isinstance(doc["methods"], list) or doc["methods"] != keys_in_order(set(doc["methods"])):
-        fail("E_DESCRIBE", "methods is the ascending list of method names", "$.methods")
-    desc = (classes or {}).get(obj["class"])
-    if desc is not None and class_hash(desc) == obj["class_hash"]:
-        if doc["methods"] != keys_in_order(desc["methods"]) or set(obj["keys"]) != set(desc["keys"]):
-            fail("E_DESCRIBE", "the object's keys and methods are its class's", "$.methods")
-    for i, k in enumerate(doc.get("same_as", [])):
-        if not isinstance(k, str):
-            fail("E_DESCRIBE", "same_as holds object keys", "$.same_as")
-        decode_key(k)
-    if "same_as" in doc and not doc["same_as"]:
-        fail("E_DESCRIBE", "same_as is absent rather than empty", "$.same_as")
+    # 4. The held class.
+    held = {class_hash(d): d for d in (classes or {}).values()}.get(obj["class_hash"])
+    if held is None:
+        return doc
+    # 5. Against it: key names, each value's type and normalisation, the methods.
+    if set(obj["keys"]) != set(held["keys"]):
+        fail("E_DESCRIBE", "the object's keys are its class's", "$.object.keys")
+    for k in keys_in_order(obj["keys"]):
+        _value_of_key(held["keys"][k], obj["keys"][k], f"$.object.keys.{k}")
+    if doc["methods"] != keys_in_order(held["methods"]):
+        fail("E_DESCRIBE", "the object's methods are its class's", "$.methods")
     return doc
+
+
+def object_of_key(text, chash):
+    """The object (16.5) a key encoding names, given its class's hash: a class-typed key is the typed
+    string scalar of its own encoding, so the object holds typed scalars only."""
+    decoded = decode_key(text)
+    check_hex(chash, 64, "$.class_hash")
+    keys = {k: {"type": "string", "value": encode_decoded(v)} if "class" in v else v
+            for k, v in decoded["keys"].items()}
+    return object_of(decoded["class"], chash, keys)
 
 
 def object_of(class_name, chash, keys):
@@ -2088,7 +2185,10 @@ def object_id(obj):
 
 
 def short_id(identifier):
-    """The first 12 hex digits of a cell id or object id (16.8)."""
+    """The first 12 hex digits of a cell id or object id (16.8); of a full id only (E_CANON_HEX)."""
+    if not isinstance(identifier, str):
+        fail("E_CANON_HEX", "a short id is taken of a cell id or object id")
+    check_hex(identifier, 64, "$")
     return identifier[:12]
 
 
@@ -2423,7 +2523,9 @@ URI_CODES = (
 RESOLUTION_KINDS = ("alias", "default", "lookup", "method")  # spec-0.5.0 (16.7); lookup (Q10 a) carries asof
 # spec-0.4.3: what an E_FOREIGN_UNAVAILABLE envelope's detail says failed (5.5).
 FOREIGN_DETAILS = ("offline", "network", "dns", "tls", "timeout", "refused")
-REQUEST_CODES = ("E_JOB_UNKNOWN", "E_SLICE_AT_CELL", "E_NAME_UNBOUND", "E_SHORT_ID_AMBIGUOUS")
+# spec-0.5.0: E_SHORT_ID_AMBIGUOUS (16.8), and a call's key codes (5.8, 16.4, 16.5): bad_request, never error.
+REQUEST_CODES = ("E_JOB_UNKNOWN", "E_SLICE_AT_CELL", "E_NAME_UNBOUND", "E_SHORT_ID_AMBIGUOUS", "E_KEY_NORMALISATION",
+                 "E_KEY_ENCODING")
 _INTEGER = re.compile(r"0|[1-9][0-9]*")
 TRUST = ("primary", "verified", "unverified", "computed")  # computed since spec-0.4.2
 _JOB = re.compile(r"[0-9a-f]{32,64}")
@@ -2481,7 +2583,8 @@ def _check_envelope_members(env, members=None):
         # refused cross-mesh import); error: any code of 10.2 but
         # the client's E_ENVELOPE and the request codes.
         if env["outcome"] == "bad_request":
-            allowed = URI_CODES + ("E_JOB_UNKNOWN", "E_SLICE_AT_CELL", "E_SHORT_ID_AMBIGUOUS")
+            allowed = URI_CODES + ("E_JOB_UNKNOWN", "E_SLICE_AT_CELL", "E_SHORT_ID_AMBIGUOUS", "E_KEY_NORMALISATION",
+                                  "E_KEY_ENCODING")
         elif env["outcome"] == "not_covered":
             allowed = ("E_NAME_UNBOUND", "E_NAMESPACE_SUSPENDED")  # the latter since spec-0.5.0 (9.9)
         else:
@@ -3031,6 +3134,7 @@ def _call_read(raw, decl, path, env):
                 fail("E_CANON_TYPE", f"an object of {value['class']} where {classes} is declared", path)
             text = encode_decoded(_call_object(value, env))
         elif kind == "quoted":
+            check_lexical("string", value, path)  # the string first (3.5), then the encoding (16.5)
             decoded = decode_key(value)
             if decoded["class"] not in classes:
                 fail("E_CANON_TYPE", f"a key of {decoded['class']} where {classes} is declared", path)
@@ -3293,10 +3397,14 @@ def run_vector(vec):
             check_key_value(vec["rule"], vec["text"])
             return {}
         if kind == "describe":  # spec-0.5.0 (16.8)
-            check_describe(parse_json(vector_input(vec)), vec.get("classes"))
+            check_describe(parse_json(vector_input(vec)), vec.get("classes"), vec.get("functions"))
             return {}
         if kind == "key":  # spec-0.5.0 (16.5)
-            return {"decoded": decode_key(vec["input"])}
+            out = {"decoded": decode_key(vec["input"])}
+            if "class_hash" in vec:  # the object and its id (16.5), given the class hash
+                obj = object_of_key(vec["input"], vec["class_hash"])
+                out.update(object=obj, object_id=object_id(obj), class_hash=vec["class_hash"])
+            return out
         if kind == "define":  # spec-0.5.0
             return check_define(vec["name"], parse_json(vector_input(vec)))
         if kind == "licence":  # spec-0.4.3: licence inheritance (8.5)
@@ -3368,7 +3476,7 @@ OUTPUT_FIELDS = ("canonical", "sha256", "object", "uri", "https", "key_id", "key
                  "asof_dependent", "value", "lineage", "tx", "receipt_asof", "fuel_used", "results",
                  "bindings", "endpoints",
                  "declarations", "licence", "reason", "entitled",  # spec-0.4.3
-                 "decoded", "resolved", "flattened", "class_hash")  # spec-0.5.0
+                 "decoded", "resolved", "flattened", "class_hash", "object_id")  # spec-0.5.0
 
 
 def check_vector(vec):

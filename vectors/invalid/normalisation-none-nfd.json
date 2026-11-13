@@ -1,0 +1,9 @@
+{
+  "id": "invalid/normalisation-none-nfd",
+  "kind": "normalisation",
+  "description": "spec-0.5.0: none: A string that is not NFC is refused by 3.5, never normalised, under none too. (16.4; JS-2, RS-d, PY-5)",
+  "valid": false,
+  "rule": "none",
+  "text": "Zürich",
+  "error": "E_CANON_STRING"
+}
