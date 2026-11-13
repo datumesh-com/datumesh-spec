@@ -89,7 +89,7 @@ class Describe(unittest.TestCase):
         a = class_answer()
         self.assertEqual(a["kind"], "class")
         self.assertEqual(a["class_hash"], canon.class_hash(FX_DESC))
-        self.assertEqual(set(a["methods"]), {"cross", "forward", "rate"})
+        self.assertEqual(set(a["methods"]), {"cross", "forward", "named", "rate", "spot"})
         self.assertEqual(a["methods"]["rate"]["fn"], f"{W.FX}/rate")
         self.assertEqual(a["methods"]["rate"]["returns"], {"type": "number", "unit": {"of": {"arg": "quote"},
                                                                                      "per": {"arg": "base"}}})
@@ -108,7 +108,7 @@ class Describe(unittest.TestCase):
     def test_rules(self):
         c, o = class_answer(), object_answer()
         bad = [dict(c, class_hash="ab" * 32), dict(c, kind="interface"), {k: v for k, v in c.items() if k != "methods"},
-               dict(c, methods=dict(c["methods"], spot=c["methods"]["rate"])),
+               dict(c, methods=dict(c["methods"], points=c["methods"]["rate"])),
                dict(o, object_id="ab" * 32), dict(o, short_id=o["object_id"][:11]), dict(o, short_id="0" * 12),
                dict(o, call="x"), dict(o, methods=["text"]), dict(o, same_as=["not a key"]), dict(o, extra=1)]
         for d in bad:

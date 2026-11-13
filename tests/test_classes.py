@@ -21,6 +21,7 @@ VECTORS = {v["id"]: v for v in canon.load_vectors()}
 SPEC = (ROOT / "SPEC.md").read_text(encoding="utf-8")
 
 STR, DATE = {"type": "string", "valid": False}, {"type": "date", "valid": True}
+KEY = dict(STR, key_normalisation="upper_ascii")  # a method's key argument carries its key's rule (16.2)
 RATE_UNIT = {"of": {"arg": "quote"}, "per": {"arg": "base"}}
 
 
@@ -29,11 +30,11 @@ def fn(args, order, returns, lang="stored", body="", inputs=()):
             "signature": {"args": args, "order": order, "returns": returns}}
 
 
-RATE = fn({"base": STR, "date": DATE, "quote": STR}, ["base", "quote", "date"], {"type": "number", "unit": RATE_UNIT})
-CROSS = fn({"base": STR, "date": DATE, "quote": STR, "via": STR}, ["base", "quote", "via", "date"],
+RATE = fn({"base": KEY, "date": DATE, "quote": KEY}, ["base", "quote", "date"], {"type": "number", "unit": RATE_UNIT})
+CROSS = fn({"base": KEY, "date": DATE, "quote": KEY, "via": STR}, ["base", "quote", "via", "date"],
            {"type": "number", "unit": RATE_UNIT}, "expr", "rate(base, via, date) * rate(via, quote, date)\n",
            ["rates.example.org/fx_pair/rate"])
-RATE_ALT = fn({"base": STR, "date": DATE, "quote": STR}, ["base", "quote", "date"], {"type": "number", "unit": RATE_UNIT},
+RATE_ALT = fn({"base": KEY, "date": DATE, "quote": KEY}, ["base", "quote", "date"], {"type": "number", "unit": RATE_UNIT},
               "expr", "a re-derived rate\n", ["rates.example.org/fx_pair/rate"])
 H = canon.function_hash
 STEWARD = {"namespace": "rates.example.org", "process": "https://rates.example.org/classes/change"}
@@ -85,7 +86,7 @@ class Descriptor(unittest.TestCase):
                                                    "quote": UPPER}),
                                dict(FX_PAIR, steward=dict(STEWARD, process="ftp://x")),
                                dict(FX_PAIR, open=["rate"]),  # open without final
-                               dict(FX_PAIR, final=True, open=["spot"]),  # not a method
+                               dict(FX_PAIR, final=True, open=["points"]),  # not a method
                                dict(FX_PAIR, inverse=["isin"]),  # no by_isin method
                                dict(FX_PAIR, maps=["not a uri"])],
         }
@@ -138,9 +139,9 @@ class Inheritance(unittest.TestCase):
         self.assertNotEqual(canon.class_hash(again), canon.class_hash(flat))
 
     def test_rules(self):
-        cross_unit = fn({"base": STR, "date": DATE, "quote": STR}, ["base", "quote", "date"],
+        cross_unit = fn({"base": KEY, "date": DATE, "quote": KEY}, ["base", "quote", "date"],
                         {"type": "number", "unit": "1"}, "expr", "x\n")
-        extra_arg = fn({"base": STR, "date": DATE, "quote": STR, "x": STR}, ["base", "quote", "date", "x"],
+        extra_arg = fn({"base": KEY, "date": DATE, "quote": KEY, "x": STR}, ["base", "quote", "date", "x"],
                        {"type": "number", "unit": RATE_UNIT}, "expr", "x\n")
         env = dict(self.env, functions=ENV["functions"] + [cross_unit, extra_arg])
         cases = [

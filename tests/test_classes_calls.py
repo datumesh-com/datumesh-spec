@@ -63,7 +63,7 @@ class MethodBodies(unittest.TestCase):
         fwd = W.SCENARIO["functions"][f"{W.FX}/forward"]
         self.assertNotIn("this", fwd["code"]["body"])
         self.assertIn(f"{W.FX}/rate(base: base, date: date, quote: quote)", fwd["code"]["body"])
-        self.assertEqual(fwd["inputs"], ["rates.example.org/deposit", f"{W.FX}/rate"])
+        self.assertEqual(fwd["inputs"], ["rates.example.org/deposit", f"{W.FX}/rate", f"{W.FX}/spot"])
         ndf = W.SCENARIO["functions"][f"{W.NDF}/rate"]
         self.assertIn(f"{W.FX}/rate@{canon.function_hash(W.RATE)}(", ndf["code"]["body"])  # super: the parent's hash
         price = W.SCENARIO["functions"]["calc.example.net/price_of"]
@@ -73,7 +73,7 @@ class MethodBodies(unittest.TestCase):
         num = {"type": "number", "unit": "1"}
         cases = [
             ("this.rate(2026-03-16)", sig(RATE_RET), None, "E_FORMULA_RESERVED"),
-            (f"{W.FX}(EUR, USD).spot(2026-03-16)", sig(RATE_RET), None, "E_FORMULA_METHOD"),
+            (f"{W.FX}(EUR, USD).points(2026-03-16)", sig(RATE_RET), None, "E_FORMULA_METHOD"),
             (f"{W.FX}(EUR, USD) = 1", sig("boolean"), None, "E_FORMULA_METHOD"),
             (f'{W.FX}("eur", "USD").rate(2026-03-16)', sig(RATE_RET), None, "E_FORMULA_KEY"),
             (f'{W.VERSE}(Tanakh, "Gen", One, 1).text("uxlc")', sig("blob"), None, "E_FORMULA_TYPE"),
@@ -108,14 +108,14 @@ class MethodBodies(unittest.TestCase):
 
 class Evaluation(unittest.TestCase):
     def test_vectors(self):
-        expected = {"formula-eval/class-forward": 3, "formula-eval/class-super": 1, "formula-eval/class-dispatch-bond": 1,
+        expected = {"formula-eval/class-forward": 4, "formula-eval/class-super": 1, "formula-eval/class-dispatch-bond": 1,
                     "formula-eval/class-dispatch-swap": 1, "formula-eval/class-default-asof": 1}
         for vid, n in expected.items():
             with self.subTest(vid):
                 v = VECTORS[vid]
                 self.assertEqual(len(v["lineage"]), n)
                 self.assertEqual(canon.check_vector(v), [])
-        self.assertEqual(VECTORS["invalid/formula-eval-class-dispatch-outside"]["error"], "E_FORMULA_DISPATCH")
+        self.assertEqual(VECTORS["invalid/formula-eval-class-dispatch-outside"]["error"], "E_FORMULA_DISPATCH_KEY")
         self.assertEqual(canon.check_vector(VECTORS["invalid/formula-eval-class-dispatch-outside"]), [])
 
     def test_lineage_names_the_hash_called(self):
@@ -167,11 +167,11 @@ class Calls(unittest.TestCase):
 
     def test_errors(self):
         self.assertEqual(self.uri(f'{W.FX}("eur", "USD").rate(2026-03-16)'), "E_KEY_NORMALISATION")
-        self.assertEqual(self.uri(f"{W.FX}(EUR, USD).spot(2026-03-16)"), "E_NAME_UNBOUND")
+        self.assertEqual(self.uri(f"{W.FX}(EUR, USD).points(2026-03-16)"), "E_NAME_UNBOUND")
         self.assertEqual(self.uri(f"{W.FX}(EUR, USD)"), "E_PARSE_URI")
         self.assertEqual(self.uri("fx_rate(EUR, GBP)", W.call_env()), "E_NAME_UNBOUND")
         self.assertEqual(self.uri(f"{W.FX}(EUR).rate(2026-03-16)"), "E_ARG_MISSING")
-        self.assertEqual(self.uri(f'{W.VERSE}("quran", 2, 1, 255).text("uthmani")'), "E_CANON_TYPE")
+        self.assertEqual(self.uri(f'{W.VERSE}("quran", 2, one, 255).text("uthmani")'), "E_CANON_TYPE")
 
     def test_vectors(self):
         for a, b in [("call/class-method", "call/class-method-plain")]:
