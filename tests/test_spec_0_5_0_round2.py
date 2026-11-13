@@ -29,7 +29,8 @@ def code(fn, *args):
 
 class Codes(unittest.TestCase):
     def test_table(self):
-        self.assertEqual(canon.ERROR_CODES[-2:], ("E_UNROOTED_INPUT", "E_NAMESPACE_SUSPENDED"))
+        i = canon.ERROR_CODES.index("E_UNROOTED_INPUT")  # the class codes follow (spec-0.5.0, section 16)
+        self.assertEqual(canon.ERROR_CODES[i:i + 2], ("E_UNROOTED_INPUT", "E_NAMESPACE_SUSPENDED"))
         self.assertRegex(SPEC, r"\| `E_UNROOTED_INPUT` \| define \|")
         self.assertRegex(SPEC, r"\| `E_NAMESPACE_SUSPENDED` \| write \|")
 
