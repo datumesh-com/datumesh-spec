@@ -1,0 +1,28 @@
+{
+  "id": "key/verse",
+  "kind": "key",
+  "description": "spec-0.5.0: Keys in ascending name order; numbers bare.",
+  "valid": true,
+  "input": "scripture.example.org/verse(book:\"Gen\",chapter:1,corpus:\"tanakh\",verse:1)",
+  "decoded": {
+    "class": "scripture.example.org/verse",
+    "keys": {
+      "book": {
+        "type": "string",
+        "value": "Gen"
+      },
+      "chapter": {
+        "type": "number",
+        "value": "1"
+      },
+      "corpus": {
+        "type": "string",
+        "value": "tanakh"
+      },
+      "verse": {
+        "type": "number",
+        "value": "1"
+      }
+    }
+  }
+}

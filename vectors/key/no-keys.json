@@ -1,0 +1,11 @@
+{
+  "id": "key/no-keys",
+  "kind": "key",
+  "description": "spec-0.5.0: A keyless object.",
+  "valid": true,
+  "input": "a.example.org/singleton()",
+  "decoded": {
+    "class": "a.example.org/singleton",
+    "keys": {}
+  }
+}

@@ -1,0 +1,8 @@
+{
+  "id": "normalisation/none-anything",
+  "kind": "normalisation",
+  "description": "spec-0.5.0: none, canonical.",
+  "valid": true,
+  "rule": "none",
+  "text": "anything at all"
+}

@@ -1,0 +1,319 @@
+{
+  "id": "invalid/class-inverse-without-method",
+  "kind": "class",
+  "description": "spec-0.5.0: inverse isin needs the method by_isin.",
+  "valid": false,
+  "input": "{\n  \"inverse\": [\n    \"isin\"\n  ],\n  \"steward\": {\n    \"process\": \"https://rates.example.org/classes/change\",\n    \"namespace\": \"rates.example.org\"\n  },\n  \"order\": [\n    \"base\",\n    \"quote\"\n  ],\n  \"methods\": {\n    \"rate\": \"f041cf0f3eabaf4a611a6f57050dac8fb1f2e2cd5d6b6526913cff0847ef88df\"\n  },\n  \"keys\": {\n    \"quote\": {\n      \"type\": \"string\",\n      \"key_normalisation\": \"upper_ascii\"\n    },\n    \"base\": {\n      \"type\": \"string\",\n      \"key_normalisation\": \"upper_ascii\"\n    }\n  }\n}",
+  "name": "rates.example.org/fx_pair",
+  "env": {
+    "classes": [],
+    "definer": "rates.example.org",
+    "functions": [
+      {
+        "code": {
+          "body": "",
+          "lang": "stored"
+        },
+        "inputs": [],
+        "signature": {
+          "args": {
+            "base": {
+              "type": "string",
+              "valid": false
+            },
+            "date": {
+              "type": "date",
+              "valid": true
+            },
+            "quote": {
+              "type": "string",
+              "valid": false
+            }
+          },
+          "order": [
+            "base",
+            "quote",
+            "date"
+          ],
+          "returns": {
+            "type": "number",
+            "unit": {
+              "of": {
+                "arg": "quote"
+              },
+              "per": {
+                "arg": "base"
+              }
+            }
+          }
+        }
+      },
+      {
+        "code": {
+          "body": "a re-derived rate\n",
+          "lang": "expr"
+        },
+        "inputs": [
+          "rates.example.org/fx_pair/rate"
+        ],
+        "signature": {
+          "args": {
+            "base": {
+              "type": "string",
+              "valid": false
+            },
+            "date": {
+              "type": "date",
+              "valid": true
+            },
+            "quote": {
+              "type": "string",
+              "valid": false
+            }
+          },
+          "order": [
+            "base",
+            "quote",
+            "date"
+          ],
+          "returns": {
+            "type": "number",
+            "unit": {
+              "of": {
+                "arg": "quote"
+              },
+              "per": {
+                "arg": "base"
+              }
+            }
+          }
+        }
+      },
+      {
+        "code": {
+          "body": "x\n",
+          "lang": "expr"
+        },
+        "inputs": [],
+        "signature": {
+          "args": {
+            "base": {
+              "type": "string",
+              "valid": false
+            },
+            "date": {
+              "type": "date",
+              "valid": true
+            },
+            "quote": {
+              "type": "string",
+              "valid": false
+            }
+          },
+          "order": [
+            "base",
+            "quote",
+            "date"
+          ],
+          "returns": {
+            "type": "number",
+            "unit": "1"
+          }
+        }
+      },
+      {
+        "code": {
+          "body": "",
+          "lang": "stored"
+        },
+        "inputs": [],
+        "signature": {
+          "args": {
+            "base": {
+              "type": "string",
+              "valid": false
+            },
+            "quote": {
+              "type": "string",
+              "valid": false
+            }
+          },
+          "order": [
+            "base",
+            "quote"
+          ],
+          "returns": {
+            "type": "string",
+            "classes": [
+              "iso.example.org/pair"
+            ]
+          }
+        }
+      },
+      {
+        "code": {
+          "body": "",
+          "lang": "stored"
+        },
+        "inputs": [],
+        "signature": {
+          "args": {
+            "base": {
+              "type": "string",
+              "valid": false
+            },
+            "quote": {
+              "type": "string",
+              "valid": false
+            }
+          },
+          "order": [
+            "base",
+            "quote"
+          ],
+          "returns": {
+            "type": "string",
+            "classes": [
+              "rates.example.org/fx_pair"
+            ]
+          }
+        }
+      },
+      {
+        "code": {
+          "body": "",
+          "lang": "stored"
+        },
+        "inputs": [],
+        "signature": {
+          "args": {
+            "base": {
+              "type": "string",
+              "valid": false
+            },
+            "quote": {
+              "type": "string",
+              "valid": false
+            }
+          },
+          "order": [
+            "base",
+            "quote"
+          ],
+          "returns": "boolean"
+        }
+      },
+      {
+        "code": {
+          "body": "",
+          "lang": "stored"
+        },
+        "inputs": [],
+        "signature": {
+          "args": {
+            "base": {
+              "type": "string",
+              "valid": false
+            },
+            "fixing": {
+              "type": "string",
+              "valid": false
+            },
+            "quote": {
+              "type": "string",
+              "valid": false
+            }
+          },
+          "order": [
+            "base",
+            "quote",
+            "fixing"
+          ],
+          "returns": "date"
+        }
+      },
+      {
+        "code": {
+          "body": "",
+          "lang": "stored"
+        },
+        "inputs": [],
+        "signature": {
+          "args": {
+            "pair": {
+              "type": "string",
+              "valid": false
+            },
+            "date": {
+              "type": "date",
+              "valid": true
+            }
+          },
+          "order": [
+            "pair",
+            "date"
+          ],
+          "returns": {
+            "type": "number",
+            "unit": "1"
+          }
+        }
+      },
+      {
+        "code": {
+          "body": "abstract\n",
+          "lang": "expr"
+        },
+        "inputs": [],
+        "signature": {
+          "args": {
+            "date": {
+              "type": "date",
+              "valid": true
+            }
+          },
+          "order": [
+            "date"
+          ],
+          "returns": {
+            "type": "number",
+            "unit": "1"
+          }
+        }
+      },
+      {
+        "code": {
+          "body": "a price\n",
+          "lang": "expr"
+        },
+        "inputs": [],
+        "signature": {
+          "args": {
+            "base": {
+              "type": "string",
+              "valid": false
+            },
+            "date": {
+              "type": "date",
+              "valid": true
+            },
+            "quote": {
+              "type": "string",
+              "valid": false
+            }
+          },
+          "order": [
+            "base",
+            "quote",
+            "date"
+          ],
+          "returns": {
+            "type": "number",
+            "unit": "1"
+          }
+        }
+      }
+    ]
+  },
+  "error": "E_CLASS_MEMBER"
+}

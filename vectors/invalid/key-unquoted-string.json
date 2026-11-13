@@ -1,0 +1,8 @@
+{
+  "id": "invalid/key-unquoted-string",
+  "kind": "key",
+  "description": "spec-0.5.0: A string is quoted.",
+  "valid": false,
+  "input": "iso.example.org/currency(code:EUR)",
+  "error": "E_KEY_ENCODING"
+}

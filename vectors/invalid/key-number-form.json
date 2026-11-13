@@ -1,0 +1,8 @@
+{
+  "id": "invalid/key-number-form",
+  "kind": "key",
+  "description": "spec-0.5.0: Numbers in their lexical form (3.1).",
+  "valid": false,
+  "input": "a.example.org/k(n:01)",
+  "error": "E_KEY_ENCODING"
+}

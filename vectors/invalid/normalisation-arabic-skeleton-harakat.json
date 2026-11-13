@@ -1,0 +1,9 @@
+{
+  "id": "invalid/normalisation-arabic-skeleton-harakat",
+  "kind": "normalisation",
+  "description": "spec-0.5.0: arabic_skeleton, not canonical: rejected, never repaired.",
+  "valid": false,
+  "rule": "arabic_skeleton",
+  "text": "بِسْمِ ٱللَّهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ",
+  "error": "E_KEY_NORMALISATION"
+}

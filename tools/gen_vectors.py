@@ -31,7 +31,9 @@ OUTPUT_FIELDS = ("object", "canonical", "sha256", "https", "key_id", "key_ids", 
                  # spec-0.4.1: mesh documents
                  "bindings", "endpoints",
                  # spec-0.4.3: key document declarations, licence inheritance, entitlement
-                 "declarations", "licence", "reason", "entitled")
+                 "declarations", "licence", "reason", "entitled",
+                 # spec-0.5.0: classes
+                 "decoded")
 
 
 # Vectors from spec-0.1.1 whose bytes changed in spec-0.2.0, and why. tests/test_migration.py
@@ -2093,6 +2095,190 @@ for name, fn, desc, error, why in [
      "The descriptor is checked (section 7) before the rule of 2.5: unsorted inputs."),
 ]:
     add(name, "define", f"spec-0.5.0: {why}", text(desc), error, name=fn)
+
+
+# ---------------------------------------------------------------------------
+# spec-0.5.0, classes (section 16): class descriptors, define and flattening (16.1, 16.2), key
+# normalisation (16.4), object keys (16.5).
+
+C_STR, C_DATE = {"type": "string", "valid": False}, {"type": "date", "valid": True}
+C_RATE_UNIT = {"of": {"arg": "quote"}, "per": {"arg": "base"}}
+
+
+def c_fn(args, order, returns, lang="stored", body="", inputs=()):
+    return {"code": {"body": body, "lang": lang}, "inputs": list(inputs),
+            "signature": {"args": args, "order": order, "returns": returns}}
+
+
+C_RATE = c_fn({"base": C_STR, "date": C_DATE, "quote": C_STR}, ["base", "quote", "date"],
+              {"type": "number", "unit": C_RATE_UNIT})
+C_RATE_ALT = c_fn({"base": C_STR, "date": C_DATE, "quote": C_STR}, ["base", "quote", "date"],
+                  {"type": "number", "unit": C_RATE_UNIT}, "expr", "a re-derived rate\n", ["rates.example.org/fx_pair/rate"])
+C_RATE_UNIT1 = c_fn({"base": C_STR, "date": C_DATE, "quote": C_STR}, ["base", "quote", "date"],
+                    {"type": "number", "unit": "1"}, "expr", "x\n")
+C_SAME = c_fn({"base": C_STR, "quote": C_STR}, ["base", "quote"], {"type": "string", "classes": ["iso.example.org/pair"]})
+C_SAME_SELF = c_fn({"base": C_STR, "quote": C_STR}, ["base", "quote"],
+                   {"type": "string", "classes": ["rates.example.org/fx_pair"]})
+C_EXISTS = c_fn({"base": C_STR, "quote": C_STR}, ["base", "quote"], "boolean")
+C_FIX = c_fn({"base": C_STR, "fixing": C_STR, "quote": C_STR}, ["base", "quote", "fixing"], "date")
+C_WRONG = c_fn({"pair": C_STR, "date": C_DATE}, ["pair", "date"], {"type": "number", "unit": "1"})
+C_IFACE_PRICE = c_fn({"date": C_DATE}, ["date"], {"type": "number", "unit": "1"}, "expr", "abstract\n")
+C_PRICE = c_fn({"base": C_STR, "date": C_DATE, "quote": C_STR}, ["base", "quote", "date"], {"type": "number", "unit": "1"},
+               "expr", "a price\n")
+H_ = canon.function_hash
+C_STEWARD = {"namespace": "rates.example.org", "process": "https://rates.example.org/classes/change"}
+C_UPPER = {"key_normalisation": "upper_ascii", "type": "string"}
+C_FX_PAIR = {"keys": {"base": C_UPPER, "quote": C_UPPER}, "methods": {"rate": H_(C_RATE)}, "order": ["base", "quote"],
+             "steward": C_STEWARD}
+C_FUNCS = [C_RATE, C_RATE_ALT, C_RATE_UNIT1, C_SAME, C_SAME_SELF, C_EXISTS, C_FIX, C_WRONG, C_IFACE_PRICE, C_PRICE]
+C_ENV = {"classes": [], "definer": "rates.example.org", "functions": C_FUNCS}
+C_PARENT = canon.define_class("rates.example.org/fx_pair", C_FX_PAIR, C_ENV)
+C_PARENT_FINAL = canon.define_class("rates.example.org/fx_pair", dict(C_FX_PAIR, final=True), C_ENV)
+C_PARENT_OPEN = canon.define_class("rates.example.org/fx_pair", dict(C_FX_PAIR, final=True, open=["rate"]), C_ENV)
+C_IFACE = canon.define_class("rates.example.org/priced", {"keys": {}, "methods": {"price": H_(C_IFACE_PRICE)},
+                                                          "order": [], "steward": C_STEWARD}, C_ENV)
+C_NDF = {"keys": {"fixing": {"key_normalisation": "none", "type": "string"}}, "methods": {"fixing_date": H_(C_FIX)},
+         "order": ["fixing"], "parent": canon.class_hash(C_PARENT),
+         "steward": {"namespace": "calc.example.net", "process": "https://calc.example.net/classes"}}
+C_SUB_ENV = {"classes": [C_PARENT, C_PARENT_FINAL, C_PARENT_OPEN, C_IFACE], "definer": "calc.example.net",
+             "functions": C_FUNCS}
+FX_N = "rates.example.org/fx_pair"
+NDF_N = "calc.example.net/fx_ndf"
+for vid, name, desc, env, error, why in [
+    ("class/fx-pair", FX_N, C_FX_PAIR, C_ENV, None, "A class: two upper_ascii keys in order, one method, a steward."),
+    ("class/fx-pair-reordered", FX_N, {k: C_FX_PAIR[k] for k in reversed(list(C_FX_PAIR))}, C_ENV, None,
+     "The same class with its members in another order: the same canonical bytes and class hash."),
+    ("class/all-members", FX_N, dict(C_FX_PAIR, methods={"by_isin": H_(C_SAME_SELF), "price": H_(C_PRICE),
+                                                         "rate": H_(C_RATE), "same_as": H_(C_SAME)},
+                                     extent={"exists": H_(C_EXISTS)}, final=True, open=["rate"], inverse=["isin"],
+                                     maps=["http://schema.example/ExchangeRate", "https://www.wikidata.example/Q1"],
+                                     implements=[canon.class_hash(C_IFACE)]),
+     dict(C_ENV, classes=[C_IFACE]), None, "Every optional member: extent, final with open, implements, inverse, maps."),
+    ("invalid/class-implements-missing-method", FX_N, dict(C_FX_PAIR, implements=[canon.class_hash(C_IFACE)]),
+     dict(C_ENV, classes=[C_IFACE]), "E_CLASS_INTERFACE",
+     "A class implementing an interface has its methods: fx_pair has no price."),
+    ("class/interface", "rates.example.org/priced", {"keys": {}, "methods": {"price": H_(C_IFACE_PRICE)}, "order": [],
+                                                    "steward": C_STEWARD}, C_ENV, None,
+     "An interface: a keyless method set."),
+    ("class/subclass-flattened", NDF_N, C_NDF, C_SUB_ENV, None,
+     "A subclass by another namespace: the parent's keys first, its own key appended, the parent's methods "
+     "inherited, a method added; the flattened descriptor names the parent and is what is hashed."),
+    ("class/subclass-override", NDF_N, dict(C_NDF, methods={"fixing_date": H_(C_FIX), "rate": H_(C_RATE_ALT)}),
+     C_SUB_ENV, None, "An override keeps the parent method's signature, return type and unit."),
+    ("class/subclass-of-final-adds", NDF_N, dict(C_NDF, parent=canon.class_hash(C_PARENT_FINAL)), C_SUB_ENV, None,
+     "A subclass of a final class may add methods."),
+    ("class/subclass-of-final-overrides-open", NDF_N, dict(C_NDF, parent=canon.class_hash(C_PARENT_OPEN),
+                                                          methods={"fixing_date": H_(C_FIX), "rate": H_(C_RATE_ALT)}),
+     C_SUB_ENV, None, "A subclass of a final class may override a method marked open."),
+    ("class/same-as-and-inverse", FX_N, dict(C_FX_PAIR, methods={"by_isin": H_(C_SAME_SELF), "rate": H_(C_RATE),
+                                                                 "same_as": H_(C_SAME)}, inverse=["isin"],
+                                             extent={"exists": H_(C_EXISTS)}), C_ENV, None,
+     "same_as returns a key of another class; inverse isin has by_isin returning a key of this class; extent.exists."),
+    ("invalid/class-missing-steward", FX_N, {k: v for k, v in C_FX_PAIR.items() if k != "steward"}, C_ENV, "E_SCHEMA",
+     "steward is required."),
+    ("invalid/class-extra-member", FX_N, dict(C_FX_PAIR, owner="x"), C_ENV, "E_SCHEMA", "No other member."),
+    ("invalid/class-final-false", FX_N, dict(C_FX_PAIR, final=False), C_ENV, "E_SCHEMA",
+     "final is true when present: false is written by leaving it out."),
+    ("invalid/class-key-reserved", FX_N, dict(C_FX_PAIR, keys={"asof": C_UPPER, "quote": C_UPPER}, order=["asof", "quote"]),
+     C_ENV, "E_CANON_ARG_NAME", "Key names are argument names: asof is reserved."),
+    ("invalid/class-key-blob", FX_N, dict(C_FX_PAIR, keys={"base": {"type": "blob"}, "quote": C_UPPER}), C_ENV,
+     "E_CANON_TYPE", "A key is not a blob."),
+    ("invalid/class-key-number-unit", FX_N, dict(C_FX_PAIR, keys={"base": {"type": "number"}, "quote": C_UPPER}),
+     C_ENV, "E_CANON_UNIT", "A number key declares its unit."),
+    ("invalid/class-key-normalisation-missing", FX_N, dict(C_FX_PAIR, keys={"base": {"type": "string"}, "quote": C_UPPER}),
+     C_ENV, "E_CLASS_MEMBER", "A string key declares its key_normalisation."),
+    ("invalid/class-key-normalisation-unknown", FX_N,
+     dict(C_FX_PAIR, keys={"base": dict(C_UPPER, key_normalisation="lowercase"), "quote": C_UPPER}), C_ENV,
+     "E_CLASS_MEMBER", "key_normalisation is one of the closed list of 16.4."),
+    ("invalid/class-key-class-name", FX_N, dict(C_FX_PAIR, keys={"base": {"class": "currency"}, "quote": C_UPPER}),
+     C_ENV, "E_CANON_NAME", "A class-typed key names a class by its full name."),
+    ("invalid/class-order", FX_N, dict(C_FX_PAIR, order=["base"]), C_ENV, "E_CANON_SET", "order lists every key once."),
+    ("invalid/class-method-name", FX_N, dict(C_FX_PAIR, methods={"Rate": H_(C_RATE)}), C_ENV, "E_CANON_NAME",
+     "A method name is a name (2.2)."),
+    ("invalid/class-method-hash", FX_N, dict(C_FX_PAIR, methods={"rate": "AB" * 32}), C_ENV, "E_CANON_HEX",
+     "A method maps to a function hash."),
+    ("invalid/class-steward-process", FX_N, dict(C_FX_PAIR, steward=dict(C_STEWARD, process="mailto:x@y")), C_ENV,
+     "E_CLASS_MEMBER", "The steward's change process is an https URL."),
+    ("invalid/class-open-without-final", FX_N, dict(C_FX_PAIR, open=["rate"]), C_ENV, "E_CLASS_MEMBER",
+     "open is for a final class."),
+    ("invalid/class-open-unsorted", FX_N, dict(C_FX_PAIR, final=True, open=["rate", "cross"]), C_ENV, "E_CANON_SET",
+     "open is a set: ascending."),
+    ("invalid/class-inverse-without-method", FX_N, dict(C_FX_PAIR, inverse=["isin"]), C_ENV, "E_CLASS_MEMBER",
+     "inverse isin needs the method by_isin."),
+    ("invalid/class-maps-not-uri", FX_N, dict(C_FX_PAIR, maps=["exchange rate"]), C_ENV, "E_CLASS_MEMBER",
+     "maps holds URIs."),
+    ("invalid/class-method-keys", FX_N, dict(C_FX_PAIR, methods={"rate": H_(C_WRONG)}), C_ENV, "E_CLASS_METHOD",
+     "A method's first arguments are the class keys, in class order."),
+    ("invalid/class-method-unknown", FX_N, dict(C_FX_PAIR, methods={"rate": "cd" * 32}), C_ENV, "E_CLASS_METHOD",
+     "No descriptor for a method's hash."),
+    ("invalid/class-same-as-self", FX_N, dict(C_FX_PAIR, methods={"rate": H_(C_RATE), "same_as": H_(C_SAME_SELF)}),
+     C_ENV, "E_CLASS_METHOD", "same_as returns a key of another class."),
+    ("invalid/class-extent-signature", FX_N, dict(C_FX_PAIR, extent={"exists": H_(C_RATE)}), C_ENV, "E_CLASS_MEMBER",
+     "extent.exists takes exactly the class keys and returns a boolean."),
+    ("invalid/class-parent-unknown", NDF_N, dict(C_NDF, parent="ab" * 32), C_SUB_ENV, "E_CLASS_PARENT",
+     "The parent's class descriptor is not known to define."),
+    ("invalid/class-inherit-redeclared", NDF_N, dict(C_NDF, keys={"base": {"key_normalisation": "none",
+                                                                          "type": "string"}}, order=["base"]),
+     C_SUB_ENV, "E_CLASS_INHERIT", "A parent key is inherited, never redeclared or retyped."),
+    ("invalid/class-override-unit", NDF_N, dict(C_NDF, methods={"rate": H_(C_RATE_UNIT1)}), C_SUB_ENV,
+     "E_CLASS_OVERRIDE", "An override keeps the return unit."),
+    ("invalid/class-override-final", NDF_N, dict(C_NDF, parent=canon.class_hash(C_PARENT_FINAL),
+                                                 methods={"rate": H_(C_RATE_ALT)}), C_SUB_ENV, "E_CLASS_FINAL",
+     "A method of a final class not marked open is not overridden."),
+    ("invalid/class-owner", NDF_N, C_NDF, dict(C_SUB_ENV, definer="other.example.org"), "E_CLASS_OWNER",
+     "A namespace defines classes under itself only: a non-owner cannot define (or override in) another's class."),
+    ("invalid/class-implements-keyed", FX_N, dict(C_FX_PAIR, implements=[canon.class_hash(C_PARENT)]),
+     dict(C_ENV, classes=[C_PARENT]), "E_CLASS_INTERFACE", "implements names interfaces: keyless classes."),
+]:
+    add(vid, "class", f"spec-0.5.0: {why}", text(desc), error, name=name, env=env)
+add("class/implements-interface", "class", "spec-0.5.0: a class implementing an interface: its price takes the keys "
+    "first, then exactly the interface method's arguments, with its return type and unit.",
+    text(dict(C_FX_PAIR, methods={"price": H_(C_PRICE), "rate": H_(C_RATE)}, implements=[canon.class_hash(C_IFACE)])),
+    name=FX_N, env=dict(C_ENV, classes=[C_IFACE]))
+
+C_NORM = [
+    ("none-anything", "none", "anything at all", None),
+    ("upper-ascii", "upper_ascii", "EUR", None), ("upper-ascii-period", "upper_ascii", "1M", None),
+    ("upper-ascii-lowercase", "upper_ascii", "eur", "E_KEY_NORMALISATION"),
+    ("upper-ascii-space", "upper_ascii", "E R", "E_KEY_NORMALISATION"),
+    ("nfc-strict", "nfc_strict", "Zürich", None), ("nfc-strict-zwj", "nfc_strict", "a‍b", "E_KEY_NORMALISATION"),
+    ("nfc-strict-double-space", "nfc_strict", "New  York", "E_KEY_NORMALISATION"),
+    ("hebrew-consonantal", "hebrew_consonantal", "בראשית ברא אלהים את השמים ואת הארץ", None),
+    ("hebrew-consonantal-maqaf", "hebrew_consonantal", "את־השמים", None),
+    ("hebrew-consonantal-pointed", "hebrew_consonantal",
+     unicodedata.normalize("NFC", "בְּרֵאשִׁית בָּרָא אֱלֹהִים"), "E_KEY_NORMALISATION"),
+    ("hebrew-consonantal-accent", "hebrew_consonantal", unicodedata.normalize("NFC", "בָּרָ֣א"), "E_KEY_NORMALISATION"),
+    ("greek-unaccented", "greek_unaccented", "Εν αρχη ην ο λογος", None),
+    ("greek-unaccented-accented", "greek_unaccented", unicodedata.normalize("NFC", "Ἐν ἀρχῇ ἦν ὁ λόγος"),
+     "E_KEY_NORMALISATION"),
+    ("arabic-skeleton", "arabic_skeleton", "بسم ٱلله ٱلرحمن ٱلرحيم", None),
+    ("arabic-skeleton-harakat", "arabic_skeleton", unicodedata.normalize("NFC", "بِسْمِ ٱللَّهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ"),
+     "E_KEY_NORMALISATION"),
+    ("arabic-skeleton-tatweel", "arabic_skeleton", "اللـه", "E_KEY_NORMALISATION"),
+]
+for name, rule, value, error in C_NORM:
+    vid = f"normalisation/{name}" if error is None else f"invalid/normalisation-{name}"
+    add(vid, "normalisation", f"spec-0.5.0: {rule}, {'canonical' if error is None else 'not canonical: rejected, never repaired'}.",
+        error=error, rule=rule, text=value)
+
+for name, enc, error, why in [
+    ("currency", 'iso.example.org/currency(code:"EUR")', None, "One string key."),
+    ("nested", 'rates.example.org/fx_pair(base:iso.example.org/currency(code:"EUR"),quote:iso.example.org/currency(code:"USD"))',
+     None, "Class-typed keys nested in the same form."),
+    ("verse", 'scripture.example.org/verse(book:"Gen",chapter:1,corpus:"tanakh",verse:1)', None,
+     "Keys in ascending name order; numbers bare."),
+    ("all-types", 'a.example.org/k(b:true,d:2024-03-15,i:2024-03-15T16:00:00.000000Z,n:-1.5,s:"say ""hi""")', None,
+     "Every key type: boolean, date, instant, number, string with a doubled quote."),
+    ("no-keys", "a.example.org/singleton()", None, "A keyless object."),
+    ("spaces", 'iso.example.org/currency(code: "EUR")', "E_KEY_ENCODING", "No spaces: one spelling."),
+    ("unsorted", 'a.example.org/k(z:1,a:2)', "E_KEY_ENCODING", "Keys in ascending name order."),
+    ("unquoted-string", 'iso.example.org/currency(code:EUR)', "E_KEY_ENCODING", "A string is quoted."),
+    ("number-form", 'a.example.org/k(n:01)', "E_KEY_ENCODING", "Numbers in their lexical form (3.1)."),
+    ("bare-class", 'currency(code:"EUR")', "E_KEY_ENCODING", "A class is named in full."),
+    ("trailing", 'a.example.org/k()x', "E_KEY_ENCODING", "Nothing after the key."),
+]:
+    vid = f"key/{name}" if error is None else f"invalid/key-{name}"
+    add(vid, "key", f"spec-0.5.0: {why}", enc, error)
 
 
 def main():

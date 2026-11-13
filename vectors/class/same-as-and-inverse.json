@@ -1,0 +1,320 @@
+{
+  "id": "class/same-as-and-inverse",
+  "kind": "class",
+  "description": "spec-0.5.0: same_as returns a key of another class; inverse isin has by_isin returning a key of this class; extent.exists.",
+  "valid": true,
+  "input": "{\n  \"extent\": {\n    \"exists\": \"282855ae2560a5ce1e194e7318465cb75c8dcf8dff5bfd0148fd76022c906b98\"\n  },\n  \"inverse\": [\n    \"isin\"\n  ],\n  \"steward\": {\n    \"process\": \"https://rates.example.org/classes/change\",\n    \"namespace\": \"rates.example.org\"\n  },\n  \"order\": [\n    \"base\",\n    \"quote\"\n  ],\n  \"methods\": {\n    \"same_as\": \"58130e2c0b4bfb120498ba2bb5d851e482e7a34af45dd20423379bb8bf60f664\",\n    \"rate\": \"f041cf0f3eabaf4a611a6f57050dac8fb1f2e2cd5d6b6526913cff0847ef88df\",\n    \"by_isin\": \"45a26ee88dc288b7db3e2450392a35eef472cfd92cf2e1069b05ff6070a70b33\"\n  },\n  \"keys\": {\n    \"quote\": {\n      \"type\": \"string\",\n      \"key_normalisation\": \"upper_ascii\"\n    },\n    \"base\": {\n      \"type\": \"string\",\n      \"key_normalisation\": \"upper_ascii\"\n    }\n  }\n}",
+  "name": "rates.example.org/fx_pair",
+  "env": {
+    "classes": [],
+    "definer": "rates.example.org",
+    "functions": [
+      {
+        "code": {
+          "body": "",
+          "lang": "stored"
+        },
+        "inputs": [],
+        "signature": {
+          "args": {
+            "base": {
+              "type": "string",
+              "valid": false
+            },
+            "date": {
+              "type": "date",
+              "valid": true
+            },
+            "quote": {
+              "type": "string",
+              "valid": false
+            }
+          },
+          "order": [
+            "base",
+            "quote",
+            "date"
+          ],
+          "returns": {
+            "type": "number",
+            "unit": {
+              "of": {
+                "arg": "quote"
+              },
+              "per": {
+                "arg": "base"
+              }
+            }
+          }
+        }
+      },
+      {
+        "code": {
+          "body": "a re-derived rate\n",
+          "lang": "expr"
+        },
+        "inputs": [
+          "rates.example.org/fx_pair/rate"
+        ],
+        "signature": {
+          "args": {
+            "base": {
+              "type": "string",
+              "valid": false
+            },
+            "date": {
+              "type": "date",
+              "valid": true
+            },
+            "quote": {
+              "type": "string",
+              "valid": false
+            }
+          },
+          "order": [
+            "base",
+            "quote",
+            "date"
+          ],
+          "returns": {
+            "type": "number",
+            "unit": {
+              "of": {
+                "arg": "quote"
+              },
+              "per": {
+                "arg": "base"
+              }
+            }
+          }
+        }
+      },
+      {
+        "code": {
+          "body": "x\n",
+          "lang": "expr"
+        },
+        "inputs": [],
+        "signature": {
+          "args": {
+            "base": {
+              "type": "string",
+              "valid": false
+            },
+            "date": {
+              "type": "date",
+              "valid": true
+            },
+            "quote": {
+              "type": "string",
+              "valid": false
+            }
+          },
+          "order": [
+            "base",
+            "quote",
+            "date"
+          ],
+          "returns": {
+            "type": "number",
+            "unit": "1"
+          }
+        }
+      },
+      {
+        "code": {
+          "body": "",
+          "lang": "stored"
+        },
+        "inputs": [],
+        "signature": {
+          "args": {
+            "base": {
+              "type": "string",
+              "valid": false
+            },
+            "quote": {
+              "type": "string",
+              "valid": false
+            }
+          },
+          "order": [
+            "base",
+            "quote"
+          ],
+          "returns": {
+            "type": "string",
+            "classes": [
+              "iso.example.org/pair"
+            ]
+          }
+        }
+      },
+      {
+        "code": {
+          "body": "",
+          "lang": "stored"
+        },
+        "inputs": [],
+        "signature": {
+          "args": {
+            "base": {
+              "type": "string",
+              "valid": false
+            },
+            "quote": {
+              "type": "string",
+              "valid": false
+            }
+          },
+          "order": [
+            "base",
+            "quote"
+          ],
+          "returns": {
+            "type": "string",
+            "classes": [
+              "rates.example.org/fx_pair"
+            ]
+          }
+        }
+      },
+      {
+        "code": {
+          "body": "",
+          "lang": "stored"
+        },
+        "inputs": [],
+        "signature": {
+          "args": {
+            "base": {
+              "type": "string",
+              "valid": false
+            },
+            "quote": {
+              "type": "string",
+              "valid": false
+            }
+          },
+          "order": [
+            "base",
+            "quote"
+          ],
+          "returns": "boolean"
+        }
+      },
+      {
+        "code": {
+          "body": "",
+          "lang": "stored"
+        },
+        "inputs": [],
+        "signature": {
+          "args": {
+            "base": {
+              "type": "string",
+              "valid": false
+            },
+            "fixing": {
+              "type": "string",
+              "valid": false
+            },
+            "quote": {
+              "type": "string",
+              "valid": false
+            }
+          },
+          "order": [
+            "base",
+            "quote",
+            "fixing"
+          ],
+          "returns": "date"
+        }
+      },
+      {
+        "code": {
+          "body": "",
+          "lang": "stored"
+        },
+        "inputs": [],
+        "signature": {
+          "args": {
+            "pair": {
+              "type": "string",
+              "valid": false
+            },
+            "date": {
+              "type": "date",
+              "valid": true
+            }
+          },
+          "order": [
+            "pair",
+            "date"
+          ],
+          "returns": {
+            "type": "number",
+            "unit": "1"
+          }
+        }
+      },
+      {
+        "code": {
+          "body": "abstract\n",
+          "lang": "expr"
+        },
+        "inputs": [],
+        "signature": {
+          "args": {
+            "date": {
+              "type": "date",
+              "valid": true
+            }
+          },
+          "order": [
+            "date"
+          ],
+          "returns": {
+            "type": "number",
+            "unit": "1"
+          }
+        }
+      },
+      {
+        "code": {
+          "body": "a price\n",
+          "lang": "expr"
+        },
+        "inputs": [],
+        "signature": {
+          "args": {
+            "base": {
+              "type": "string",
+              "valid": false
+            },
+            "date": {
+              "type": "date",
+              "valid": true
+            },
+            "quote": {
+              "type": "string",
+              "valid": false
+            }
+          },
+          "order": [
+            "base",
+            "quote",
+            "date"
+          ],
+          "returns": {
+            "type": "number",
+            "unit": "1"
+          }
+        }
+      }
+    ]
+  },
+  "canonical": "{\"extent\":{\"exists\":\"282855ae2560a5ce1e194e7318465cb75c8dcf8dff5bfd0148fd76022c906b98\"},\"inverse\":[\"isin\"],\"keys\":{\"base\":{\"key_normalisation\":\"upper_ascii\",\"type\":\"string\"},\"quote\":{\"key_normalisation\":\"upper_ascii\",\"type\":\"string\"}},\"methods\":{\"by_isin\":\"45a26ee88dc288b7db3e2450392a35eef472cfd92cf2e1069b05ff6070a70b33\",\"rate\":\"f041cf0f3eabaf4a611a6f57050dac8fb1f2e2cd5d6b6526913cff0847ef88df\",\"same_as\":\"58130e2c0b4bfb120498ba2bb5d851e482e7a34af45dd20423379bb8bf60f664\"},\"order\":[\"base\",\"quote\"],\"steward\":{\"namespace\":\"rates.example.org\",\"process\":\"https://rates.example.org/classes/change\"}}",
+  "sha256": "2ed81bb0c9e65e88c6dcb8e1a03ce6bfd32809701e132bfa9d2efd1cb47736e9"
+}

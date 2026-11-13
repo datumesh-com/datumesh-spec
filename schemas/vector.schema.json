@@ -38,7 +38,10 @@
         "batch",
         "licence",
         "entitlement",
-        "define"
+        "define",
+        "class",
+        "normalisation",
+        "key"
       ]
     },
     "description": {
@@ -588,6 +591,22 @@
     "name": {
       "type": "string",
       "description": "spec-0.5.0, define vectors: the full name the descriptor is defined under (a full function name, except in invalid vectors)."
+    },
+    "rule": {
+      "type": "string",
+      "description": "spec-0.5.0, normalisation vectors: a key normalisation (16.4)."
+    },
+    "text": {
+      "type": "string",
+      "description": "spec-0.5.0, normalisation vectors: a string key value."
+    },
+    "decoded": {
+      "type": "object",
+      "required": [
+        "class",
+        "keys"
+      ],
+      "description": "spec-0.5.0, key vectors: the decoded object key (16.5)."
     }
   },
   "oneOf": [
@@ -610,7 +629,8 @@
             "formula-eval",
             "excel",
             "decimal",
-            "licence"
+            "licence",
+            "normalisation"
           ]
         }
       },

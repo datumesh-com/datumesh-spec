@@ -27,6 +27,7 @@ The executable form of this document is `tools/canon.py`, with `tools/formula.py
 13. Decisions and rationale
 14. Changes
 15. The formula dialect
+16. Classes
 - Appendix A: collected ABNF
 
 ## 1. Terms
@@ -540,6 +541,9 @@ A function descriptor has exactly three members: the function's signature, its c
 - `signature.order` (optional, since `spec-0.4.0`) is an array listing every argument name exactly once: the order in which positional arguments of a formula read bind (15.5), and in 1.3b the order of a class's key tuple. A list that misses an argument, repeats one or holds any string that is not a declared argument (whatever its form: `"Date"` and `""` too) is `E_CANON_SET`; anything but an array of strings is `E_SCHEMA`. A function with no arguments may have `"order": []`. Formula descriptors always carry it (`E_FORMULA_ORDER`); that, and the other formula rules of 15.6 (`E_FORMULA_NOT_CANONICAL`, `E_FORMULA_INPUTS`), are checked by `define` and by formula evaluators, not by a verifier (10.1 step 7.1).
 - An argument declaration may have `extent` (optional, since `spec-0.4.0`): the cells a slice over a computed function enumerates (15.13). It is an array of lexical values of the argument's type, checked value by value in its lexical form (that type's code), then strictly ascending in the type's order (numbers numerically, dates and instants chronologically, strings by code point, not by UTF-16 code unit; `E_CANON_SET`), then at most 4096 (`E_CANON_LIMIT`); it may be empty. Or, for `date` and `number` arguments, a range `{"hi", "lo"}`: `hi`, then `lo`, each in the type's lexical form (for a number, 3.1's form and then its 128-character limit) and, for a number, an integer (`E_CANON_NUMBER`); then `lo <= hi` (`E_CANON_SET`). Any extent of a boolean or blob, and a range on a string or instant argument, is `E_CANON_TYPE`, before its values; any other shape is `E_SCHEMA`.
 - **Both are optional, and absent they change nothing**: a descriptor without them is byte-identical to its `spec-0.3.0` form, with the same hash. A verifier library of `spec-0.3.0` rejects a descriptor that has either (`E_SCHEMA`); verifiers of `spec-0.4.0` MUST accept them.
+- A `string` argument declaration may have `classes` (optional, since `spec-0.5.0`): an array of full class names (16), ascending and unique, at least one (`E_CANON_NAME` for a name, then `E_CANON_SET`). The argument then holds an object key of one of those classes, encoded as in 16.5; a method call on it dispatches among them (16.6). `classes` on any other type is `E_CANON_TYPE`. Likewise `returns` may be `{"type": "string", "classes": [...]}`: the function returns an object key (16.5); with `classes`, a type other than `string` is `E_CANON_TYPE` and a `unit` `E_CANON_UNIT`.
+- An argument declaration may have `default` (optional, since `spec-0.5.0`), whose only value is `"asof"` (anything else is `E_SCHEMA`), on a valid-time argument of type `date` or `instant` only (`E_CANON_TYPE`): a read that does not bind the argument binds it to the evaluation asof, `asof()` for an instant and `date_of(asof())` for a date (15.5, 16.7).
+- `classes` and `default` are optional, and absent they change nothing: no hash of any existing descriptor changes. A verifier library before its `spec-0.5.0` release rejects a descriptor that has either (`E_SCHEMA`); verifiers of `spec-0.5.0` MUST accept them, with their checks, which use no new code.
 - Units are required on numbers and allowed nowhere else. Each of these fails with `E_CANON_UNIT`: a `number` argument without `unit`; `unit` on any other argument; `returns` written as the bare name `"number"`; a `returns` object whose type is not `number`, or that has no `unit`; and a unit that is not valid by 7.1. A declaration or `returns` object with a missing `type` or any other member is `E_SCHEMA`.
 - **Check order.** A descriptor's structure (`E_SCHEMA`), unit, `order` and `extent` shapes included, is checked over the whole descriptor before any canonical-form rule. Then `code`, `inputs`, each argument in JCS order of names, `order`, and `returns`. Within an argument declaration: `type` (`E_CANON_TYPE`), then `unit`, then `valid`, then `extent` (its values in order, then their order, then their count). For `returns`: the type name (`E_CANON_TYPE`), then that an object's type is `number` and that a bare name is not `number`, then the presence of `unit`, then the unit itself (all `E_CANON_UNIT`).
 - `code.lang` is a name identifying the language of `code.body`. `stored` means the function is a table of recorded values; by convention its body is empty and it declares no inputs. This convention is not enforced. `formula` is defined in section 15: its body is the printed canonical AST and its `inputs` are derived from it. Other languages are defined by later steps; until then, a body is an opaque text that the evaluator for `lang` interprets.
@@ -897,7 +901,7 @@ A verifier runs these steps in order and stops at the first failure, reporting i
 
    Otherwise, accept exactly when the canonical encoding of [S]B − [k]A equals the bytes of `R` (the cofactorless equation). Compute − [k]A as the negation of the point [k]A, or as [k](−A). Do not compute it as [L − k]A: for a mixed-order `A`, [L]A is not the identity, so that gives a different point. A key with a small-order component that is not itself small order (mixed order) is not rejected. These are the rules of libsodium's `crypto_sign_verify_detached`. The `receipt/ed25519-*` and `invalid/receipt-ed25519-*` vectors test each rule with signatures a permissive (cofactored) verifier accepts. A receipt that passes steps 1-6 is **signature-valid**.
 7. **Recomputation** (optional; makes the receipt **fully verified**):
-   1. Obtain the descriptor for `cell.fn_hash` (`E_FN_UNAVAILABLE` when none is obtained). First check that it hashes to `cell.fn_hash` (`E_FN_HASH_MISMATCH`), before anything else about it. Then check that it is canonical (sections 6-7, units, `order` and `extent` included), reporting a failure with the code canonicalising it on its own would give. For `lang = "formula"` this does not include the formula rules of 15.6 (`order` present, the body the print of its AST, `inputs` derived): those are `define`'s and a formula evaluator's, and the formula codes are not verification codes.
+   1. Obtain the descriptor for `cell.fn_hash` (`E_FN_UNAVAILABLE` when none is obtained). First check that it hashes to `cell.fn_hash` (`E_FN_HASH_MISMATCH`), before anything else about it. Then check that it is canonical (sections 6-7, units, `order` and `extent` included, and since `spec-0.5.0` `classes` and `default`), reporting a failure with the code canonicalising it on its own would give. For `lang = "formula"` this does not include the formula rules of 15.6 (`order` present, the body the print of its AST, `inputs` derived): those are `define`'s and a formula evaluator's, and the formula codes are not verification codes.
 
       What is obtained is a JSON value, and its hash is SHA-256 of that value's canonical bytes. A verifier that obtains the descriptor as bytes parses them strictly first (6.1), reporting a parse failure with its code. An implementation whose interface also takes text in place of a parsed value says which it takes; text is then the obtained bytes. Only obtaining nothing is unavailability: a JSON `null`, or any other value that is not the descriptor, is a descriptor offered, and fails the hash check (`E_FN_HASH_MISMATCH`), as there is no null value (3.6).
    2. `cell.args` names exactly the declared arguments, each with its declared type: first any undeclared argument (`E_ARG_UNKNOWN`), then any unbound declared argument (`E_ARG_MISSING`), then any type mismatch (`E_ARG_TYPE`), each in JCS order of names.
@@ -991,8 +995,18 @@ The four failure classes a verifier distinguishes are: bad canonical form (parse
 | `E_FOREIGN_UNAVAILABLE` | envelope, mesh | In an `error` envelope, with HTTP 502 and `detail`: the cell belongs to another mesh, which could not be reached (offline, network, DNS, TLS, timeout, a refused connection). A mesh's or resolver's code, never a verification result (since `spec-0.4.3`). |
 | `E_UNROOTED_INPUT` | define | A function under a rooted namespace whose `inputs` name a function under an unrooted one (2.5). Define's code, never a verification result (since `spec-0.5.0`). |
 | `E_NAMESPACE_SUSPENDED` | write | A write under a suspended namespace: `put_version`, a stored receipt signed by its host, `bind_name` or `define` (9.9). A write refusal, never a verification result (since `spec-0.5.0`). |
+| `E_CLASS_MEMBER` | class | A class descriptor member breaks its rule (16.1): a string key without a known `key_normalisation`, one on another type, the steward's process not an https URL, `open` without `final` or naming no method, `maps` not URIs, `inverse` without its `by_` method, an `extent` function of the wrong signature. Since `spec-0.5.0`. |
+| `E_CLASS_PARENT` | class | The parent's class descriptor is not known to define (16.2). |
+| `E_CLASS_INHERIT` | class | A subclass redeclares (and so could retype or remove) a parent key (16.2). |
+| `E_CLASS_OVERRIDE` | class | An override changes the method's signature, return type or unit (16.2). |
+| `E_CLASS_FINAL` | class | A subclass of a `final` class overrides a method not marked `open` (16.2). |
+| `E_CLASS_METHOD` | class | A method's function is unknown, has no `order`, or does not take the class keys first with their types (16.2); `same_as` or a `by_` method of the wrong return. |
+| `E_CLASS_INTERFACE` | class | `implements` names a class that is not a keyless interface the define knows, or an interface method is not implemented with its signature (16.2). |
+| `E_CLASS_OWNER` | class | A namespace defines a class under another namespace (16.2). |
+| `E_KEY_NORMALISATION` | class | A string key value is not canonical under its key's normalisation (16.4); it is rejected, never repaired. |
+| `E_KEY_ENCODING` | class | An object key string is malformed or not its canonical encoding (16.5). |
 
-"URI" marks codes raised while parsing a cell URI (5.4), "envelope" codes raised while checking a response envelope (5.5), "mesh" codes raised in cross-mesh resolution (9.6), and "unit" codes raised while resolving a unit (7.1), and since `spec-0.5.0` "define" and "write" codes a mesh's define and write paths raise. Canonicalising a scalar, cell, reference or descriptor on its own uses the same codes as steps 1-3.
+"URI" marks codes raised while parsing a cell URI (5.4), "envelope" codes raised while checking a response envelope (5.5), "mesh" codes raised in cross-mesh resolution (9.6), and "unit" codes raised while resolving a unit (7.1), and since `spec-0.5.0` "define" and "write" codes a mesh's define and write paths raise, and "class" codes raised in defining a class (16.2) and in reading object keys (16.4, 16.5). None of the "class" codes is a verification result. Canonicalising a scalar, cell, reference or descriptor on its own uses the same codes as steps 1-3.
 
 ### 10.3 Licence entitlement
 
@@ -1033,6 +1047,9 @@ The answer is about the licence only. An entitled receipt is no more valid than 
 | `call` (since `spec-0.4.2`) | `input`: the call (5.8); `env`: `{"functions": {name: descriptor}, "aliases": {alias: name}, "descriptors": [descriptors known by hash]}` | `uri`: the cell URI it is written as |
 | `mesh` (since `spec-0.4.1`) | `host`; `env`: `{"keys": <env of the key document>, "mesh": <env of the mesh document>}`, each an `env` as below (9.6) | `bindings` (the URL) and `endpoints` (the known endpoint templates; unknown members dropped) |
 | `slice` | `input`: JSON text of a slice object (4.4) or a manifest (15.13). It is a manifest exactly when it is an object with a `members` member; anything else is checked as a slice object (so `{"slice": …}` alone is `E_SCHEMA`, as a slice object without `args`) | `canonical`, `sha256`, `slice_id`; for a manifest also `members_hash` and `entry` |
+| `class` (since `spec-0.5.0`) | `input`: a class descriptor's JSON text, as written (its own members, and `parent`); `name`: the class name; `env`: `{"functions": [descriptors], "classes": [flattened class descriptors], "definer": namespace}` | `canonical` (the flattened descriptor, 16.2) and `sha256` (the class hash) |
+| `normalisation` (since `spec-0.5.0`) | `rule`: a key normalisation; `text`: a string key value | none: a valid vector is canonical under `rule`, an invalid one is `E_KEY_NORMALISATION` (16.4) |
+| `key` (since `spec-0.5.0`) | `input`: an object key string | `decoded`: `{"class", "keys"}`, each key a typed scalar or a nested decoded object (16.5) |
 | `define` (since `spec-0.5.0`) | `input`: a descriptor's JSON text; `name`: the full function name it is defined under | `canonical`, `sha256` (the function hash); an invalid vector has the first failure: the name (2.3), then the descriptor (section 7), then `E_UNROOTED_INPUT` (2.5). Formula descriptors' own define-time rules (15.6) are the `formula` kind's |
 | `formula` | `input`: a formula source; `env`: `{"name", "signature", "functions": {name: descriptor}, "aliases": {alias: name}}` | `ast` (the canonical AST's JCS text), `ast_sha256`, `body`, `inputs` (the derived set), `returns` (type and unit), `asof_dependent`; an invalid vector has `error`, and `token` for `E_FORMULA_FORBIDDEN` |
 | `formula-eval` | `world`: `{"functions": {name: {"descriptor", "bound"}}, "receipts": [stored receipts], "max_depth"?, "blobs"?}`, `blobs` (since `spec-0.4.2`) the content the resolver can give, SHA-256 to the content's hex; `cell`: `{"fn", "args"}`; `asof`; `fuel`? | `value`, `lineage` (the receipt's `inputs`), `tx`, `receipt_asof`, `fuel_used`, `receipt_hash`; an invalid vector has the evaluation code as `error` |
@@ -1168,6 +1185,10 @@ Every choice this specification makes where its brief left room, with the main a
 | D79 | For an unrooted host, mesh-document URLs (`bindings` included), `poll` and `next` may be loopback `http://` URLs (`127.0.0.1`, `[::1]`, `localhost`, an optional port), all on one origin; rooted hosts stay https-only; the key document is never fetched over loopback (`spec-0.5.0`) | No exception, local tools using the address they connected to; a separate local document format | The user's decision B3 b. A local resolver serves on a loopback address, and its unrooted name never resolves; one exact list of loopback spellings keeps the check strict, one origin keeps a document from pointing at two local servers, and the key document stays out of band, so loopback is never a path to keys |
 | D80 | `E_UNROOTED_INPUT`, define's code for a rooted function reading an unrooted one, checked after the name and the descriptor; in 10.2's table with step "define", never a verification result; a vector kind `define` (`spec-0.5.0`) | A typed library error only; a define envelope invented now | The user's decision (S1 a). The refusal needs one name every implementation reports; define has no answer format yet, so the code is listed and tested without an outcome or status |
 | D81 | `E_NAMESPACE_SUSPENDED`, a write refusal for a namespace whose host's key document cannot be validated; suspension blocks writes and never reads, verification, serving existing receipts or the key document; the schedule and failure count are the mesh's policy (`spec-0.5.0`) | A verification failure; withdrawing the namespace's receipts; a normative validation schedule | The user's decisions. Receipts already signed stay true statements, so suspension can only stop new ones; what counts as failing validation is operational, not protocol |
+| D82 | A class descriptor is a third hashed object (`keys` with types and `order`, `methods` from name to function hash, `steward`; optional `parent`, `final`, `open`, `maps`, `inverse`, `extent`, `implements`); the author writes the class's own members and define flattens them onto the parent; the flattened descriptor, `parent` kept, is hashed; optional members are absent, never empty (`spec-0.5.0`) | Hash the descriptor as written, resolving the parent at each read; keep `final: false` | The user's decision (the class hash over the flattened descriptor). A flattened descriptor reads alone, and naming the parent's hash keeps a child's hash until it is defined again; one spelling for absence, as for `valid_to` |
+| D83 | Key normalisation is a canonicality check from a closed list (`none`, `upper_ascii`, `nfc_strict`, `arabic_skeleton`, `hebrew_consonantal`, `greek_unaccented`), each defined by the code points it forbids; the Hebrew set is `remove_chars`'s (`spec-0.5.0`) | Normalise input to the canonical form; rules by reference to external libraries | The user's decision: reject, never repair (the spec's first rule). Code-point sets are exact and need no data beyond Unicode 15.1 |
+| D84 | An object key travels as one canonical string: the full class name, keys labelled in ascending name order without spaces, literals in their lexical forms, class-typed keys nested unquoted (`spec-0.5.0`) | Positional keys by class order; a JSON object; the class hash in the encoding | Labels make the string decodable without the class descriptor, and sorting gives one spelling; the hash would pin a version of the class, but an object is its key tuple |
+| D85 | Function descriptors gain optional `classes` on string arguments and returns, and `default: "asof"` on date and instant valid-time arguments, checked with existing codes (`spec-0.5.0`) | New verification codes; class types as a seventh scalar type | No hash of an existing descriptor changes, and a verifier gains no code; an object key is a string as far as a cell is concerned |
 
 ## 14. Changes
 
@@ -1186,7 +1207,8 @@ Clients on libraries before their spec-0.5.0 releases reject a loopback mesh doc
   - 8.5: the rule's arguments are checked (licences by 8.1, `fn`, `issued`, the mesh's own licence); the reference took `MIT License` as a restricted licence (JS 56).
   - 2.5: being unrooted is a property of a valid namespace, checked first (`E_CANON_NAME`); the reference answered on any string (RS-45, JS 59).
   - 11: a `licence` vector's `declarations` are given directly, `{}` for none, names not checked against `fn`'s host (RS-46).
-- **Vectors** (11). 30 new, 1266 in all: 7 of the new kind `define` (3 valid, 4 invalid); 8 `mesh` (3 valid, 5 invalid) and 6 `envelope` (2 valid, 4 invalid) for loopback URLs; 3 invalid `licence` and 6 invalid `entitlement` for the findings.
+- **Classes, part one** (16.1, 16.2, 16.4, 16.5, 7, D82-D85; step 1.3b part A). The class descriptor, the third hashed object; define and flattening, the class hash over the flattened descriptor, inheritance, overrides, `final` and `open`, interfaces, the owner; key normalisation from a closed list; object keys as one canonical string, and the object id; `classes` and `default` in function descriptors. Ten "class" codes in 10.2, none a verification result. Vectors of the new kinds `class` (38: 10 valid, 28 invalid), `normalisation` (17) and `key` (11).
+- **Vectors** (11). 96 new, 1332 in all: 66 for classes (above); 7 of the new kind `define` (3 valid, 4 invalid); 8 `mesh` (3 valid, 5 invalid) and 6 `envelope` (2 valid, 4 invalid) for loopback URLs; 3 invalid `licence` and 6 invalid `entitlement` for the findings.
 - **Schemas.** `mesh.schema.json` (a loopback URL), `envelope.schema.json` (`poll`, `next`), `versions.schema.json` (`next`), `vector.schema.json` (the kind `define` and its `name`; loopback `bindings` and endpoints; the `licence` kind's arguments as strings, for invalid vectors).
 - **Security** (12): job URLs and mesh documents of unrooted hosts on loopback addresses.
 - **Reference tool.** `tools/canon.py`: `loopback_origin`, one origin per mesh document, loopback `poll` and `next` against the request's `mesh`; `is_unrooted` checks its name; `inherit_licence` checks its arguments; `input_licences` reports 7.5's codes; `check_entitlement` refuses an L for a receipt without inputs; `check_define`, the two codes, kept out of read envelopes. Cross-check: `generate_050.py`, `LIBS=0.4.3`.
@@ -1877,6 +1899,84 @@ Three forms are reserved so that 1.3b can add meaning without changing any 0.4.0
 1. **Method chaining.** `postfix = primary *( "." name "(" [ args ] ")" )`: `rates.example.org/fx_pair(base: "EUR", quote: "USD").forward(tenor: "1M")`. `).` is `E_FORMULA_RESERVED` now. A method call will resolve to a read of the method's function with the object's keys as its first arguments (by `signature.order`), so its canonical AST, and hash, equal those of the plain read.
 2. **Key literals.** A word with a capital letter not followed by `(` (`EUR`) and digits followed by `D`, `M` or `Y` (`1M`, `10Y`) are reserved for class keys; in 1.3b they are strings checked by the class's key normalisation and printed quoted, so `fx_pair(EUR, USD)` and `fx_pair("EUR", "USD")` will have one AST. `1W` stays one watt; a one-week tenor is `7D`.
 3. **Class-typed keys.** When a callee's parameter is declared with a class type (1.3b), a call in that position will be the object's key, not a read and not an input. The distinction is made at resolution from the callee's signature, with an AST node kind `key`; 0.4.0 signatures cannot declare class types, so every 0.4.0 body keeps meaning a read.
+
+## 16. Classes
+
+Since `spec-0.5.0` (step 1.3b). A **class** names a kind of thing by its key tuple and gathers the functions about it as **methods**. An **object** is a class and one key tuple: it is never stored and is never a value of its own. A method is an ordinary function (section 7) whose first arguments are the class keys in class order, so reading a method of an object is reading a cell of that function: receipts, verification (section 10) and every hash defined before stay as they are. Classes add a third hashed object, the class descriptor, and resolution sugar over reads.
+
+### 16.1 The class descriptor
+
+A class descriptor is a JSON object with the members below. `keys`, `methods`, `order` and `steward` are required; the others are optional, and an optional member is absent rather than empty (`E_SCHEMA` for an empty array, an empty `extent`, or `final` other than `true`). Any other member is `E_SCHEMA`.
+
+```json
+{
+  "keys": {"base": {"key_normalisation": "upper_ascii", "type": "string"},
+           "quote": {"key_normalisation": "upper_ascii", "type": "string"}},
+  "methods": {"cross": "<fn_hash>", "forward": "<fn_hash>", "rate": "<fn_hash>"},
+  "order": ["base", "quote"],
+  "steward": {"namespace": "rates.example.org", "process": "https://rates.example.org/classes/change"}
+}
+```
+
+- `keys`: the key arguments, from name to declaration. A name is an argument name (2.4, `E_CANON_ARG_NAME`); at most 32 keys (`E_CANON_LIMIT`). A declaration is `{"type", ...}` for a scalar key or `{"class": <full class name>}` for a **class-typed key**, whose value is the key of an object of that class, encoded as one string (16.5). A scalar key's type is one of the types of section 3 but `blob` (`E_CANON_TYPE`); a `number` key has a `unit` as in 7.1 and no other key does (`E_CANON_UNIT`); a `string` key has `key_normalisation`, one of the rules of 16.4, and no other key does (`E_CLASS_MEMBER`).
+- `order`: every key name exactly once, the order of the key tuple and of a method's first arguments (`E_CANON_SET`).
+- `methods`: from method name (2.2, `E_CANON_NAME`) to function hash (64 lowercase hex digits, `E_CANON_HEX`).
+- `parent` (optional): the class hash of the parent class (16.2).
+- `final` (optional, `true`): a subclass may add methods but override only those listed in `open`.
+- `open` (optional): method names of this class, ascending and unique (`E_CANON_SET`), overridable in a subclass of a final class; only with `final` (`E_CLASS_MEMBER`).
+- `steward`: `namespace`, the namespace that keeps the class (2.3), and `process`, an https URL of its change process (by the licence URL rule of 8.1; `E_CLASS_MEMBER`).
+- `maps` (optional): ontology URIs the class corresponds to, ascending and unique: a scheme and printable ASCII, at most 512 characters (`E_CLASS_MEMBER`).
+- `inverse` (optional): attribute names, ascending and unique, each with a method `by_<attribute>` in `methods` that returns a key of this class (16.2): the inverse lookup from the attribute to the object (`E_CLASS_MEMBER`).
+- `extent` (optional): `exists`, `keys` or both, each a function hash: functions taking exactly the class keys, in class order, and returning a boolean. `exists` says whether an object exists; `keys` is a stored function whose recorded cells are the class's objects, so the slice `keys(*, ...)` enumerates them (15.13).
+- `implements` (optional): class hashes of interfaces (keyless classes, 16.2) this class implements, ascending and unique.
+
+**Check order.** The structure over the whole descriptor first (`E_SCHEMA`), then the members in this order: `keys` (the count, then each key in JCS order of names: its name, then its declaration), `order`, `methods` (in JCS order of names), `steward`, `parent`, `open`, `maps`, `inverse`, `extent`, `implements`.
+
+The **class hash** is SHA-256 of the canonical bytes (6.2) of the flattened descriptor (16.2). As for functions, the class name is not part of it. A **class name** is a full name as a function name is (2.3), `rates.example.org/fx_pair`, and binds to a class hash through the bindings resource (9.7), whose answer gives it as `class_hash` in place of `fn_hash`, and may be pinned as a function is: `rates.example.org/fx_pair@<class hash>(...)` in a request (5.8).
+
+### 16.2 Define and flattening
+
+A class is defined from the descriptor its author writes, which holds the class's own keys and methods and, for a subclass, `parent`. Define checks it, flattens it onto its parent, and checks the result; **the flattened descriptor is the class descriptor, and its hash is the class hash**. A child's flattened descriptor names its parent's hash, so a parent defined anew does not change a child's hash until the child is defined again against it. Define checks, in this order, reporting the first failure:
+
+1. The class name (2.3, `E_CANON_NAME`). It is under the namespace of the definer: a namespace defines classes under itself only (`E_CLASS_OWNER`).
+2. The descriptor as written (16.1).
+3. **The parent**, when there is one: its class descriptor is known (`E_CLASS_PARENT`). No key of the parent is declared again (`E_CLASS_INHERIT`): keys are inherited, never removed or retyped. Flattening gives the keys of the parent and then the class's own; `order` the parent's order followed by the class's own; `methods` the parent's, overlaid by the class's own; `implements` the union of the parent's and the class's own. The other members are the class's own, and `parent` stays. Single inheritance only.
+4. **Overrides**: a method of the class with the name of a parent method and another hash. When the parent is `final`, a method not listed in the parent's `open` is not overridden (`E_CLASS_FINAL`): a subclass of a final class adds methods. An override keeps the overridden method's signature, so its arguments, return type and unit (`E_CLASS_OVERRIDE`).
+5. The flattened descriptor (16.1).
+6. **Methods**, in JCS order of names: each hash has a descriptor (`E_CLASS_METHOD`), with `order`, whose first arguments are the class keys in class order, each declaring its key (the same type, and unit for a number; for a class-typed key a `string` argument with `"classes": [<that class>]`) (`E_CLASS_METHOD`). A method that a parent declared, overridden or not, takes the keys the parent had, a prefix of the class order. `same_as` (a reserved name) returns a key of another class: `{"type": "string", "classes": [...]}` not naming this class; a `by_<attribute>` method of `inverse` returns a key of this class (`E_CLASS_METHOD`).
+7. `extent` functions as in 16.1 (`E_CLASS_MEMBER`).
+8. **Interfaces.** An interface is a keyless class: a method set. Each class in `implements` is a keyless class the define knows, and the class has each of its methods with that method's signature once the class keys are taken away: the same remaining arguments, order and return (`E_CLASS_INTERFACE`).
+
+A namespace that does not own a class does not change it: it subclasses it (step 3), or writes functions of its own whose first arguments are the class keys and calls them as extension methods (16.3). Override checks therefore concern subclasses only.
+
+### 16.4 Key normalisation
+
+A string key's `key_normalisation` names the rule its values are canonical under. A value that is not canonical is rejected with `E_KEY_NORMALISATION`, never repaired: in a call (5.8), in a key literal of a body (16.3), and in an object key (16.5). A cell of a method's function read by its plain name is a cell of an ordinary function and is not checked against the class's rule. Every rule but `none` rejects the empty string and a value that is not NFC. The closed list:
+
+| Rule | Canonical when the value |
+|---|---|
+| `none` | is any string (3.5) |
+| `upper_ascii` | holds printable ASCII only, U+0021 to U+007E, and no lowercase letter `a`-`z`: `EUR`, `1M`, `XAMS:ASML` |
+| `nfc_strict` | holds no format character (Cf), no line or paragraph separator and no space other than U+0020, and no leading, trailing or repeated U+0020 |
+| `arabic_skeleton` | holds no Arabic mark: U+0610-U+061A, U+064B-U+065F, U+0670, U+06D6-U+06DC, U+06DF-U+06E8, U+06EA-U+06ED, and no tatweel U+0640: `بسم ٱلله` |
+| `hebrew_consonantal` | holds no Hebrew point or accent, U+0591-U+05C7, except maqaf U+05BE, paseq U+05C0, sof pasuq U+05C3 and nun hafukha U+05C6 (the set of `remove_chars` in `formula-eval/hebrew-consonantal`): `בראשית` |
+| `greek_unaccented` | has no combining mark U+0300-U+036F in its NFD form (accents, breathings, iota subscript): `λογος`, not `λόγος` |
+
+The list grows only through revisions of this specification. The `normalisation` vectors give canonical and non-canonical values of each rule.
+
+### 16.5 Object keys
+
+An **object** is the JSON object `{"class": <class name>, "class_hash": <class hash>, "keys": {<key name>: <typed scalar>, ...}}`, every key bound; its **object id** is SHA-256 of its canonical bytes. An object is never stored and has no receipt.
+
+When a key is class-typed, or a method returns an object, the object travels as **one canonical string**, its key encoding:
+
+```
+key-encoding = class-name "(" [ key-pair *( "," key-pair ) ] ")"
+key-pair     = name ":" key-value                 ; names strictly ascending
+key-value    = DQUOTE *( string-char / 2DQUOTE ) DQUOTE / number / date / instant / "true" / "false" / key-encoding
+```
+
+`iso.example.org/currency(code:"EUR")`; nested: `rates.example.org/fx_pair(base:iso.example.org/currency(code:"EUR"),quote:iso.example.org/currency(code:"USD"))`. The class name is in full; the keys are labelled, in ascending order of name, with no space; a string is quoted with `"` doubled inside and follows 3.5; numbers, dates and instants are in their lexical forms; a class-typed key is its own encoding, unquoted. The encoding of an object is unique, so it is a string value with one spelling: anything that is not exactly the encoding of what it decodes to is `E_KEY_ENCODING`. As a cell argument it is a `string` and its 1024-byte limit applies.
 
 ## Appendix A: collected ABNF
 

@@ -1,0 +1,9 @@
+{
+  "id": "invalid/normalisation-hebrew-consonantal-pointed",
+  "kind": "normalisation",
+  "description": "spec-0.5.0: hebrew_consonantal, not canonical: rejected, never repaired.",
+  "valid": false,
+  "rule": "hebrew_consonantal",
+  "text": "בְּרֵאשִׁית בָּרָא אֱלֹהִים",
+  "error": "E_KEY_NORMALISATION"
+}

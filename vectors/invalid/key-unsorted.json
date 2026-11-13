@@ -1,0 +1,8 @@
+{
+  "id": "invalid/key-unsorted",
+  "kind": "key",
+  "description": "spec-0.5.0: Keys in ascending name order.",
+  "valid": false,
+  "input": "a.example.org/k(z:1,a:2)",
+  "error": "E_KEY_ENCODING"
+}

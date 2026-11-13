@@ -1,0 +1,9 @@
+{
+  "id": "invalid/normalisation-arabic-skeleton-tatweel",
+  "kind": "normalisation",
+  "description": "spec-0.5.0: arabic_skeleton, not canonical: rejected, never repaired.",
+  "valid": false,
+  "rule": "arabic_skeleton",
+  "text": "اللـه",
+  "error": "E_KEY_NORMALISATION"
+}

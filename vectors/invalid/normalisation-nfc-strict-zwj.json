@@ -1,0 +1,9 @@
+{
+  "id": "invalid/normalisation-nfc-strict-zwj",
+  "kind": "normalisation",
+  "description": "spec-0.5.0: nfc_strict, not canonical: rejected, never repaired.",
+  "valid": false,
+  "rule": "nfc_strict",
+  "text": "a‍b",
+  "error": "E_KEY_NORMALISATION"
+}

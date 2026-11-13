@@ -89,9 +89,22 @@ ERROR_CODES = (
     "E_FOREIGN_UNAVAILABLE",  # spec-0.4.3: an envelope and resolution code, never a verification result
     "E_UNROOTED_INPUT",  # spec-0.5.0: define's (2.5)
     "E_NAMESPACE_SUSPENDED",  # spec-0.5.0: a write refusal (9.9)
+    # spec-0.5.0, classes (section 16): define-time codes of classes, and keys; never verification results
+    "E_CLASS_MEMBER",
+    "E_CLASS_PARENT",
+    "E_CLASS_INHERIT",
+    "E_CLASS_OVERRIDE",
+    "E_CLASS_FINAL",
+    "E_CLASS_METHOD",
+    "E_CLASS_INTERFACE",
+    "E_CLASS_OWNER",
+    "E_KEY_NORMALISATION",
+    "E_KEY_ENCODING",
 )
 # spec-0.5.0: define and write codes, never verification results and never in a read envelope.
-DEFINE_WRITE_CODES = ("E_UNROOTED_INPUT", "E_NAMESPACE_SUSPENDED")
+DEFINE_WRITE_CODES = ("E_UNROOTED_INPUT", "E_NAMESPACE_SUSPENDED", "E_CLASS_MEMBER", "E_CLASS_PARENT",
+                      "E_CLASS_INHERIT", "E_CLASS_OVERRIDE", "E_CLASS_FINAL", "E_CLASS_METHOD", "E_CLASS_INTERFACE",
+                      "E_CLASS_OWNER")
 
 # Section 4.5 of SPEC.md.
 LIMITS = {
@@ -677,8 +690,13 @@ def shape_signature(sig, path):
         fail("E_SCHEMA", "expected an object", f"{path}.args")
     for name, decl in sig["args"].items():
         p = f"{path}.args.{name}"
-        _shape_object(decl, ("type", "valid"), ("extent", "unit"), p)
+        _shape_object(decl, ("type", "valid"), ("classes", "default", "extent", "unit"), p)
         _shape_str(decl, "type", p)
+        if "classes" in decl and (not isinstance(decl["classes"], list)
+                                  or not all(isinstance(c, str) for c in decl["classes"])):
+            fail("E_SCHEMA", "classes is an array of class names", f"{p}.classes")
+        if "default" in decl and decl["default"] != "asof":  # spec-0.5.0: the only default
+            fail("E_SCHEMA", 'the only default is "asof"', f"{p}.default")
         if "unit" in decl:
             shape_unit(decl["unit"], f"{p}.unit")
         if not isinstance(decl["valid"], bool):
@@ -697,8 +715,11 @@ def shape_signature(sig, path):
             fail("E_SCHEMA", "order is an array of argument names", f"{path}.order")
     returns = sig["returns"]
     if isinstance(returns, dict):
-        _shape_object(returns, ("type",), ("unit",), f"{path}.returns")
+        _shape_object(returns, ("type",), ("classes", "unit"), f"{path}.returns")
         _shape_str(returns, "type", f"{path}.returns")
+        if "classes" in returns and (not isinstance(returns["classes"], list)
+                                     or not all(isinstance(c, str) for c in returns["classes"])):
+            fail("E_SCHEMA", "classes is an array of class names", f"{path}.returns.classes")
         if "unit" in returns:
             shape_unit(returns["unit"], f"{path}.returns.unit")
     elif not isinstance(returns, str):
@@ -813,6 +834,12 @@ def check_function(desc, path="$"):
             fail("E_CANON_UNIT", "only number arguments have a unit", f"{p}.unit")
         if decl["valid"] and decl["type"] not in VALID_TIME_TYPES:
             fail("E_CANON_TYPE", "a valid-time argument must be a date, instant or string", p)
+        if "classes" in decl:  # spec-0.5.0 (16.5): the argument holds an object key of one of the classes
+            if decl["type"] != "string":
+                fail("E_CANON_TYPE", "only a string argument holds an object key", f"{p}.classes")
+            _check_class_names(decl["classes"], f"{p}.classes")
+        if "default" in decl and not (decl["valid"] and decl["type"] in ("date", "instant")):
+            fail("E_CANON_TYPE", "the asof default is for a date or instant valid-time argument", f"{p}.default")
         if "extent" in decl:
             check_extent(decl, f"{p}.extent")
     if "order" in desc["signature"]:
@@ -825,6 +852,13 @@ def check_function(desc, path="$"):
         check_type_name(returns, p)
         if returns == "number":
             fail("E_CANON_UNIT", 'a number return is written {"type": "number", "unit": ...}', p)
+    elif "classes" in returns:  # spec-0.5.0 (16.5): the function returns an object key
+        check_type_name(returns["type"], f"{p}.type")
+        if returns["type"] != "string":
+            fail("E_CANON_TYPE", "an object key is returned as a string", p)
+        if "unit" in returns:
+            fail("E_CANON_UNIT", "an object key has no unit", p)
+        _check_class_names(returns["classes"], f"{p}.classes")
     else:
         check_type_name(returns["type"], f"{p}.type")
         if returns["type"] != "number":
@@ -833,6 +867,14 @@ def check_function(desc, path="$"):
             fail("E_CANON_UNIT", "a number return declares its unit", p)
         check_unit(returns["unit"], args, f"{p}.unit")
     return desc
+
+
+def _check_class_names(names, path):
+    if not names:
+        fail("E_CANON_SET", "classes lists at least one class", path)
+    for i, n in enumerate(names):
+        check_function_name(n, f"{path}[{i}]")
+    check_set(names, path)
 
 
 def type_key(type_, lexical):
@@ -1538,6 +1580,407 @@ def input_licences(receipt, receipts, manifests, keyenv=None):
             fail("E_INPUT_UNAVAILABLE", f"the manifest given for {entry} is another slice's", "$.inputs")
         out.extend(get(h) for h in m["members"])
     return out
+
+
+# ---------------------------------------------------------------------------
+# Classes (SPEC.md section 16, spec-0.5.0): the class descriptor, define and flattening, key
+# normalisation, object keys and ids.
+
+KEY_NORMALISATIONS = ("none", "upper_ascii", "nfc_strict", "arabic_skeleton", "hebrew_consonantal",
+                      "greek_unaccented")
+_HEBREW_KEPT = {0x05BE, 0x05C0, 0x05C3, 0x05C6}  # maqaf, paseq, sof pasuq, nun hafukha
+_ARABIC_MARKS = [(0x0610, 0x061A), (0x064B, 0x065F), (0x0670, 0x0670), (0x06D6, 0x06DC), (0x06DF, 0x06E8),
+                 (0x06EA, 0x06ED), (0x0640, 0x0640)]
+
+
+def check_key_value(rule, value, path="$"):
+    """A string key value is canonical under its key normalisation (16.4); never repaired."""
+    def bad(why):
+        fail("E_KEY_NORMALISATION", f"not canonical under {rule}: {why}", path)
+    if rule == "none":
+        return
+    if value == "":
+        bad("empty")
+    if unicodedata.normalize("NFC", value) != value:
+        bad("not NFC")
+    if rule == "upper_ascii":
+        if any(not ("\x21" <= c <= "\x7e") or "a" <= c <= "z" for c in value):
+            bad("printable ASCII without lowercase letters or spaces")
+    elif rule == "nfc_strict":
+        for c in value:
+            cat = unicodedata.category(c)
+            if cat in ("Cf", "Zl", "Zp") or (cat == "Zs" and c != " ") or c in "\t\n\r":
+                bad(f"U+{ord(c):04X}")
+        if value != value.strip(" ") or "  " in value:
+            bad("leading, trailing or repeated spaces")
+    elif rule == "hebrew_consonantal":
+        if any(0x0591 <= ord(c) <= 0x05C7 and ord(c) not in _HEBREW_KEPT for c in value):
+            bad("Hebrew points or accents")
+    elif rule == "greek_unaccented":
+        if any(0x0300 <= ord(c) <= 0x036F for c in unicodedata.normalize("NFD", value)):
+            bad("Greek accents or breathings")
+    elif rule == "arabic_skeleton":
+        if any(lo <= ord(c) <= hi for c in value for lo, hi in _ARABIC_MARKS):
+            bad("Arabic marks or tatweel")
+    else:
+        fail("E_CLASS_MEMBER", f"unknown key normalisation {rule!r}", path)
+
+
+CLASS_REQUIRED = ("keys", "methods", "order", "steward")
+CLASS_OPTIONAL = ("extent", "final", "implements", "inverse", "maps", "open", "parent")
+_ANY_URI = re.compile(r"[a-z][a-z0-9+.-]*:[!-~]+")
+
+
+def shape_class(d, path="$"):
+    _shape_object(d, CLASS_REQUIRED, CLASS_OPTIONAL, path)
+    if not isinstance(d["keys"], dict):
+        fail("E_SCHEMA", "keys is an object", f"{path}.keys")
+    for name, decl in d["keys"].items():
+        p = f"{path}.keys.{name}"
+        if isinstance(decl, dict) and "class" in decl:
+            _shape_object(decl, ("class",), (), p)
+            _shape_str(decl, "class", p)
+        else:
+            _shape_object(decl, ("type",), ("key_normalisation", "unit"), p)
+            _shape_str(decl, "type", p)
+            if "key_normalisation" in decl:
+                _shape_str(decl, "key_normalisation", p)
+            if "unit" in decl:
+                shape_unit(decl["unit"], f"{p}.unit")
+    if not isinstance(d["order"], list) or not all(isinstance(n, str) for n in d["order"]):
+        fail("E_SCHEMA", "order is an array of key names", f"{path}.order")
+    if not isinstance(d["methods"], dict) or not all(isinstance(h, str) for h in d["methods"].values()):
+        fail("E_SCHEMA", "methods maps names to function hashes", f"{path}.methods")
+    _shape_object(d["steward"], ("namespace", "process"), (), f"{path}.steward")
+    for k in ("namespace", "process"):
+        _shape_str(d["steward"], k, f"{path}.steward")
+    if "parent" in d:
+        _shape_str(d, "parent", path)
+    if "final" in d and d["final"] is not True:
+        fail("E_SCHEMA", "final is true when present", f"{path}.final")
+    for k in ("implements", "inverse", "maps", "open"):
+        if k in d and (not isinstance(d[k], list) or not d[k] or not all(isinstance(x, str) for x in d[k])):
+            fail("E_SCHEMA", f"{k} is a non-empty array of strings", f"{path}.{k}")
+    if "extent" in d:
+        _shape_object(d["extent"], (), ("exists", "keys"), f"{path}.extent")
+        if not d["extent"]:
+            fail("E_SCHEMA", "extent names exists, keys or both", f"{path}.extent")
+        for k in d["extent"]:
+            _shape_str(d["extent"], k, f"{path}.extent")
+
+
+def check_class(d, path="$"):
+    """A class descriptor on its own (16.1): structure, then each member's rules, in the order of 16.1."""
+    shape_class(d, path)
+    keys = d["keys"]
+    if len(keys) > LIMITS["args"]:
+        fail("E_CANON_LIMIT", f"more than {LIMITS['args']} keys", f"{path}.keys")
+    pseudo = {n: {"type": (k.get("type") if "type" in k else "string")} for n, k in keys.items()}
+    for name in keys_in_order(keys):
+        p = f"{path}.keys.{name}"
+        decl = keys[name]
+        check_arg_name(name, p)
+        if "class" in decl:
+            check_function_name(decl["class"], f"{p}.class")
+            continue
+        check_type_name(decl["type"], f"{p}.type")
+        if decl["type"] == "blob":
+            fail("E_CANON_TYPE", "a key is not a blob", f"{p}.type")
+        if decl["type"] == "number":
+            if "unit" not in decl:
+                fail("E_CANON_UNIT", "a number key declares its unit", p)
+            check_unit(decl["unit"], pseudo, f"{p}.unit")
+        elif "unit" in decl:
+            fail("E_CANON_UNIT", "only number keys have a unit", f"{p}.unit")
+        if decl["type"] == "string":
+            if "key_normalisation" not in decl:
+                fail("E_CLASS_MEMBER", "a string key declares its key_normalisation", p)
+            if decl["key_normalisation"] not in KEY_NORMALISATIONS:
+                fail("E_CLASS_MEMBER", f"unknown key normalisation {decl['key_normalisation']!r}", p)
+        elif "key_normalisation" in decl:
+            fail("E_CLASS_MEMBER", "only string keys have a key_normalisation", p)
+    order = d["order"]
+    if len(order) != len(set(order)) or set(order) != set(keys):
+        fail("E_CANON_SET", "order lists every key exactly once", f"{path}.order")
+    for name in keys_in_order(d["methods"]):
+        check_name(name, f"{path}.methods.{name}")
+        check_hex(d["methods"][name], 64, f"{path}.methods.{name}")
+    check_namespace(d["steward"]["namespace"], f"{path}.steward.namespace")
+    proc = d["steward"]["process"]
+    if not _URL.fullmatch(proc) or len(proc) > LIMITS["licence_url"]:
+        fail("E_CLASS_MEMBER", "the steward's process is an https URL", f"{path}.steward.process")
+    if "parent" in d:
+        check_hex(d["parent"], 64, f"{path}.parent")
+    if "open" in d:
+        check_set(d["open"], f"{path}.open")
+        for m in d["open"]:
+            if m not in d["methods"]:
+                fail("E_CLASS_MEMBER", f"open names a method: {m!r}", f"{path}.open")
+        if "final" not in d:
+            fail("E_CLASS_MEMBER", "open is for a final class", f"{path}.open")
+    if "maps" in d:
+        check_set(d["maps"], f"{path}.maps")
+        for u in d["maps"]:
+            if not _ANY_URI.fullmatch(u) or len(u) > LIMITS["licence_url"]:
+                fail("E_CLASS_MEMBER", f"maps holds URIs: {u!r}", f"{path}.maps")
+    if "inverse" in d:
+        check_set(d["inverse"], f"{path}.inverse")
+        for a in d["inverse"]:
+            check_name(a, f"{path}.inverse")
+            if f"by_{a}" not in d["methods"]:
+                fail("E_CLASS_MEMBER", f"inverse {a!r} needs the method by_{a}", f"{path}.inverse")
+    if "extent" in d:
+        for k in sorted(d["extent"]):
+            check_hex(d["extent"][k], 64, f"{path}.extent.{k}")
+    if "implements" in d:
+        check_set(d["implements"], f"{path}.implements")
+        for h in d["implements"]:
+            check_hex(h, 64, f"{path}.implements")
+    return d
+
+
+def class_hash(flat):
+    """SHA-256 of the canonical bytes of the flattened class descriptor (16.2)."""
+    return sha256_hex(jcs(flat))
+
+
+def _key_matches(decl, arg):
+    """A method's leading argument declares the class key (16.2)."""
+    if "class" in decl:
+        return arg["type"] == "string" and arg.get("classes") == [decl["class"]]
+    if arg["type"] != decl["type"] or "classes" in arg:
+        return False
+    return decl["type"] != "number" or arg.get("unit") == decl.get("unit")
+
+
+def _leading_keys(fd, keys, order, path, what):
+    sig = fd["signature"]
+    if "order" not in sig or sig["order"][:len(order)] != order:
+        fail("E_CLASS_METHOD", f"{what} takes the class keys {order} first, by signature.order", path)
+    for k in order:
+        if not _key_matches(keys[k], sig["args"][k]):
+            fail("E_CLASS_METHOD", f"{what}: argument {k} does not declare the key {k}", path)
+
+
+def _without_keys(sig, order):
+    args = {n: a for n, a in sig["args"].items() if n not in order}
+    return {"args": args, "order": [n for n in sig.get("order", []) if n not in order], "returns": sig["returns"]}
+
+
+def define_class(name, desc, env):
+    """Define a class (16.2): check it, flatten it onto its parent, check its methods. Returns the
+    flattened descriptor, whose hash is the class hash.
+
+    env: {"functions": [descriptors], "classes": [flattened class descriptors], "definer": namespace?}."""
+    check_function_name(name, "$.name")
+    definer = env.get("definer")
+    ns = name.rpartition("/")[0]
+    if definer is not None and not (ns == definer or ns.startswith(definer + "/")):
+        fail("E_CLASS_OWNER", f"{definer} cannot define a class under {ns}", "$.name")
+    check_class(desc)
+    functions = {function_hash(f): f for f in env.get("functions", [])}
+    classes = {class_hash(c): c for c in env.get("classes", [])}
+    flat = copy_json(desc)
+    parent = None
+    if "parent" in desc:
+        if desc["parent"] not in classes:
+            fail("E_CLASS_PARENT", "no class descriptor for the parent's hash", "$.parent")
+        parent = classes[desc["parent"]]
+        for k in keys_in_order(desc["keys"]):
+            if k in parent["keys"]:
+                fail("E_CLASS_INHERIT", f"the key {k} is inherited: never redeclared, removed or retyped",
+                     f"$.keys.{k}")
+        flat["keys"] = dict(parent["keys"], **desc["keys"])
+        flat["order"] = parent["order"] + desc["order"]
+        flat["methods"] = dict(parent["methods"], **desc["methods"])
+        implements = set(parent.get("implements", [])) | set(desc.get("implements", []))
+        if implements:
+            flat["implements"] = sorted(implements, key=_utf16_key)
+        for m in keys_in_order(desc["methods"]):
+            if m not in parent["methods"] or parent["methods"][m] == desc["methods"][m]:
+                continue
+            if "final" in parent and m not in parent.get("open", []):
+                fail("E_CLASS_FINAL", f"{m} of a final class is not open: add, do not override", f"$.methods.{m}")
+            old, new = functions.get(parent["methods"][m]), functions.get(desc["methods"][m])
+            if old is None or new is None:
+                fail("E_CLASS_METHOD", f"no descriptor for the method {m}", f"$.methods.{m}")
+            if old["signature"] != new["signature"]:
+                fail("E_CLASS_OVERRIDE", f"an override of {m} keeps its signature, return type and unit",
+                     f"$.methods.{m}")
+    check_class(flat)
+    keys, order = flat["keys"], flat["order"]
+    for m in keys_in_order(flat["methods"]):
+        p = f"$.methods.{m}"
+        fd = functions.get(flat["methods"][m])
+        if fd is None:
+            fail("E_CLASS_METHOD", f"no descriptor for the method {m}", p)
+        if parent is not None and m in parent["methods"]:
+            n = 0  # an inherited method takes the parent's keys it was defined with: a prefix of its order
+            while n < len(parent["order"]) and parent["order"][n] in fd["signature"]["args"]:
+                n += 1
+            _leading_keys(fd, keys, parent["order"][:n], p, m)
+        else:
+            _leading_keys(fd, keys, order, p, m)
+        ret = fd["signature"]["returns"]
+        if m == "same_as" and not (isinstance(ret, dict) and "classes" in ret and name not in ret["classes"]):
+            fail("E_CLASS_METHOD", "same_as returns a key of another class", p)
+        if m.startswith("by_") and m[3:] in flat.get("inverse", []) \
+                and not (isinstance(ret, dict) and ret.get("classes") == [name]):
+            fail("E_CLASS_METHOD", f"{m} returns a key of this class", p)
+    for k in sorted(flat.get("extent", {})):
+        fd = functions.get(flat["extent"][k])
+        if fd is None or fd["signature"].get("order") != order or set(fd["signature"]["args"]) != set(order) \
+                or fd["signature"]["returns"] != "boolean":
+            fail("E_CLASS_MEMBER", f"extent.{k} takes exactly the class keys and returns a boolean", f"$.extent.{k}")
+    for h in flat.get("implements", []):
+        iface = classes.get(h)
+        if iface is None or iface["keys"]:
+            fail("E_CLASS_INTERFACE", "implements names keyless classes (interfaces) the define knows",
+                 "$.implements")
+        for m in keys_in_order(iface["methods"]):
+            want, have = functions.get(iface["methods"][m]), functions.get(flat["methods"].get(m, ""))
+            if want is None or have is None or _without_keys(have["signature"], order) != _without_keys(
+                    want["signature"], []):
+                fail("E_CLASS_INTERFACE", f"the interface's method {m} is not implemented with its signature",
+                     "$.implements")
+    return flat
+
+
+def copy_json(value):
+    return json.loads(json.dumps(value))
+
+
+_KEY_NUMBER = re.compile(r"-?(?:0|[1-9][0-9]*)(?:\.[0-9]*[1-9])?")
+_KEY_DATE = re.compile(r"[0-9]{4}-[0-9]{2}-[0-9]{2}")
+_KEY_INSTANT = re.compile(r"[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}\.[0-9]{6}Z")
+_KEY_CLASS = re.compile(r"[a-z0-9][a-z0-9.\-]*(?:/[a-z0-9_]+)+")
+
+
+def _encode_value(v):
+    if "class" in v:
+        return encode_key(v["class"], v["keys"])
+    t, x = v["type"], v["value"]
+    if t == "string":
+        return '"' + x.replace('"', '""') + '"'
+    if t == "boolean":
+        return "true" if x else "false"
+    return x
+
+
+def encode_key(class_name, keys):
+    """An object key as one canonical string (16.5): the class name, then its keys labelled in
+    ascending order of name, without spaces; a class-typed key nested in the same form."""
+    return class_name + "(" + ",".join(f"{k}:{_encode_value(keys[k])}" for k in keys_in_order(keys)) + ")"
+
+
+def encode_decoded(decoded):
+    return encode_key(decoded["class"], decoded["keys"])
+
+
+def decode_key(text):
+    """The object a key encoding names: {"class", "keys"}, keys typed scalars or nested objects.
+    Anything malformed or not canonical is E_KEY_ENCODING (16.5)."""
+    def bad(why):
+        fail("E_KEY_ENCODING", f"{why}: {text!r}")
+    if not isinstance(text, str):
+        bad("not a string")
+    pos = [0]
+
+    def obj():
+        m = _KEY_CLASS.match(text, pos[0])
+        if not m or not text.startswith("(", m.end()):
+            bad("a key is <class name>(...)")
+        name = m.group()
+        try:
+            check_function_name(name, "$")
+        except DatumeshError:
+            bad("not a class name")
+        pos[0] = m.end() + 1
+        keys = {}
+        if text.startswith(")", pos[0]):
+            pos[0] += 1
+            return {"class": name, "keys": keys}
+        while True:
+            m = re.compile(r"[a-z][a-z0-9_]*:").match(text, pos[0])
+            if not m:
+                bad("a key is <name>:<value>")
+            label = m.group()[:-1]
+            try:
+                check_arg_name(label, "$")
+            except DatumeshError:
+                bad("not a key name")
+            if label in keys:
+                bad("a key named twice")
+            pos[0] = m.end()
+            keys[label] = value()
+            if text.startswith(",", pos[0]):
+                pos[0] += 1
+                continue
+            if text.startswith(")", pos[0]):
+                pos[0] += 1
+                return {"class": name, "keys": keys}
+            bad("expected , or )")
+
+    def ends(n):
+        return n == len(text) or text[n] in ",)"
+
+    def value():
+        i = pos[0]
+        if text.startswith('"', i):
+            j, out = i + 1, []
+            while True:
+                if j >= len(text):
+                    bad("an unterminated string")
+                if text[j] == '"':
+                    if text.startswith('""', j):
+                        out.append('"')
+                        j += 2
+                        continue
+                    break
+                out.append(text[j])
+                j += 1
+            s = "".join(out)
+            try:
+                check_text(s, "$", "string")
+            except DatumeshError:
+                bad("a string key breaks 3.5")
+            pos[0] = j + 1
+            return {"type": "string", "value": s}
+        for regex, type_ in ((_KEY_INSTANT, "instant"), (_KEY_DATE, "date"), (_KEY_NUMBER, "number")):
+            m = regex.match(text, i)
+            if m and ends(m.end()):
+                try:
+                    check_lexical(type_, m.group(), "$")
+                except DatumeshError:
+                    bad(f"not a {type_}")
+                pos[0] = m.end()
+                return {"type": type_, "value": m.group()}
+        for word, b in (("true", True), ("false", False)):
+            if text.startswith(word, i) and ends(i + len(word)):
+                pos[0] = i + len(word)
+                return {"type": "boolean", "value": b}
+        return obj()
+
+    decoded = obj()
+    if pos[0] != len(text):
+        bad("text after the key")
+    if encode_decoded(decoded) != text:
+        bad("not the canonical encoding")
+    return decoded
+
+
+def object_of(class_name, chash, keys):
+    """The object (16.5): a class name, its class hash and its key tuple. Never stored."""
+    return {"class": class_name, "class_hash": chash, "keys": keys}
+
+
+def object_id(obj):
+    return sha256_hex(jcs(obj))
+
+
+def short_id(identifier):
+    """The first 12 hex digits of a cell id or object id (16.8)."""
+    return identifier[:12]
 
 
 # ---------------------------------------------------------------------------
@@ -2445,6 +2888,15 @@ def run_vector(vec):
             if doc["declarations"]:  # spec-0.4.3
                 out["declarations"] = doc["declarations"]
             return out
+        if kind == "class":  # spec-0.5.0 (16.2)
+            flat = define_class(vec["name"], parse_json(vector_input(vec)), vec.get("env", {}))
+            canonical = jcs(flat)
+            return {"canonical": canonical.decode(), "sha256": sha256_hex(canonical)}
+        if kind == "normalisation":  # spec-0.5.0 (16.4)
+            check_key_value(vec["rule"], vec["text"])
+            return {}
+        if kind == "key":  # spec-0.5.0 (16.5)
+            return {"decoded": decode_key(vec["input"])}
         if kind == "define":  # spec-0.5.0
             return check_define(vec["name"], parse_json(vector_input(vec)))
         if kind == "licence":  # spec-0.4.3: licence inheritance (8.5)
@@ -2515,7 +2967,8 @@ OUTPUT_FIELDS = ("canonical", "sha256", "object", "uri", "https", "key_id", "key
                  "slice_id", "members_hash", "entry", "ast", "ast_sha256", "body", "inputs", "returns",
                  "asof_dependent", "value", "lineage", "tx", "receipt_asof", "fuel_used", "results",
                  "bindings", "endpoints",
-                 "declarations", "licence", "reason", "entitled")  # spec-0.4.3
+                 "declarations", "licence", "reason", "entitled",  # spec-0.4.3
+                 "decoded")  # spec-0.5.0
 
 
 def check_vector(vec):

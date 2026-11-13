@@ -1,0 +1,32 @@
+{
+  "id": "key/all-types",
+  "kind": "key",
+  "description": "spec-0.5.0: Every key type: boolean, date, instant, number, string with a doubled quote.",
+  "valid": true,
+  "input": "a.example.org/k(b:true,d:2024-03-15,i:2024-03-15T16:00:00.000000Z,n:-1.5,s:\"say \"\"hi\"\"\")",
+  "decoded": {
+    "class": "a.example.org/k",
+    "keys": {
+      "b": {
+        "type": "boolean",
+        "value": true
+      },
+      "d": {
+        "type": "date",
+        "value": "2024-03-15"
+      },
+      "i": {
+        "type": "instant",
+        "value": "2024-03-15T16:00:00.000000Z"
+      },
+      "n": {
+        "type": "number",
+        "value": "-1.5"
+      },
+      "s": {
+        "type": "string",
+        "value": "say \"hi\""
+      }
+    }
+  }
+}

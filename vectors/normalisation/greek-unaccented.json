@@ -1,0 +1,8 @@
+{
+  "id": "normalisation/greek-unaccented",
+  "kind": "normalisation",
+  "description": "spec-0.5.0: greek_unaccented, canonical.",
+  "valid": true,
+  "rule": "greek_unaccented",
+  "text": "Εν αρχη ην ο λογος"
+}

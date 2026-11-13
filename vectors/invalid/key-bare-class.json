@@ -1,0 +1,8 @@
+{
+  "id": "invalid/key-bare-class",
+  "kind": "key",
+  "description": "spec-0.5.0: A class is named in full.",
+  "valid": false,
+  "input": "currency(code:\"EUR\")",
+  "error": "E_KEY_ENCODING"
+}

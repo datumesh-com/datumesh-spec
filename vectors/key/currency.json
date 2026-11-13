@@ -1,0 +1,16 @@
+{
+  "id": "key/currency",
+  "kind": "key",
+  "description": "spec-0.5.0: One string key.",
+  "valid": true,
+  "input": "iso.example.org/currency(code:\"EUR\")",
+  "decoded": {
+    "class": "iso.example.org/currency",
+    "keys": {
+      "code": {
+        "type": "string",
+        "value": "EUR"
+      }
+    }
+  }
+}

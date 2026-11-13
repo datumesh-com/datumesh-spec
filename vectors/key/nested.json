@@ -1,0 +1,30 @@
+{
+  "id": "key/nested",
+  "kind": "key",
+  "description": "spec-0.5.0: Class-typed keys nested in the same form.",
+  "valid": true,
+  "input": "rates.example.org/fx_pair(base:iso.example.org/currency(code:\"EUR\"),quote:iso.example.org/currency(code:\"USD\"))",
+  "decoded": {
+    "class": "rates.example.org/fx_pair",
+    "keys": {
+      "base": {
+        "class": "iso.example.org/currency",
+        "keys": {
+          "code": {
+            "type": "string",
+            "value": "EUR"
+          }
+        }
+      },
+      "quote": {
+        "class": "iso.example.org/currency",
+        "keys": {
+          "code": {
+            "type": "string",
+            "value": "USD"
+          }
+        }
+      }
+    }
+  }
+}
