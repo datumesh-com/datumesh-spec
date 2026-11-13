@@ -31,7 +31,8 @@ FOREIGN = {"detail": "offline", "error": "E_FOREIGN_UNAVAILABLE", "outcome": "er
 
 class ForeignUnavailable(unittest.TestCase):
     def test_code_table(self):
-        self.assertEqual(canon.ERROR_CODES[-1], "E_FOREIGN_UNAVAILABLE")
+        i = canon.ERROR_CODES.index("E_NAME_UNBOUND")  # spec-0.5.0 appends define and write codes after it
+        self.assertEqual(canon.ERROR_CODES[i + 1], "E_FOREIGN_UNAVAILABLE")
         self.assertRegex(SPEC, r"\| `E_FOREIGN_UNAVAILABLE` \|")
         self.assertEqual(canon.FOREIGN_DETAILS, DETAILS)
 

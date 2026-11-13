@@ -106,6 +106,9 @@ class Coverage(unittest.TestCase):
         # E_FOREIGN_UNAVAILABLE (spec-0.4.3) is a mesh's or resolver's answer in an error envelope.
         used |= (set(canon.REQUEST_CODES) | {"E_FOREIGN_UNAVAILABLE"}) & {
             json.loads(v["input"]).get("error") for v in VECTORS if v["kind"] == "envelope" and v["valid"]}
+        # E_NAMESPACE_SUSPENDED (spec-0.5.0) is a write refusal; the spec has no write answer format
+        # yet, so no vector kind can carry it.
+        used.add("E_NAMESPACE_SUSPENDED")
         self.assertEqual(set(canon.ERROR_CODES) - used, set())
         self.assertEqual(used - set(canon.ERROR_CODES), set())
 
