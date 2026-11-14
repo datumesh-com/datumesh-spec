@@ -11,6 +11,7 @@ deterministic, so re-running this script reproduces vectors/ byte for byte.
     python3 tools/gen_vectors.py
 """
 
+import copy
 import hashlib
 import json
 import pathlib
@@ -2374,6 +2375,11 @@ for name, source, s_, method_of, error, why in [
                                                                   "valid": False}}, "order": ["i"],
                                                    "returns": CW_RATE_RET}, None, "E_FORMULA_DISPATCH",
      "Bounded dispatch needs one signature for the method in every class of the set."),
+    # The formula library's findings (H3): a quoted encoding is decoded against its class, as an object literal is.
+    ("quoted-key-not-canonical", f'{CW.CCY_PAIR}("{CW.CURRENCY}(code:""eur"")", "{CW.CURRENCY}(code:""USD"")")'
+     '.rate(2026-03-16)', cw_sig(CW_NUM), None, "E_FORMULA_KEY",
+     "A quoted key encoding in a class-typed position is decoded against its class, exactly as an object literal is: "
+     "currency's code is upper_ascii, so \"eur\" is refused (16.5)."),
 ]:
     add(f"invalid/formula-class-{name}", "formula", f"spec-0.5.0: {source}  ({why})", source, error,
         env=CW.env(CW_E, s_, method_of))
@@ -2427,6 +2433,16 @@ for name, fn, args, asof, error, why in [
     add(vid, "formula-eval", f"spec-0.5.0: {why}", None, error, world=CW_WORLD, cell={"args": args, "fn": fn},
         asof=asof)
 
+# The formula library's findings (H1): <class>/m bound to another hash than the class's method at evaluation.
+CW_REBOUND_WORLD = copy.deepcopy(CW_WORLD)
+CW_REBOUND_WORLD["functions"][f"{CW.BOND}/price"]["descriptor"] = dict(CW.BOND_PRICE, code={"body": "other prices\n",
+                                                                                             "lang": "stored"})
+add("invalid/formula-eval-class-dispatch-rebound", "formula-eval", "spec-0.5.0: calc.example.net/bond/price is bound to "
+    "another hash than bond's method price (a binding changed since price_of was defined): the dispatch's read is "
+    "E_FORMULA_DISPATCH, the mesh's failure, not 15.8's define-time E_FORMULA_METHOD (16.6).", None, "E_FORMULA_DISPATCH",
+    world=CW_REBOUND_WORLD, cell={"args": {"date": CW.D(CW.DAY), "instrument": CW.S('calc.example.net/bond(isin:"XS0001")')},
+                                  "fn": "calc.example.net/price_of"}, asof=CW.ASOF)
+
 CW_SHORT_ENV = CW.call_env(aliases={"fx_rate": "rates.example.org/fx_rate"}, aliases_tx="2026-05-01T00:00:00.000000Z")
 CW_OLD_ENV = CW.call_env(aliases={"fx_rate": f"{CW.FX}/rate"}, aliases_tx="2026-01-01T00:00:00.000000Z")
 for vid, call_text, env, error, why in [
@@ -2472,6 +2488,24 @@ for vid, call_text, env, error, why in [
      CW.call_env(lookups=CW.LOOKUPS), "E_NAME_UNBOUND", "verse has no lookup: a label names none of its objects."),
     ("invalid/call-class-without-method", f"{CW.FX}(EUR, USD)", CW.call_env(), "E_PARSE_URI",
      "A call of a class names a method: an object has no cell."),
+    # The formula library's findings (H3, H4, H7).
+    ("invalid/call-class-quoted-key-normalisation",
+     f'{CW.CCY_PAIR}("{CW.CURRENCY}(code:""eur"")", "{CW.CURRENCY}(code:""USD"")").rate(2026-03-16)', CW.call_env(),
+     "E_KEY_NORMALISATION", "A quoted key encoding in a class-typed position is decoded against its class, exactly as "
+     "an object literal is: currency's code is upper_ascii (16.5)."),
+    ("invalid/call-class-default-no-now", "rates.example.org/fx_rate(EUR, GBP)", CW.call_env(), "E_ARG_MISSING",
+     "The date's asof default needs the call's asof or the mesh's now; evaluated with neither (no now in env), "
+     "E_ARG_MISSING (16.7)."),
+    ("invalid/call-class-lookup-no-now", f"{CW.FX}[cable].rate(2026-03-16)", CW.call_env(lookups=CW.LOOKUPS),
+     "E_ARG_MISSING", "A label's lookup is read as of the call's asof or the mesh's now; evaluated with neither, "
+     "E_ARG_MISSING (16.7)."),
+    ("invalid/call-class-lookup-on-object", f"{CW.FX}(EUR, USD).named(cable)", CW.call_env(), "E_NAME_UNBOUND",
+     "The class's lookup method called on an object: as a method the class does not have (16.1, 5.8)."),
+    ("invalid/call-class-extension-without-keys", f"{CW.FX}(EUR, USD).calc.example.net/price_of(2026-03-16)",
+     CW.call_env(), "E_ARG_UNKNOWN", "An extension method that does not take the class keys first: the object's keys "
+     "are arguments it does not take (5.8)."),
+    ("invalid/call-class-extension-missing", f"{CW.FX}(EUR, USD).calc.example.net/fx_extra/carry()", CW.call_env(),
+     "E_ARG_MISSING", "An extension method's own arguments bind as any call's: date is not bound (5.8)."),
 ]:
     if error is None:
         got = canon.parse_call(call_text, env)

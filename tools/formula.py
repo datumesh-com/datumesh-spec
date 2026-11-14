@@ -59,6 +59,9 @@ EVAL_CODES = FAULT_CODES + ("E_FORMULA_NOT_COVERED", "E_FORMULA_BUDGET", "E_FORM
                              "E_FORMULA_BLOB_UNAVAILABLE")  # spec-0.4.2: text_of without the content
 CODES = tuple(dict.fromkeys(DEFINE_CODES + EVAL_CODES))  # E_FORMULA_KEY is both (spec-0.5.0)
 CATCHABLE = ("E_FORMULA_EMPTY", "E_FORMULA_ABSENT")
+# spec-0.5.0 (I3): a code of 10.2, not of 15.11, that the define of a method body can give: super in a
+# subclass whose parent's hash no class name is bound to in the definer's environment (16.3).
+CLASS_CODES = ("E_CLASS_PARENT",)
 
 
 def _no_value(e):
@@ -70,7 +73,7 @@ def _no_value(e):
 
 class FormulaError(Exception):
     def __init__(self, code, detail="", token=None):
-        assert code in CODES, code
+        assert code in CODES or code in CLASS_CODES, code
         self.code, self.detail, self.token = code, detail, token
         super().__init__(f"{code}: {detail}")
 
@@ -1000,6 +1003,11 @@ def _resolve_arg(tree, decl, env, normalisation=None):
             fail("E_FORMULA_KEY", f"not an object key (16.5): {e.detail}")
         if decoded["class"] not in decl["classes"]:
             fail("E_FORMULA_TYPE", f"a key of {decoded['class']} where {decl['classes']} is declared")
+        try:  # spec-0.5.0 (H3): decoded against its class, when known, exactly as an object literal is (16.5)
+            canon.check_key_of_class(decoded, _classes(env))
+        except canon.DatumeshError as e:
+            fail("E_FORMULA_KEY" if e.code == "E_KEY_NORMALISATION" else "E_FORMULA_TYPE",
+                 f"not a key of {decoded['class']} (16.5): {e.detail}")
     if normalisation is None and decl is not None:  # spec-0.5.0 (Q6 b): the argument's own rule
         normalisation = decl.get("key_normalisation")
     if normalisation is not None and node["node"] == "str":
@@ -1098,9 +1106,14 @@ def _method_object(recv, env):
         keys = {k: {"node": "var", "name": k} for k in desc["order"] if k in sig_args}
         if recv == ("super",):
             parent = desc.get("parent")
-            pname = next((n for n, d in _classes(env).items() if canon.class_hash(d) == parent), None)
-            if pname is None:
+            if parent is None:
                 fail("E_FORMULA_METHOD", "super needs the parent class")
+            # spec-0.5.0 (I3): P is the class name parent's hash is bound to in the definer's environment
+            # (the first in ascending order should several be); parent stays a hash.
+            named = _classes(env)
+            pname = next((n for n in canon.keys_in_order(named) if canon.class_hash(named[n]) == parent), None)
+            if pname is None:
+                fail("E_CLASS_PARENT", f"no class name is bound to the parent's hash {parent} at define")
             return (pname, _class_of(env, pname), keys, True)
         return (name, desc, keys, False)
     if recv[0] == "read" and recv[1] is not None and _class_of(env, recv[1]) is not None:
@@ -1245,7 +1258,9 @@ def _resolve_dispatch(tree, env):
         callee = _callee(env, fq)
         if callee is None:
             fail("E_FORMULA_UNRESOLVED", f"{fq} has no binding")
-        if canon.function_hash(callee) != desc["methods"][m]:
+        if canon.function_hash(callee) != desc["methods"][m] and not (env or {}).get("evaluating"):
+            # At evaluation (spec-0.5.0, H1) a <class>/m bound to another hash than the class's method
+            # is E_FORMULA_DISPATCH at the dispatch's read (16.6), not this define-time code (15.8).
             fail("E_FORMULA_METHOD", f"{fq} is not bound to the method {m} of {c}")
         keys = [k for k in desc["order"] if k in callee["signature"]["args"]]
         this_shape = canon._without_keys(callee["signature"], keys)
@@ -2707,7 +2722,8 @@ class World:
     def env_at(self, fq, asof, descriptor, override=None):
         return {"name": fq, "signature": descriptor["signature"],
                 "functions": _BoundAt(self, asof, override), "aliases": {},
-                "classes": self.classes_at(asof), "by_hash": self.descriptor_by_hash, "allow_pins": True}
+                "classes": self.classes_at(asof), "by_hash": self.descriptor_by_hash, "allow_pins": True,
+                "evaluating": True}
 
     def classes_at(self, asof):
         """spec-0.5.0: the class descriptors bound as of asof."""
@@ -2990,11 +3006,16 @@ class Context:
         if c not in node["classes"]:
             fail("E_FORMULA_DISPATCH_KEY", f"{c} is not among the classes {node['classes']} the function dispatches to")
         desc = self.world.classes_at(self.A).get(c)
-        if desc is not None and not _keys_of(desc, decoded["keys"]):
+        if desc is None:  # spec-0.5.0 (H1): not bound as of the read, 15.8's general rule; the mesh's failure
+            fail("E_FORMULA_UNRESOLVED", f"{c} has no binding as of {self.A}")
+        if not _keys_of(desc, decoded["keys"]):
             fail("E_FORMULA_DISPATCH_KEY", f"the value is not the key of an object of {c}: its keys differ")
+        # A key of the class not canonical under its rules is still its key (H2): the method's
+        # argument rule faults with E_FORMULA_KEY at the read (check_keys).
         fq = f"{c}/{node['method']}"
-        binding = self.world.binding(fq, self.A)
-        if desc is None or desc["methods"].get(node["method"]) != binding[1]:
+        binding = self.world.binding(fq, self.A)  # E_FORMULA_UNRESOLVED when not bound (H1)
+        if desc["methods"].get(node["method"]) != binding[1]:
+            # H1: a binding changed since define; the mesh's failure, in place of 15.8's E_FORMULA_METHOD
             fail("E_FORMULA_DISPATCH", f"{fq} is not bound to the method {node['method']} of {c}")
         sig = binding[0]["signature"]["args"]
         args = {}

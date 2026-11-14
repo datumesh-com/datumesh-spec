@@ -2165,6 +2165,29 @@ def check_describe(doc, classes=None, functions=None):
     return doc
 
 
+def check_key_of_class(decoded, classes, path="$"):
+    """spec-0.5.0 (H3, 16.5): a decoded key encoding against its class, when the class is known: its key
+    names exactly the class's, each value of its key's type (a class-typed key decoded against its own
+    class, when known), each string value canonical under its key's normalisation. E_CANON_TYPE for names
+    or types, E_KEY_NORMALISATION for a value not canonical; nothing when the class is not known."""
+    desc = classes.get(decoded["class"])
+    if desc is None:
+        return
+    keys = decoded["keys"]
+    if set(keys) != set(desc["keys"]):
+        fail("E_CANON_TYPE", f"not the keys of {decoded['class']}", path)
+    for k in keys_in_order(keys):
+        decl, v = desc["keys"][k], keys[k]
+        if "class" in decl:
+            if v.get("class") != decl["class"]:
+                fail("E_CANON_TYPE", f"the key {k} of {decoded['class']} is a key of {decl['class']}", path)
+            check_key_of_class(v, classes, path)
+        elif "class" in v or v["type"] != decl["type"]:
+            fail("E_CANON_TYPE", f"the key {k} of {decoded['class']} is a {decl['type']}", path)
+        elif decl["type"] == "string":
+            check_key_value(decl["key_normalisation"], v["value"], path)
+
+
 def object_of_key(text, chash):
     """The object (16.5) a key encoding names, given its class's hash: a class-typed key is the typed
     string scalar of its own encoding, so the object holds typed scalars only."""
@@ -2995,8 +3018,8 @@ def parse_call(text, env):
         else:
             if mname not in desc["methods"]:
                 fail("E_NAME_UNBOUND", f"{fq} has no method {mname}")
-            if mname == desc.get("lookup"):
-                fail("E_PARSE_URI", f"{mname} is {fq}'s lookup: it takes a label, not an object")
+            if mname == desc.get("lookup"):  # spec-0.5.0 (H7): as a method the class does not have
+                fail("E_NAME_UNBOUND", f"{mname} is {fq}'s lookup: it takes a label, not an object")
             mfq = f"{fq}/{mname}"
             if mfq not in functions or function_hash(functions[mfq]) != desc["methods"][mname]:
                 fail("E_NAME_UNBOUND", f"{mfq} is not bound to the method {mname} of {fq}")
@@ -3138,6 +3161,7 @@ def _call_read(raw, decl, path, env):
             decoded = decode_key(value)
             if decoded["class"] not in classes:
                 fail("E_CANON_TYPE", f"a key of {decoded['class']} where {classes} is declared", path)
+            check_key_of_class(decoded, env.get("classes") or {}, path)  # H3: as an object literal is
             text = value
         else:
             fail("E_CANON_TYPE", f"a key of {classes} is an object or a quoted key encoding", path)
