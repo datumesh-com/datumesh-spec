@@ -170,6 +170,9 @@ class Coverage(unittest.TestCase):
         import generate_060
 
         produced.update({v["id"]: v for v in generate_060.VECTORS})
+        import generate_061  # spec-0.6.1: its vectors are written by crosscheck/generate_061.py
+
+        produced.update({v["id"]: v for v in generate_061.VECTORS})
         on_disk = {v["id"]: {k: x for k, x in v.items() if k != "_file"} for v in VECTORS}
         self.assertEqual(produced, on_disk)
 

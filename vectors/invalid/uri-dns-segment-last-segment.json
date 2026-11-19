@@ -1,0 +1,35 @@
+{
+  "id": "invalid/uri-dns-segment-last-segment",
+  "kind": "uri",
+  "description": "spec-0.6.1: A DNS name as the last segment: the function stays a name (2.3).",
+  "valid": false,
+  "input": "cell://datumesh.com/relay/ecb.europa.eu?base=EUR&date=2024-03-15&quote=USD",
+  "signature": {
+    "args": {
+      "base": {
+        "type": "string",
+        "valid": false
+      },
+      "date": {
+        "type": "date",
+        "valid": true
+      },
+      "quote": {
+        "type": "string",
+        "valid": false
+      }
+    },
+    "returns": {
+      "type": "number",
+      "unit": {
+        "of": {
+          "arg": "quote"
+        },
+        "per": {
+          "arg": "base"
+        }
+      }
+    }
+  },
+  "error": "E_CANON_NAME"
+}

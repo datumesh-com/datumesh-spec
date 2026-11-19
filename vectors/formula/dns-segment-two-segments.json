@@ -1,0 +1,61 @@
+{
+  "id": "formula/dns-segment-two-segments",
+  "kind": "formula",
+  "description": "spec-0.6.1: Two DNS segments in one name.",
+  "valid": true,
+  "input": "datumesh.com/relay/ecb.europa.eu/v2.example/rate(d: d)",
+  "env": {
+    "aliases": {},
+    "functions": {
+      "datumesh.com/relay/ecb.europa.eu/v2.example/rate": {
+        "code": {
+          "body": "",
+          "lang": "stored"
+        },
+        "inputs": [],
+        "signature": {
+          "args": {
+            "d": {
+              "type": "date",
+              "valid": true
+            }
+          },
+          "returns": {
+            "type": "number",
+            "unit": "1"
+          },
+          "order": [
+            "d"
+          ]
+        }
+      }
+    },
+    "name": "calc.example.net/f",
+    "signature": {
+      "args": {
+        "d": {
+          "type": "date",
+          "valid": true
+        }
+      },
+      "order": [
+        "d"
+      ],
+      "returns": {
+        "type": "number",
+        "unit": "1"
+      }
+    }
+  },
+  "ast": "{\"args\":{\"d\":{\"name\":\"d\",\"node\":\"var\"}},\"fn\":\"datumesh.com/relay/ecb.europa.eu/v2.example/rate\",\"node\":\"read\"}",
+  "ast_sha256": "76b065d59b8736332cd0c3502ce37eab1fa70c419a569fff97deba5e0c27e5e1",
+  "body": "datumesh.com/relay/ecb.europa.eu/v2.example/rate(d: d)\n",
+  "inputs": [
+    "datumesh.com/relay/ecb.europa.eu/v2.example/rate"
+  ],
+  "returns": {
+    "type": "number",
+    "unit": "1"
+  },
+  "asof_dependent": false
+}

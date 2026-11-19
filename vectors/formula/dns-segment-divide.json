@@ -1,0 +1,84 @@
+{
+  "id": "formula/dns-segment-divide",
+  "kind": "formula",
+  "description": "spec-0.6.1: A DNS-segment read divided by another: the \"/\" after the closing parenthesis is the operator, the \"/\" inside a name is not (15.4).",
+  "valid": true,
+  "input": "datumesh.com/relay/ecb.europa.eu/rate(d: d)/datumesh.com/relay/treasury.gov/yield(d: d)",
+  "env": {
+    "aliases": {},
+    "functions": {
+      "datumesh.com/relay/ecb.europa.eu/rate": {
+        "code": {
+          "body": "",
+          "lang": "stored"
+        },
+        "inputs": [],
+        "signature": {
+          "args": {
+            "d": {
+              "type": "date",
+              "valid": true
+            }
+          },
+          "returns": {
+            "type": "number",
+            "unit": "1"
+          },
+          "order": [
+            "d"
+          ]
+        }
+      },
+      "datumesh.com/relay/treasury.gov/yield": {
+        "code": {
+          "body": "",
+          "lang": "stored"
+        },
+        "inputs": [],
+        "signature": {
+          "args": {
+            "d": {
+              "type": "date",
+              "valid": true
+            }
+          },
+          "returns": {
+            "type": "number",
+            "unit": "1"
+          },
+          "order": [
+            "d"
+          ]
+        }
+      }
+    },
+    "name": "calc.example.net/f",
+    "signature": {
+      "args": {
+        "d": {
+          "type": "date",
+          "valid": true
+        }
+      },
+      "order": [
+        "d"
+      ],
+      "returns": {
+        "type": "number",
+        "unit": "1"
+      }
+    }
+  },
+  "ast": "{\"args\":[{\"args\":{\"d\":{\"name\":\"d\",\"node\":\"var\"}},\"fn\":\"datumesh.com/relay/ecb.europa.eu/rate\",\"node\":\"read\"},{\"args\":{\"d\":{\"name\":\"d\",\"node\":\"var\"}},\"fn\":\"datumesh.com/relay/treasury.gov/yield\",\"node\":\"read\"}],\"node\":\"op\",\"op\":\"/\"}",
+  "ast_sha256": "4f5b824a08a7627ab70f56f021a5419b17b1f6512bcc96ef9dcd0a97bd94b5d3",
+  "body": "datumesh.com/relay/ecb.europa.eu/rate(d: d) / datumesh.com/relay/treasury.gov/yield(d: d)\n",
+  "inputs": [
+    "datumesh.com/relay/ecb.europa.eu/rate",
+    "datumesh.com/relay/treasury.gov/yield"
+  ],
+  "returns": {
+    "type": "number",
+    "unit": "1"
+  },
+  "asof_dependent": false
+}

@@ -1,0 +1,56 @@
+{
+  "id": "uri/dns-segment-relay-ecb",
+  "kind": "uri",
+  "description": "spec-0.6.1: A DNS name as a namespace segment after the host: the relay of the ECB's reference rates (2.3).",
+  "valid": true,
+  "input": "cell://datumesh.com/relay/ecb.europa.eu/fx_reference?base=EUR&date=2024-03-15&quote=USD",
+  "signature": {
+    "args": {
+      "base": {
+        "type": "string",
+        "valid": false
+      },
+      "date": {
+        "type": "date",
+        "valid": true
+      },
+      "quote": {
+        "type": "string",
+        "valid": false
+      }
+    },
+    "returns": {
+      "type": "number",
+      "unit": {
+        "of": {
+          "arg": "quote"
+        },
+        "per": {
+          "arg": "base"
+        }
+      }
+    }
+  },
+  "object": {
+    "args": {
+      "base": {
+        "type": "string",
+        "value": "EUR"
+      },
+      "date": {
+        "type": "date",
+        "value": "2024-03-15"
+      },
+      "quote": {
+        "type": "string",
+        "value": "USD"
+      }
+    },
+    "fn": "fx_reference",
+    "ns": "datumesh.com/relay/ecb.europa.eu"
+  },
+  "canonical": "{\"args\":{\"base\":{\"type\":\"string\",\"value\":\"EUR\"},\"date\":{\"type\":\"date\",\"value\":\"2024-03-15\"},\"quote\":{\"type\":\"string\",\"value\":\"USD\"}},\"fn\":\"fx_reference\",\"ns\":\"datumesh.com/relay/ecb.europa.eu\"}",
+  "sha256": "0064e5685eee42aeebef9f4a42d9aa1de242f42beff9afcd985ea313f97a1016",
+  "uri": "cell://datumesh.com/relay/ecb.europa.eu/fx_reference?base=EUR&date=2024-03-15&quote=USD",
+  "https": "https://mesh.example/cell/datumesh.com/relay/ecb.europa.eu/fx_reference?base=EUR&date=2024-03-15&quote=USD"
+}

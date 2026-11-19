@@ -1,0 +1,116 @@
+{
+  "id": "formula-eval/dns-segment-minus-left",
+  "kind": "formula-eval",
+  "description": "spec-0.6.1: 1 - datumesh.com/relay/bank-x.example/rate(d: d), with the read 0.9: 0.1.",
+  "valid": true,
+  "world": {
+    "functions": {
+      "calc.example.net/e": {
+        "bound": "2026-01-01T00:00:00.000000Z",
+        "descriptor": {
+          "code": {
+            "body": "1 - datumesh.com/relay/bank-x.example/rate(d: d)\n",
+            "lang": "formula"
+          },
+          "inputs": [
+            "datumesh.com/relay/bank-x.example/rate"
+          ],
+          "signature": {
+            "args": {
+              "d": {
+                "type": "date",
+                "valid": true
+              }
+            },
+            "order": [
+              "d"
+            ],
+            "returns": {
+              "type": "number",
+              "unit": "1"
+            }
+          }
+        }
+      },
+      "datumesh.com/relay/bank-x.example/rate": {
+        "bound": "2026-01-01T00:00:00.000000Z",
+        "descriptor": {
+          "code": {
+            "body": "",
+            "lang": "stored"
+          },
+          "inputs": [],
+          "signature": {
+            "args": {
+              "d": {
+                "type": "date",
+                "valid": true
+              }
+            },
+            "returns": {
+              "type": "number",
+              "unit": "1"
+            },
+            "order": [
+              "d"
+            ]
+          }
+        }
+      }
+    },
+    "receipts": [
+      {
+        "asof": "2026-03-02T16:00:00.000000Z",
+        "cell": {
+          "args": {
+            "d": {
+              "type": "date",
+              "value": "2026-03-02"
+            }
+          },
+          "fn": "rate",
+          "fn_hash": "b716ddda9a92450a9c9a3499f6d6a17671c6e3bed1412640c17147e29ffcaa89",
+          "ns": "datumesh.com/relay/bank-x.example"
+        },
+        "computed_by": "datumesh.com#b62749c28eb8161a",
+        "inputs": [],
+        "issued": "2026-03-02T16:00:00.000000Z",
+        "licence": "CC-BY-4.0",
+        "proto": "datumesh/1",
+        "publisher": "datumesh.com/relay/bank-x.example",
+        "summary": "A recorded value of rate.",
+        "tx": "2026-03-02T16:00:00.000000Z",
+        "type": "number",
+        "valid": {
+          "d": {
+            "type": "date",
+            "value": "2026-03-02"
+          }
+        },
+        "value": "0.9",
+        "sig": "b0d90a906c57a39d93ebaa35f0da64bb3cfcd85e18cadf05582fa101735ffa1b2f009a6fea04a58ee93445a0ecba34cd6adc02c8edbdd6baf89fa2e13c0ba30a"
+      }
+    ]
+  },
+  "cell": {
+    "args": {
+      "d": {
+        "type": "date",
+        "value": "2026-03-02"
+      }
+    },
+    "fn": "calc.example.net/e"
+  },
+  "asof": "2026-06-01T00:00:00.000000Z",
+  "receipt_hash": "5e8293c78668bf3eaa7b4dd44dafc3902c65f48a18b821595d0334d6710b2902",
+  "value": {
+    "type": "number",
+    "value": "0.1"
+  },
+  "lineage": [
+    "4ba4ba8e81d1f8bb0ecc809b0d0a9b3840d83062bc1a9fc56d7a09fb146095cf"
+  ],
+  "tx": "2026-03-02T16:00:00.000000Z",
+  "receipt_asof": "2026-03-02T16:00:00.000000Z",
+  "fuel_used": 5
+}

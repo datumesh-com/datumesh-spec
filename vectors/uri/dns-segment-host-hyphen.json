@@ -1,0 +1,56 @@
+{
+  "id": "uri/dns-segment-host-hyphen",
+  "kind": "uri",
+  "description": "spec-0.6.1: A hyphenated host and a DNS segment.",
+  "valid": true,
+  "input": "cell://bank-x.example/relay/ecb.europa.eu/rate?base=EUR&date=2024-03-15&quote=USD",
+  "signature": {
+    "args": {
+      "base": {
+        "type": "string",
+        "valid": false
+      },
+      "date": {
+        "type": "date",
+        "valid": true
+      },
+      "quote": {
+        "type": "string",
+        "valid": false
+      }
+    },
+    "returns": {
+      "type": "number",
+      "unit": {
+        "of": {
+          "arg": "quote"
+        },
+        "per": {
+          "arg": "base"
+        }
+      }
+    }
+  },
+  "object": {
+    "args": {
+      "base": {
+        "type": "string",
+        "value": "EUR"
+      },
+      "date": {
+        "type": "date",
+        "value": "2024-03-15"
+      },
+      "quote": {
+        "type": "string",
+        "value": "USD"
+      }
+    },
+    "fn": "rate",
+    "ns": "bank-x.example/relay/ecb.europa.eu"
+  },
+  "canonical": "{\"args\":{\"base\":{\"type\":\"string\",\"value\":\"EUR\"},\"date\":{\"type\":\"date\",\"value\":\"2024-03-15\"},\"quote\":{\"type\":\"string\",\"value\":\"USD\"}},\"fn\":\"rate\",\"ns\":\"bank-x.example/relay/ecb.europa.eu\"}",
+  "sha256": "691a900447f01a3a3a00e7571bffcbedf11df9a67083face8a4be1066f62b2bd",
+  "uri": "cell://bank-x.example/relay/ecb.europa.eu/rate?base=EUR&date=2024-03-15&quote=USD",
+  "https": "https://mesh.example/cell/bank-x.example/relay/ecb.europa.eu/rate?base=EUR&date=2024-03-15&quote=USD"
+}

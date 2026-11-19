@@ -1,0 +1,9 @@
+{
+  "id": "invalid/define-dns-segment-leading-dot",
+  "kind": "define",
+  "description": "spec-0.6.1: A DNS segment may not start with a dot.",
+  "valid": false,
+  "input": "{\n  \"signature\": {\n    \"returns\": {\n      \"unit\": {\n        \"per\": {\n          \"arg\": \"base\"\n        },\n        \"of\": {\n          \"arg\": \"quote\"\n        }\n      },\n      \"type\": \"number\"\n    },\n    \"args\": {\n      \"quote\": {\n        \"valid\": false,\n        \"type\": \"string\"\n      },\n      \"date\": {\n        \"valid\": true,\n        \"type\": \"date\"\n      },\n      \"base\": {\n        \"valid\": false,\n        \"type\": \"string\"\n      }\n    }\n  },\n  \"inputs\": [],\n  \"code\": {\n    \"lang\": \"stored\",\n    \"body\": \"\"\n  }\n}",
+  "name": "datumesh.com/relay/.europa.eu/rate",
+  "error": "E_CANON_NAME"
+}

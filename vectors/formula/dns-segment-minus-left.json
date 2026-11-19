@@ -1,0 +1,61 @@
+{
+  "id": "formula/dns-segment-minus-left",
+  "kind": "formula",
+  "description": "spec-0.6.1: A subtraction whose right operand is a read with a hyphenated DNS segment: with spaces, 1 is a number and the hyphen an operator.",
+  "valid": true,
+  "input": "1 - datumesh.com/relay/bank-x.example/rate(d: d)",
+  "env": {
+    "aliases": {},
+    "functions": {
+      "datumesh.com/relay/bank-x.example/rate": {
+        "code": {
+          "body": "",
+          "lang": "stored"
+        },
+        "inputs": [],
+        "signature": {
+          "args": {
+            "d": {
+              "type": "date",
+              "valid": true
+            }
+          },
+          "returns": {
+            "type": "number",
+            "unit": "1"
+          },
+          "order": [
+            "d"
+          ]
+        }
+      }
+    },
+    "name": "calc.example.net/f",
+    "signature": {
+      "args": {
+        "d": {
+          "type": "date",
+          "valid": true
+        }
+      },
+      "order": [
+        "d"
+      ],
+      "returns": {
+        "type": "number",
+        "unit": "1"
+      }
+    }
+  },
+  "ast": "{\"args\":[{\"node\":\"num\",\"value\":\"1\"},{\"args\":{\"d\":{\"name\":\"d\",\"node\":\"var\"}},\"fn\":\"datumesh.com/relay/bank-x.example/rate\",\"node\":\"read\"}],\"node\":\"op\",\"op\":\"-\"}",
+  "ast_sha256": "01cd03f326c92377d4c1193ff73385a661f05923750fee944fadd3882910ecae",
+  "body": "1 - datumesh.com/relay/bank-x.example/rate(d: d)\n",
+  "inputs": [
+    "datumesh.com/relay/bank-x.example/rate"
+  ],
+  "returns": {
+    "type": "number",
+    "unit": "1"
+  },
+  "asof_dependent": false
+}

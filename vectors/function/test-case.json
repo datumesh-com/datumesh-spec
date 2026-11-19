@@ -1,0 +1,9 @@
+{
+  "id": "function/test-case",
+  "kind": "function",
+  "description": "spec-0.6.1: The test_case function of a host (7.3): function_hash and case, both strings, and a boolean value. One per host, under the host itself.",
+  "valid": true,
+  "input": "{\n  \"signature\": {\n    \"returns\": \"boolean\",\n    \"order\": [\n      \"function_hash\",\n      \"case\"\n    ],\n    \"args\": {\n      \"function_hash\": {\n        \"valid\": false,\n        \"type\": \"string\"\n      },\n      \"case\": {\n        \"valid\": false,\n        \"type\": \"string\"\n      }\n    }\n  },\n  \"inputs\": [],\n  \"code\": {\n    \"lang\": \"stored\",\n    \"body\": \"\"\n  }\n}",
+  "canonical": "{\"code\":{\"body\":\"\",\"lang\":\"stored\"},\"inputs\":[],\"signature\":{\"args\":{\"case\":{\"type\":\"string\",\"valid\":false},\"function_hash\":{\"type\":\"string\",\"valid\":false}},\"order\":[\"function_hash\",\"case\"],\"returns\":\"boolean\"}}",
+  "sha256": "4e015d338c4179c0a81b44c37a9707455300ae953638dc90c3d586ad5ed3ea37"
+}

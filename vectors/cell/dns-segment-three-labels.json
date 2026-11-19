@@ -1,0 +1,9 @@
+{
+  "id": "cell/dns-segment-three-labels",
+  "kind": "cell",
+  "description": "spec-0.6.1: A DNS segment of three labels.",
+  "valid": true,
+  "input": "{\n  \"ns\": \"datumesh.com/relay/bankofengland.co.uk\",\n  \"fn_hash\": \"7b58ecb8fd23b644c87951d0bd609790ff547cbb23fed27186c669ce2ce0aa80\",\n  \"fn\": \"bank_rate\",\n  \"args\": {\n    \"quote\": {\n      \"value\": \"USD\",\n      \"type\": \"string\"\n    },\n    \"date\": {\n      \"value\": \"2024-03-15\",\n      \"type\": \"date\"\n    },\n    \"base\": {\n      \"value\": \"EUR\",\n      \"type\": \"string\"\n    }\n  }\n}",
+  "canonical": "{\"args\":{\"base\":{\"type\":\"string\",\"value\":\"EUR\"},\"date\":{\"type\":\"date\",\"value\":\"2024-03-15\"},\"quote\":{\"type\":\"string\",\"value\":\"USD\"}},\"fn\":\"bank_rate\",\"fn_hash\":\"7b58ecb8fd23b644c87951d0bd609790ff547cbb23fed27186c669ce2ce0aa80\",\"ns\":\"datumesh.com/relay/bankofengland.co.uk\"}",
+  "sha256": "eed976138cebcc9a15c8845ae970a18a363728b0750639ec81638f6226628cad"
+}

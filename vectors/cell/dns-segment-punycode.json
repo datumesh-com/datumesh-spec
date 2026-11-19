@@ -1,0 +1,9 @@
+{
+  "id": "cell/dns-segment-punycode",
+  "kind": "cell",
+  "description": "spec-0.6.1: A punycode (A-label) segment, opaque as in 2.1.",
+  "valid": true,
+  "input": "{\n  \"ns\": \"datumesh.com/relay/xn--bcher-kva.example\",\n  \"fn_hash\": \"7b58ecb8fd23b644c87951d0bd609790ff547cbb23fed27186c669ce2ce0aa80\",\n  \"fn\": \"rate\",\n  \"args\": {\n    \"quote\": {\n      \"value\": \"USD\",\n      \"type\": \"string\"\n    },\n    \"date\": {\n      \"value\": \"2024-03-15\",\n      \"type\": \"date\"\n    },\n    \"base\": {\n      \"value\": \"EUR\",\n      \"type\": \"string\"\n    }\n  }\n}",
+  "canonical": "{\"args\":{\"base\":{\"type\":\"string\",\"value\":\"EUR\"},\"date\":{\"type\":\"date\",\"value\":\"2024-03-15\"},\"quote\":{\"type\":\"string\",\"value\":\"USD\"}},\"fn\":\"rate\",\"fn_hash\":\"7b58ecb8fd23b644c87951d0bd609790ff547cbb23fed27186c669ce2ce0aa80\",\"ns\":\"datumesh.com/relay/xn--bcher-kva.example\"}",
+  "sha256": "8f4db50640875a4f409434e18ba2c57a771e783cb8d0b272d201a9f7039d0a1b"
+}

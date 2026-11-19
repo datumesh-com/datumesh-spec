@@ -1,0 +1,61 @@
+{
+  "id": "formula/dns-segment-digit-hyphen-host",
+  "kind": "formula",
+  "description": "spec-0.6.1: No spaces: 1-datumesh.com is one host (15.4, hyphenated hosts: longest match), so this is a read of 1-datumesh.com/relay/bank-x.example/rate, not a subtraction.",
+  "valid": true,
+  "input": "1-datumesh.com/relay/bank-x.example/rate(d: d)",
+  "env": {
+    "aliases": {},
+    "functions": {
+      "1-datumesh.com/relay/bank-x.example/rate": {
+        "code": {
+          "body": "",
+          "lang": "stored"
+        },
+        "inputs": [],
+        "signature": {
+          "args": {
+            "d": {
+              "type": "date",
+              "valid": true
+            }
+          },
+          "returns": {
+            "type": "number",
+            "unit": "1"
+          },
+          "order": [
+            "d"
+          ]
+        }
+      }
+    },
+    "name": "calc.example.net/f",
+    "signature": {
+      "args": {
+        "d": {
+          "type": "date",
+          "valid": true
+        }
+      },
+      "order": [
+        "d"
+      ],
+      "returns": {
+        "type": "number",
+        "unit": "1"
+      }
+    }
+  },
+  "ast": "{\"args\":{\"d\":{\"name\":\"d\",\"node\":\"var\"}},\"fn\":\"1-datumesh.com/relay/bank-x.example/rate\",\"node\":\"read\"}",
+  "ast_sha256": "bd87ebfe2a8759082c9ccde0bdee690a58f0a47dbafb45b2c88edad63993b4ca",
+  "body": "1-datumesh.com/relay/bank-x.example/rate(d: d)\n",
+  "inputs": [
+    "1-datumesh.com/relay/bank-x.example/rate"
+  ],
+  "returns": {
+    "type": "number",
+    "unit": "1"
+  },
+  "asof_dependent": false
+}

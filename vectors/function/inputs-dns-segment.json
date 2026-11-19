@@ -1,0 +1,9 @@
+{
+  "id": "function/inputs-dns-segment",
+  "kind": "function",
+  "description": "spec-0.6.1: A DNS segment in the fully qualified names of `inputs` (7).",
+  "valid": true,
+  "input": "{\n  \"signature\": {\n    \"returns\": {\n      \"unit\": {\n        \"per\": {\n          \"arg\": \"base\"\n        },\n        \"of\": {\n          \"arg\": \"quote\"\n        }\n      },\n      \"type\": \"number\"\n    },\n    \"args\": {\n      \"quote\": {\n        \"valid\": false,\n        \"type\": \"string\"\n      },\n      \"date\": {\n        \"valid\": true,\n        \"type\": \"date\"\n      },\n      \"base\": {\n        \"valid\": false,\n        \"type\": \"string\"\n      }\n    }\n  },\n  \"inputs\": [\n    \"datumesh.com/relay/ecb.europa.eu/fx_reference\"\n  ],\n  \"code\": {\n    \"lang\": \"expr\",\n    \"body\": \"datumesh.com/relay/ecb.europa.eu/fx_reference(base: base, date: date, quote: quote)\\n\"\n  }\n}",
+  "canonical": "{\"code\":{\"body\":\"datumesh.com/relay/ecb.europa.eu/fx_reference(base: base, date: date, quote: quote)\\n\",\"lang\":\"expr\"},\"inputs\":[\"datumesh.com/relay/ecb.europa.eu/fx_reference\"],\"signature\":{\"args\":{\"base\":{\"type\":\"string\",\"valid\":false},\"date\":{\"type\":\"date\",\"valid\":true},\"quote\":{\"type\":\"string\",\"valid\":false}},\"returns\":{\"type\":\"number\",\"unit\":{\"of\":{\"arg\":\"quote\"},\"per\":{\"arg\":\"base\"}}}}}",
+  "sha256": "6bc6a44fd2aa70b2cf1baa8ec44260f043f7cfffc6255a7f4947ec23635e6e7b"
+}

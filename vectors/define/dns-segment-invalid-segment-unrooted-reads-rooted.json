@@ -1,0 +1,10 @@
+{
+  "id": "define/dns-segment-invalid-segment-unrooted-reads-rooted",
+  "kind": "define",
+  "description": "spec-0.6.1: local.invalid/x/foo.example/g is unrooted (its host is local.invalid): it may read the rooted rates.example.org/x/foo.invalid/f.",
+  "valid": true,
+  "input": "{\n  \"signature\": {\n    \"returns\": {\n      \"unit\": \"1\",\n      \"type\": \"number\"\n    },\n    \"args\": {}\n  },\n  \"inputs\": [\n    \"rates.example.org/x/foo.invalid/f\"\n  ],\n  \"code\": {\n    \"lang\": \"expr\",\n    \"body\": \"x\\n\"\n  }\n}",
+  "name": "local.invalid/x/foo.example/g",
+  "canonical": "{\"code\":{\"body\":\"x\\n\",\"lang\":\"expr\"},\"inputs\":[\"rates.example.org/x/foo.invalid/f\"],\"signature\":{\"args\":{},\"returns\":{\"type\":\"number\",\"unit\":\"1\"}}}",
+  "sha256": "4d7d179bd810fc5d108816e1f6d45d024130c6f35d3a795c0e47ef83482d5be8"
+}

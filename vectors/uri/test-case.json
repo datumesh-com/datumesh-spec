@@ -1,0 +1,42 @@
+{
+  "id": "uri/test-case",
+  "kind": "uri",
+  "description": "spec-0.6.1: The URI of a test_case cell: the host's own test_case, with the function hash and the case as string arguments.",
+  "valid": true,
+  "input": "cell://rates.example.org/test_case?case=d6d175b5b2153943&function_hash=7b58ecb8fd23b644c87951d0bd609790ff547cbb23fed27186c669ce2ce0aa80",
+  "signature": {
+    "args": {
+      "case": {
+        "type": "string",
+        "valid": false
+      },
+      "function_hash": {
+        "type": "string",
+        "valid": false
+      }
+    },
+    "order": [
+      "function_hash",
+      "case"
+    ],
+    "returns": "boolean"
+  },
+  "object": {
+    "args": {
+      "case": {
+        "type": "string",
+        "value": "d6d175b5b2153943"
+      },
+      "function_hash": {
+        "type": "string",
+        "value": "7b58ecb8fd23b644c87951d0bd609790ff547cbb23fed27186c669ce2ce0aa80"
+      }
+    },
+    "fn": "test_case",
+    "ns": "rates.example.org"
+  },
+  "canonical": "{\"args\":{\"case\":{\"type\":\"string\",\"value\":\"d6d175b5b2153943\"},\"function_hash\":{\"type\":\"string\",\"value\":\"7b58ecb8fd23b644c87951d0bd609790ff547cbb23fed27186c669ce2ce0aa80\"}},\"fn\":\"test_case\",\"ns\":\"rates.example.org\"}",
+  "sha256": "a374d8475f5237663f7f7274fbbc39ca1dc5be91d33b5abb2b3d4acdd3a65d1b",
+  "uri": "cell://rates.example.org/test_case?case=d6d175b5b2153943&function_hash=7b58ecb8fd23b644c87951d0bd609790ff547cbb23fed27186c669ce2ce0aa80",
+  "https": "https://mesh.example/cell/rates.example.org/test_case?case=d6d175b5b2153943&function_hash=7b58ecb8fd23b644c87951d0bd609790ff547cbb23fed27186c669ce2ce0aa80"
+}

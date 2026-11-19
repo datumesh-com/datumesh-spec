@@ -1,0 +1,77 @@
+{
+  "id": "formula/dns-segment-method-call",
+  "kind": "formula",
+  "description": "spec-0.6.1: A method call after a read, with a domain in a string literal: `.status()` after `)` stays a method call (15.3), as in 0.6.0; the register's `source` key holds a domain as a string.",
+  "valid": true,
+  "input": "datumesh.com/register/dataset(source: \"ecb.europa.eu\", code: \"reference_rates\").status()",
+  "env": {
+    "aliases": {},
+    "classes": {
+      "datumesh.com/register/dataset": {
+        "keys": {
+          "code": {
+            "key_normalisation": "none",
+            "type": "string"
+          },
+          "source": {
+            "key_normalisation": "none",
+            "type": "string"
+          }
+        },
+        "methods": {
+          "status": "36721afbc913f2b51ccd022f6f2c1bdf1d3c6ed177a066ceb2330ea9fdf79a4a"
+        },
+        "order": [
+          "source",
+          "code"
+        ],
+        "steward": {
+          "namespace": "datumesh.com/register",
+          "process": "https://datumesh.com/register/change"
+        }
+      }
+    },
+    "functions": {
+      "datumesh.com/register/dataset/status": {
+        "code": {
+          "body": "",
+          "lang": "stored"
+        },
+        "inputs": [],
+        "signature": {
+          "args": {
+            "code": {
+              "type": "string",
+              "valid": false
+            },
+            "source": {
+              "type": "string",
+              "valid": false
+            }
+          },
+          "order": [
+            "source",
+            "code"
+          ],
+          "returns": "string"
+        }
+      }
+    },
+    "name": "calc.example.net/f",
+    "signature": {
+      "args": {},
+      "order": [],
+      "returns": "string"
+    }
+  },
+  "ast": "{\"args\":{\"code\":{\"node\":\"str\",\"value\":\"reference_rates\"},\"source\":{\"node\":\"str\",\"value\":\"ecb.europa.eu\"}},\"fn\":\"datumesh.com/register/dataset/status\",\"node\":\"read\"}",
+  "ast_sha256": "8dde66fbbec81256a3aa41801c8a1e591125468a1545c5beb976f26d1b0c0eed",
+  "body": "datumesh.com/register/dataset/status(code: \"reference_rates\", source: \"ecb.europa.eu\")\n",
+  "inputs": [
+    "datumesh.com/register/dataset/status"
+  ],
+  "returns": {
+    "type": "string"
+  },
+  "asof_dependent": false
+}

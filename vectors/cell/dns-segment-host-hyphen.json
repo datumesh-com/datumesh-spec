@@ -1,0 +1,9 @@
+{
+  "id": "cell/dns-segment-host-hyphen",
+  "kind": "cell",
+  "description": "spec-0.6.1: A hyphenated host and a DNS segment.",
+  "valid": true,
+  "input": "{\n  \"ns\": \"bank-x.example/relay/ecb.europa.eu\",\n  \"fn_hash\": \"7b58ecb8fd23b644c87951d0bd609790ff547cbb23fed27186c669ce2ce0aa80\",\n  \"fn\": \"rate\",\n  \"args\": {\n    \"quote\": {\n      \"value\": \"USD\",\n      \"type\": \"string\"\n    },\n    \"date\": {\n      \"value\": \"2024-03-15\",\n      \"type\": \"date\"\n    },\n    \"base\": {\n      \"value\": \"EUR\",\n      \"type\": \"string\"\n    }\n  }\n}",
+  "canonical": "{\"args\":{\"base\":{\"type\":\"string\",\"value\":\"EUR\"},\"date\":{\"type\":\"date\",\"value\":\"2024-03-15\"},\"quote\":{\"type\":\"string\",\"value\":\"USD\"}},\"fn\":\"rate\",\"fn_hash\":\"7b58ecb8fd23b644c87951d0bd609790ff547cbb23fed27186c669ce2ce0aa80\",\"ns\":\"bank-x.example/relay/ecb.europa.eu\"}",
+  "sha256": "a2e87c5f99a8173c63a0926a608c8e4cae1fa321596b3f3b5f1847ae95407d1b"
+}

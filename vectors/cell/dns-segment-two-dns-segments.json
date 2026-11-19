@@ -1,0 +1,9 @@
+{
+  "id": "cell/dns-segment-two-dns-segments",
+  "kind": "cell",
+  "description": "spec-0.6.1: Two DNS segments in one namespace.",
+  "valid": true,
+  "input": "{\n  \"ns\": \"datumesh.com/relay/ecb.europa.eu/v2.example\",\n  \"fn_hash\": \"7b58ecb8fd23b644c87951d0bd609790ff547cbb23fed27186c669ce2ce0aa80\",\n  \"fn\": \"rate\",\n  \"args\": {\n    \"quote\": {\n      \"value\": \"USD\",\n      \"type\": \"string\"\n    },\n    \"date\": {\n      \"value\": \"2024-03-15\",\n      \"type\": \"date\"\n    },\n    \"base\": {\n      \"value\": \"EUR\",\n      \"type\": \"string\"\n    }\n  }\n}",
+  "canonical": "{\"args\":{\"base\":{\"type\":\"string\",\"value\":\"EUR\"},\"date\":{\"type\":\"date\",\"value\":\"2024-03-15\"},\"quote\":{\"type\":\"string\",\"value\":\"USD\"}},\"fn\":\"rate\",\"fn_hash\":\"7b58ecb8fd23b644c87951d0bd609790ff547cbb23fed27186c669ce2ce0aa80\",\"ns\":\"datumesh.com/relay/ecb.europa.eu/v2.example\"}",
+  "sha256": "de38fd06e3d7506773dbc42c115d1f62052e43969164a8595695ed8e4c69a5d7"
+}

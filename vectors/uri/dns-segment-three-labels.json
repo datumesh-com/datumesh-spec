@@ -1,0 +1,56 @@
+{
+  "id": "uri/dns-segment-three-labels",
+  "kind": "uri",
+  "description": "spec-0.6.1: A DNS segment of three labels.",
+  "valid": true,
+  "input": "cell://datumesh.com/relay/bankofengland.co.uk/bank_rate?base=EUR&date=2024-03-15&quote=USD",
+  "signature": {
+    "args": {
+      "base": {
+        "type": "string",
+        "valid": false
+      },
+      "date": {
+        "type": "date",
+        "valid": true
+      },
+      "quote": {
+        "type": "string",
+        "valid": false
+      }
+    },
+    "returns": {
+      "type": "number",
+      "unit": {
+        "of": {
+          "arg": "quote"
+        },
+        "per": {
+          "arg": "base"
+        }
+      }
+    }
+  },
+  "object": {
+    "args": {
+      "base": {
+        "type": "string",
+        "value": "EUR"
+      },
+      "date": {
+        "type": "date",
+        "value": "2024-03-15"
+      },
+      "quote": {
+        "type": "string",
+        "value": "USD"
+      }
+    },
+    "fn": "bank_rate",
+    "ns": "datumesh.com/relay/bankofengland.co.uk"
+  },
+  "canonical": "{\"args\":{\"base\":{\"type\":\"string\",\"value\":\"EUR\"},\"date\":{\"type\":\"date\",\"value\":\"2024-03-15\"},\"quote\":{\"type\":\"string\",\"value\":\"USD\"}},\"fn\":\"bank_rate\",\"ns\":\"datumesh.com/relay/bankofengland.co.uk\"}",
+  "sha256": "e5855d6d91043257e4d371abccbe1675e6630b82281fc06deb1d4aec94f7bace",
+  "uri": "cell://datumesh.com/relay/bankofengland.co.uk/bank_rate?base=EUR&date=2024-03-15&quote=USD",
+  "https": "https://mesh.example/cell/datumesh.com/relay/bankofengland.co.uk/bank_rate?base=EUR&date=2024-03-15&quote=USD"
+}

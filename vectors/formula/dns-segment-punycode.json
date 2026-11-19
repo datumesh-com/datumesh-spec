@@ -1,0 +1,61 @@
+{
+  "id": "formula/dns-segment-punycode",
+  "kind": "formula",
+  "description": "spec-0.6.1: A punycode segment in a body.",
+  "valid": true,
+  "input": "datumesh.com/relay/xn--bcher-kva.example/rate(d: d)",
+  "env": {
+    "aliases": {},
+    "functions": {
+      "datumesh.com/relay/xn--bcher-kva.example/rate": {
+        "code": {
+          "body": "",
+          "lang": "stored"
+        },
+        "inputs": [],
+        "signature": {
+          "args": {
+            "d": {
+              "type": "date",
+              "valid": true
+            }
+          },
+          "returns": {
+            "type": "number",
+            "unit": "1"
+          },
+          "order": [
+            "d"
+          ]
+        }
+      }
+    },
+    "name": "calc.example.net/f",
+    "signature": {
+      "args": {
+        "d": {
+          "type": "date",
+          "valid": true
+        }
+      },
+      "order": [
+        "d"
+      ],
+      "returns": {
+        "type": "number",
+        "unit": "1"
+      }
+    }
+  },
+  "ast": "{\"args\":{\"d\":{\"name\":\"d\",\"node\":\"var\"}},\"fn\":\"datumesh.com/relay/xn--bcher-kva.example/rate\",\"node\":\"read\"}",
+  "ast_sha256": "3c9942bf8196507bf7b468b2919bb347713c725427c053dcec213f5cf83d464f",
+  "body": "datumesh.com/relay/xn--bcher-kva.example/rate(d: d)\n",
+  "inputs": [
+    "datumesh.com/relay/xn--bcher-kva.example/rate"
+  ],
+  "returns": {
+    "type": "number",
+    "unit": "1"
+  },
+  "asof_dependent": false
+}

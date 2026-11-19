@@ -80,7 +80,7 @@ class GrammarVectors(unittest.TestCase):
             with self.subTest(vec["id"]):
                 c = formula.compile(vec["input"], vec["env"])
                 self.assertEqual(c.inputs, vec["inputs"])
-                self.assertEqual(set(c.inputs), set(re.findall(r'"fn":"([a-z0-9.\-]+(?:/[a-z0-9_]+)+)"', vec["ast"])))
+                self.assertEqual(set(c.inputs), set(re.findall(r'"fn":"([a-z0-9.\-]+(?:/[a-z0-9_.\-]+)+)"', vec["ast"])))
 
     def test_body_is_a_fixed_point(self):
         for vec in VALID:

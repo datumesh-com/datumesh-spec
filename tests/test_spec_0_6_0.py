@@ -115,7 +115,8 @@ class Receipts(unittest.TestCase):
 
     def test_old_receipts_have_no_source(self):
         for vec in canon.load_vectors():
-            if vec["kind"] == "receipt" and vec["id"] not in NEW and vec["valid"]:
+            if vec["kind"] == "receipt" and vec["id"] not in NEW and vec["valid"] and "dns-segment" not in vec["id"]:
+                # (spec-0.6.1's relayed receipt under a DNS segment, receipt/dns-segment-relay, has one)
                 self.assertNotIn("source", json.loads(vec["input"]), vec["id"])
 
 
@@ -221,7 +222,7 @@ class SpecText(unittest.TestCase):
                                r"backdated corrections[^.]*stored receipts' `tx`")
 
     def test_status_line_names_this_revision(self):
-        self.assertRegex(SPEC, r"(?m)^Status: draft, revision `spec-0\.6\.0`")
+        self.assertRegex(SPEC, r"(?m)^Status: draft, revision `spec-0\.6\.[01]`")  # spec-0.6.1 bumps the revision
         self.assertNotIn("in progress, part one", SPEC)
         self.assertRegex(SPEC, r"(?m)^### spec-0\.5\.0\s*$")
 

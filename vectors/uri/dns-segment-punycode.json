@@ -1,0 +1,56 @@
+{
+  "id": "uri/dns-segment-punycode",
+  "kind": "uri",
+  "description": "spec-0.6.1: A punycode (A-label) segment, opaque as in 2.1.",
+  "valid": true,
+  "input": "cell://datumesh.com/relay/xn--bcher-kva.example/rate?base=EUR&date=2024-03-15&quote=USD",
+  "signature": {
+    "args": {
+      "base": {
+        "type": "string",
+        "valid": false
+      },
+      "date": {
+        "type": "date",
+        "valid": true
+      },
+      "quote": {
+        "type": "string",
+        "valid": false
+      }
+    },
+    "returns": {
+      "type": "number",
+      "unit": {
+        "of": {
+          "arg": "quote"
+        },
+        "per": {
+          "arg": "base"
+        }
+      }
+    }
+  },
+  "object": {
+    "args": {
+      "base": {
+        "type": "string",
+        "value": "EUR"
+      },
+      "date": {
+        "type": "date",
+        "value": "2024-03-15"
+      },
+      "quote": {
+        "type": "string",
+        "value": "USD"
+      }
+    },
+    "fn": "rate",
+    "ns": "datumesh.com/relay/xn--bcher-kva.example"
+  },
+  "canonical": "{\"args\":{\"base\":{\"type\":\"string\",\"value\":\"EUR\"},\"date\":{\"type\":\"date\",\"value\":\"2024-03-15\"},\"quote\":{\"type\":\"string\",\"value\":\"USD\"}},\"fn\":\"rate\",\"ns\":\"datumesh.com/relay/xn--bcher-kva.example\"}",
+  "sha256": "6cb9fb3c4ffd13cbbd670b9a66615a7f42a4e8044a3d47fcdcc553f07e44a47c",
+  "uri": "cell://datumesh.com/relay/xn--bcher-kva.example/rate?base=EUR&date=2024-03-15&quote=USD",
+  "https": "https://mesh.example/cell/datumesh.com/relay/xn--bcher-kva.example/rate?base=EUR&date=2024-03-15&quote=USD"
+}

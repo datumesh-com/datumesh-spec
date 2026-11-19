@@ -1,0 +1,174 @@
+{
+  "id": "formula-eval/dns-segment-divide",
+  "kind": "formula-eval",
+  "description": "spec-0.6.1: ecb.europa.eu rate / treasury.gov yield, 1.25 / 0.05: 25.",
+  "valid": true,
+  "world": {
+    "functions": {
+      "calc.example.net/e": {
+        "bound": "2026-01-01T00:00:00.000000Z",
+        "descriptor": {
+          "code": {
+            "body": "datumesh.com/relay/ecb.europa.eu/rate(d: d) / datumesh.com/relay/treasury.gov/yield(d: d)\n",
+            "lang": "formula"
+          },
+          "inputs": [
+            "datumesh.com/relay/ecb.europa.eu/rate",
+            "datumesh.com/relay/treasury.gov/yield"
+          ],
+          "signature": {
+            "args": {
+              "d": {
+                "type": "date",
+                "valid": true
+              }
+            },
+            "order": [
+              "d"
+            ],
+            "returns": {
+              "type": "number",
+              "unit": "1"
+            }
+          }
+        }
+      },
+      "datumesh.com/relay/ecb.europa.eu/rate": {
+        "bound": "2026-01-01T00:00:00.000000Z",
+        "descriptor": {
+          "code": {
+            "body": "",
+            "lang": "stored"
+          },
+          "inputs": [],
+          "signature": {
+            "args": {
+              "d": {
+                "type": "date",
+                "valid": true
+              }
+            },
+            "returns": {
+              "type": "number",
+              "unit": "1"
+            },
+            "order": [
+              "d"
+            ]
+          }
+        }
+      },
+      "datumesh.com/relay/treasury.gov/yield": {
+        "bound": "2026-01-01T00:00:00.000000Z",
+        "descriptor": {
+          "code": {
+            "body": "",
+            "lang": "stored"
+          },
+          "inputs": [],
+          "signature": {
+            "args": {
+              "d": {
+                "type": "date",
+                "valid": true
+              }
+            },
+            "returns": {
+              "type": "number",
+              "unit": "1"
+            },
+            "order": [
+              "d"
+            ]
+          }
+        }
+      }
+    },
+    "receipts": [
+      {
+        "asof": "2026-03-02T16:00:00.000000Z",
+        "cell": {
+          "args": {
+            "d": {
+              "type": "date",
+              "value": "2026-03-02"
+            }
+          },
+          "fn": "rate",
+          "fn_hash": "b716ddda9a92450a9c9a3499f6d6a17671c6e3bed1412640c17147e29ffcaa89",
+          "ns": "datumesh.com/relay/ecb.europa.eu"
+        },
+        "computed_by": "datumesh.com#b62749c28eb8161a",
+        "inputs": [],
+        "issued": "2026-03-02T16:00:00.000000Z",
+        "licence": "CC-BY-4.0",
+        "proto": "datumesh/1",
+        "publisher": "datumesh.com/relay/ecb.europa.eu",
+        "summary": "A recorded value of rate.",
+        "tx": "2026-03-02T16:00:00.000000Z",
+        "type": "number",
+        "valid": {
+          "d": {
+            "type": "date",
+            "value": "2026-03-02"
+          }
+        },
+        "value": "1.25",
+        "sig": "fe6a79344d05830ec7a478a55260e81ee2c983c7d65e12faba43be0538a1627a870a438a11700d74fc51fb20df2b19db0abb4428070bb82cf3df812a788bfb09"
+      },
+      {
+        "asof": "2026-03-02T16:00:00.000000Z",
+        "cell": {
+          "args": {
+            "d": {
+              "type": "date",
+              "value": "2026-03-02"
+            }
+          },
+          "fn": "yield",
+          "fn_hash": "b716ddda9a92450a9c9a3499f6d6a17671c6e3bed1412640c17147e29ffcaa89",
+          "ns": "datumesh.com/relay/treasury.gov"
+        },
+        "computed_by": "datumesh.com#b62749c28eb8161a",
+        "inputs": [],
+        "issued": "2026-03-02T16:00:00.000000Z",
+        "licence": "CC-BY-4.0",
+        "proto": "datumesh/1",
+        "publisher": "datumesh.com/relay/treasury.gov",
+        "summary": "A recorded value of yield.",
+        "tx": "2026-03-02T16:00:00.000000Z",
+        "type": "number",
+        "valid": {
+          "d": {
+            "type": "date",
+            "value": "2026-03-02"
+          }
+        },
+        "value": "0.05",
+        "sig": "061fbb5340da67568c9023aa07aea08b298c82ef021b5cc93d9e401c82825b86e34fb76f39967f1dde3a86a733d3a6690ead96cd51f6459f6beb77b45233550b"
+      }
+    ]
+  },
+  "cell": {
+    "args": {
+      "d": {
+        "type": "date",
+        "value": "2026-03-02"
+      }
+    },
+    "fn": "calc.example.net/e"
+  },
+  "asof": "2026-06-01T00:00:00.000000Z",
+  "receipt_hash": "e36be44cb5f6b4cd07b1d53083091dc9fbc817691676d0908cb25e486e856850",
+  "value": {
+    "type": "number",
+    "value": "25"
+  },
+  "lineage": [
+    "1410d497556304e2d53c3f3305375e62845fc8b6603fd49cfa577c5753507195",
+    "8274ea83a5996e3f5c94277c94f175a5674079203093afa410ac691ee0a81a4f"
+  ],
+  "tx": "2026-03-02T16:00:00.000000Z",
+  "receipt_asof": "2026-03-02T16:00:00.000000Z",
+  "fuel_used": 7
+}

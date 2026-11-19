@@ -1,0 +1,10 @@
+{
+  "id": "define/dns-segment-invalid-segment-rooted-reads-rooted",
+  "kind": "define",
+  "description": "spec-0.6.1: rates.example.org/x/foo.invalid/f is rooted (its host is rates.example.org): it may read the rooted calc.example.net/x/foo.invalid/g.",
+  "valid": true,
+  "input": "{\n  \"signature\": {\n    \"returns\": {\n      \"unit\": \"1\",\n      \"type\": \"number\"\n    },\n    \"args\": {}\n  },\n  \"inputs\": [\n    \"calc.example.net/x/foo.invalid/g\"\n  ],\n  \"code\": {\n    \"lang\": \"expr\",\n    \"body\": \"x\\n\"\n  }\n}",
+  "name": "rates.example.org/x/foo.invalid/f",
+  "canonical": "{\"code\":{\"body\":\"x\\n\",\"lang\":\"expr\"},\"inputs\":[\"calc.example.net/x/foo.invalid/g\"],\"signature\":{\"args\":{},\"returns\":{\"type\":\"number\",\"unit\":\"1\"}}}",
+  "sha256": "2737696fcc898e5fa25c611fb856cb1af5cc96c0f676ab31a8dbd636434d93cf"
+}

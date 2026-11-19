@@ -1,0 +1,9 @@
+{
+  "id": "jcs/test-case-id",
+  "kind": "jcs",
+  "description": "spec-0.6.1: The case of a test_case cell (7.3) is the first 16 hex digits of the SHA-256 of the test's JCS: here d6d175b5b2153943. The test has call, asof and expect; inputs is absent.",
+  "valid": true,
+  "input": "{\n  \"asof\": \"2024-03-16T09:00:00.000000Z\",\n  \"call\": \"rates.example.org/fx_rate(base: \\\"EUR\\\", date: 2024-03-15, quote: \\\"USD\\\")\",\n  \"expect\": {\n    \"type\": \"number\",\n    \"value\": \"1.0892\"\n  }\n}",
+  "canonical": "{\"asof\":\"2024-03-16T09:00:00.000000Z\",\"call\":\"rates.example.org/fx_rate(base: \\\"EUR\\\", date: 2024-03-15, quote: \\\"USD\\\")\",\"expect\":{\"type\":\"number\",\"value\":\"1.0892\"}}",
+  "sha256": "d6d175b5b2153943d9bc6c68503dae315db7207121fc60f3043e12682e70b98c"
+}

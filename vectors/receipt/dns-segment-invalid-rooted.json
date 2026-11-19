@@ -1,0 +1,30 @@
+{
+  "id": "receipt/dns-segment-invalid-rooted",
+  "kind": "receipt",
+  "description": "spec-0.6.1: A receipt whose namespace has a later segment foo.invalid: it is rooted (2.5), signs with the key of rates.example.org and verifies as any rooted receipt.",
+  "valid": true,
+  "input": "{\n  \"sig\": \"15130ccb1597bdaf6b4b35dba082edb61ad2d8e3b503f0c5c087c9c75f801c4608557a4a4b1d9862cfd190839ab9e8ee158893b3e294969e3452f049cefb8504\",\n  \"value\": \"1.0892\",\n  \"valid\": {\n    \"date\": {\n      \"value\": \"2024-03-15\",\n      \"type\": \"date\"\n    }\n  },\n  \"type\": \"number\",\n  \"tx\": \"2024-03-15T16:00:00.000000Z\",\n  \"summary\": \"1 EUR was worth 1.0892 USD at the 15 March 2024 reference rate.\",\n  \"publisher\": \"rates.example.org/x/foo.invalid\",\n  \"proto\": \"datumesh/1\",\n  \"licence\": \"CC-BY-4.0\",\n  \"issued\": \"2024-03-16T09:00:00.000000Z\",\n  \"inputs\": [],\n  \"computed_by\": \"rates.example.org#d712b32a2cc5cb7c\",\n  \"cell\": {\n    \"ns\": \"rates.example.org/x/foo.invalid\",\n    \"fn_hash\": \"7b58ecb8fd23b644c87951d0bd609790ff547cbb23fed27186c669ce2ce0aa80\",\n    \"fn\": \"f\",\n    \"args\": {\n      \"quote\": {\n        \"value\": \"USD\",\n        \"type\": \"string\"\n      },\n      \"date\": {\n        \"value\": \"2024-03-15\",\n        \"type\": \"date\"\n      },\n      \"base\": {\n        \"value\": \"EUR\",\n        \"type\": \"string\"\n      }\n    }\n  },\n  \"asof\": \"2024-03-16T09:00:00.000000Z\"\n}",
+  "canonical": "{\"asof\":\"2024-03-16T09:00:00.000000Z\",\"cell\":{\"args\":{\"base\":{\"type\":\"string\",\"value\":\"EUR\"},\"date\":{\"type\":\"date\",\"value\":\"2024-03-15\"},\"quote\":{\"type\":\"string\",\"value\":\"USD\"}},\"fn\":\"f\",\"fn_hash\":\"7b58ecb8fd23b644c87951d0bd609790ff547cbb23fed27186c669ce2ce0aa80\",\"ns\":\"rates.example.org/x/foo.invalid\"},\"computed_by\":\"rates.example.org#d712b32a2cc5cb7c\",\"inputs\":[],\"issued\":\"2024-03-16T09:00:00.000000Z\",\"licence\":\"CC-BY-4.0\",\"proto\":\"datumesh/1\",\"publisher\":\"rates.example.org/x/foo.invalid\",\"summary\":\"1 EUR was worth 1.0892 USD at the 15 March 2024 reference rate.\",\"tx\":\"2024-03-15T16:00:00.000000Z\",\"type\":\"number\",\"valid\":{\"date\":{\"type\":\"date\",\"value\":\"2024-03-15\"}},\"value\":\"1.0892\"}",
+  "sha256": "c45f4a44a44de5091aaafd82c6b11a928be30b6b3bb25ed9b389021d6ef87556",
+  "sig": "15130ccb1597bdaf6b4b35dba082edb61ad2d8e3b503f0c5c087c9c75f801c4608557a4a4b1d9862cfd190839ab9e8ee158893b3e294969e3452f049cefb8504",
+  "level": "signed",
+  "keypair": {
+    "seed": "d939265c141c467e77fb079486a3bb8b932c1d471c8c25e5a2eed06c42db8ad0",
+    "public": "843baeb22bfd0364fb1b7262b367fb3202e7886c69a070fecf8e343fedb1eabf",
+    "key_id": "d712b32a2cc5cb7c"
+  },
+  "keys": {
+    "rates.example.org": {
+      "https": {
+        "status": 200,
+        "body": "{\n  \"host\": \"rates.example.org\",\n  \"keys\": [\n    {\n      \"alg\": \"ed25519\",\n      \"id\": \"d712b32a2cc5cb7c\",\n      \"public\": \"843baeb22bfd0364fb1b7262b367fb3202e7886c69a070fecf8e343fedb1eabf\",\n      \"valid_from\": \"2020-01-01T00:00:00.000000Z\",\n      \"valid_to\": \"2024-06-01T00:00:00.000000Z\"\n    },\n    {\n      \"alg\": \"ed25519\",\n      \"id\": \"d9a2df65559c4444\",\n      \"public\": \"3ecf7b3ff834cb6782f5405dfcb213b5e78c0f30188068c25568adc25a739b52\",\n      \"valid_from\": \"2024-06-01T00:00:00.000000Z\"\n    }\n  ],\n  \"proto\": \"datumesh/1\"\n}"
+      }
+    },
+    "calc.example.net": {
+      "https": {
+        "status": 200,
+        "body": "{\n  \"host\": \"calc.example.net\",\n  \"keys\": [\n    {\n      \"alg\": \"ed25519\",\n      \"id\": \"f7ec60a92abf4774\",\n      \"public\": \"ccd4faa3a0b8338bc796d3bfc30bda2f6e87d336a576b70dc9d47cbfe0e8830f\",\n      \"valid_from\": \"2020-01-01T00:00:00.000000Z\"\n    }\n  ],\n  \"proto\": \"datumesh/1\"\n}"
+      }
+    }
+  }
+}

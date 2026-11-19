@@ -1,0 +1,9 @@
+{
+  "id": "invalid/define-dns-segment-invalid-segment-reads-unrooted",
+  "kind": "define",
+  "description": "spec-0.6.1: rates.example.org/x/foo.invalid/f is rooted: a `.invalid` later segment makes nothing unrooted, so it may not read local.invalid/g (E_UNROOTED_INPUT, 2.5).",
+  "valid": false,
+  "input": "{\n  \"signature\": {\n    \"returns\": {\n      \"unit\": \"1\",\n      \"type\": \"number\"\n    },\n    \"args\": {}\n  },\n  \"inputs\": [\n    \"local.invalid/g\"\n  ],\n  \"code\": {\n    \"lang\": \"expr\",\n    \"body\": \"x\\n\"\n  }\n}",
+  "name": "rates.example.org/x/foo.invalid/f",
+  "error": "E_UNROOTED_INPUT"
+}

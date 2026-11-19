@@ -1,0 +1,61 @@
+{
+  "id": "formula/dns-segment-minus-spaced",
+  "kind": "formula",
+  "description": "spec-0.6.1: The same, with spaces round the minus.",
+  "valid": true,
+  "input": "datumesh.com/relay/ecb.europa.eu/rate(d: d) - 1",
+  "env": {
+    "aliases": {},
+    "functions": {
+      "datumesh.com/relay/ecb.europa.eu/rate": {
+        "code": {
+          "body": "",
+          "lang": "stored"
+        },
+        "inputs": [],
+        "signature": {
+          "args": {
+            "d": {
+              "type": "date",
+              "valid": true
+            }
+          },
+          "returns": {
+            "type": "number",
+            "unit": "1"
+          },
+          "order": [
+            "d"
+          ]
+        }
+      }
+    },
+    "name": "calc.example.net/f",
+    "signature": {
+      "args": {
+        "d": {
+          "type": "date",
+          "valid": true
+        }
+      },
+      "order": [
+        "d"
+      ],
+      "returns": {
+        "type": "number",
+        "unit": "1"
+      }
+    }
+  },
+  "ast": "{\"args\":[{\"args\":{\"d\":{\"name\":\"d\",\"node\":\"var\"}},\"fn\":\"datumesh.com/relay/ecb.europa.eu/rate\",\"node\":\"read\"},{\"node\":\"num\",\"value\":\"1\"}],\"node\":\"op\",\"op\":\"-\"}",
+  "ast_sha256": "f59aa86369fb67bff5054d618a3a068602930288af9ebfd6d18033a6c1eb1b6f",
+  "body": "datumesh.com/relay/ecb.europa.eu/rate(d: d) - 1\n",
+  "inputs": [
+    "datumesh.com/relay/ecb.europa.eu/rate"
+  ],
+  "returns": {
+    "type": "number",
+    "unit": "1"
+  },
+  "asof_dependent": false
+}

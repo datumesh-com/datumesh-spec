@@ -1,0 +1,51 @@
+{
+  "id": "invalid/formula-dns-segment-digit-hyphen-host-unbound",
+  "kind": "formula",
+  "description": "spec-0.6.1: Written without spaces, 1-datumesh.com/relay/bank-x.example/rate(d: d) is a read of a function under the host 1-datumesh.com, which nothing binds: E_FORMULA_UNRESOLVED. It is not 1 minus the read of datumesh.com/relay/bank-x.example/rate (write the spaces).",
+  "valid": false,
+  "input": "1-datumesh.com/relay/bank-x.example/rate(d: d)",
+  "env": {
+    "aliases": {},
+    "functions": {
+      "datumesh.com/relay/bank-x.example/rate": {
+        "code": {
+          "body": "",
+          "lang": "stored"
+        },
+        "inputs": [],
+        "signature": {
+          "args": {
+            "d": {
+              "type": "date",
+              "valid": true
+            }
+          },
+          "returns": {
+            "type": "number",
+            "unit": "1"
+          },
+          "order": [
+            "d"
+          ]
+        }
+      }
+    },
+    "name": "calc.example.net/f",
+    "signature": {
+      "args": {
+        "d": {
+          "type": "date",
+          "valid": true
+        }
+      },
+      "order": [
+        "d"
+      ],
+      "returns": {
+        "type": "number",
+        "unit": "1"
+      }
+    }
+  },
+  "error": "E_FORMULA_UNRESOLVED"
+}

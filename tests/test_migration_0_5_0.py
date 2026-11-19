@@ -50,7 +50,7 @@ class Migration050(unittest.TestCase):
         spec = (ROOT / "SPEC.md").read_text(encoding="utf-8")
         self.assertRegex(spec, r"(?m)^### spec-0\.5\.0\b")
         self.assertIn("`spec-0.6.0`", (ROOT / "units.md").read_text(encoding="utf-8"))  # coordinator, round 2
-        self.assertIn("revision `spec-0.6.0`", (ROOT / "README.md").read_text(encoding="utf-8"))  # coordinator, round 2
+        self.assertRegex((ROOT / "README.md").read_text(encoding="utf-8"), r"revision `spec-0\.6\.[01]`")  # coordinator, round 2; spec-0.6.1 bumps it
 
 
 if __name__ == "__main__":
