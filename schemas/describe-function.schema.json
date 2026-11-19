@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://datumesh.com/schemas/1/describe-function.schema.json",
   "title": "Datumesh describe answer: a function",
-  "description": "SPEC.md 16.8, spec-0.6.0. Unsigned, the mesh's statement. fn_hash is 64 lowercase hex digits; when the client holds the descriptor of fn_hash, args and returns are its signature's, all of its arguments (checked by the procedure, E_DESCRIBE). description is 1 to 1024 bytes (counted in bytes by the procedure).",
+  "description": "SPEC.md 16.8, spec-0.6.0; since spec-0.6.1 the optional publisher (the host of fn: checked by the procedure, E_DESCRIBE). Unsigned, the mesh's statement. fn_hash is 64 lowercase hex digits; when the client holds the descriptor of fn_hash, args and returns are its signature's, all of its arguments (checked by the procedure, E_DESCRIBE). description is 1 to 1024 bytes (counted in bytes by the procedure).",
   "type": "object",
   "required": [
     "args",
@@ -15,6 +15,10 @@
   "properties": {
     "kind": {
       "const": "function"
+    },
+    "publisher": {
+      "description": "spec-0.6.1 (16.8, D108): the host of the name's namespace, a DNS name; never the domain of a later segment. Optional and additive.",
+      "$ref": "defs.schema.json#/$defs/dnsName"
     },
     "fn": {
       "$ref": "defs.schema.json#/$defs/functionName"

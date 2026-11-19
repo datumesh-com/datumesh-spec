@@ -61,15 +61,20 @@
       "maxLength": 253
     },
     "namespace": {
+      "description": "SPEC.md 2.3: a host, then segments each a name or, since spec-0.6.1, a DNS name (a label only, no authority). A DNS segment has at most 253 characters (expressed here); the 64 of a name segment and the 512 of a whole name are the procedure's (E_CANON_LIMIT).",
       "type": "string",
-      "pattern": "^([a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?\\.)+[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?(/[a-z][a-z0-9]*(_[a-z0-9]+)*)*$",
+      "pattern": "^([a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?\\.)+[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?(/(?:(?![^/]{254})([a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?\\.)+[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?|[a-z][a-z0-9]*(_[a-z0-9]+)*))*$",
       "not": {
         "pattern": "\\.[0-9]+(/|$)"
       }
     },
     "functionName": {
+      "description": "SPEC.md 2.3: a namespace and a last segment that is a name, never a DNS name; at most 512 characters.",
       "type": "string",
-      "pattern": "^([a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?\\.)+[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?(/[a-z][a-z0-9]*(_[a-z0-9]+)*)+$",
+      "pattern": "^([a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?\\.)+[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?(/(?:(?![^/]{254})([a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?\\.)+[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?|[a-z][a-z0-9]*(_[a-z0-9]+)*))*/[a-z][a-z0-9]*(_[a-z0-9]+)*$",
+      "not": {
+        "pattern": "\\.[0-9]+(/|$)"
+      },
       "maxLength": 512
     },
     "hex64": {
