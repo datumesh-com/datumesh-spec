@@ -52,7 +52,7 @@ class Envelope(unittest.TestCase):
             self.assertEqual(env({"outcome": "not_covered", "shadows": bad}, 404), "E_ENVELOPE")
 
     def test_short_id_ambiguous(self):
-        self.assertEqual(canon.ERROR_CODES[-2:], ("E_SHORT_ID_AMBIGUOUS", "E_DESCRIBE"))
+        self.assertEqual(canon.ERROR_CODES[-2:], ("E_WHATIF_UNSUPPORTED", "E_WHATIF_NO_SOLUTION"))  # spec-0.6.0 appends its codes
         self.assertIn("E_SHORT_ID_AMBIGUOUS", canon.REQUEST_CODES)
         self.assertEqual(env({"error": "E_SHORT_ID_AMBIGUOUS", "outcome": "bad_request"}, 400), "bad_request")
         self.assertEqual(env({"error": "E_SHORT_ID_AMBIGUOUS", "outcome": "error"}, 500), "E_ENVELOPE")

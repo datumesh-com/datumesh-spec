@@ -71,7 +71,7 @@ CLASS_CODES = ("E_CLASS_MEMBER", "E_CLASS_PARENT", "E_CLASS_INHERIT", "E_CLASS_O
                "E_CLASS_METHOD", "E_CLASS_INTERFACE", "E_CLASS_OWNER")
 NOT_IN_ERROR = ("E_ENVELOPE", "E_DESCRIBE", "E_JOB_UNKNOWN", "E_SLICE_AT_CELL", "E_NAME_UNBOUND",
                 "E_SHORT_ID_AMBIGUOUS", "E_KEY_NORMALISATION", "E_KEY_ENCODING", "E_UNROOTED_INPUT",
-                "E_NAMESPACE_SUSPENDED", "E_WHATIF_UNSUPPORTED") + CLASS_CODES
+                "E_NAMESPACE_SUSPENDED", "E_WHATIF_UNSUPPORTED", "E_WHATIF_NO_SOLUTION") + CLASS_CODES
 
 
 class ErrorEnvelopeCodes(unittest.TestCase):
@@ -388,7 +388,7 @@ class CodeCounts(unittest.TestCase):
         self.assertEqual(len(rows), 10)
         self.assertEqual(sum(l.startswith("| `E_CLASS_") for l in rows), 8)
         self.assertLess(SPEC.index("| `E_SHORT_ID_AMBIGUOUS` |"), SPEC.index("| `E_DESCRIBE` |"))
-        self.assertEqual(canon.ERROR_CODES[-2:], ("E_SHORT_ID_AMBIGUOUS", "E_DESCRIBE"))
+        self.assertEqual(canon.ERROR_CODES[-2:], ("E_WHATIF_UNSUPPORTED", "E_WHATIF_NO_SOLUTION"))  # spec-0.6.0 appends its codes
         self.assertIn("the eight `E_CLASS_*` codes, `E_KEY_NORMALISATION` and `E_KEY_ENCODING`", S14)
 
 
