@@ -106,8 +106,13 @@ class Coverage(unittest.TestCase):
         # answers about a request, never a client's failure: they appear in valid envelope vectors.
         # E_FOREIGN_UNAVAILABLE (spec-0.4.3) is a mesh's or resolver's answer in an error envelope;
         # E_NAMESPACE_SUSPENDED (spec-0.5.0) a write refusal, carried by not_covered for a refused import.
-        used |= (set(canon.REQUEST_CODES) | {"E_FOREIGN_UNAVAILABLE", "E_NAMESPACE_SUSPENDED"}) & {
+        # E_WHATIF_UNSUPPORTED (spec-0.6.0) is a request code: a bad_request answer at whatif; E_WHATIF_NO_SOLUTION
+        # is a fault, carried by a valid not_covered envelope like the formula faults.
+        used |= (set(canon.REQUEST_CODES) | {"E_FOREIGN_UNAVAILABLE", "E_NAMESPACE_SUSPENDED",
+                                             "E_WHATIF_UNSUPPORTED"}) & {
             json.loads(v["input"]).get("error") for v in VECTORS if v["kind"] == "envelope" and v["valid"]}
+        used |= {"E_WHATIF_NO_SOLUTION"} & {
+            json.loads(v["input"]).get("fault") for v in VECTORS if v["kind"] == "envelope" and v["valid"]}
         self.assertEqual(set(canon.ERROR_CODES) - used, set())
         self.assertEqual(used - set(canon.ERROR_CODES), set())
 

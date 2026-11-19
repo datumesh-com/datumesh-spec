@@ -44,7 +44,7 @@ S163 = section("### 16.3 Method calls", "### 16.4 Key normalisation")
 S165 = section("### 16.5 Object keys", "### 16.6 Bounded dispatch")
 S166 = section("### 16.6 Bounded dispatch", "### 16.7 Defaults")
 S167 = section("### 16.7 Defaults", "### 16.8 describe")
-S14 = section("### spec-0.5.0 (in progress, part one)", "### spec-0.4.3")
+S14 = section("### spec-0.5.0", "### spec-0.4.3")
 
 
 def check_vectors(test, ids):

@@ -220,6 +220,11 @@ class SpecText(unittest.TestCase):
         self.assertRegex(FLAT, r"(?i)stored receipts' `tx`[^.]*backdated corrections|"
                                r"backdated corrections[^.]*stored receipts' `tx`")
 
+    def test_status_line_names_this_revision(self):
+        self.assertRegex(SPEC, r"(?m)^Status: draft, revision `spec-0\.6\.0`")
+        self.assertNotIn("in progress, part one", SPEC)
+        self.assertRegex(SPEC, r"(?m)^### spec-0\.5\.0\s*$")
+
     def test_c2_source_and_relayed(self):
         self.assertRegex(FLAT, r"`source` \(since `spec-0\.6\.0`\)")
         for member in ("`name`", "`url`", "`retrieved`", "`sha256`", "`takeover`"):
@@ -228,7 +233,7 @@ class SpecText(unittest.TestCase):
         self.assertIn("`relayed`", FLAT)
         self.assertRegex(FLAT, r"`primary`[^.]*no `source`|no `source`[^.]*`primary`")
         self.assertIn("`retrieved <= issued`", FLAT)
-        self.assertIn("A mesh that serves receipts with `source` is unverifiable by clients on core < 0.4.0 or "
+        self.assertIn("A mesh that serves receipts with `source` is unverifiable by clients on core < 0.3.9 or "
                       "datumesh < 0.6.0 (@datumesh/verify < 0.6.0); such receipts are new, and every receipt signed "
                       "before them verifies unchanged.", FLAT)
         self.assertRegex(FLAT, r"\| `relayed` \|")

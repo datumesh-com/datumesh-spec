@@ -42,7 +42,7 @@ S164 = section("### 16.4 Key normalisation", "### 16.5 Object keys")
 S165 = section("### 16.5 Object keys", "### 16.6 Bounded dispatch")
 S168 = section("### 16.8 describe and short ids", "### 16.9 Shadowing")
 S162 = section("### 16.2 Define and flattening", "### 16.3 Method calls")
-S14 = section("### spec-0.5.0 (in progress, part one)", "### spec-0.4.3")
+S14 = section("### spec-0.5.0", "### spec-0.4.3")
 
 
 def env(body, status):
@@ -71,7 +71,7 @@ CLASS_CODES = ("E_CLASS_MEMBER", "E_CLASS_PARENT", "E_CLASS_INHERIT", "E_CLASS_O
                "E_CLASS_METHOD", "E_CLASS_INTERFACE", "E_CLASS_OWNER")
 NOT_IN_ERROR = ("E_ENVELOPE", "E_DESCRIBE", "E_JOB_UNKNOWN", "E_SLICE_AT_CELL", "E_NAME_UNBOUND",
                 "E_SHORT_ID_AMBIGUOUS", "E_KEY_NORMALISATION", "E_KEY_ENCODING", "E_UNROOTED_INPUT",
-                "E_NAMESPACE_SUSPENDED") + CLASS_CODES
+                "E_NAMESPACE_SUSPENDED", "E_WHATIF_UNSUPPORTED") + CLASS_CODES
 
 
 class ErrorEnvelopeCodes(unittest.TestCase):

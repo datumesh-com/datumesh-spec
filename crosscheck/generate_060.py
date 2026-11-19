@@ -244,6 +244,24 @@ envelope("invalid/envelope-stale-with-overrides", "stale is not an answer at wha
 envelope("invalid/envelope-scenario-status", "scenario is HTTP 200.", scenario(CONVERT_CELL, "120", OV_TWO), 202,
          "E_ENVELOPE", request=whatif_request(CONVERT_CELL, OV_TWO))
 
+WHATIF_SOLVE = whatif_request(CONVERT_CELL, [OV_FX], solve=cell_id(FX_CELL))
+valid_envelope("envelope/whatif-bad-request-unsupported", "A mesh that does not offer solve refuses it: bad_request "
+               "with E_WHATIF_UNSUPPORTED (5.9).", {"error": "E_WHATIF_UNSUPPORTED", "outcome": "bad_request"}, 400,
+               WHATIF_SOLVE)
+BAD_SLICE = {"add": [], "remove": [FX_18], "slice": SLICE_FX}  # FX_18 is not a member of the slice as asked
+valid_envelope("envelope/whatif-bad-request-slice-member", "A slice override naming a cell that is not in the slice "
+               "is a bad_request with E_SLICE_MEMBER (5.9).", {"error": "E_SLICE_MEMBER", "outcome": "bad_request"},
+               400, whatif_request(FX_18, [BAD_SLICE]))
+valid_envelope("envelope/whatif-not-covered-no-solution", "A solve with no value within its bounds and fuel: "
+               "not_covered with the fault E_WHATIF_NO_SOLUTION.",
+               {"fault": "E_WHATIF_NO_SOLUTION", "outcome": "not_covered"}, 404, WHATIF_SOLVE)
+envelope("invalid/envelope-no-solution-without-solve", "E_WHATIF_NO_SOLUTION answers a solve: the request had none.",
+         {"fault": "E_WHATIF_NO_SOLUTION", "outcome": "not_covered"}, 404, "E_ENVELOPE",
+         request=whatif_request(CONVERT_CELL, [OV_FX]))
+envelope("invalid/envelope-error-whatif-unsupported", "E_WHATIF_UNSUPPORTED is a request code: an error envelope "
+         "never carries it.", {"error": "E_WHATIF_UNSUPPORTED", "outcome": "error"}, 500, "E_ENVELOPE",
+         request=whatif_request(CONVERT_CELL, [OV_FX], solve=cell_id(FX_CELL)))
+
 # cycle (C6): an E_EVAL_UNAVAILABLE error names its path.
 CYC_A = 'calc.example.net/budget(month: 2024-03-01, unit: "ops")'
 CYC_B = 'calc.example.net/forecast(month: 2024-03-01, unit: "ops")'

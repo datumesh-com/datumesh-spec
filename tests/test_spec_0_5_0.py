@@ -216,8 +216,7 @@ class IsUnrooted(unittest.TestCase):
 class Text(unittest.TestCase):
     def test_statements(self):
         for phrase in (
-            "Status: draft, revision `spec-0.5.0` (in progress, part one).",
-            "### spec-0.5.0 (in progress, part one)",
+            "### spec-0.5.0",
             "for an unrooted host (a name under .invalid), mesh-document URLs and poll may be http:// on a loopback "
             "address only (127.0.0.1, [::1], localhost); rooted hosts stay https-only",
             "**Loopback URLs**",
