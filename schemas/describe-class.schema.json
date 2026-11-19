@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://datumesh.com/schemas/1/describe-class.schema.json",
   "title": "Datumesh describe answer: a class",
-  "description": "SPEC.md 16.8, spec-0.5.0. Unsigned, the mesh's statement. class_hash is the descriptor's hash and the method table lists exactly the descriptor's methods: checked by the procedure (E_DESCRIBE), not here.",
+  "description": "SPEC.md 16.8, spec-0.5.0; since spec-0.6.0 tests and source in method entries. Unsigned, the mesh's statement. class_hash is the descriptor's hash and the method table lists exactly the descriptor's methods: checked by the procedure (E_DESCRIBE), not here.",
   "type": "object",
   "required": [
     "class",
@@ -56,7 +56,72 @@
           "description": {
             "type": "string",
             "minLength": 1
+          },
+          "tests": {
+            "$ref": "#/$defs/tests"
+          },
+          "source": {
+            "$ref": "#/$defs/source"
           }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "tests": {
+      "description": "spec-0.6.0 (16.8): the mesh's statement of the tests it holds for this function hash; covered is at most branches (checked by the procedure).",
+      "type": "object",
+      "required": [
+        "branches",
+        "count",
+        "counterexamples",
+        "covered"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "branches": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "count": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "counterexamples": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "covered": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        }
+      }
+    },
+    "source": {
+      "description": "spec-0.6.0 (16.8): a relayed function's source.",
+      "type": "object",
+      "required": [
+        "name",
+        "relayed_by",
+        "takeover"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "$ref": "defs.schema.json#/$defs/dnsName"
+        },
+        "relayed_by": {
+          "$ref": "defs.schema.json#/$defs/dnsName",
+          "description": "The mesh's host."
+        },
+        "takeover": {
+          "type": "string",
+          "pattern": "^https://[!-~]+$",
+          "maxLength": 512
         }
       }
     }

@@ -109,7 +109,59 @@
         "string",
         "boolean"
       ]
+    },
+    "source": {
+      "description": "spec-0.6.0 (C2, 8.1): a stored receipt's provenance for a relayed value. Only when inputs is empty (checked here by if/then); the rules of 8.1 are checked by the procedure, in member order.",
+      "type": "object",
+      "required": [
+        "name",
+        "retrieved",
+        "url"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "$ref": "defs.schema.json#/$defs/dnsName",
+          "description": "The source's DNS name; not the host of cell.ns (checked by the procedure, E_SCHEMA)."
+        },
+        "retrieved": {
+          "$ref": "defs.schema.json#/$defs/instant",
+          "description": "When the publisher fetched the value; at or before issued (8.2)."
+        },
+        "url": {
+          "type": "string",
+          "pattern": "^https://[!-~]+$",
+          "maxLength": 512,
+          "description": "Where the value was taken from: https://, printable ASCII, at most 512 characters."
+        },
+        "sha256": {
+          "$ref": "defs.schema.json#/$defs/hex64",
+          "description": "The SHA-256 of the bytes fetched from url."
+        },
+        "takeover": {
+          "type": "string",
+          "pattern": "^https://[!-~]+$",
+          "maxLength": 512,
+          "description": "Where the source can take over publishing these cells."
+        }
+      }
     }
   },
-  "$ref": "defs.schema.json#/$defs/typedValue"
+  "$ref": "defs.schema.json#/$defs/typedValue",
+  "allOf": [
+    {
+      "if": {
+        "required": [
+          "source"
+        ]
+      },
+      "then": {
+        "properties": {
+          "inputs": {
+            "maxItems": 0
+          }
+        }
+      }
+    }
+  ]
 }

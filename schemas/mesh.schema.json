@@ -144,6 +144,19 @@
             }
           ],
           "description": "spec-0.5.0, optional: describe answers (16.8)."
+        },
+        "whatif": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/url"
+            },
+            {
+              "not": {
+                "pattern": "[{}]"
+              }
+            }
+          ],
+          "description": "spec-0.6.0, optional (9.6, 5.9): a whatif request, a read with overrides. It has no placeholders."
         }
       },
       "description": "Endpoint templates: each known endpoint has exactly its placeholders, once each (9.6)."

@@ -100,6 +100,8 @@ ERROR_CODES = (
     "E_CLASS_OWNER",
     "E_KEY_NORMALISATION",
     "E_KEY_ENCODING",
+    "E_WHATIF_UNSUPPORTED",  # spec-0.6.0: a whatif solve the mesh does not offer (5.9): bad_request
+    "E_WHATIF_NO_SOLUTION",  # spec-0.6.0: a whatif solve with no value within its bounds and fuel (5.9): a fault
     "E_SHORT_ID_AMBIGUOUS",  # spec-0.5.0: a mesh's answer about a request (16.8)
     "E_DESCRIBE",  # spec-0.5.0: a describe answer breaks 16.8 (a client's check)
 )
@@ -754,8 +756,43 @@ RECEIPT_MEMBERS = (
 )
 
 
+# spec-0.6.0 (C2, 8.1): a stored receipt may carry its source, a relayed value's provenance.
+SOURCE_REQUIRED = ("name", "retrieved", "url")
+SOURCE_OPTIONAL = ("sha256", "takeover")
+
+
+def shape_source(src, path):
+    """A receipt's source: exactly its members, each a string (E_SCHEMA); the rules are check_source's."""
+    _shape_object(src, SOURCE_REQUIRED, SOURCE_OPTIONAL, path)
+    for key in SOURCE_REQUIRED + SOURCE_OPTIONAL:
+        if key in src:
+            _shape_str(src, key, path)
+
+
+def check_https_url(text, path):
+    """An https URL by the licence URL rule (8.1): the grammar (E_CANON_LICENCE), then the length (E_CANON_LIMIT)."""
+    if not isinstance(text, str) or not _URL.fullmatch(text):
+        fail("E_CANON_LICENCE", "an https:// URL of printable ASCII", path)
+    if len(text) > LIMITS["licence_url"]:
+        fail("E_CANON_LIMIT", "a URL is at most 512 characters", path)
+
+
+def check_source(src, host, path):
+    """source (8.1, spec-0.6.0), its members in member order: name, retrieved, sha256, takeover, url. A
+    publisher does not relay itself: name is not the host of cell.ns (E_SCHEMA)."""
+    check_dns_name(src["name"], f"{path}.name")
+    if src["name"] == host:
+        fail("E_SCHEMA", "source.name is the publisher's own host: a publisher does not relay itself", f"{path}.name")
+    check_instant(src["retrieved"], f"{path}.retrieved")
+    if "sha256" in src:
+        check_hex(src["sha256"], 64, f"{path}.sha256")
+    if "takeover" in src:
+        check_https_url(src["takeover"], f"{path}.takeover")
+    check_https_url(src["url"], f"{path}.url")
+
+
 def shape_receipt(r, path="$"):
-    _shape_object(r, RECEIPT_MEMBERS, (), path)
+    _shape_object(r, RECEIPT_MEMBERS, ("source",), path)
     for key in ("asof", "computed_by", "issued", "licence", "proto", "publisher",
                 "sig", "summary", "tx", "type"):
         _shape_str(r, key, path)
@@ -764,6 +801,10 @@ def shape_receipt(r, path="$"):
     shape_cell(r["cell"], f"{path}.cell")
     if not isinstance(r["inputs"], list) or not all(isinstance(i, str) for i in r["inputs"]):
         fail("E_SCHEMA", "inputs must be an array of strings", f"{path}.inputs")
+    if "source" in r:  # spec-0.6.0: only a stored receipt, one with no inputs, has a source
+        if r["inputs"]:
+            fail("E_SCHEMA", "source is allowed only when inputs is empty (a stored receipt)", f"{path}.source")
+        shape_source(r["source"], f"{path}.source")
     shape_args(r["valid"], f"{path}.valid")
     if not isinstance(r["value"], (str, bool)):
         fail("E_SCHEMA", "value must be a string or a boolean", f"{path}.value")
@@ -1002,6 +1043,8 @@ def check_receipt_form(r, path="$"):
     check_licence(r["licence"], f"{path}.licence")
     check_namespace(r["publisher"], f"{path}.publisher")
     check_hex(r["sig"], 128, f"{path}.sig")
+    if "source" in r:  # spec-0.6.0 (C2): in member order, after sig and before summary
+        check_source(r["source"], r["cell"]["ns"].split("/")[0], f"{path}.source")
     if r["summary"] == "":
         fail("E_CANON_STRING", "summary must not be empty", f"{path}.summary")
     check_text(r["summary"], f"{path}.summary", "summary")
@@ -1027,6 +1070,8 @@ def check_receipt_form(r, path="$"):
     # Fixed-width instants compare correctly as strings.
     if not r["tx"] <= r["asof"] <= r["issued"]:
         fail("E_TIME_ORDER", "requires tx <= asof <= issued", path)
+    if "source" in r and not r["source"]["retrieved"] <= r["issued"]:  # spec-0.6.0 (8.2)
+        fail("E_TIME_ORDER", "requires source.retrieved <= issued", f"{path}.source.retrieved")
     return r
 
 
@@ -2063,8 +2108,10 @@ def check_describe(doc, classes=None, functions=None):
     (flattened descriptors, by name; the name is not compared), 5 against it, 6 against the held method
     functions (`functions`, descriptors), when given. Every failure is E_DESCRIBE."""
     # 2. Shape.
-    if not isinstance(doc, dict) or doc.get("kind") not in ("class", "object"):
-        fail("E_DESCRIBE", "a describe answer is of kind class or object")
+    if not isinstance(doc, dict) or doc.get("kind") not in ("class", "object", "function"):
+        fail("E_DESCRIBE", "a describe answer is of kind class, object or function")
+    if doc["kind"] == "function":  # spec-0.6.0 (C7): a function answer, for {id} a function name (2.3)
+        return _check_describe_function(doc, functions)
     if doc["kind"] == "class":
         _shape_object(doc, ("class", "class_hash", "descriptor", "kind", "methods"), (), "$")
         _shape_text(doc["class"], "$.class")
@@ -2076,7 +2123,7 @@ def check_describe(doc, classes=None, functions=None):
             fail("E_DESCRIBE", "methods is an object", "$.methods")
         for m in keys_in_order(doc["methods"]):
             e, p = doc["methods"][m], f"$.methods.{m}"
-            _shape_object(e, ("args", "fn", "fn_hash", "returns"), ("description",), p)
+            _shape_object(e, ("args", "fn", "fn_hash", "returns"), ("description", "source", "tests"), p)
             _shape_text(e["fn"], f"{p}.fn")
             _shape_text(e["fn_hash"], f"{p}.fn_hash")
             if not isinstance(e["args"], dict):
@@ -2085,6 +2132,10 @@ def check_describe(doc, classes=None, functions=None):
                 _shape_text(e["description"], f"{p}.description")
                 if e["description"] == "":
                     fail("E_DESCRIBE", "a description is 1 to 1024 bytes", f"{p}.description")
+            if "tests" in e:  # spec-0.6.0 (C7)
+                _check_describe_tests(e["tests"], f"{p}.tests")
+            if "source" in e:
+                _check_describe_source(e["source"], f"{p}.source")
         # 3. Consistency.
         check_class(doc["descriptor"], "$.descriptor")
         if doc["class_hash"] != class_hash(doc["descriptor"]):
@@ -2165,6 +2216,52 @@ def check_describe(doc, classes=None, functions=None):
     return doc
 
 
+def _check_describe_tests(tests, path):
+    """tests (16.8, spec-0.6.0): the mesh's statement of the tests it holds for a function hash. Four integers
+    (5.5's integer rule: written 0 or without a leading zero, no fraction or exponent), covered at most branches."""
+    _shape_object(tests, ("branches", "count", "counterexamples", "covered"), (), path)
+    for name in ("branches", "count", "counterexamples", "covered"):
+        if not _seconds(tests[name]):
+            fail("E_DESCRIBE", f"{name} is an integer", f"{path}.{name}")
+    if int(tests["covered"].text) > int(tests["branches"].text):
+        fail("E_DESCRIBE", "covered is at most branches", f"{path}.covered")
+
+
+def _check_describe_source(source, path):
+    """source of a relayed function (16.8, spec-0.6.0): the source's DNS name, the mesh's host and its takeover URL."""
+    _shape_object(source, ("name", "relayed_by", "takeover"), (), path)
+    for name in ("name", "relayed_by", "takeover"):
+        _shape_text(source[name], f"{path}.{name}")
+    check_dns_name(source["name"], f"{path}.name")
+    check_dns_name(source["relayed_by"], f"{path}.relayed_by")
+    check_https_url(source["takeover"], f"{path}.takeover")
+
+
+def _check_describe_function(doc, functions):
+    """A function answer (16.8, spec-0.6.0): its shape; the descriptor's args and returns when it is held, all of its
+    arguments, as a method entry's are after its keys."""
+    _shape_object(doc, ("args", "fn", "fn_hash", "kind", "returns"), ("description", "source", "tests"), "$")
+    _shape_text(doc["fn"], "$.fn")
+    check_function_name(doc["fn"], "$.fn")
+    _shape_text(doc["fn_hash"], "$.fn_hash")
+    check_hex(doc["fn_hash"], 64, "$.fn_hash")
+    if not isinstance(doc["args"], dict) or not all(isinstance(a, dict) and isinstance(a.get("type"), str)
+                                                    for a in doc["args"].values()):
+        fail("E_DESCRIBE", "args is an object of argument declarations", "$.args")
+    if "description" in doc:
+        _shape_text(doc["description"], "$.description")
+        if not 1 <= len(doc["description"].encode("utf-8")) <= LIMITS["string"]:
+            fail("E_DESCRIBE", "a description is 1 to 1024 bytes", "$.description")
+    if "tests" in doc:
+        _check_describe_tests(doc["tests"], "$.tests")
+    if "source" in doc:
+        _check_describe_source(doc["source"], "$.source")
+    held = {function_hash(f): f for f in (functions or [])}.get(doc["fn_hash"])
+    if held is not None and (doc["args"] != held["signature"]["args"] or doc["returns"] != held["signature"]["returns"]):
+        fail("E_DESCRIBE", "args and returns are the held descriptor's", "$")
+    return doc
+
+
 def check_key_of_class(decoded, classes, path="$"):
     """spec-0.5.0 (H3, 16.5): a decoded key encoding against its class, when the class is known: its key
     names exactly the class's, each value of its key's type (a class-typed key decoded against its own
@@ -2219,6 +2316,7 @@ def short_id(identifier):
 # The mesh document (SPEC.md 9.6, spec-0.4.1): cross-mesh resolution, never verification.
 
 MESH_ENDPOINTS = {  # endpoint -> its placeholders (each exactly once)
+    "whatif": (),  # spec-0.6.0 (5.9), optional: a whatif request, no placeholders
     "blob": ("sha256",), "cell": ("cell",), "cells": (), "descriptor": ("hash",), "explain": ("cell",), "find": (),
     "jobs": ("job",), "manifest": ("slice_id", "members_hash"), "receipt": ("hash",), "slice": ("cell",), "verify": (),
     "versions": ("cell",),  # spec-0.4.2, optional
@@ -2523,9 +2621,12 @@ ENVELOPE_MEMBERS = {  # outcome -> (required, optional)
     "payment_required": (("outcome", "quote"), ("fn_hash", "resolved", "shadows")),
     "rate_limited": (("outcome", "retry_after_seconds"), ("fn_hash",)),
     # detail: E_FOREIGN_UNAVAILABLE's (spec-0.4.3); resolved and shadows (spec-0.5.0, 16.7, 16.9)
-    "error": (("error", "outcome"), ("detail", "fn_hash", "resolved", "shadows")),
+    # cycle (spec-0.6.0, 5.5): the path of a cycle, with the fixes it admits, on E_EVAL_UNAVAILABLE only
+    "error": (("error", "outcome"), ("cycle", "detail", "fn_hash", "resolved", "shadows")),
     "bad_request": (("error", "outcome"), ("fn_hash",)),
     "pending": (("estimate_seconds", "job", "outcome", "poll", "request"), ()),
+    # spec-0.6.0 (5.9): the answer of a whatif request, a scenario: never signed, stored or served as a fact
+    "scenario": (("outcome", "scenario"), ("fn_hash", "resolved")),
 }
 # spec-0.4.2: an ok envelope at the slice endpoint (5.6) carries a page of member envelopes.
 SLICE_OK_MEMBERS = (("members", "outcome", "slice"), ("fn_hash", "next"))
@@ -2533,7 +2634,7 @@ ENVELOPE_STATUS = {
     "ok": range(200, 201), "stale": range(200, 201), "not_covered": range(404, 405),
     "unlicensed": range(403, 404), "payment_required": range(402, 403),
     "rate_limited": range(429, 430), "error": range(500, 600), "bad_request": range(400, 401),
-    "pending": range(202, 203),
+    "pending": range(202, 203), "scenario": range(200, 201),  # scenario: spec-0.6.0
 }
 # The codes parse(uri, signature) can raise (SPEC 5.4): what a bad_request may report.
 URI_CODES = (
@@ -2542,6 +2643,8 @@ URI_CODES = (
     "E_CANON_STRING", "E_CANON_BLOB", "E_CANON_LIMIT", "E_ARG_UNKNOWN", "E_ARG_MISSING",
     "E_CANON_HEX",  # spec-0.4.2: a fn_hash= that is not 64 lowercase hex digits
 )
+# spec-0.6.0 (5.9): the faults a whatif answer may carry beyond the formula faults (E_WHATIF_NO_SOLUTION, with solve)
+WHATIF_FAULT = "E_WHATIF_NO_SOLUTION"
 # Codes a mesh reports about a request, never as an error (spec-0.4.1, spec-0.4.2).
 RESOLUTION_KINDS = ("alias", "default", "lookup", "method")  # spec-0.5.0 (16.7); lookup (Q10 a) carries asof
 # spec-0.4.3: what an E_FOREIGN_UNAVAILABLE envelope's detail says failed (5.5).
@@ -2550,7 +2653,7 @@ FOREIGN_DETAILS = ("offline", "network", "dns", "tls", "timeout", "refused")
 REQUEST_CODES = ("E_JOB_UNKNOWN", "E_SLICE_AT_CELL", "E_NAME_UNBOUND", "E_SHORT_ID_AMBIGUOUS", "E_KEY_NORMALISATION",
                  "E_KEY_ENCODING")
 _INTEGER = re.compile(r"0|[1-9][0-9]*")
-TRUST = ("primary", "verified", "unverified", "computed")  # computed since spec-0.4.2
+TRUST = ("primary", "verified", "unverified", "computed", "relayed")  # computed since spec-0.4.2, relayed spec-0.6.0
 _JOB = re.compile(r"[0-9a-f]{32,64}")
 
 
@@ -2590,6 +2693,30 @@ def _mesh_url_host(value, path, what):
     return host
 
 
+# spec-0.6.0 (C6, 5.5): the fixes a cycle admits, in the order 5.5 lists them.
+CYCLE_FIXES = ("asof", "lag", "step", "solver")
+
+
+@_as_error("E_ENVELOPE")
+def _check_cycle(env):
+    """An error envelope's cycle (5.5, spec-0.6.0): exactly path and fixes, on E_EVAL_UNAVAILABLE only. The path
+    is at least two calls, its first and last equal; the fixes are distinct and in the order of CYCLE_FIXES."""
+    if env["outcome"] != "error" or env.get("error") != "E_EVAL_UNAVAILABLE":
+        fail("E_ENVELOPE", "cycle is carried by an error envelope with E_EVAL_UNAVAILABLE", "$.cycle")
+    cycle = env["cycle"]
+    _shape_object(cycle, ("fixes", "path"), (), "$.cycle")
+    path = cycle["path"]
+    if not isinstance(path, list) or len(path) < 2 or not all(isinstance(c, str) and c for c in path) \
+            or path[0] != path[-1]:
+        fail("E_ENVELOPE", "cycle.path is at least two calls, and its first and last are equal", "$.cycle.path")
+    fixes = cycle["fixes"]
+    if not isinstance(fixes, list) or not fixes or not all(isinstance(f, str) and f in CYCLE_FIXES for f in fixes):
+        fail("E_ENVELOPE", "cycle.fixes is a non-empty array of asof, lag, step and solver", "$.cycle.fixes")
+    places = [CYCLE_FIXES.index(f) for f in fixes]
+    if any(a >= b for a, b in zip(places, places[1:])):
+        fail("E_ENVELOPE", "cycle.fixes are distinct and in the order asof, lag, step, solver", "$.cycle.fixes")
+
+
 @_as_error("E_ENVELOPE")
 def _check_envelope_members(env, members=None):
     if not isinstance(env, dict) or not isinstance(env.get("outcome"), str):
@@ -2607,7 +2734,7 @@ def _check_envelope_members(env, members=None):
         # the client's E_ENVELOPE and the request codes.
         if env["outcome"] == "bad_request":
             allowed = URI_CODES + ("E_JOB_UNKNOWN", "E_SLICE_AT_CELL", "E_SHORT_ID_AMBIGUOUS", "E_KEY_NORMALISATION",
-                                  "E_KEY_ENCODING")
+                                  "E_KEY_ENCODING", "E_WHATIF_UNSUPPORTED")  # the last: spec-0.6.0 (5.9)
         elif env["outcome"] == "not_covered":
             allowed = ("E_NAME_UNBOUND", "E_NAMESPACE_SUSPENDED")  # the latter since spec-0.5.0 (9.9)
         else:
@@ -2617,6 +2744,8 @@ def _check_envelope_members(env, members=None):
             fail("E_ENVELOPE", f"{env['error']!r} is not a code this outcome can carry", "$.error")
         if "fault" in env:
             fail("E_ENVELOPE", "not_covered carries fault or error, not both", "$.error")
+    if "cycle" in env:  # spec-0.6.0 (C6)
+        _check_cycle(env)
     if "resolved" in env:  # spec-0.5.0 (16.7): what a short call resolved
         r = env["resolved"]
         if not isinstance(r, dict) or set(r) - {"aliases_tx", "call", "resolutions"} or "call" not in r \
@@ -2696,8 +2825,8 @@ def _check_envelope_members(env, members=None):
     if "superseded_by" in env:
         _shape_str(env, "superseded_by", "$")
         check_hex(env["superseded_by"], 64, "$.superseded_by")
-    if "fault" in env and env["fault"] not in FORMULA_FAULTS:
-        fail("E_ENVELOPE", "fault is a formula evaluation fault code (SPEC 15.11)", "$.fault")
+    if "fault" in env and env["fault"] not in FORMULA_FAULTS + (WHATIF_FAULT,):
+        fail("E_ENVELOPE", "fault is a formula evaluation fault code (SPEC 15.11) or E_WHATIF_NO_SOLUTION", "$.fault")
     if "trust" in env and env["trust"] not in TRUST:
         fail("E_ENVELOPE", f"trust is one of {', '.join(TRUST)}", "$.trust")
     if "next" in env:
@@ -2723,13 +2852,21 @@ def _check_receipt_answer(env, keyenv, request, cell_ok, path="$"):
     # receipt is the latest version known as of the requested asof, is the mesh's claim.
     if "asof" in request and not r["asof"] <= request["asof"]:
         fail("E_ENVELOPE", "the receipt's asof is after the one requested", f"{path}.receipt.asof")
-    primary = _host(r["computed_by"]) == r["cell"]["ns"].split("/")[0] and not r["inputs"]
+    # spec-0.6.0 (C2): primary is a stored answer with no source; relayed is the same signed by the
+    # publisher's host with a source (a value taken from another party).
+    publisher_signed = _host(r["computed_by"]) == r["cell"]["ns"].split("/")[0] and not r["inputs"]
+    primary = publisher_signed and "source" not in r
+    relayed = publisher_signed and "source" in r
     if primary != (env["trust"] == "primary"):
-        fail("E_ENVELOPE", "trust is primary exactly when the publisher's host signed a stored answer", f"{path}.trust")
+        fail("E_ENVELOPE", "trust is primary exactly when the publisher's host signed a stored answer with no source",
+             f"{path}.trust")
+    if relayed != (env["trust"] == "relayed"):
+        fail("E_ENVELOPE", "trust is relayed exactly when the publisher's host signed a stored answer with a source",
+             f"{path}.trust")
     # spec-0.4.2: computed is this mesh's own evaluation, signed by it; verified and unverified are
     # receipts another host signed. The envelope check can tell them apart only when the caller
-    # names the mesh it asked.
-    if not primary and "mesh" in request:
+    # names the mesh it asked. A relayed receipt is never computed, even when the mesh asked signed it.
+    if not primary and not relayed and "mesh" in request:
         own = _host(r["computed_by"]) == request["mesh"]
         if own != (env["trust"] == "computed"):
             fail("E_ENVELOPE", "trust is computed exactly when the mesh asked signed the receipt", f"{path}.trust")
@@ -2782,7 +2919,8 @@ def check_request(request):
     if not isinstance(request, dict):
         bad("not an object")
     page = "slice_id" in request
-    allowed = {"slice_id", "asof", "fn_hash", "mesh", "after"} if page else {"cell_id", "asof", "job", "fn_hash", "mesh"}
+    allowed = {"slice_id", "asof", "fn_hash", "mesh", "after"} if page else {
+        "cell_id", "asof", "job", "fn_hash", "mesh", "overrides", "solve"}  # overrides, solve: spec-0.6.0 (5.9)
     if set(request) - allowed:
         bad(f"unknown members {sorted(set(request) - allowed)}")
     key = "slice_id" if page else "cell_id"
@@ -2800,6 +2938,25 @@ def check_request(request):
             check_dns_name(request["mesh"], "request.mesh")
         except DatumeshError:
             bad("mesh is a DNS name")
+    if "overrides" in request:  # spec-0.6.0 (5.9): the canonical override array of a whatif request
+        overrides = request["overrides"]
+        if not isinstance(overrides, list) or len(overrides) > 64:
+            bad("overrides is an array of at most 64 overrides")
+        if not overrides and "solve" not in request:
+            bad("overrides is empty only when solve is given")
+        ids = []
+        for o in overrides:
+            try:
+                ids.append(_check_override(o))
+            except DatumeshError as e:
+                bad(f"an override is malformed ({e.code})")
+        if ids != sorted(ids) or len(set(ids)) != len(ids):
+            bad("overrides are sorted by cell or slice id, each cell or slice once")
+    if "solve" in request:
+        if "overrides" not in request:
+            bad("solve is given with overrides")
+        if not (isinstance(request["solve"], str) and _HEX64.fullmatch(request["solve"])):
+            bad("solve is the vary cell's id, 64 lowercase hex digits")
     if "after" in request:
         if not isinstance(request["after"], dict):
             bad("a cursor is an object")
@@ -2809,6 +2966,44 @@ def check_request(request):
                 check_scalar(value, f"request.after.{name}")
             except DatumeshError:
                 bad(f"the cursor's {name} is not a typed scalar")
+
+
+def cell_id(cell):
+    """A cell's id (4.4): the hash of its canonical bytes."""
+    return sha256_hex(jcs(cell))
+
+
+def _check_override(o):
+    """One override of a whatif request (5.9), checked as a value: a value override {cell, value} or a slice
+    override {slice, add, remove}, with add and remove sorted by cell id. Returns the override's id: its cell's
+    or its slice's. Raises DatumeshError."""
+    if isinstance(o, dict) and set(o) == {"cell", "value"}:
+        shape_cell(o["cell"], "$.cell")
+        check_cell(o["cell"], "$.cell")
+        shape_scalar(o["value"], "$.value")
+        check_scalar(o["value"], "$.value")
+        return cell_id(o["cell"])
+    if isinstance(o, dict) and set(o) == {"add", "remove", "slice"}:
+        shape_slice(o["slice"], "$.slice")
+        check_slice(o["slice"], "$.slice")
+        for name in ("add", "remove"):
+            if not isinstance(o[name], list):
+                fail("E_SCHEMA", f"{name} is an array", f"$.{name}")
+        for member in o["add"]:
+            _shape_object(member, ("cell", "value"), (), "$.add")
+            shape_cell(member["cell"], "$.add.cell")
+            check_cell(member["cell"], "$.add.cell")
+            shape_scalar(member["value"], "$.add.value")
+            check_scalar(member["value"], "$.add.value")
+        for cell in o["remove"]:
+            shape_cell(cell, "$.remove")
+            check_cell(cell, "$.remove")
+        for name, cells in (("add", [m["cell"] for m in o["add"]]), ("remove", o["remove"])):
+            ids = [cell_id(c) for c in cells]
+            if ids != sorted(ids) or len(set(ids)) != len(ids):
+                fail("E_SCHEMA", f"{name} is sorted by cell id, each cell once", f"$.{name}")
+        return slice_id(o["slice"])
+    fail("E_SCHEMA", "an override is a value override {cell, value} or a slice override {slice, add, remove}")
 
 
 def _check_own_url(value, request, path, what):
@@ -2830,6 +3025,41 @@ def _check_status(env, status):
         fail("E_ENVELOPE", "E_FOREIGN_UNAVAILABLE is answered with 502", "$.outcome")
 
 
+@_as_error("E_ENVELOPE")
+def _check_scenario(env, request):
+    """A scenario (5.9, spec-0.6.0): the answer to a whatif request, checked against it at step 5: its cell, its asof,
+    its overrides byte for byte after canonical JSON, and solved exactly when the request had solve."""
+    s = env["scenario"]
+    _shape_object(s, ("asof", "cell", "overrides", "type", "value"), ("solved",), "$.scenario")
+    shape_cell(s["cell"], "$.scenario.cell")
+    check_cell(s["cell"], "$.scenario.cell")
+    check_instant(s["asof"], "$.scenario.asof")
+    _shape_str(s, "type", "$.scenario")
+    check_type_name(s["type"], "$.scenario.type")
+    if not isinstance(s["value"], (str, bool)):
+        fail("E_ENVELOPE", "value is a string or a boolean", "$.scenario.value")
+    check_lexical(s["type"], s["value"], "$.scenario.value")
+    if cell_id(s["cell"]) != request["cell_id"]:
+        fail("E_ENVELOPE", "scenario.cell is not the cell requested", "$.scenario.cell")
+    if "asof" in request and s["asof"] != request["asof"]:
+        fail("E_ENVELOPE", "scenario.asof is not the asof requested", "$.scenario.asof")
+    if jcs(s["overrides"]) != jcs(request["overrides"]):
+        fail("E_ENVELOPE", "scenario.overrides are not the request's overrides", "$.scenario.overrides")
+    if ("solved" in s) != ("solve" in request):
+        fail("E_ENVELOPE", "solved is present exactly when the request had solve", "$.scenario.solved")
+    if "solved" in s:
+        _shape_object(s["solved"], ("value", "vary"), (), "$.scenario.solved")
+        shape_scalar(s["solved"]["value"], "$.scenario.solved.value")
+        check_scalar(s["solved"]["value"], "$.scenario.solved.value")
+        if s["solved"]["value"]["type"] != "number":
+            fail("E_ENVELOPE", "solved.value is a number", "$.scenario.solved.value")
+        shape_cell(s["solved"]["vary"], "$.scenario.solved.vary")
+        check_cell(s["solved"]["vary"], "$.scenario.solved.vary")
+        if cell_id(s["solved"]["vary"]) != request["solve"]:
+            fail("E_ENVELOPE", "solved.vary is not the cell the request asked to vary", "$.scenario.solved.vary")
+    return {"outcome": "scenario"}
+
+
 def check_envelope_object(status, env, keyenv, request, _request_checked=False):
     """check_envelope on a parsed envelope (the items of a batch, 5.7, use it)."""
     if not _request_checked:
@@ -2841,6 +3071,17 @@ def check_envelope_object(status, env, keyenv, request, _request_checked=False):
     result = {"outcome": env["outcome"]}
     if env.get("error") == "E_JOB_UNKNOWN" and "job" not in request:
         fail("E_ENVELOPE", "E_JOB_UNKNOWN answers a job URL only", "$.error")
+    # spec-0.6.0 (5.9): a request with overrides is answered by a scenario or by a refusal, never by a fact
+    whatif = "overrides" in request
+    if whatif and env["outcome"] in ("ok", "stale", "pending"):
+        fail("E_ENVELOPE", f"{env['outcome']} is not an answer to a whatif request", "$.outcome")
+    if env["outcome"] == "scenario":
+        if not whatif:
+            fail("E_ENVELOPE", "a scenario answers a whatif request, with overrides", "$.outcome")
+        _check_pin_echo(env, request)
+        return _check_scenario(env, request)
+    if env.get("fault") == WHATIF_FAULT and "solve" not in request:
+        fail("E_ENVELOPE", "E_WHATIF_NO_SOLUTION answers a solve", "$.fault")
     _check_pin_echo(env, request)
     if env["outcome"] == "pending":
         # Step 5 for pending (spec-0.4.1): the echoed request is the one made, and a pending
@@ -2978,7 +3219,7 @@ def parse_call(text, env):
     q = _call_query_start(text)
     rest = text[q:]
     try:
-        tokens = formula.tokenize(text[:q])
+        tokens = formula.tokenize(text[:q], request=True)  # spec-0.6.0: the request lexer (5.8, C3)
     except formula.FormulaError as e:
         fail(_CALL_LEXER_CODES.get(e.code, "E_PARSE_URI"), f"not a call: {e}")
     callee, args, method, label = _call_tree(tokens)
@@ -3169,6 +3410,8 @@ def _call_read(raw, decl, path, env):
         return {"type": "string", "value": text}
     if kind == "object":
         fail("E_CANON_TYPE", f"an object for a {type_} argument", path)
+    if kind == "token" and value[0] == "digit-word" and type_ != "string":  # spec-0.6.0 (C3)
+        fail("E_CANON_TYPE", f"the digit-led word {value[1]!r} for a {type_} argument", path)
     if type_ in ("string", "blob"):
         text = value if kind == "quoted" else value[1]
     elif kind == "token" and value[0] == type_ and type_ in ("number", "date", "instant"):
@@ -3325,6 +3568,8 @@ def _call_tree(tokens):
             v = ("token", ("number", "-" + at().value))
         elif tok.kind == "PERIOD":
             v = ("token", ("period", tok.value))
+        elif tok.kind == "DWORD":  # spec-0.6.0 (C3): a value only in a string position (_call_read)
+            v = ("token", ("digit-word", tok.value))
         elif tok.kind == "WORD" and not punct("(", 1):  # a value, never an alias (Q1)
             v = ("token", ("word", tok.text))
         elif tok.kind == "PUNCT" and tok.text == "*" and objects:
@@ -3420,8 +3665,9 @@ def run_vector(vec):
         if kind == "normalisation":  # spec-0.5.0 (16.4)
             check_key_value(vec["rule"], vec["text"])
             return {}
-        if kind == "describe":  # spec-0.5.0 (16.8)
-            check_describe(parse_json(vector_input(vec)), vec.get("classes"), vec.get("functions"))
+        if kind == "describe":  # spec-0.5.0 (16.8); integers kept as written (spec-0.6.0: tests, 5.5)
+            check_describe(parse_json(vector_input(vec), keep_integer_text=True), vec.get("classes"),
+                           vec.get("functions"))
             return {}
         if kind == "key":  # spec-0.5.0 (16.5)
             out = {"decoded": decode_key(vec["input"])}

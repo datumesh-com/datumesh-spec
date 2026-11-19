@@ -1,0 +1,53 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://datumesh.com/schemas/1/describe-function.schema.json",
+  "title": "Datumesh describe answer: a function",
+  "description": "SPEC.md 16.8, spec-0.6.0. Unsigned, the mesh's statement. fn_hash is 64 lowercase hex digits; when the client holds the descriptor of fn_hash, args and returns are its signature's, all of its arguments (checked by the procedure, E_DESCRIBE). description is 1 to 1024 bytes (counted in bytes by the procedure).",
+  "type": "object",
+  "required": [
+    "args",
+    "fn",
+    "fn_hash",
+    "kind",
+    "returns"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "kind": {
+      "const": "function"
+    },
+    "fn": {
+      "$ref": "defs.schema.json#/$defs/functionName"
+    },
+    "fn_hash": {
+      "$ref": "defs.schema.json#/$defs/hex64"
+    },
+    "args": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "required": [
+          "type"
+        ],
+        "properties": {
+          "type": {
+            "$ref": "defs.schema.json#/$defs/type"
+          }
+        }
+      },
+      "description": "The function's arguments with their types and units, all of them."
+    },
+    "returns": {},
+    "description": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 1024
+    },
+    "tests": {
+      "$ref": "describe-class.schema.json#/$defs/tests"
+    },
+    "source": {
+      "$ref": "describe-class.schema.json#/$defs/source"
+    }
+  }
+}

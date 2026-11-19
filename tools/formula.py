@@ -62,6 +62,8 @@ CATCHABLE = ("E_FORMULA_EMPTY", "E_FORMULA_ABSENT")
 # spec-0.5.0 (I3): a code of 10.2, not of 15.11, that the define of a method body can give: super in a
 # subclass whose parent's hash no class name is bound to in the definer's environment (16.3).
 CLASS_CODES = ("E_CLASS_PARENT",)
+# spec-0.6.0 (C3): the request lexer's code for a run that is no token of a request (5.8), E_PARSE_URI.
+REQUEST_CODES = ("E_PARSE_URI",)
 
 
 def _no_value(e):
@@ -73,7 +75,7 @@ def _no_value(e):
 
 class FormulaError(Exception):
     def __init__(self, code, detail="", token=None):
-        assert code in CODES or code in CLASS_CODES, code
+        assert code in CODES or code in CLASS_CODES or code in REQUEST_CODES, code
         self.code, self.detail, self.token = code, detail, token
         super().__init__(f"{code}: {detail}")
 
@@ -240,6 +242,10 @@ _NUMBER = re.compile(r"[0-9]+(?:\.[0-9]+)?")
 _CANONICAL_NUMBER = re.compile(r"(0|[1-9][0-9]*)(\.[0-9]*[1-9])?")
 _INDEX_UNIT = re.compile(r"index:[0-9]{4}(?:-[0-9]{2}){0,2}=(?:0|[1-9][0-9]*)(?:\.[0-9]*[1-9])?")
 _WORD = re.compile(r"[A-Za-z][A-Za-z0-9_]*")
+# spec-0.6.0 (C3, 5.8): a request's digit-led word is a run of digits, letters, digits or "_" that begins with a digit,
+# when the number, date, instant and period lexers do not accept the whole run; a period is 1*DIGIT ("D"/"M"/"Y").
+_DIGIT_RUN = re.compile(r"[0-9][A-Za-z0-9_]*")
+_PERIOD_TOKEN = re.compile(r"[0-9]+[DMY]")
 _NAME = re.compile(r"[a-z][a-z0-9]*(?:_[a-z0-9]+)*")
 PUNCT2 = ("..", "->", "<>", "<=", ">=")
 PUNCT1 = "()[],:*+-/^&=<>"
@@ -268,7 +274,10 @@ def _pin(source, i, token):
     return i
 
 
-def tokenize(source):
+def tokenize(source, request=False):
+    """The tokens of a body (15.2), or of a request's call (5.8) when request is true. The request lexer differs in
+    two places (spec-0.6.0): a date followed by a letter, digit or "_" is E_PARSE_URI (the run is no token of the
+    dialect, 5.8), and a digit-led word is a token DWORD."""
     if not isinstance(source, str):
         fail("E_FORMULA_SYNTAX", "a body is text")
     if len(source.encode("utf-8")) > LIMIT_SOURCE:
@@ -300,6 +309,8 @@ def tokenize(source):
         if m:
             end = len(m.group())
             if end < len(rest) and _word_char(rest[end]):
+                if request:
+                    fail("E_PARSE_URI", f"{m.group()}{rest[end]} is no token of a request (5.8)")
                 fail("E_FORMULA_DATE", "a date is YYYY-MM-DD")
             try:
                 canon.check_date(m.group(), "$")
@@ -345,6 +356,12 @@ def tokenize(source):
             i = _pin(source, i, tokens[-1])
             continue
         # L5 numbers, L6 unit suffixes
+        if request and c.isdigit():  # spec-0.6.0 (C3): a digit-led word, unless it is a period
+            run = _DIGIT_RUN.match(rest).group()
+            if any(ch.isascii() and ch.isalpha() for ch in run) and not _PERIOD_TOKEN.fullmatch(run):
+                tokens.append(Token("DWORD", run, i, run))
+                i += len(run)
+                continue
         if c.isdigit() or (c == "." and i + 1 < n and source[i + 1].isdigit()):
             if c == ".":
                 fail("E_FORMULA_NUMBER", "a number has digits before its point")

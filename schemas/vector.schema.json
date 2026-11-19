@@ -198,7 +198,8 @@
         "primary",
         "verified",
         "unverified",
-        "computed"
+        "computed",
+        "relayed"
       ]
     },
     "receipt_hash": {
@@ -234,6 +235,18 @@
         "after": {
           "type": "object",
           "description": "spec-0.4.2, slice requests: the key of the last member of the previous page."
+        },
+        "overrides": {
+          "type": "array",
+          "maxItems": 64,
+          "items": {
+            "type": "object"
+          },
+          "description": "spec-0.6.0 (5.9): the canonical override array of a whatif request; with it, the envelope's outcome is scenario or a refusal."
+        },
+        "solve": {
+          "$ref": "defs.schema.json#/$defs/hex64",
+          "description": "spec-0.6.0 (5.9): the id of the vary cell, when the whatif request had solve."
         }
       },
       "oneOf": [
