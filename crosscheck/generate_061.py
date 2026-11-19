@@ -13,7 +13,7 @@ receipt hashes come from the pure helpers of canon.py (JCS, SHA-256, the receipt
 expected code is stated by hand from the text of SPEC.md 2.3, 5.1, 15.2 and 16.8. The reference tools must
 then be made to agree with them. The only outputs that depend on an evaluator are those of the three
 `formula-eval` vectors (value, lineage, fuel and receipt hash): they are written in EVAL_OUTPUT below, taken
-once from a copy of the reference with the 0.6.1 lexer rule applied (scratch, not committed), and the value of
+once from a copy of the reference with the 0.6.1 lexer rule applied (the committed tools of spec-0.6.1 reproduce them: tests/test_spec_0_6_1.py), and the value of
 each was also worked by hand (see the comments).
 
 Only new files are written under vectors/. Every existing vector stays byte for byte as it is.

@@ -6,8 +6,7 @@ convention; S3 `publisher` in describe.
 
 (a) every new vector is on disk as crosscheck/generate_061.py builds it, and the spec-0.6.0 vectors are
     untouched (read from git at the spec-0.6.0 tag; this needs git and the full history);
-(b) the reference tools reproduce every new vector's expected result (the vectors are written first:
-    these fail until the tools of spec-0.6.1 are written);
+(b) the reference tools reproduce every new vector's expected result (the vectors were written first);
 (c) SPEC.md states each rule;
 (d) the schemas know the new member and the new segments.
 """
@@ -106,7 +105,7 @@ class Migration061(unittest.TestCase):
 
 
 class ReferenceTools(unittest.TestCase):
-    """(b): fails until tools/canon.py and tools/formula.py implement spec-0.6.1."""
+    """(b): tools/canon.py and tools/formula.py implement spec-0.6.1."""
 
     def test_every_new_vector(self):
         for id_, vec in NEW.items():

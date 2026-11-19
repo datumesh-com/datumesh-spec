@@ -236,6 +236,8 @@ _INSTANT = re.compile(r"[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}\.[
 _DATE = re.compile(r"[0-9]{4}-[0-9]{2}-[0-9]{2}")
 _LABEL = r"[a-z0-9](?:[a-z0-9-]*[a-z0-9])?"
 _QUALIFIED = re.compile(_LABEL + r"(?:\." + _LABEL + r")+(?:/[a-z0-9_]+)+")
+_QUALIFIED_HOST = re.compile(_LABEL + r"(?:\." + _LABEL + r")+")
+_RUN = re.compile(r"[A-Za-z0-9_.-]*")
 _HOSTISH = re.compile(r"[A-Za-z0-9_.\-]+")
 _ALIAS = re.compile(r"@[A-Za-z0-9_/]*")
 _NUMBER = re.compile(r"[0-9]+(?:\.[0-9]+)?")
@@ -319,15 +321,30 @@ def tokenize(source, request=False):
             tokens.append(Token("DATE", m.group(), i, m.group()))
             i += end
             continue
-        # L3 qualified names
+        # L3 qualified names (spec-0.6.1: a later segment may be a DNS name when a "/" follows it; the last is a name)
         if c.isascii() and c.isalnum():
-            m = _QUALIFIED.match(rest)
-            if m:
-                text = m.group()
-                host = text.split("/")[0]
-                if not host.split(".")[-1].isdigit():
-                    if len(text) < len(rest) and _word_char(rest[len(text)]):
-                        fail("E_FORMULA_NAME", f"not a function name: {text}{rest[len(text)]}")
+            m = _QUALIFIED_HOST.match(rest)
+            if m and not m.group().split(".")[-1].isdigit():
+                j = m.end()
+                text_end = None
+                while j < len(rest) and rest[j] == "/":
+                    r = _RUN.match(rest, j + 1)
+                    run = r.group()
+                    if not run:
+                        break
+                    k = j + 1 + len(run)
+                    if k < len(rest) and rest[k] == "/":
+                        j = k
+                        text_end = j
+                        continue
+                    nm = re.match(r"[a-z0-9_]+", run)
+                    if nm:
+                        text_end = j + 1 + nm.end()
+                    break
+                if text_end is not None:
+                    text = rest[:text_end]
+                    if text_end < len(rest) and rest[text_end - 1] != "/" and _word_char(rest[text_end]):
+                        fail("E_FORMULA_NAME", f"not a function name: {text}{rest[text_end]}")
                     try:
                         canon.check_function_name(text, "$")
                     except canon.DatumeshError as e:

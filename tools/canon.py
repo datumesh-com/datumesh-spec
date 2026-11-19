@@ -554,7 +554,10 @@ def check_namespace(text, path):
     host, *segments = text.split("/")
     check_dns_name(host, path)
     for segment in segments:
-        check_name(segment, path)
+        if "." in segment:
+            check_dns_name(segment, path)
+        else:
+            check_name(segment, path)
 
 
 def check_function_name(text, path):
@@ -2113,9 +2116,10 @@ def check_describe(doc, classes=None, functions=None):
     if doc["kind"] == "function":  # spec-0.6.0 (C7): a function answer, for {id} a function name (2.3)
         return _check_describe_function(doc, functions)
     if doc["kind"] == "class":
-        _shape_object(doc, ("class", "class_hash", "descriptor", "kind", "methods"), (), "$")
+        _shape_object(doc, ("class", "class_hash", "descriptor", "kind", "methods"), ("publisher",), "$")
         _shape_text(doc["class"], "$.class")
         check_function_name(doc["class"], "$.class")
+        _check_publisher(doc, doc["class"])
         _shape_text(doc["class_hash"], "$.class_hash")
         check_hex(doc["class_hash"], 64, "$.class_hash")
         shape_class(doc["descriptor"], "$.descriptor")
@@ -2237,12 +2241,21 @@ def _check_describe_source(source, path):
     check_https_url(source["takeover"], f"{path}.takeover")
 
 
+def _check_publisher(doc, name):
+    if "publisher" in doc:
+        _shape_text(doc["publisher"], "$.publisher")
+        check_dns_name(doc["publisher"], "$.publisher")
+        if doc["publisher"] != name.split("/")[0]:
+            fail("E_DESCRIBE", "publisher is the host of the name", "$.publisher")
+
+
 def _check_describe_function(doc, functions):
     """A function answer (16.8, spec-0.6.0): its shape; the descriptor's args and returns when it is held, all of its
     arguments, as a method entry's are after its keys."""
-    _shape_object(doc, ("args", "fn", "fn_hash", "kind", "returns"), ("description", "source", "tests"), "$")
+    _shape_object(doc, ("args", "fn", "fn_hash", "kind", "returns"), ("description", "publisher", "source", "tests"), "$")
     _shape_text(doc["fn"], "$.fn")
     check_function_name(doc["fn"], "$.fn")
+    _check_publisher(doc, doc["fn"])
     _shape_text(doc["fn_hash"], "$.fn_hash")
     check_hex(doc["fn_hash"], 64, "$.fn_hash")
     if not isinstance(doc["args"], dict) or not all(isinstance(a, dict) and isinstance(a.get("type"), str)
