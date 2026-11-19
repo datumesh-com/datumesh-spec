@@ -100,10 +100,10 @@ ERROR_CODES = (
     "E_CLASS_OWNER",
     "E_KEY_NORMALISATION",
     "E_KEY_ENCODING",
-    "E_WHATIF_UNSUPPORTED",  # spec-0.6.0: a whatif solve the mesh does not offer (5.9): bad_request
-    "E_WHATIF_NO_SOLUTION",  # spec-0.6.0: a whatif solve with no value within its bounds and fuel (5.9): a fault
     "E_SHORT_ID_AMBIGUOUS",  # spec-0.5.0: a mesh's answer about a request (16.8)
     "E_DESCRIBE",  # spec-0.5.0: a describe answer breaks 16.8 (a client's check)
+    "E_WHATIF_UNSUPPORTED",  # spec-0.6.0: a whatif solve the mesh does not offer (5.9): bad_request
+    "E_WHATIF_NO_SOLUTION",  # spec-0.6.0: a whatif solve with no value within its bounds and fuel (5.9): a fault
 )
 # spec-0.5.0: define and write codes, never verification results and never in a read envelope.
 DEFINE_WRITE_CODES = ("E_UNROOTED_INPUT", "E_NAMESPACE_SUSPENDED", "E_CLASS_MEMBER", "E_CLASS_PARENT",
@@ -2651,7 +2651,7 @@ RESOLUTION_KINDS = ("alias", "default", "lookup", "method")  # spec-0.5.0 (16.7)
 FOREIGN_DETAILS = ("offline", "network", "dns", "tls", "timeout", "refused")
 # spec-0.5.0: E_SHORT_ID_AMBIGUOUS (16.8), and a call's key codes (5.8, 16.4, 16.5): bad_request, never error.
 REQUEST_CODES = ("E_JOB_UNKNOWN", "E_SLICE_AT_CELL", "E_NAME_UNBOUND", "E_SHORT_ID_AMBIGUOUS", "E_KEY_NORMALISATION",
-                 "E_KEY_ENCODING")
+                 "E_KEY_ENCODING", "E_WHATIF_UNSUPPORTED", "E_WHATIF_NO_SOLUTION")  # spec-0.6.0: whatif's codes (5.5)
 _INTEGER = re.compile(r"0|[1-9][0-9]*")
 TRUST = ("primary", "verified", "unverified", "computed", "relayed")  # computed since spec-0.4.2, relayed spec-0.6.0
 _JOB = re.compile(r"[0-9a-f]{32,64}")
@@ -2734,7 +2734,7 @@ def _check_envelope_members(env, members=None):
         # the client's E_ENVELOPE and the request codes.
         if env["outcome"] == "bad_request":
             allowed = URI_CODES + ("E_JOB_UNKNOWN", "E_SLICE_AT_CELL", "E_SHORT_ID_AMBIGUOUS", "E_KEY_NORMALISATION",
-                                  "E_KEY_ENCODING", "E_WHATIF_UNSUPPORTED")  # the last: spec-0.6.0 (5.9)
+                                  "E_KEY_ENCODING", "E_WHATIF_UNSUPPORTED", "E_SLICE_MEMBER")  # spec-0.6.0 (5.5, 5.9)
         elif env["outcome"] == "not_covered":
             allowed = ("E_NAME_UNBOUND", "E_NAMESPACE_SUSPENDED")  # the latter since spec-0.5.0 (9.9)
         else:
@@ -3082,6 +3082,11 @@ def check_envelope_object(status, env, keyenv, request, _request_checked=False):
         return _check_scenario(env, request)
     if env.get("fault") == WHATIF_FAULT and "solve" not in request:
         fail("E_ENVELOPE", "E_WHATIF_NO_SOLUTION answers a solve", "$.fault")
+    # spec-0.6.0 (5.5): the whatif codes of a bad_request answer a whatif request, and only that one
+    if env["outcome"] == "bad_request" and env.get("error") == "E_WHATIF_UNSUPPORTED" and "solve" not in request:
+        fail("E_ENVELOPE", "E_WHATIF_UNSUPPORTED answers a solve", "$.error")
+    if env["outcome"] == "bad_request" and env.get("error") == "E_SLICE_MEMBER" and not whatif:
+        fail("E_ENVELOPE", "E_SLICE_MEMBER answers a whatif request with overrides", "$.error")
     _check_pin_echo(env, request)
     if env["outcome"] == "pending":
         # Step 5 for pending (spec-0.4.1): the echoed request is the one made, and a pending

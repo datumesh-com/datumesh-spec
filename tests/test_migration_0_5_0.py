@@ -49,8 +49,8 @@ class Migration050(unittest.TestCase):
     def test_revision_strings(self):
         spec = (ROOT / "SPEC.md").read_text(encoding="utf-8")
         self.assertRegex(spec, r"(?m)^### spec-0\.5\.0\b")
-        self.assertIn("`spec-0.5.0` (in progress", (ROOT / "units.md").read_text(encoding="utf-8"))
-        self.assertIn("revision `spec-0.5.0` (in progress, part one)", (ROOT / "README.md").read_text(encoding="utf-8"))
+        self.assertIn("`spec-0.6.0`", (ROOT / "units.md").read_text(encoding="utf-8"))  # coordinator, round 2
+        self.assertIn("revision `spec-0.6.0`", (ROOT / "README.md").read_text(encoding="utf-8"))  # coordinator, round 2
 
 
 if __name__ == "__main__":

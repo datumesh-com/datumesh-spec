@@ -597,7 +597,9 @@
               "E_SHORT_ID_AMBIGUOUS",
               "E_NAMESPACE_SUSPENDED",
               "E_KEY_NORMALISATION",
-              "E_KEY_ENCODING"
+              "E_KEY_ENCODING",
+              "E_WHATIF_UNSUPPORTED",
+              "E_WHATIF_NO_SOLUTION"
             ]
           }
         }
@@ -682,7 +684,8 @@
             "E_SHORT_ID_AMBIGUOUS",
             "E_KEY_NORMALISATION",
             "E_KEY_ENCODING",
-            "E_WHATIF_UNSUPPORTED"
+            "E_WHATIF_UNSUPPORTED",
+            "E_SLICE_MEMBER"
           ]
         }
       },
