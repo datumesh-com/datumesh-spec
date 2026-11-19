@@ -1,0 +1,49 @@
+{
+  "id": "call/period-token-as-string",
+  "kind": "call",
+  "description": "spec-0.6.0: 2D stays a period token; in a string position it is the string \"2D\".",
+  "valid": true,
+  "input": "datumesh.example.org/verse(bible, 2D, 1, 1)",
+  "env": {
+    "aliases": {},
+    "functions": {
+      "datumesh.example.org/verse": {
+        "code": {
+          "body": "",
+          "lang": "stored"
+        },
+        "inputs": [],
+        "signature": {
+          "args": {
+            "book": {
+              "type": "string",
+              "valid": false
+            },
+            "chapter": {
+              "type": "number",
+              "unit": "1",
+              "valid": false
+            },
+            "corpus": {
+              "type": "string",
+              "valid": false
+            },
+            "verse": {
+              "type": "number",
+              "unit": "1",
+              "valid": false
+            }
+          },
+          "order": [
+            "corpus",
+            "book",
+            "chapter",
+            "verse"
+          ],
+          "returns": "string"
+        }
+      }
+    }
+  },
+  "uri": "cell://datumesh.example.org/verse?book=2D&chapter=1&corpus=bible&verse=1"
+}

@@ -3,6 +3,7 @@
 
 import json
 import re
+import sys
 import unittest
 
 import jsonschema
@@ -159,6 +160,11 @@ class Coverage(unittest.TestCase):
         import gen_vectors  # runs the generator in memory
 
         produced = {v["id"]: v for v in gen_vectors.VECTORS}
+        # spec-0.6.0: its vectors are written by crosscheck/generate_060.py, which builds on gen_vectors.
+        sys.path.insert(0, str(ROOT / "crosscheck"))
+        import generate_060
+
+        produced.update({v["id"]: v for v in generate_060.VECTORS})
         on_disk = {v["id"]: {k: x for k, x in v.items() if k != "_file"} for v in VECTORS}
         self.assertEqual(produced, on_disk)
 
@@ -233,6 +239,8 @@ class Schemas(unittest.TestCase):
             if "blob_hex" in vec:  # E_SCHEMA from step 7.7 is about the content, not the receipt's shape
                 continue
             if vec["id"] == "invalid/receipt-slice-manifest-schema":  # the manifest's shape, not the receipt's
+                continue
+            if vec["id"] == "invalid/receipt-source-name-is-publisher":  # spec-0.6.0: compares two members
                 continue
             try:
                 doc = canon.parse_json(canon.vector_input(vec))

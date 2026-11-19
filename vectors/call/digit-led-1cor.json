@@ -1,0 +1,49 @@
+{
+  "id": "call/digit-led-1cor",
+  "kind": "call",
+  "description": "spec-0.6.0: 1Cor is a digit-led word.",
+  "valid": true,
+  "input": "datumesh.example.org/verse(bible, 1Cor, 1, 1)",
+  "env": {
+    "aliases": {},
+    "functions": {
+      "datumesh.example.org/verse": {
+        "code": {
+          "body": "",
+          "lang": "stored"
+        },
+        "inputs": [],
+        "signature": {
+          "args": {
+            "book": {
+              "type": "string",
+              "valid": false
+            },
+            "chapter": {
+              "type": "number",
+              "unit": "1",
+              "valid": false
+            },
+            "corpus": {
+              "type": "string",
+              "valid": false
+            },
+            "verse": {
+              "type": "number",
+              "unit": "1",
+              "valid": false
+            }
+          },
+          "order": [
+            "corpus",
+            "book",
+            "chapter",
+            "verse"
+          ],
+          "returns": "string"
+        }
+      }
+    }
+  },
+  "uri": "cell://datumesh.example.org/verse?book=1Cor&chapter=1&corpus=bible&verse=1"
+}
