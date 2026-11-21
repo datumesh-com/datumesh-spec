@@ -657,7 +657,9 @@
             "mol",
             "percent",
             "permille",
-            "s"
+            "s",
+            "pure",
+            "shares"
           ]
         },
         {
@@ -712,6 +714,9 @@
                   "$ref": "#/$defs/currency"
                 },
                 {
+                  "const": "shares"
+                },
+                {
                   "$ref": "#/$defs/unitArg"
                 }
               ]
@@ -763,7 +768,7 @@
       }
     },
     "licence": {
-      "description": "A licence (SPEC.md 8.1): an SPDX identifier or an https:// URL.",
+      "description": "A licence (SPEC.md 8.1): an SPDX identifier, an https:// URL, or since spec-0.6.2 public:<https URL>, at most 512 characters in all for the public form.",
       "type": "string",
       "anyOf": [
         {
@@ -772,6 +777,10 @@
         },
         {
           "pattern": "^https://[!-~]+$",
+          "maxLength": 512
+        },
+        {
+          "pattern": "^public:https://[!-~]+$",
           "maxLength": 512
         }
       ]

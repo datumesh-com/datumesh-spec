@@ -584,10 +584,16 @@ def check_hex(text, length, path):
 
 _SPDX = re.compile(r"[A-Za-z0-9][A-Za-z0-9.+-]*")
 _URL = re.compile(r"https://[!-~]+")
+PUBLIC_PREFIX = "public:"  # spec-0.6.2 (8.1): public:<https URL>, the whole string at most 512 characters
 
 
 def check_licence(text, path):
-    if text.startswith("https://"):
+    if text.startswith(PUBLIC_PREFIX):
+        if not _URL.fullmatch(text[len(PUBLIC_PREFIX):]):
+            fail("E_CANON_LICENCE", f"public: is followed by an https URL of printable ASCII: {text!r}", path)
+        if len(text) > LIMITS["licence_url"]:
+            fail("E_CANON_LIMIT", "public: licence longer than 512 characters, the prefix included", path)
+    elif text.startswith("https://"):
         if not _URL.fullmatch(text):
             fail("E_CANON_LICENCE", "licence URL has characters outside printable ASCII", path)
         if len(text) > LIMITS["licence_url"]:
@@ -968,6 +974,11 @@ def returns_type(desc):
     return returns if isinstance(returns, str) else returns["type"]
 
 
+def _rate_side_ok(side, value):
+    """A rate's side (units.md 1, 3): of is a currency code; per is a currency code or shares (spec-0.6.2)."""
+    return value in CURRENCIES or (side == "per" and value == "shares")
+
+
 def check_unit(unit, args, path):
     """A unit in a signature (units.md section 1); args is the signature's args."""
     if isinstance(unit, str):
@@ -978,8 +989,9 @@ def check_unit(unit, args, path):
     else:
         for side in ("of", "per"):
             if isinstance(unit[side], str):
-                if unit[side] not in CURRENCIES:
-                    fail("E_CANON_UNIT", f"a rate side is a currency code: {unit[side]!r}", f"{path}.{side}")
+                if not _rate_side_ok(side, unit[side]):
+                    fail("E_CANON_UNIT", f"a rate side is a currency code (per may be shares): {unit[side]!r}",
+                         f"{path}.{side}")
             else:
                 _check_unit_arg(unit[side]["arg"], args, f"{path}.{side}")
 
@@ -1003,16 +1015,25 @@ def resolved_unit(desc, cell):
         return unit
     if "arg" in unit:
         value = _unit_arg_value(unit["arg"], cell, path)
-        if not is_unit_literal(value):
-            fail("E_CANON_UNIT", f"argument {unit['arg']} is not a unit: {value!r}", path)
-        return value
+        if is_unit_literal(value):
+            return value
+        return _resolved_rate_value(unit["arg"], value, path)
     sides = []
     for side in ("of", "per"):
         value = unit[side] if isinstance(unit[side], str) else _unit_arg_value(unit[side]["arg"], cell, path)
-        if value not in CURRENCIES:
-            fail("E_CANON_UNIT", f"rate {side} is not a currency code: {value!r}", f"{path}.{side}")
+        if not _rate_side_ok(side, value):
+            fail("E_CANON_UNIT", f"rate {side} is not allowed here: {value!r}", f"{path}.{side}")
         sides.append(value)
     return "/".join(sides)
+
+
+def _resolved_rate_value(name, value, path):
+    """spec-0.6.2 (units.md 3): a whole-unit argument may hold a rate's resolved form <of>/<per>. This is the one
+    place a unit string is split, at its single slash, and only on resolution."""
+    of, slash, per = value.partition("/")
+    if not slash or "/" in per or not _rate_side_ok("of", of) or not _rate_side_ok("per", per):
+        fail("E_CANON_UNIT", f"argument {name} is not a unit: {value!r}", path)
+    return value
 
 
 def _unit_arg_value(name, cell, path):
@@ -1527,8 +1548,8 @@ def is_unrooted(namespace):
     return namespace.split("/")[0].rsplit(".", 1)[-1] == "invalid"
 
 
-# The open licences, least to most strict, in the order 8.5 lists them. Every other licence, any
-# https:// URL and any SPDX identifier not listed (compared byte for byte), is restricted (tier 4).
+# The listed open licences, least to most strict, in the order 8.5 lists them (spec-0.4.3). Every other licence,
+# any https:// URL and any SPDX identifier not listed (compared byte for byte), is restricted: index 4 here.
 LICENCE_TIERS = (("CC0-1.0", "PDDL-1.0"),
                  ("MIT", "Apache-2.0", "CC-BY-4.0", "OGL-UK-3.0"),
                  ("CC-BY-SA-4.0", "ODbL-1.0"))
@@ -1536,10 +1557,25 @@ RESTRICTED = 4
 
 
 def licence_tier(licence):
+    """The index of a listed licence in LICENCE_TIERS (1 to 3), RESTRICTED otherwise. public: licences are not
+    listed; spec_tier() gives them their 8.5 tier (spec-0.6.2)."""
     for tier, ids in enumerate(LICENCE_TIERS, 1):
         if licence in ids:
             return tier
     return RESTRICTED
+
+
+# The tiers of 8.5 (spec-0.6.2): 1 public domain, 2 public information (public:), 3 attribution, 4 share-alike,
+# 5 restricted. The listed tiers 1 to 3 above are spec tiers 1, 3 and 4.
+PUBLIC_TIER, SHARE_ALIKE_TIER, SPEC_RESTRICTED = 2, 4, 5
+_SPEC_TIER_OF_INDEX = {1: 1, 2: 3, 3: SHARE_ALIKE_TIER}
+
+
+def spec_tier(licence):
+    if licence.startswith(PUBLIC_PREFIX):
+        return PUBLIC_TIER
+    index = licence_tier(licence)
+    return SPEC_RESTRICTED if index == RESTRICTED else _SPEC_TIER_OF_INDEX[index]
 
 
 def _open_at(entry, at):
@@ -1562,8 +1598,8 @@ def inherit_licence(licences, declarations, fn, issued, own):
     check_licence(own, "$.mesh_licence")
     if not licences:
         return {"licence": own, "reason": "no_inputs"}
-    restricted = sorted({x for x in licences if licence_tier(x) == RESTRICTED})
-    share_alike = {x for x in licences if licence_tier(x) == 3}
+    restricted = sorted({x for x in licences if spec_tier(x) == SPEC_RESTRICTED})
+    share_alike = {x for x in licences if spec_tier(x) == SHARE_ALIKE_TIER}
     if share_alike and (len(share_alike) > 1 or restricted):  # spec-0.4.3, the user's S2 b
         return {"licence": None, "reason": "share_alike_conflict"}
     if len(restricted) > 1:
@@ -1575,8 +1611,12 @@ def inherit_licence(licences, declarations, fn, issued, own):
         if not any(_open_at(e, issued) for e in entries):
             return {"licence": None, "reason": "declaration_not_open"}
         return {"licence": restricted[0], "reason": "declared"}
-    top = max(licence_tier(x) for x in licences)
-    present = [x for x in LICENCE_TIERS[top - 1] if x in licences]
+    top = max(spec_tier(x) for x in licences)
+    if top == PUBLIC_TIER:  # several different public: licences: the one greatest in byte order (8.5 step 5)
+        return {"licence": max((x for x in licences if spec_tier(x) == top), key=lambda x: x.encode()),
+                "reason": "open"}
+    listed = {1: LICENCE_TIERS[0], 3: LICENCE_TIERS[1], SHARE_ALIKE_TIER: LICENCE_TIERS[2]}[top]
+    present = [x for x in listed if x in licences]
     return {"licence": present[-1], "reason": "open"}
 
 

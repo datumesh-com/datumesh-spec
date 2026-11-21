@@ -77,6 +77,10 @@
         {
           "pattern": "^https://[!-~]+$",
           "maxLength": 512
+        },
+        {
+          "pattern": "^public:https://[!-~]+$",
+          "maxLength": 512
         }
       ]
     },

@@ -137,6 +137,8 @@ BUILTINS.update({
     "latest": (("slice",), ("bound", "along"), False),
     "last_before": (("slice", "x"), ("bound", "along"), False),
     "first_after": (("slice", "x"), ("bound", "along"), False),
+    "last_by": (("slice", "by"), (), False),  # spec-0.6.2 (15.7, 15.13)
+    "first_by": (("slice", "by"), (), False),
     "nearest": (("slice", "x"), ("bound", "along"), False),
     "within": (("slice", "x", "bound"), ("along",), False),
     "interpolate": (("slice", "x"), ("method", "bound", "along"), False),
@@ -2067,6 +2069,27 @@ class Checker:
         s, dim, _ = self._metric_lookup(node, scope, args, named, "nearest")
         return self.lookup_result(s, dim)
 
+    def _by_check(self, node, scope, args, name):
+        """spec-0.6.2 (15.13): by's open arguments are open arguments of the slice of the same key type (the
+        dimension, E_FORMULA_JOIN); its values must be orderable; the result drops the dimension."""
+        s = self.slice_arg(args[0], scope, f"{name}()")
+        b = self.slice_arg(args[1], scope, f"{name}()")
+        for k in b.keys:
+            if k not in s.keys or s.keys[k].kind != b.keys[k].kind:
+                fail("E_FORMULA_JOIN", f"{name}(): by's open arguments are open arguments of the slice, of the same type")
+        if b.elem.kind in ("boolean", "blob"):
+            fail("E_FORMULA_TYPE", f"{name}() needs ordered values in by")
+        if b.elem.kind == "number" and b.elem.unit in (VARIES, None):
+            fail("E_FORMULA_UNIT_UNKNOWN", f"{name}(): the unit of by's values varies by member")
+        rest = {k: v for k, v in s.keys.items() if k not in b.keys}
+        return Ty("slice", elem=s.elem, keys=rest) if rest else s.elem
+
+    def b_last_by(self, node, scope, args, named):
+        return self._by_check(node, scope, args, "last_by")
+
+    def b_first_by(self, node, scope, args, named):
+        return self._by_check(node, scope, args, "first_by")
+
     def b_within(self, node, scope, args, named):
         s = self.slice_arg(args[0], scope, "within()")
         dim = self.along(node, s, named)
@@ -3375,6 +3398,43 @@ class Context:
                     return v
             return None
         return self.per_group(m, dim, pick, m.elem)
+
+    def _by(self, node, scope, last):
+        """spec-0.6.2 (15.13): each member of the slice joined to the member of by with the same values for by's
+        open arguments (an inner join); per group of the other open arguments the candidate whose by value is
+        greatest (last_by) or least (first_by), a tie to the later or earlier member in key order. No charge
+        beyond the two reads (15.12): the reads charge themselves."""
+        s = self.mat(self.eval(node["args"][0], scope))
+        b = self.mat(self.eval(node["args"][1], scope))
+        bkind = self.ty(node["args"][1]).elem.kind
+        by_value = {_tuple_key(b.kinds, key): v for key, v in b.members}
+        pos = [s.keys.index(k) for k in b.keys]
+        rest_idx = [i for i, k in enumerate(s.keys) if k not in b.keys]
+        chosen = {}
+        for key, value in s.members:  # key order
+            bv = by_value.get(_tuple_key(b.kinds, tuple(key[i] for i in pos)))
+            if bv is None:
+                continue
+            rank = sort_key(bkind, bv[1])
+            rest = tuple(key[i] for i in rest_idx)
+            cur = chosen.get(rest)
+            if cur is None or (rank >= cur[0] if last else rank < cur[0]):
+                chosen[rest] = (rank, value)
+        rest_keys = [s.keys[i] for i in rest_idx]
+        rest_kinds = [s.kinds[i] for i in rest_idx]
+        if not rest_keys:
+            if () not in chosen:
+                fail("E_FORMULA_ABSENT", "no member of the slice has a candidate in by")
+            return chosen[()][1]
+        members = [(rest, found) for rest, (_, found) in
+                   sorted(chosen.items(), key=lambda kv: _tuple_key(rest_kinds, kv[0]))]
+        return Mat(rest_keys, rest_kinds, members, s.elem)
+
+    def f_last_by(self, node, scope):
+        return self._by(node, scope, True)
+
+    def f_first_by(self, node, scope):
+        return self._by(node, scope, False)
 
     def f_nearest(self, node, scope):
         m, dim, x, bound = self._metric(node, scope, True, True)

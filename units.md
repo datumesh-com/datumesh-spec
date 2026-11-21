@@ -1,6 +1,6 @@
 # Datumesh units
 
-Status: part of `spec-0.6.0` (unchanged since `spec-0.4.0`), normative. SPEC.md section 7.1 says where units appear; this document says which units exist.
+Status: part of `spec-0.6.2` (changed in `spec-0.6.2`: the literals `shares` and `pure`, a rate per `shares`, and a resolved rate as a whole-unit argument value; otherwise unchanged since `spec-0.4.0`), normative. SPEC.md section 7.1 says where units appear; this document says which units exist.
 
 A function declares the unit of every number it takes or returns. The unit lives in the function's signature, so the function hash commits to it and every receipt inherits it through `cell.fn_hash`. A receipt never carries a unit itself.
 
@@ -23,7 +23,7 @@ A unit in a signature is one of three JSON forms:
 | Rate | `{"of": "USD", "per": {"arg": "base"}}` | Units of `of` per one unit of `per`. |
 
 - An **argument reference** names an argument of the same signature whose type is `string`. The descriptor check is only that: the argument exists and is a string (`E_CANON_UNIT` otherwise). A name that is not an argument of the signature, whether or not it is a well-formed name (`{"arg": "Bad"}`), is `E_CANON_UNIT`. By convention such an argument holds a currency or unit code, and the publisher documents it as one.
-- A **rate** has exactly the members `of` and `per`. Each is a currency code from section 2.1 or an argument reference. Rates of other units, and rates of rates, cannot be written. Because rates have this one form, the string `"USD/EUR"` is not a unit.
+- A **rate** has exactly the members `of` and `per`. `of` is a currency code from section 2.1 or an argument reference. `per` is a currency code, the literal `shares` (section 2.3), or an argument reference. Rates of other units, and rates of rates, cannot be written. Because rates have this one form, the string `"USD/EUR"` is not a unit, and neither is `"USD/shares"`.
 - A literal is a JSON string, a reference is an object with exactly the member `arg` whose value is a string, and a rate is an object with exactly `of` and `per`, each a string or a reference. Any other JSON shape is `E_SCHEMA`, and is found while checking the descriptor's structure, before any canonical-form check (SPEC.md 7).
 
 Examples:
@@ -31,6 +31,7 @@ Examples:
 ```json
 {"type": "number", "unit": {"of": {"arg": "quote"}, "per": {"arg": "base"}}}
 {"type": "number", "unit": {"of": {"arg": "quote"}, "per": "EUR"}}
+{"type": "number", "unit": {"of": "USD", "per": "shares"}}
 {"type": "number", "unit": {"arg": "base"}, "valid": false}
 {"type": "number", "unit": "index:2015=100"}
 ```
@@ -106,7 +107,7 @@ functions and `haversine`. A day is
 ### 2.3 Ratios and counts
 
 ```units-ratio
-percent permille bp 1 count
+percent permille bp 1 count shares pure
 ```
 
 | Unit | Meaning |
@@ -116,6 +117,8 @@ percent permille bp 1 count
 | `bp` | Basis points, parts per ten thousand: `25` means 0.25 %. |
 | `1` | A dimensionless quantity that is none of the others, such as a ratio of like quantities or a coefficient. |
 | `count` | A number of things. |
+| `shares` | Shares: a number of shares of the issuer's equity, as a securities filing counts them. The plural is XBRL's spelling, kept as filed. It is the only count that may be the `per` side of a rate (section 3): `{"of": "USD", "per": "shares"}` is money per share. |
+| `pure` | Dimensionless: a pure number, XBRL's `pure`: a ratio of two amounts of one unit. It is a different string from `1`, because units are compared byte for byte and a verifier never converts. The two have the same meaning, and `pure` exists so that relays keep the filed spelling. |
 
 ### 2.4 Indices
 
@@ -145,8 +148,9 @@ Resolution is a client convenience. Verification (SPEC.md 10.1) never resolves u
 Only the arguments the return unit refers to are examined. A referenced argument the cell does not bind is `E_ARG_MISSING`, and one bound with a type other than `string` is `E_ARG_TYPE`. Other arguments are not checked against the signature; verification step 7.2 does that.
 
 - A literal resolves to itself.
-- An argument reference resolves to that argument's value in the cell. The value must itself be a literal unit from section 2, otherwise `E_CANON_UNIT`.
-- A rate resolves to `<of>/<per>`, each side resolved as above. Each side must resolve to a currency code, otherwise `E_CANON_UNIT`. `{"of": "USD", "per": "EUR"}` resolves to `USD/EUR`, meaning US dollars per euro.
+- An argument reference resolves to that argument's value in the cell. The value must be a literal unit from section 2, or a rate's resolved form as above, otherwise `E_CANON_UNIT`.
+- A rate resolves to `<of>/<per>`, each side resolved as above. `of` must resolve to a currency code, and `per` to a currency code or `shares`, otherwise `E_CANON_UNIT`. `{"of": "USD", "per": "EUR"}` resolves to `USD/EUR`, meaning US dollars per euro, and `{"of": "USD", "per": "shares"}` to `USD/shares`, meaning US dollars per share.
+- A whole-unit argument reference (not one inside a rate) may take a rate's resolved form as its value, `<of>/<per>`. That value has exactly one `/`: its side before the `/` is a currency code, and its side after it is a currency code or `shares`. This is the one place a unit string is split, at its single `/`, and only on resolution. A listed literal that contains `/` (`m/s`, `km/h`, `W/m2`) is a literal and is not split. A value with two `/`, an empty side, or a side not allowed there is `E_CANON_UNIT`. In a signature a rate is still only the object form, so the string `"USD/shares"` as a literal is `E_CANON_UNIT`.
 - A referenced argument that is a slice marker cannot be resolved (`E_SLICE`).
 - A function whose return type is not `number` has no unit; the result is null.
 
@@ -174,6 +178,7 @@ Dates, such as incorporation dates, are values of type `date` and have no unit.
 
 ## 5. Changes
 
+- `spec-0.6.2`: `shares` (count) and `pure` (dimensionless) added; a rate's `per` may be `shares`; a whole-unit argument reference may resolve to a rate's form `<of>/<per>` (section 3). No existing unit changes meaning, and no hash changes: a unit is part of a hash only in a descriptor that uses it.
 - `spec-0.4.0`: `min`, `h`, `d`, `km` and `deg` added. No other change; no hash changes, since a unit is
   part of a hash only in a descriptor that uses it.
 - `spec-0.2.0`: first version, including `mm`, `cm`, `km/h`, `hPa`, `W/m2` and `permille` for the seed sources.
