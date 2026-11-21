@@ -1,0 +1,238 @@
+{
+  "id": "formula/last-by-group-key",
+  "kind": "formula",
+  "description": "spec-0.6.2: A group key: `period` is open in the slice and not in `by`, so the result is a slice over `period`, summed.",
+  "valid": true,
+  "input": "sum(last_by(data.example.org/revenue(accession: *, period: *), data.example.org/filed(accession: *)))",
+  "env": {
+    "aliases": {},
+    "functions": {
+      "data.example.org/filed": {
+        "code": {
+          "body": "",
+          "lang": "stored"
+        },
+        "inputs": [],
+        "signature": {
+          "args": {
+            "accession": {
+              "type": "string",
+              "valid": false
+            }
+          },
+          "returns": "date",
+          "order": [
+            "accession"
+          ]
+        }
+      },
+      "data.example.org/revenue": {
+        "code": {
+          "body": "",
+          "lang": "stored"
+        },
+        "inputs": [],
+        "signature": {
+          "args": {
+            "accession": {
+              "type": "string",
+              "valid": false
+            },
+            "period": {
+              "type": "date",
+              "valid": true
+            }
+          },
+          "returns": {
+            "type": "number",
+            "unit": "EUR"
+          },
+          "order": [
+            "accession",
+            "period"
+          ]
+        }
+      }
+    },
+    "name": "calc.example.net/f",
+    "signature": {
+      "args": {
+        "a": {
+          "type": "number",
+          "valid": false,
+          "unit": "EUR"
+        },
+        "b": {
+          "type": "number",
+          "valid": false,
+          "unit": "EUR"
+        },
+        "c": {
+          "type": "number",
+          "valid": false,
+          "unit": "USD"
+        },
+        "n": {
+          "type": "number",
+          "valid": false,
+          "unit": "1"
+        },
+        "k": {
+          "type": "number",
+          "valid": false,
+          "unit": "1"
+        },
+        "x": {
+          "type": "number",
+          "valid": false,
+          "unit": "1"
+        },
+        "r": {
+          "type": "number",
+          "valid": false,
+          "unit": "percent"
+        },
+        "t1": {
+          "type": "number",
+          "valid": false,
+          "unit": "degC"
+        },
+        "t2": {
+          "type": "number",
+          "valid": false,
+          "unit": "degC"
+        },
+        "amount": {
+          "type": "number",
+          "valid": false,
+          "unit": {
+            "arg": "base"
+          }
+        },
+        "count": {
+          "type": "number",
+          "valid": false,
+          "unit": "count"
+        },
+        "plat": {
+          "type": "number",
+          "valid": false,
+          "unit": "deg"
+        },
+        "plon": {
+          "type": "number",
+          "valid": false,
+          "unit": "deg"
+        },
+        "dist": {
+          "type": "number",
+          "valid": false,
+          "unit": "m"
+        },
+        "secs": {
+          "type": "number",
+          "valid": false,
+          "unit": "s"
+        },
+        "s": {
+          "type": "string",
+          "valid": false
+        },
+        "name": {
+          "type": "string",
+          "valid": false
+        },
+        "base": {
+          "type": "string",
+          "valid": false
+        },
+        "quote": {
+          "type": "string",
+          "valid": false
+        },
+        "station": {
+          "type": "string",
+          "valid": false
+        },
+        "tenor": {
+          "type": "string",
+          "valid": false
+        },
+        "item": {
+          "type": "string",
+          "valid": false
+        },
+        "stations": {
+          "type": "string",
+          "valid": false
+        },
+        "p": {
+          "type": "string",
+          "valid": false
+        },
+        "d": {
+          "type": "date",
+          "valid": true
+        },
+        "d2": {
+          "type": "date",
+          "valid": true
+        },
+        "t": {
+          "type": "instant",
+          "valid": true
+        },
+        "flag": {
+          "type": "boolean",
+          "valid": false
+        }
+      },
+      "order": [
+        "a",
+        "amount",
+        "b",
+        "base",
+        "c",
+        "count",
+        "d",
+        "d2",
+        "dist",
+        "flag",
+        "item",
+        "k",
+        "n",
+        "name",
+        "p",
+        "plat",
+        "plon",
+        "quote",
+        "r",
+        "s",
+        "secs",
+        "station",
+        "stations",
+        "t",
+        "t1",
+        "t2",
+        "tenor",
+        "x"
+      ],
+      "returns": {
+        "type": "number",
+        "unit": "EUR"
+      }
+    }
+  },
+  "ast": "{\"args\":[{\"args\":[{\"args\":{\"accession\":{\"node\":\"open\"},\"period\":{\"node\":\"open\"}},\"fn\":\"data.example.org/revenue\",\"node\":\"read\"},{\"args\":{\"accession\":{\"node\":\"open\"}},\"fn\":\"data.example.org/filed\",\"node\":\"read\"}],\"fn\":\"last_by\",\"named\":{},\"node\":\"call\"}],\"fn\":\"sum\",\"named\":{},\"node\":\"call\"}",
+  "ast_sha256": "31d776641662040e5cb434bc5811d0eea1fb25300704e41e492395a8c45b488d",
+  "body": "sum(last_by(data.example.org/revenue(accession: *, period: *), data.example.org/filed(accession: *)))\n",
+  "inputs": [
+    "data.example.org/filed",
+    "data.example.org/revenue"
+  ],
+  "returns": {
+    "type": "number",
+    "unit": "EUR"
+  },
+  "asof_dependent": false
+}

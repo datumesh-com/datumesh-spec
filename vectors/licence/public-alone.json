@@ -1,0 +1,15 @@
+{
+  "id": "licence/public-alone",
+  "kind": "licence",
+  "description": "spec-0.6.2: One public input: it is open, so it needs no declaration, and the result carries it.",
+  "valid": true,
+  "licences": [
+    "public:https://www.sec.gov/privacy"
+  ],
+  "declarations": {},
+  "fn": "calc.example.net/convert",
+  "issued": "2024-03-16T09:00:00.000000Z",
+  "mesh_licence": "CC-BY-4.0",
+  "licence": "public:https://www.sec.gov/privacy",
+  "reason": "open"
+}

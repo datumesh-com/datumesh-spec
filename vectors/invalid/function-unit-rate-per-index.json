@@ -1,0 +1,8 @@
+{
+  "id": "invalid/function-unit-rate-per-index",
+  "kind": "function",
+  "description": "spec-0.6.2: An index unit is still not a side of a rate.",
+  "valid": false,
+  "input": "{\n  \"signature\": {\n    \"returns\": {\n      \"unit\": {\n        \"per\": \"index:2015=100\",\n        \"of\": \"USD\"\n      },\n      \"type\": \"number\"\n    },\n    \"args\": {\n      \"date\": {\n        \"valid\": true,\n        \"type\": \"date\"\n      }\n    }\n  },\n  \"inputs\": [],\n  \"code\": {\n    \"lang\": \"stored\",\n    \"body\": \"\"\n  }\n}",
+  "error": "E_CANON_UNIT"
+}

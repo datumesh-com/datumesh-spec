@@ -101,7 +101,8 @@ class Migration061(unittest.TestCase):
     def test_the_new_files_are_all_the_generator_wrote(self):
         now = {str(p.relative_to(ROOT)) for p in (ROOT / "vectors").rglob("*.json")}
         added = now - set(self.old)
-        self.assertEqual(added, {f"vectors/{i}.json" for i in NEW})
+        # (spec-0.6.2 and later revisions add files of their own: only that these are all there)
+        self.assertLessEqual({f"vectors/{i}.json" for i in NEW}, added)
 
 
 class ReferenceTools(unittest.TestCase):
@@ -115,9 +116,9 @@ class ReferenceTools(unittest.TestCase):
 
 class SpecText(unittest.TestCase):
     def test_status_line_names_this_revision(self):
-        self.assertRegex(SPEC, r"(?m)^Status: draft, revision `spec-0\.6\.1`")
+        self.assertRegex(SPEC, r"(?m)^Status: draft, revision `spec-0\.6\.[12]`")  # spec-0.6.2 bumps the revision
         self.assertRegex(SPEC, r"(?m)^### spec-0\.6\.1\s*$")
-        self.assertIn("revision `spec-0.6.1`", (ROOT / "README.md").read_text(encoding="utf-8"))
+        self.assertRegex((ROOT / "README.md").read_text(encoding="utf-8"), r"revision `spec-0\.6\.[12]`")
 
     def test_s1_dns_segments(self):
         a = SPEC.index("### 2.3")

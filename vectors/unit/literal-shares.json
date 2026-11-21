@@ -1,0 +1,8 @@
+{
+  "id": "unit/literal-shares",
+  "kind": "unit",
+  "description": "spec-0.6.2: A literal `shares` resolves to itself.",
+  "valid": true,
+  "input": "{\n  \"descriptor\": {\n    \"signature\": {\n      \"returns\": {\n        \"unit\": \"shares\",\n        \"type\": \"number\"\n      },\n      \"args\": {\n        \"date\": {\n          \"valid\": true,\n          \"type\": \"date\"\n        },\n        \"company\": {\n          \"valid\": false,\n          \"type\": \"string\"\n        }\n      }\n    },\n    \"inputs\": [],\n    \"code\": {\n      \"lang\": \"stored\",\n      \"body\": \"\"\n    }\n  },\n  \"cell\": {\n    \"ns\": \"data.example.org\",\n    \"fn_hash\": \"dfad8f6af87c41058b4d0159845861cba77ac56280c09e2db69d4d4e16da08d6\",\n    \"fn\": \"outstanding\",\n    \"args\": {\n      \"date\": {\n        \"value\": \"2025-12-31\",\n        \"type\": \"date\"\n      },\n      \"company\": {\n        \"value\": \"0000320193\",\n        \"type\": \"string\"\n      }\n    }\n  }\n}",
+  "unit": "shares"
+}

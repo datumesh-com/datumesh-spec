@@ -1,0 +1,253 @@
+{
+  "id": "formula-eval/last-by-tie",
+  "kind": "formula-eval",
+  "description": "spec-0.6.2: Two members with the same greatest by value, a1 and a2 both filed on 10 Feb: last_by gives the later one in key order, a2, 110.",
+  "valid": true,
+  "world": {
+    "functions": {
+      "calc.example.net/e": {
+        "bound": "2026-01-01T00:00:00.000000Z",
+        "descriptor": {
+          "code": {
+            "body": "last_by(data.example.org/fact(accession: *), data.example.org/filed(accession: *))\n",
+            "lang": "formula"
+          },
+          "inputs": [
+            "data.example.org/fact",
+            "data.example.org/filed"
+          ],
+          "signature": {
+            "args": {},
+            "order": [],
+            "returns": {
+              "type": "number",
+              "unit": "EUR"
+            }
+          }
+        }
+      },
+      "data.example.org/fact": {
+        "bound": "2026-01-01T00:00:00.000000Z",
+        "descriptor": {
+          "code": {
+            "body": "",
+            "lang": "stored"
+          },
+          "inputs": [],
+          "signature": {
+            "args": {
+              "accession": {
+                "type": "string",
+                "valid": false
+              }
+            },
+            "returns": {
+              "type": "number",
+              "unit": "EUR"
+            },
+            "order": [
+              "accession"
+            ]
+          }
+        }
+      },
+      "data.example.org/filed": {
+        "bound": "2026-01-01T00:00:00.000000Z",
+        "descriptor": {
+          "code": {
+            "body": "",
+            "lang": "stored"
+          },
+          "inputs": [],
+          "signature": {
+            "args": {
+              "accession": {
+                "type": "string",
+                "valid": false
+              }
+            },
+            "returns": "date",
+            "order": [
+              "accession"
+            ]
+          }
+        }
+      }
+    },
+    "receipts": [
+      {
+        "asof": "2026-03-02T16:00:00.000000Z",
+        "cell": {
+          "args": {
+            "accession": {
+              "type": "string",
+              "value": "a1"
+            }
+          },
+          "fn": "fact",
+          "fn_hash": "26e8c7cce2bb7f854f30287ef2065c035c2d61396aceb94ec5d257e1f551bc67",
+          "ns": "data.example.org"
+        },
+        "computed_by": "data.example.org#efb20f82a7e15e96",
+        "inputs": [],
+        "issued": "2026-03-02T16:00:00.000000Z",
+        "licence": "CC-BY-4.0",
+        "proto": "datumesh/1",
+        "publisher": "data.example.org",
+        "summary": "A recorded value of fact.",
+        "tx": "2026-03-02T16:00:00.000000Z",
+        "type": "number",
+        "valid": {},
+        "value": "100",
+        "sig": "d78724abc6155aea5bb3290f67385600a13b0bdfa944a431db694cce217f4f3823494b32c2c5aad89d1480bdbfcd53db207c01313a3743112f5e30ad2a2aef0b"
+      },
+      {
+        "asof": "2026-03-02T16:00:00.000000Z",
+        "cell": {
+          "args": {
+            "accession": {
+              "type": "string",
+              "value": "a2"
+            }
+          },
+          "fn": "fact",
+          "fn_hash": "26e8c7cce2bb7f854f30287ef2065c035c2d61396aceb94ec5d257e1f551bc67",
+          "ns": "data.example.org"
+        },
+        "computed_by": "data.example.org#efb20f82a7e15e96",
+        "inputs": [],
+        "issued": "2026-03-02T16:00:00.000000Z",
+        "licence": "CC-BY-4.0",
+        "proto": "datumesh/1",
+        "publisher": "data.example.org",
+        "summary": "A recorded value of fact.",
+        "tx": "2026-03-02T16:00:00.000000Z",
+        "type": "number",
+        "valid": {},
+        "value": "110",
+        "sig": "1528e5f8a8314d80995765745d8ecc686cf32f2570b696587e5afe93128dc515c4339b2b7b354d33be227420e8a9629ed88989949b4b091ab4b9ff609b347f0b"
+      },
+      {
+        "asof": "2026-03-02T16:00:00.000000Z",
+        "cell": {
+          "args": {
+            "accession": {
+              "type": "string",
+              "value": "a3"
+            }
+          },
+          "fn": "fact",
+          "fn_hash": "26e8c7cce2bb7f854f30287ef2065c035c2d61396aceb94ec5d257e1f551bc67",
+          "ns": "data.example.org"
+        },
+        "computed_by": "data.example.org#efb20f82a7e15e96",
+        "inputs": [],
+        "issued": "2026-03-02T16:00:00.000000Z",
+        "licence": "CC-BY-4.0",
+        "proto": "datumesh/1",
+        "publisher": "data.example.org",
+        "summary": "A recorded value of fact.",
+        "tx": "2026-03-02T16:00:00.000000Z",
+        "type": "number",
+        "valid": {},
+        "value": "120",
+        "sig": "6fdff0f2d9418e7eae0472cf4ccd50b7027131056d957e54df3aa127780722882f4a767ee27514b119ea4898c3664c92c70575e6982b58919a85b9bd58c70e09"
+      },
+      {
+        "asof": "2026-03-02T16:00:00.000000Z",
+        "cell": {
+          "args": {
+            "accession": {
+              "type": "string",
+              "value": "a1"
+            }
+          },
+          "fn": "filed",
+          "fn_hash": "145b0a1969ba2639541b52d217e0f631650e826f7449b23da921a30113f3e7d7",
+          "ns": "data.example.org"
+        },
+        "computed_by": "data.example.org#efb20f82a7e15e96",
+        "inputs": [],
+        "issued": "2026-03-02T16:00:00.000000Z",
+        "licence": "CC-BY-4.0",
+        "proto": "datumesh/1",
+        "publisher": "data.example.org",
+        "summary": "A recorded value of filed.",
+        "tx": "2026-03-02T16:00:00.000000Z",
+        "type": "date",
+        "valid": {},
+        "value": "2026-02-10",
+        "sig": "6d38e7b6c5ed4968ea2b605e1e20186801b956ec02062101a9e144afde651babf6072485b926cd3e66f801be8c881dc5ab54cd8b4765eea935b230d9c4b9f60c"
+      },
+      {
+        "asof": "2026-03-02T16:00:00.000000Z",
+        "cell": {
+          "args": {
+            "accession": {
+              "type": "string",
+              "value": "a2"
+            }
+          },
+          "fn": "filed",
+          "fn_hash": "145b0a1969ba2639541b52d217e0f631650e826f7449b23da921a30113f3e7d7",
+          "ns": "data.example.org"
+        },
+        "computed_by": "data.example.org#efb20f82a7e15e96",
+        "inputs": [],
+        "issued": "2026-03-02T16:00:00.000000Z",
+        "licence": "CC-BY-4.0",
+        "proto": "datumesh/1",
+        "publisher": "data.example.org",
+        "summary": "A recorded value of filed.",
+        "tx": "2026-03-02T16:00:00.000000Z",
+        "type": "date",
+        "valid": {},
+        "value": "2026-02-10",
+        "sig": "d280674d84ac30280c75b4942287a3f50ad03936d67c17b387b60dbfdd077cfd860da3c4a37e82ff64af5d1b9707991f88f156e474ca01cad2634735eafd2105"
+      },
+      {
+        "asof": "2026-03-02T16:00:00.000000Z",
+        "cell": {
+          "args": {
+            "accession": {
+              "type": "string",
+              "value": "a3"
+            }
+          },
+          "fn": "filed",
+          "fn_hash": "145b0a1969ba2639541b52d217e0f631650e826f7449b23da921a30113f3e7d7",
+          "ns": "data.example.org"
+        },
+        "computed_by": "data.example.org#efb20f82a7e15e96",
+        "inputs": [],
+        "issued": "2026-03-02T16:00:00.000000Z",
+        "licence": "CC-BY-4.0",
+        "proto": "datumesh/1",
+        "publisher": "data.example.org",
+        "summary": "A recorded value of filed.",
+        "tx": "2026-03-02T16:00:00.000000Z",
+        "type": "date",
+        "valid": {},
+        "value": "2026-01-20",
+        "sig": "f907194db35c42ab2cfaaf05d64f4ef766102fb0098ffc2571bf5f2c430264441c76088ef5da214d9e485091a9909f7fdefad17c15bcaf5140d0cea0b4ff4406"
+      }
+    ]
+  },
+  "cell": {
+    "args": {},
+    "fn": "calc.example.net/e"
+  },
+  "asof": "2026-06-01T00:00:00.000000Z",
+  "fuel_used": 11,
+  "lineage": [
+    "slice:573da1107cd04e7f26cc1afabd6ec6f2d7ef8be05c210ca87f72e7cd9ea55bc9:0f168c0673f4fec2ef949ee8226b64b5a952c3daae11f3f2d953fb73972c5fb7",
+    "slice:7003c5251a09c52c264249e19931e204b92c4daa60ed2c06b4dd092985d8c901:7bd8d50e386091bd74115b487dd830fb28a22725ddc28eb7c01812cbf1cbb943"
+  ],
+  "receipt_asof": "2026-03-02T16:00:00.000000Z",
+  "receipt_hash": "b492e4455e3dcd6ed8f3c5fb38433220f1d9a1e52a4f3082ef8fbc9dddc93124",
+  "tx": "2026-03-02T16:00:00.000000Z",
+  "value": {
+    "type": "number",
+    "value": "110"
+  }
+}

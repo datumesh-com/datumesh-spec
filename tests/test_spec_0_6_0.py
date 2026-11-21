@@ -222,7 +222,7 @@ class SpecText(unittest.TestCase):
                                r"backdated corrections[^.]*stored receipts' `tx`")
 
     def test_status_line_names_this_revision(self):
-        self.assertRegex(SPEC, r"(?m)^Status: draft, revision `spec-0\.6\.[01]`")  # spec-0.6.1 bumps the revision
+        self.assertRegex(SPEC, r"(?m)^Status: draft, revision `spec-0\.6\.[012]`")  # spec-0.6.1 and 0.6.2 bump the revision
         self.assertNotIn("in progress, part one", SPEC)
         self.assertRegex(SPEC, r"(?m)^### spec-0\.5\.0\s*$")
 

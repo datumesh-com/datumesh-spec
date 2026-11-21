@@ -1,0 +1,13 @@
+{
+  "id": "licence/public-no-inputs-own",
+  "kind": "licence",
+  "description": "spec-0.6.2: No inputs: the mesh's own licence, as before.",
+  "valid": true,
+  "licences": [],
+  "declarations": {},
+  "fn": "calc.example.net/convert",
+  "issued": "2024-03-16T09:00:00.000000Z",
+  "mesh_licence": "CC-BY-4.0",
+  "licence": "CC-BY-4.0",
+  "reason": "no_inputs"
+}

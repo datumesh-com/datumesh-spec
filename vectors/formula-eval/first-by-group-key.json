@@ -1,0 +1,390 @@
+{
+  "id": "formula-eval/first-by-group-key",
+  "kind": "formula-eval",
+  "description": "spec-0.6.2: sum(first_by(revenue(...), filed(...))) over the same cells: for 2025-12-31 the earliest is a3 (20 Jan), 30; for 2026-03-31 a3 again (31); 2026-06-30 has no candidate. 30 + 31 = 61.",
+  "valid": true,
+  "world": {
+    "functions": {
+      "calc.example.net/e": {
+        "bound": "2026-01-01T00:00:00.000000Z",
+        "descriptor": {
+          "code": {
+            "body": "sum(first_by(data.example.org/revenue(accession: *, period: *), data.example.org/filed(accession: *)))\n",
+            "lang": "formula"
+          },
+          "inputs": [
+            "data.example.org/filed",
+            "data.example.org/revenue"
+          ],
+          "signature": {
+            "args": {},
+            "order": [],
+            "returns": {
+              "type": "number",
+              "unit": "EUR"
+            }
+          }
+        }
+      },
+      "data.example.org/filed": {
+        "bound": "2026-01-01T00:00:00.000000Z",
+        "descriptor": {
+          "code": {
+            "body": "",
+            "lang": "stored"
+          },
+          "inputs": [],
+          "signature": {
+            "args": {
+              "accession": {
+                "type": "string",
+                "valid": false
+              }
+            },
+            "returns": "date",
+            "order": [
+              "accession"
+            ]
+          }
+        }
+      },
+      "data.example.org/revenue": {
+        "bound": "2026-01-01T00:00:00.000000Z",
+        "descriptor": {
+          "code": {
+            "body": "",
+            "lang": "stored"
+          },
+          "inputs": [],
+          "signature": {
+            "args": {
+              "accession": {
+                "type": "string",
+                "valid": false
+              },
+              "period": {
+                "type": "date",
+                "valid": true
+              }
+            },
+            "returns": {
+              "type": "number",
+              "unit": "EUR"
+            },
+            "order": [
+              "accession",
+              "period"
+            ]
+          }
+        }
+      }
+    },
+    "receipts": [
+      {
+        "asof": "2026-03-02T16:00:00.000000Z",
+        "cell": {
+          "args": {
+            "accession": {
+              "type": "string",
+              "value": "a1"
+            },
+            "period": {
+              "type": "date",
+              "value": "2025-12-31"
+            }
+          },
+          "fn": "revenue",
+          "fn_hash": "2e576349c27780cb44d8c7aecc88ac5f2144b34b6c6ce66fd06f31ad4b0dff52",
+          "ns": "data.example.org"
+        },
+        "computed_by": "data.example.org#efb20f82a7e15e96",
+        "inputs": [],
+        "issued": "2026-03-02T16:00:00.000000Z",
+        "licence": "CC-BY-4.0",
+        "proto": "datumesh/1",
+        "publisher": "data.example.org",
+        "summary": "A recorded value of revenue.",
+        "tx": "2026-03-02T16:00:00.000000Z",
+        "type": "number",
+        "valid": {
+          "period": {
+            "type": "date",
+            "value": "2025-12-31"
+          }
+        },
+        "value": "10",
+        "sig": "7f1080a3719f47d0edcbf7fb13cdc12aba4765f8d3aae4045e522fc8d3beee2555574abb4db4a112c5b50455c5b5bc0cdb456d3cfa4b7b35cf5308655006330c"
+      },
+      {
+        "asof": "2026-03-02T16:00:00.000000Z",
+        "cell": {
+          "args": {
+            "accession": {
+              "type": "string",
+              "value": "a1"
+            },
+            "period": {
+              "type": "date",
+              "value": "2026-03-31"
+            }
+          },
+          "fn": "revenue",
+          "fn_hash": "2e576349c27780cb44d8c7aecc88ac5f2144b34b6c6ce66fd06f31ad4b0dff52",
+          "ns": "data.example.org"
+        },
+        "computed_by": "data.example.org#efb20f82a7e15e96",
+        "inputs": [],
+        "issued": "2026-03-02T16:00:00.000000Z",
+        "licence": "CC-BY-4.0",
+        "proto": "datumesh/1",
+        "publisher": "data.example.org",
+        "summary": "A recorded value of revenue.",
+        "tx": "2026-03-02T16:00:00.000000Z",
+        "type": "number",
+        "valid": {
+          "period": {
+            "type": "date",
+            "value": "2026-03-31"
+          }
+        },
+        "value": "11",
+        "sig": "7e964be489b296bf37cee3561618ff03307a6e0cfffbba8cfc070772aeb630f6561011f3217a51f39411382050af12566148aca91a2592b963c71e03e8b57d06"
+      },
+      {
+        "asof": "2026-03-02T16:00:00.000000Z",
+        "cell": {
+          "args": {
+            "accession": {
+              "type": "string",
+              "value": "a2"
+            },
+            "period": {
+              "type": "date",
+              "value": "2025-12-31"
+            }
+          },
+          "fn": "revenue",
+          "fn_hash": "2e576349c27780cb44d8c7aecc88ac5f2144b34b6c6ce66fd06f31ad4b0dff52",
+          "ns": "data.example.org"
+        },
+        "computed_by": "data.example.org#efb20f82a7e15e96",
+        "inputs": [],
+        "issued": "2026-03-02T16:00:00.000000Z",
+        "licence": "CC-BY-4.0",
+        "proto": "datumesh/1",
+        "publisher": "data.example.org",
+        "summary": "A recorded value of revenue.",
+        "tx": "2026-03-02T16:00:00.000000Z",
+        "type": "number",
+        "valid": {
+          "period": {
+            "type": "date",
+            "value": "2025-12-31"
+          }
+        },
+        "value": "20",
+        "sig": "6b1d7dd0ecde061ce6a1d39cf15065806274ea356e757667fed68e638efa62f3a875f885d75e183abb4728db012fa23911703c9e0f62d8d2fad6a37af210140d"
+      },
+      {
+        "asof": "2026-03-02T16:00:00.000000Z",
+        "cell": {
+          "args": {
+            "accession": {
+              "type": "string",
+              "value": "a3"
+            },
+            "period": {
+              "type": "date",
+              "value": "2025-12-31"
+            }
+          },
+          "fn": "revenue",
+          "fn_hash": "2e576349c27780cb44d8c7aecc88ac5f2144b34b6c6ce66fd06f31ad4b0dff52",
+          "ns": "data.example.org"
+        },
+        "computed_by": "data.example.org#efb20f82a7e15e96",
+        "inputs": [],
+        "issued": "2026-03-02T16:00:00.000000Z",
+        "licence": "CC-BY-4.0",
+        "proto": "datumesh/1",
+        "publisher": "data.example.org",
+        "summary": "A recorded value of revenue.",
+        "tx": "2026-03-02T16:00:00.000000Z",
+        "type": "number",
+        "valid": {
+          "period": {
+            "type": "date",
+            "value": "2025-12-31"
+          }
+        },
+        "value": "30",
+        "sig": "c82dc4a786738fe4d557f5f24fff7d78ebf3278c24d17647eef3a2c17c7bf6dfb44aa3562d8836ff1ddacff2844a072cecdd6059e4f20f2af1880c2ca2e2e700"
+      },
+      {
+        "asof": "2026-03-02T16:00:00.000000Z",
+        "cell": {
+          "args": {
+            "accession": {
+              "type": "string",
+              "value": "a3"
+            },
+            "period": {
+              "type": "date",
+              "value": "2026-03-31"
+            }
+          },
+          "fn": "revenue",
+          "fn_hash": "2e576349c27780cb44d8c7aecc88ac5f2144b34b6c6ce66fd06f31ad4b0dff52",
+          "ns": "data.example.org"
+        },
+        "computed_by": "data.example.org#efb20f82a7e15e96",
+        "inputs": [],
+        "issued": "2026-03-02T16:00:00.000000Z",
+        "licence": "CC-BY-4.0",
+        "proto": "datumesh/1",
+        "publisher": "data.example.org",
+        "summary": "A recorded value of revenue.",
+        "tx": "2026-03-02T16:00:00.000000Z",
+        "type": "number",
+        "valid": {
+          "period": {
+            "type": "date",
+            "value": "2026-03-31"
+          }
+        },
+        "value": "31",
+        "sig": "872f6da6e58cc0525ac136d870c9719c73e8467f6c586af4607c41479ec942bbdbe4d386e40122ad8c13f5197055368beb11681eefcbaa7266756b468481eb09"
+      },
+      {
+        "asof": "2026-03-02T16:00:00.000000Z",
+        "cell": {
+          "args": {
+            "accession": {
+              "type": "string",
+              "value": "a9"
+            },
+            "period": {
+              "type": "date",
+              "value": "2026-06-30"
+            }
+          },
+          "fn": "revenue",
+          "fn_hash": "2e576349c27780cb44d8c7aecc88ac5f2144b34b6c6ce66fd06f31ad4b0dff52",
+          "ns": "data.example.org"
+        },
+        "computed_by": "data.example.org#efb20f82a7e15e96",
+        "inputs": [],
+        "issued": "2026-03-02T16:00:00.000000Z",
+        "licence": "CC-BY-4.0",
+        "proto": "datumesh/1",
+        "publisher": "data.example.org",
+        "summary": "A recorded value of revenue.",
+        "tx": "2026-03-02T16:00:00.000000Z",
+        "type": "number",
+        "valid": {
+          "period": {
+            "type": "date",
+            "value": "2026-06-30"
+          }
+        },
+        "value": "99",
+        "sig": "7782c8db55063f5e0545f7798cc1fc0d626e39fc49ccd2bc5042ce439164d81f658fab693eb75e29456277562cfe82c3b070e545a6887f2bb28f2fa36cd31c06"
+      },
+      {
+        "asof": "2026-03-02T16:00:00.000000Z",
+        "cell": {
+          "args": {
+            "accession": {
+              "type": "string",
+              "value": "a1"
+            }
+          },
+          "fn": "filed",
+          "fn_hash": "145b0a1969ba2639541b52d217e0f631650e826f7449b23da921a30113f3e7d7",
+          "ns": "data.example.org"
+        },
+        "computed_by": "data.example.org#efb20f82a7e15e96",
+        "inputs": [],
+        "issued": "2026-03-02T16:00:00.000000Z",
+        "licence": "CC-BY-4.0",
+        "proto": "datumesh/1",
+        "publisher": "data.example.org",
+        "summary": "A recorded value of filed.",
+        "tx": "2026-03-02T16:00:00.000000Z",
+        "type": "date",
+        "valid": {},
+        "value": "2026-02-10",
+        "sig": "6d38e7b6c5ed4968ea2b605e1e20186801b956ec02062101a9e144afde651babf6072485b926cd3e66f801be8c881dc5ab54cd8b4765eea935b230d9c4b9f60c"
+      },
+      {
+        "asof": "2026-03-02T16:00:00.000000Z",
+        "cell": {
+          "args": {
+            "accession": {
+              "type": "string",
+              "value": "a2"
+            }
+          },
+          "fn": "filed",
+          "fn_hash": "145b0a1969ba2639541b52d217e0f631650e826f7449b23da921a30113f3e7d7",
+          "ns": "data.example.org"
+        },
+        "computed_by": "data.example.org#efb20f82a7e15e96",
+        "inputs": [],
+        "issued": "2026-03-02T16:00:00.000000Z",
+        "licence": "CC-BY-4.0",
+        "proto": "datumesh/1",
+        "publisher": "data.example.org",
+        "summary": "A recorded value of filed.",
+        "tx": "2026-03-02T16:00:00.000000Z",
+        "type": "date",
+        "valid": {},
+        "value": "2026-03-05",
+        "sig": "cf2c783712e81373d5b39272c1c949b5408d5232c4f3091dcfb82f0fbd3ea6426d1ff80b1ffefb477b487575e63c4347b4d1018be9f64c51a1c364b280e4da0b"
+      },
+      {
+        "asof": "2026-03-02T16:00:00.000000Z",
+        "cell": {
+          "args": {
+            "accession": {
+              "type": "string",
+              "value": "a3"
+            }
+          },
+          "fn": "filed",
+          "fn_hash": "145b0a1969ba2639541b52d217e0f631650e826f7449b23da921a30113f3e7d7",
+          "ns": "data.example.org"
+        },
+        "computed_by": "data.example.org#efb20f82a7e15e96",
+        "inputs": [],
+        "issued": "2026-03-02T16:00:00.000000Z",
+        "licence": "CC-BY-4.0",
+        "proto": "datumesh/1",
+        "publisher": "data.example.org",
+        "summary": "A recorded value of filed.",
+        "tx": "2026-03-02T16:00:00.000000Z",
+        "type": "date",
+        "valid": {},
+        "value": "2026-01-20",
+        "sig": "f907194db35c42ab2cfaaf05d64f4ef766102fb0098ffc2571bf5f2c430264441c76088ef5da214d9e485091a9909f7fdefad17c15bcaf5140d0cea0b4ff4406"
+      }
+    ]
+  },
+  "cell": {
+    "args": {},
+    "fn": "calc.example.net/e"
+  },
+  "asof": "2026-06-01T00:00:00.000000Z",
+  "fuel_used": 17,
+  "lineage": [
+    "slice:7003c5251a09c52c264249e19931e204b92c4daa60ed2c06b4dd092985d8c901:c09513a7be17b1dc419e9403bdb93ed6f1bedc8493585f26b8304e8e7d1193c5",
+    "slice:961063d6be023cbbe5563057ab1d654e10323f5adaf92f422b0e6633b2825601:7639b82f0f23f574df297512aba25a1f363a28c5d19c53466682e7791ff7dbe9"
+  ],
+  "receipt_asof": "2026-03-02T16:00:00.000000Z",
+  "receipt_hash": "edb509ec26798c5a2bab7c350a6774e6af7033201fe2a2d1d60cbf8cb6640ef4",
+  "tx": "2026-03-02T16:00:00.000000Z",
+  "value": {
+    "type": "number",
+    "value": "61"
+  }
+}

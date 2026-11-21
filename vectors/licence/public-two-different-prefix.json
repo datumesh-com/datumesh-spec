@@ -1,0 +1,16 @@
+{
+  "id": "licence/public-two-different-prefix",
+  "kind": "licence",
+  "description": "spec-0.6.2: One licence is a prefix of the other: the longer is the greater in byte order.",
+  "valid": true,
+  "licences": [
+    "public:https://a.example/terms",
+    "public:https://a.example/terms/v2"
+  ],
+  "declarations": {},
+  "fn": "calc.example.net/convert",
+  "issued": "2024-03-16T09:00:00.000000Z",
+  "mesh_licence": "CC-BY-4.0",
+  "licence": "public:https://a.example/terms/v2",
+  "reason": "open"
+}

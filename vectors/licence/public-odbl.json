@@ -1,0 +1,16 @@
+{
+  "id": "licence/public-odbl",
+  "kind": "licence",
+  "description": "spec-0.6.2: Public with ODbL-1.0: share-alike with public gives the share-alike licence.",
+  "valid": true,
+  "licences": [
+    "ODbL-1.0",
+    "public:https://www.sec.gov/privacy"
+  ],
+  "declarations": {},
+  "fn": "calc.example.net/convert",
+  "issued": "2024-03-16T09:00:00.000000Z",
+  "mesh_licence": "CC-BY-4.0",
+  "licence": "ODbL-1.0",
+  "reason": "open"
+}

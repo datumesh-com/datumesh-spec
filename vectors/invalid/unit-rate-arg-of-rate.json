@@ -1,0 +1,8 @@
+{
+  "id": "invalid/unit-rate-arg-of-rate",
+  "kind": "unit",
+  "description": "spec-0.6.2: An `of` reference may not resolve to a rate.",
+  "valid": false,
+  "input": "{\n  \"descriptor\": {\n    \"signature\": {\n      \"returns\": {\n        \"unit\": {\n          \"per\": {\n            \"arg\": \"per\"\n          },\n          \"of\": {\n            \"arg\": \"of\"\n          }\n        },\n        \"type\": \"number\"\n      },\n      \"args\": {\n        \"per\": {\n          \"valid\": false,\n          \"type\": \"string\"\n        },\n        \"of\": {\n          \"valid\": false,\n          \"type\": \"string\"\n        },\n        \"date\": {\n          \"valid\": true,\n          \"type\": \"date\"\n        }\n      }\n    },\n    \"inputs\": [],\n    \"code\": {\n      \"lang\": \"stored\",\n      \"body\": \"\"\n    }\n  },\n  \"cell\": {\n    \"ns\": \"data.example.org\",\n    \"fn_hash\": \"19ebf05d2eee1dd4217cf9d74e1a9f26b4d93ca4544a2217d4cb9ab833fea534\",\n    \"fn\": \"ratio\",\n    \"args\": {\n      \"per\": {\n        \"value\": \"EUR\",\n        \"type\": \"string\"\n      },\n      \"of\": {\n        \"value\": \"USD/shares\",\n        \"type\": \"string\"\n      },\n      \"date\": {\n        \"value\": \"2025-12-31\",\n        \"type\": \"date\"\n      }\n    }\n  }\n}",
+  "error": "E_CANON_UNIT"
+}

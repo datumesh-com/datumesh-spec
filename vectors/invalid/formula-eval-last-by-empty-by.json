@@ -1,0 +1,164 @@
+{
+  "id": "invalid/formula-eval-last-by-empty-by",
+  "kind": "formula-eval",
+  "description": "spec-0.6.2: A by slice with no cell at all: no candidate, E_FORMULA_ABSENT.",
+  "valid": false,
+  "world": {
+    "functions": {
+      "calc.example.net/e": {
+        "bound": "2026-01-01T00:00:00.000000Z",
+        "descriptor": {
+          "code": {
+            "body": "last_by(data.example.org/fact(accession: *), data.example.org/filed(accession: *))\n",
+            "lang": "formula"
+          },
+          "inputs": [
+            "data.example.org/fact",
+            "data.example.org/filed"
+          ],
+          "signature": {
+            "args": {},
+            "order": [],
+            "returns": {
+              "type": "number",
+              "unit": "EUR"
+            }
+          }
+        }
+      },
+      "data.example.org/fact": {
+        "bound": "2026-01-01T00:00:00.000000Z",
+        "descriptor": {
+          "code": {
+            "body": "",
+            "lang": "stored"
+          },
+          "inputs": [],
+          "signature": {
+            "args": {
+              "accession": {
+                "type": "string",
+                "valid": false
+              }
+            },
+            "returns": {
+              "type": "number",
+              "unit": "EUR"
+            },
+            "order": [
+              "accession"
+            ]
+          }
+        }
+      },
+      "data.example.org/filed": {
+        "bound": "2026-01-01T00:00:00.000000Z",
+        "descriptor": {
+          "code": {
+            "body": "",
+            "lang": "stored"
+          },
+          "inputs": [],
+          "signature": {
+            "args": {
+              "accession": {
+                "type": "string",
+                "valid": false
+              }
+            },
+            "returns": "date",
+            "order": [
+              "accession"
+            ]
+          }
+        }
+      }
+    },
+    "receipts": [
+      {
+        "asof": "2026-03-02T16:00:00.000000Z",
+        "cell": {
+          "args": {
+            "accession": {
+              "type": "string",
+              "value": "a1"
+            }
+          },
+          "fn": "fact",
+          "fn_hash": "26e8c7cce2bb7f854f30287ef2065c035c2d61396aceb94ec5d257e1f551bc67",
+          "ns": "data.example.org"
+        },
+        "computed_by": "data.example.org#efb20f82a7e15e96",
+        "inputs": [],
+        "issued": "2026-03-02T16:00:00.000000Z",
+        "licence": "CC-BY-4.0",
+        "proto": "datumesh/1",
+        "publisher": "data.example.org",
+        "summary": "A recorded value of fact.",
+        "tx": "2026-03-02T16:00:00.000000Z",
+        "type": "number",
+        "valid": {},
+        "value": "100",
+        "sig": "d78724abc6155aea5bb3290f67385600a13b0bdfa944a431db694cce217f4f3823494b32c2c5aad89d1480bdbfcd53db207c01313a3743112f5e30ad2a2aef0b"
+      },
+      {
+        "asof": "2026-03-02T16:00:00.000000Z",
+        "cell": {
+          "args": {
+            "accession": {
+              "type": "string",
+              "value": "a2"
+            }
+          },
+          "fn": "fact",
+          "fn_hash": "26e8c7cce2bb7f854f30287ef2065c035c2d61396aceb94ec5d257e1f551bc67",
+          "ns": "data.example.org"
+        },
+        "computed_by": "data.example.org#efb20f82a7e15e96",
+        "inputs": [],
+        "issued": "2026-03-02T16:00:00.000000Z",
+        "licence": "CC-BY-4.0",
+        "proto": "datumesh/1",
+        "publisher": "data.example.org",
+        "summary": "A recorded value of fact.",
+        "tx": "2026-03-02T16:00:00.000000Z",
+        "type": "number",
+        "valid": {},
+        "value": "110",
+        "sig": "1528e5f8a8314d80995765745d8ecc686cf32f2570b696587e5afe93128dc515c4339b2b7b354d33be227420e8a9629ed88989949b4b091ab4b9ff609b347f0b"
+      },
+      {
+        "asof": "2026-03-02T16:00:00.000000Z",
+        "cell": {
+          "args": {
+            "accession": {
+              "type": "string",
+              "value": "a3"
+            }
+          },
+          "fn": "fact",
+          "fn_hash": "26e8c7cce2bb7f854f30287ef2065c035c2d61396aceb94ec5d257e1f551bc67",
+          "ns": "data.example.org"
+        },
+        "computed_by": "data.example.org#efb20f82a7e15e96",
+        "inputs": [],
+        "issued": "2026-03-02T16:00:00.000000Z",
+        "licence": "CC-BY-4.0",
+        "proto": "datumesh/1",
+        "publisher": "data.example.org",
+        "summary": "A recorded value of fact.",
+        "tx": "2026-03-02T16:00:00.000000Z",
+        "type": "number",
+        "valid": {},
+        "value": "120",
+        "sig": "6fdff0f2d9418e7eae0472cf4ccd50b7027131056d957e54df3aa127780722882f4a767ee27514b119ea4898c3664c92c70575e6982b58919a85b9bd58c70e09"
+      }
+    ]
+  },
+  "cell": {
+    "args": {},
+    "fn": "calc.example.net/e"
+  },
+  "asof": "2026-06-01T00:00:00.000000Z",
+  "error": "E_FORMULA_ABSENT"
+}

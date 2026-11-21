@@ -1,0 +1,9 @@
+{
+  "id": "function/unit-shares-argument",
+  "kind": "function",
+  "description": "spec-0.6.2: `shares` as the unit of a number argument as well as of the return.",
+  "valid": true,
+  "input": "{\n  \"signature\": {\n    \"returns\": {\n      \"unit\": \"shares\",\n      \"type\": \"number\"\n    },\n    \"args\": {\n      \"date\": {\n        \"valid\": true,\n        \"type\": \"date\"\n      },\n      \"count\": {\n        \"valid\": false,\n        \"unit\": \"shares\",\n        \"type\": \"number\"\n      }\n    }\n  },\n  \"inputs\": [],\n  \"code\": {\n    \"lang\": \"stored\",\n    \"body\": \"\"\n  }\n}",
+  "canonical": "{\"code\":{\"body\":\"\",\"lang\":\"stored\"},\"inputs\":[],\"signature\":{\"args\":{\"count\":{\"type\":\"number\",\"unit\":\"shares\",\"valid\":false},\"date\":{\"type\":\"date\",\"valid\":true}},\"returns\":{\"type\":\"number\",\"unit\":\"shares\"}}}",
+  "sha256": "73119e6804af6b849c585b8159d1480af5464678ae0406f9b6c3d97eea2dc1af"
+}

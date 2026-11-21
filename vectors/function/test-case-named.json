@@ -1,0 +1,9 @@
+{
+  "id": "function/test-case-named",
+  "kind": "function",
+  "description": "spec-0.6.2: The named test_case function of a host (7.3): case, function and function_hash, three strings, and a boolean value. `function` is the full name of the function under test, as the test's call names it. A different descriptor from function/test-case, so a different hash.",
+  "valid": true,
+  "input": "{\n  \"signature\": {\n    \"returns\": \"boolean\",\n    \"order\": [\n      \"case\",\n      \"function\",\n      \"function_hash\"\n    ],\n    \"args\": {\n      \"function_hash\": {\n        \"valid\": false,\n        \"type\": \"string\"\n      },\n      \"function\": {\n        \"valid\": false,\n        \"type\": \"string\"\n      },\n      \"case\": {\n        \"valid\": false,\n        \"type\": \"string\"\n      }\n    }\n  },\n  \"inputs\": [],\n  \"code\": {\n    \"lang\": \"stored\",\n    \"body\": \"\"\n  }\n}",
+  "canonical": "{\"code\":{\"body\":\"\",\"lang\":\"stored\"},\"inputs\":[],\"signature\":{\"args\":{\"case\":{\"type\":\"string\",\"valid\":false},\"function\":{\"type\":\"string\",\"valid\":false},\"function_hash\":{\"type\":\"string\",\"valid\":false}},\"order\":[\"case\",\"function\",\"function_hash\"],\"returns\":\"boolean\"}}",
+  "sha256": "d3bc692c18ac0afee6526c2e59902e57d1390c65bd7eb747d10b2cb29c410b75"
+}

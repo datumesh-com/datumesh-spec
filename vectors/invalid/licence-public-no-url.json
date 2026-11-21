@@ -1,0 +1,14 @@
+{
+  "id": "invalid/licence-public-no-url",
+  "kind": "licence",
+  "description": "spec-0.6.2: `public:` with no URL.",
+  "valid": false,
+  "licences": [
+    "public:"
+  ],
+  "declarations": {},
+  "fn": "calc.example.net/convert",
+  "issued": "2024-03-16T09:00:00.000000Z",
+  "mesh_licence": "CC-BY-4.0",
+  "error": "E_CANON_LICENCE"
+}

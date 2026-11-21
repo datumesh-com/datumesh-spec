@@ -1,0 +1,18 @@
+{
+  "id": "licence/public-three-different",
+  "kind": "licence",
+  "description": "spec-0.6.2: Four public licences, three different URLs among them: the greatest.",
+  "valid": true,
+  "licences": [
+    "public:https://a.example/terms/v2",
+    "public:https://home.treasury.gov/privacy-policy-and-legal-notices-and-more",
+    "public:https://a.example/terms",
+    "public:https://www.sec.gov/privacy"
+  ],
+  "declarations": {},
+  "fn": "calc.example.net/convert",
+  "issued": "2024-03-16T09:00:00.000000Z",
+  "mesh_licence": "CC-BY-4.0",
+  "licence": "public:https://www.sec.gov/privacy",
+  "reason": "open"
+}

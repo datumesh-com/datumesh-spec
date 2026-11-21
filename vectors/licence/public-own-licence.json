@@ -1,0 +1,13 @@
+{
+  "id": "licence/public-own-licence",
+  "kind": "licence",
+  "description": "spec-0.6.2: The mesh's own licence may be a public licence: no inputs, it carries it, and the rule does not constrain it.",
+  "valid": true,
+  "licences": [],
+  "declarations": {},
+  "fn": "calc.example.net/convert",
+  "issued": "2024-03-16T09:00:00.000000Z",
+  "mesh_licence": "public:https://www.sec.gov/privacy",
+  "licence": "public:https://www.sec.gov/privacy",
+  "reason": "no_inputs"
+}

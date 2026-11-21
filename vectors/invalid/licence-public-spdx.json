@@ -1,0 +1,14 @@
+{
+  "id": "invalid/licence-public-spdx",
+  "kind": "licence",
+  "description": "spec-0.6.2: Followed by an SPDX identifier, not a URL.",
+  "valid": false,
+  "licences": [
+    "public:CC0-1.0"
+  ],
+  "declarations": {},
+  "fn": "calc.example.net/convert",
+  "issued": "2024-03-16T09:00:00.000000Z",
+  "mesh_licence": "CC-BY-4.0",
+  "error": "E_CANON_LICENCE"
+}

@@ -1,0 +1,17 @@
+{
+  "id": "licence/public-share-alike-with-restricted-undeclared",
+  "kind": "licence",
+  "description": "spec-0.6.2: share_alike_conflict comes before not_declared, with public inputs too.",
+  "valid": true,
+  "licences": [
+    "public:https://www.sec.gov/privacy",
+    "ODbL-1.0",
+    "https://rates.example.org/licences/restricted"
+  ],
+  "declarations": {},
+  "fn": "calc.example.net/convert",
+  "issued": "2024-03-16T09:00:00.000000Z",
+  "mesh_licence": "CC-BY-4.0",
+  "licence": null,
+  "reason": "share_alike_conflict"
+}

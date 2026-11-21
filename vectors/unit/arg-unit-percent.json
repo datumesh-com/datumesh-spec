@@ -1,0 +1,8 @@
+{
+  "id": "unit/arg-unit-percent",
+  "kind": "unit",
+  "description": "spec-0.6.2: A listed literal from the ratio section, as before.",
+  "valid": true,
+  "input": "{\n  \"descriptor\": {\n    \"signature\": {\n      \"returns\": {\n        \"unit\": {\n          \"arg\": \"unit\"\n        },\n        \"type\": \"number\"\n      },\n      \"args\": {\n        \"unit\": {\n          \"valid\": false,\n          \"type\": \"string\"\n        },\n        \"date\": {\n          \"valid\": true,\n          \"type\": \"date\"\n        },\n        \"concept\": {\n          \"valid\": false,\n          \"type\": \"string\"\n        }\n      }\n    },\n    \"inputs\": [],\n    \"code\": {\n      \"lang\": \"stored\",\n      \"body\": \"\"\n    }\n  },\n  \"cell\": {\n    \"ns\": \"data.example.org\",\n    \"fn_hash\": \"a20133f64a53b1d1be1d1010031ec24ee204db10f252f29e59450112406789c2\",\n    \"fn\": \"reported\",\n    \"args\": {\n      \"unit\": {\n        \"value\": \"percent\",\n        \"type\": \"string\"\n      },\n      \"date\": {\n        \"value\": \"2025-12-31\",\n        \"type\": \"date\"\n      },\n      \"concept\": {\n        \"value\": \"EarningsPerShareBasic\",\n        \"type\": \"string\"\n      }\n    }\n  }\n}",
+  "unit": "percent"
+}

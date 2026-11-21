@@ -1,0 +1,8 @@
+{
+  "id": "invalid/function-unit-pure-capital",
+  "kind": "function",
+  "description": "spec-0.6.2: Units are compared byte for byte: `Pure` is not `pure`.",
+  "valid": false,
+  "input": "{\n  \"signature\": {\n    \"returns\": {\n      \"unit\": \"Pure\",\n      \"type\": \"number\"\n    },\n    \"args\": {\n      \"date\": {\n        \"valid\": true,\n        \"type\": \"date\"\n      }\n    }\n  },\n  \"inputs\": [],\n  \"code\": {\n    \"lang\": \"stored\",\n    \"body\": \"\"\n  }\n}",
+  "error": "E_CANON_UNIT"
+}

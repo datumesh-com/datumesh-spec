@@ -1,0 +1,9 @@
+{
+  "id": "function/unit-pure-argument",
+  "kind": "function",
+  "description": "spec-0.6.2: `pure` as the unit of a number argument as well as of the return.",
+  "valid": true,
+  "input": "{\n  \"signature\": {\n    \"returns\": {\n      \"unit\": \"pure\",\n      \"type\": \"number\"\n    },\n    \"args\": {\n      \"date\": {\n        \"valid\": true,\n        \"type\": \"date\"\n      },\n      \"ratio\": {\n        \"valid\": false,\n        \"unit\": \"pure\",\n        \"type\": \"number\"\n      }\n    }\n  },\n  \"inputs\": [],\n  \"code\": {\n    \"lang\": \"stored\",\n    \"body\": \"\"\n  }\n}",
+  "canonical": "{\"code\":{\"body\":\"\",\"lang\":\"stored\"},\"inputs\":[],\"signature\":{\"args\":{\"date\":{\"type\":\"date\",\"valid\":true},\"ratio\":{\"type\":\"number\",\"unit\":\"pure\",\"valid\":false}},\"returns\":{\"type\":\"number\",\"unit\":\"pure\"}}}",
+  "sha256": "ff20fab80d369bfbed8ad93a3f48c9356e350617cb9f0f1524469e65e238745c"
+}

@@ -1,0 +1,30 @@
+{
+  "id": "receipt/test-case-named-true",
+  "kind": "receipt",
+  "description": "spec-0.6.2: A named test_case cell: its host signs, with no inputs and no source, a boolean that says the function named and hashed gives the expected result of this case (7.3).",
+  "valid": true,
+  "input": "{\n  \"sig\": \"73c53dca061993c7e3541ef791bf63d256b9d1627a053ae6df0d535853aa3b1b57f082c906def35b2ad3015c68bbb4ff1444e5918d18f30d8b0fc6dd93fa760b\",\n  \"value\": true,\n  \"valid\": {},\n  \"type\": \"boolean\",\n  \"tx\": \"2024-03-15T16:00:00.000000Z\",\n  \"summary\": \"The function gives the expected result for this test: true.\",\n  \"publisher\": \"rates.example.org\",\n  \"proto\": \"datumesh/1\",\n  \"licence\": \"CC-BY-4.0\",\n  \"issued\": \"2024-03-16T09:00:00.000000Z\",\n  \"inputs\": [],\n  \"computed_by\": \"rates.example.org#d712b32a2cc5cb7c\",\n  \"cell\": {\n    \"ns\": \"rates.example.org\",\n    \"fn_hash\": \"d3bc692c18ac0afee6526c2e59902e57d1390c65bd7eb747d10b2cb29c410b75\",\n    \"fn\": \"test_case\",\n    \"args\": {\n      \"function_hash\": {\n        \"value\": \"7b58ecb8fd23b644c87951d0bd609790ff547cbb23fed27186c669ce2ce0aa80\",\n        \"type\": \"string\"\n      },\n      \"function\": {\n        \"value\": \"rates.example.org/fx_rate\",\n        \"type\": \"string\"\n      },\n      \"case\": {\n        \"value\": \"d6d175b5b2153943\",\n        \"type\": \"string\"\n      }\n    }\n  },\n  \"asof\": \"2024-03-16T09:00:00.000000Z\"\n}",
+  "canonical": "{\"asof\":\"2024-03-16T09:00:00.000000Z\",\"cell\":{\"args\":{\"case\":{\"type\":\"string\",\"value\":\"d6d175b5b2153943\"},\"function\":{\"type\":\"string\",\"value\":\"rates.example.org/fx_rate\"},\"function_hash\":{\"type\":\"string\",\"value\":\"7b58ecb8fd23b644c87951d0bd609790ff547cbb23fed27186c669ce2ce0aa80\"}},\"fn\":\"test_case\",\"fn_hash\":\"d3bc692c18ac0afee6526c2e59902e57d1390c65bd7eb747d10b2cb29c410b75\",\"ns\":\"rates.example.org\"},\"computed_by\":\"rates.example.org#d712b32a2cc5cb7c\",\"inputs\":[],\"issued\":\"2024-03-16T09:00:00.000000Z\",\"licence\":\"CC-BY-4.0\",\"proto\":\"datumesh/1\",\"publisher\":\"rates.example.org\",\"summary\":\"The function gives the expected result for this test: true.\",\"tx\":\"2024-03-15T16:00:00.000000Z\",\"type\":\"boolean\",\"valid\":{},\"value\":true}",
+  "sha256": "332ede56a258117a19c41df76c66dc3b72a34eb5686ffb2b795cda7ed85d1f10",
+  "sig": "73c53dca061993c7e3541ef791bf63d256b9d1627a053ae6df0d535853aa3b1b57f082c906def35b2ad3015c68bbb4ff1444e5918d18f30d8b0fc6dd93fa760b",
+  "level": "signed",
+  "keypair": {
+    "seed": "d939265c141c467e77fb079486a3bb8b932c1d471c8c25e5a2eed06c42db8ad0",
+    "public": "843baeb22bfd0364fb1b7262b367fb3202e7886c69a070fecf8e343fedb1eabf",
+    "key_id": "d712b32a2cc5cb7c"
+  },
+  "keys": {
+    "rates.example.org": {
+      "https": {
+        "status": 200,
+        "body": "{\n  \"host\": \"rates.example.org\",\n  \"keys\": [\n    {\n      \"alg\": \"ed25519\",\n      \"id\": \"d712b32a2cc5cb7c\",\n      \"public\": \"843baeb22bfd0364fb1b7262b367fb3202e7886c69a070fecf8e343fedb1eabf\",\n      \"valid_from\": \"2020-01-01T00:00:00.000000Z\",\n      \"valid_to\": \"2024-06-01T00:00:00.000000Z\"\n    },\n    {\n      \"alg\": \"ed25519\",\n      \"id\": \"d9a2df65559c4444\",\n      \"public\": \"3ecf7b3ff834cb6782f5405dfcb213b5e78c0f30188068c25568adc25a739b52\",\n      \"valid_from\": \"2024-06-01T00:00:00.000000Z\"\n    }\n  ],\n  \"proto\": \"datumesh/1\"\n}"
+      }
+    },
+    "calc.example.net": {
+      "https": {
+        "status": 200,
+        "body": "{\n  \"host\": \"calc.example.net\",\n  \"keys\": [\n    {\n      \"alg\": \"ed25519\",\n      \"id\": \"f7ec60a92abf4774\",\n      \"public\": \"ccd4faa3a0b8338bc796d3bfc30bda2f6e87d336a576b70dc9d47cbfe0e8830f\",\n      \"valid_from\": \"2020-01-01T00:00:00.000000Z\"\n    }\n  ],\n  \"proto\": \"datumesh/1\"\n}"
+      }
+    }
+  }
+}

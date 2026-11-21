@@ -1,0 +1,9 @@
+{
+  "id": "function/unit-rate-per-shares",
+  "kind": "function",
+  "description": "spec-0.6.2: A rate may have `shares` on the per side: US dollars per share.",
+  "valid": true,
+  "input": "{\n  \"signature\": {\n    \"returns\": {\n      \"unit\": {\n        \"per\": \"shares\",\n        \"of\": \"USD\"\n      },\n      \"type\": \"number\"\n    },\n    \"args\": {\n      \"date\": {\n        \"valid\": true,\n        \"type\": \"date\"\n      },\n      \"company\": {\n        \"valid\": false,\n        \"type\": \"string\"\n      }\n    }\n  },\n  \"inputs\": [],\n  \"code\": {\n    \"lang\": \"stored\",\n    \"body\": \"\"\n  }\n}",
+  "canonical": "{\"code\":{\"body\":\"\",\"lang\":\"stored\"},\"inputs\":[],\"signature\":{\"args\":{\"company\":{\"type\":\"string\",\"valid\":false},\"date\":{\"type\":\"date\",\"valid\":true}},\"returns\":{\"type\":\"number\",\"unit\":{\"of\":\"USD\",\"per\":\"shares\"}}}}",
+  "sha256": "f2c8ddaf69b14bea7817f908d7cf026037c886b731882f2b9c54fb65246d6ac0"
+}

@@ -1,0 +1,8 @@
+{
+  "id": "unit/rate-literal-per-shares",
+  "kind": "unit",
+  "description": "spec-0.6.2: A rate with `per` the literal `shares`: `USD/shares`.",
+  "valid": true,
+  "input": "{\n  \"descriptor\": {\n    \"signature\": {\n      \"returns\": {\n        \"unit\": {\n          \"per\": \"shares\",\n          \"of\": \"USD\"\n        },\n        \"type\": \"number\"\n      },\n      \"args\": {\n        \"date\": {\n          \"valid\": true,\n          \"type\": \"date\"\n        },\n        \"company\": {\n          \"valid\": false,\n          \"type\": \"string\"\n        }\n      }\n    },\n    \"inputs\": [],\n    \"code\": {\n      \"lang\": \"stored\",\n      \"body\": \"\"\n    }\n  },\n  \"cell\": {\n    \"ns\": \"data.example.org\",\n    \"fn_hash\": \"f2c8ddaf69b14bea7817f908d7cf026037c886b731882f2b9c54fb65246d6ac0\",\n    \"fn\": \"eps\",\n    \"args\": {\n      \"date\": {\n        \"value\": \"2025-12-31\",\n        \"type\": \"date\"\n      },\n      \"company\": {\n        \"value\": \"0000320193\",\n        \"type\": \"string\"\n      }\n    }\n  }\n}",
+  "unit": "USD/shares"
+}

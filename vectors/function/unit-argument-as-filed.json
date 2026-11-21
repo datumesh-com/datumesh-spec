@@ -1,0 +1,9 @@
+{
+  "id": "function/unit-argument-as-filed",
+  "kind": "function",
+  "description": "spec-0.6.2: The unit as filed: a whole-unit argument reference, which may now hold `USD`, `shares`, `USD/shares` or `pure`.",
+  "valid": true,
+  "input": "{\n  \"signature\": {\n    \"returns\": {\n      \"unit\": {\n        \"arg\": \"unit\"\n      },\n      \"type\": \"number\"\n    },\n    \"args\": {\n      \"unit\": {\n        \"valid\": false,\n        \"type\": \"string\"\n      },\n      \"date\": {\n        \"valid\": true,\n        \"type\": \"date\"\n      },\n      \"concept\": {\n        \"valid\": false,\n        \"type\": \"string\"\n      }\n    }\n  },\n  \"inputs\": [],\n  \"code\": {\n    \"lang\": \"stored\",\n    \"body\": \"\"\n  }\n}",
+  "canonical": "{\"code\":{\"body\":\"\",\"lang\":\"stored\"},\"inputs\":[],\"signature\":{\"args\":{\"concept\":{\"type\":\"string\",\"valid\":false},\"date\":{\"type\":\"date\",\"valid\":true},\"unit\":{\"type\":\"string\",\"valid\":false}},\"returns\":{\"type\":\"number\",\"unit\":{\"arg\":\"unit\"}}}}",
+  "sha256": "a20133f64a53b1d1be1d1010031ec24ee204db10f252f29e59450112406789c2"
+}

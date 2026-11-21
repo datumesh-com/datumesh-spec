@@ -1,0 +1,14 @@
+{
+  "id": "invalid/licence-public-uppercase",
+  "kind": "licence",
+  "description": "spec-0.6.2: The prefix is lowercase: this is neither an SPDX identifier nor an https URL.",
+  "valid": false,
+  "licences": [
+    "PUBLIC:https://www.sec.gov/privacy"
+  ],
+  "declarations": {},
+  "fn": "calc.example.net/convert",
+  "issued": "2024-03-16T09:00:00.000000Z",
+  "mesh_licence": "CC-BY-4.0",
+  "error": "E_CANON_LICENCE"
+}

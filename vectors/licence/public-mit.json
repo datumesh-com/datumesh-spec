@@ -1,0 +1,16 @@
+{
+  "id": "licence/public-mit",
+  "kind": "licence",
+  "description": "spec-0.6.2: Public with MIT: MIT.",
+  "valid": true,
+  "licences": [
+    "MIT",
+    "public:https://www.sec.gov/privacy"
+  ],
+  "declarations": {},
+  "fn": "calc.example.net/convert",
+  "issued": "2024-03-16T09:00:00.000000Z",
+  "mesh_licence": "CC-BY-4.0",
+  "licence": "MIT",
+  "reason": "open"
+}

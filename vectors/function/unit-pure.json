@@ -1,0 +1,9 @@
+{
+  "id": "function/unit-pure",
+  "kind": "function",
+  "description": "spec-0.6.2: `pure` is a literal unit: XBRL's pure number, a different string from `1`.",
+  "valid": true,
+  "input": "{\n  \"signature\": {\n    \"returns\": {\n      \"unit\": \"pure\",\n      \"type\": \"number\"\n    },\n    \"args\": {\n      \"date\": {\n        \"valid\": true,\n        \"type\": \"date\"\n      },\n      \"company\": {\n        \"valid\": false,\n        \"type\": \"string\"\n      }\n    }\n  },\n  \"inputs\": [],\n  \"code\": {\n    \"lang\": \"stored\",\n    \"body\": \"\"\n  }\n}",
+  "canonical": "{\"code\":{\"body\":\"\",\"lang\":\"stored\"},\"inputs\":[],\"signature\":{\"args\":{\"company\":{\"type\":\"string\",\"valid\":false},\"date\":{\"type\":\"date\",\"valid\":true}},\"returns\":{\"type\":\"number\",\"unit\":\"pure\"}}}",
+  "sha256": "f3c9b45208353ba505bd7df14b2f2b0f562011dcfde9c9c42a625332e94fb5d8"
+}

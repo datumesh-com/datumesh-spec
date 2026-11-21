@@ -1,0 +1,8 @@
+{
+  "id": "unit/literal-pure",
+  "kind": "unit",
+  "description": "spec-0.6.2: A literal `pure` resolves to itself, not to `1`.",
+  "valid": true,
+  "input": "{\n  \"descriptor\": {\n    \"signature\": {\n      \"returns\": {\n        \"unit\": \"pure\",\n        \"type\": \"number\"\n      },\n      \"args\": {\n        \"date\": {\n          \"valid\": true,\n          \"type\": \"date\"\n        },\n        \"company\": {\n          \"valid\": false,\n          \"type\": \"string\"\n        }\n      }\n    },\n    \"inputs\": [],\n    \"code\": {\n      \"lang\": \"stored\",\n      \"body\": \"\"\n    }\n  },\n  \"cell\": {\n    \"ns\": \"data.example.org\",\n    \"fn_hash\": \"f3c9b45208353ba505bd7df14b2f2b0f562011dcfde9c9c42a625332e94fb5d8\",\n    \"fn\": \"margin\",\n    \"args\": {\n      \"date\": {\n        \"value\": \"2025-12-31\",\n        \"type\": \"date\"\n      },\n      \"company\": {\n        \"value\": \"0000320193\",\n        \"type\": \"string\"\n      }\n    }\n  }\n}",
+  "unit": "pure"
+}

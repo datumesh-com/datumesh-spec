@@ -1,0 +1,17 @@
+{
+  "id": "licence/public-share-alike-two-ids",
+  "kind": "licence",
+  "description": "spec-0.6.2: Public with two different share-alike licences: step 2 is unchanged.",
+  "valid": true,
+  "licences": [
+    "public:https://www.sec.gov/privacy",
+    "CC-BY-SA-4.0",
+    "ODbL-1.0"
+  ],
+  "declarations": {},
+  "fn": "calc.example.net/convert",
+  "issued": "2024-03-16T09:00:00.000000Z",
+  "mesh_licence": "CC-BY-4.0",
+  "licence": null,
+  "reason": "share_alike_conflict"
+}
