@@ -185,6 +185,17 @@ formula_invalid("invalid/formula-inherited-unbound-definer", f"K5: {call_ndf_cro
                 "calc.example.net/fx_ndf/cross bound by an older library does not help)", call_ndf_cross,
                 k5_env(OLD_ENV_SIG, functions=LEGACY_FUNCTIONS, classes=NO_FX), "E_FORMULA_UNRESOLVED")
 
+# An override is the subclass's own method: its resolution needs the parent's descriptor (to see that the parent does not
+# carry the method with that hash), not the parent's name. The env member `class_descriptors` holds flattened class
+# descriptors by hash only: no class name in `classes` is bound to them (the way a mesh's store holds a class descriptor
+# by its hash, Callees::class_descriptor). A library that names the parent for an own method fails these two.
+BY_HASH = [K5_CLASSES[FX]]
+formula_vector("formula/class-override-parent-unnamed", f"K5: {call_ndf_rate}  (an override is the subclass's own: it is "
+               f"{NDF}/rate although no class name is bound to the hash of its parent fx_pair; the env holds the parent's "
+               "descriptor by hash only, in class_descriptors)", call_ndf_rate,
+               dict(k5_env(OLD_ENV_SIG, classes=NO_FX), class_descriptors=BY_HASH),
+               via(call_ndf_rate, old_env(OLD_ENV_SIG)))
+
 # --- `this` in a method body of the subclass
 THIS_SIG = {"args": {"base": CW.UKEY, "date": CW.DATE, "fixing": CW.STR, "quote": CW.UKEY, "via": CW.STR},
             "order": ["base", "quote", "fixing", "via", "date"], "returns": RATE_SIG_RET}
@@ -243,6 +254,11 @@ request_vector("call/class-inherited-middle", f"K5: {GRT}(...).rate is the cell 
 request_vector("call/class-override", f"K5: an override is the subclass's own: {NDF}(...).rate is the cell of {NDF}/rate",
                f'{NDF}(EUR, USD, "F1").rate(2026-03-16)', f'{NDF}(EUR, USD, "F1").rate(2026-03-16)',
                (f"{NDF}(...).rate", f"{NDF}/rate"), k5_call_env())
+request_vector("call/class-override-parent-unnamed", f"K5: an override is the subclass's own: {NDF}(...).rate is the cell of "
+               f"{NDF}/rate although no class name is bound to the hash of its parent fx_pair (the env holds the parent's "
+               "descriptor by hash only, in class_descriptors)",
+               f'{NDF}(EUR, USD, "F1").rate(2026-03-16)', f'{NDF}(EUR, USD, "F1").rate(2026-03-16)',
+               (f"{NDF}(...).rate", f"{NDF}/rate"), dict(k5_call_env(classes=NO_FX), class_descriptors=BY_HASH))
 add("invalid/call-class-inherited-plain", "call", f"K5: the plain call {NDF}/cross(...) of an inherited method: the name "
     "is not bound (binding a class binds its own methods only)",
     f'{NDF}/cross("EUR", "USD", "F1", "GBP", 2026-03-16)', "E_NAME_UNBOUND", env=k5_call_env())

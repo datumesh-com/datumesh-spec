@@ -22,6 +22,12 @@ K5
   E_FORMULA_UNRESOLVED, although it lives under formula/ and not invalid/). The new file formula/class-inherited-
   defining-plain is the plain read of D/m that the call form now equals. tools/class_world.py drops the "inherited" row
   of EQUIVALENT (a call form and a plain read under the same class name are no longer one read).
+* An override is the subclass's own method, so its resolution needs the parent's descriptor (the parent does not
+  carry m with that hash), not the parent's name: formula/class-override-parent-unnamed and
+  call/class-override-parent-unnamed bind no name to fx_pair's hash and hand its flattened descriptor in a new env
+  member, `class_descriptors` (a list of flattened class descriptors held by hash only, as a store holds them). The
+  expected results are those of formula/class-override and call/class-override. An inherited method still needs the
+  name of every parent the walk reaches (invalid/*-unbound-definer).
 * A dispatch over a class and its subclass for an inherited method lists the one function D/m once in `inputs`.
 * No formula-eval vector: their receipt hashes and lineage need an evaluator that implements the rule.
 * In a `resolved` method entry, `from` stays `<class as written>(...).<m>` and `to` is `D/m`.
@@ -148,11 +154,11 @@ class VectorFiles(unittest.TestCase):
                     self.assertEqual(vec["valid"], not id_.startswith("invalid/"))
 
     def test_counts(self):
-        self.assertEqual(len(NEW), 190)
+        self.assertEqual(len(NEW), 192)
         self.assertEqual({k: (count(k, True), count(k, False)) for k in
                           ("call", "describe", "find-result", "formula", "function", "normalisation", "class",
                            "envelope")},
-                         {"call": (25, 16), "describe": (22, 56), "find-result": (6, 10), "formula": (16, 4),
+                         {"call": (26, 16), "describe": (22, 56), "find-result": (6, 10), "formula": (17, 4),
                           "function": (6, 7), "normalisation": (5, 12), "class": (1, 1), "envelope": (2, 1)})
 
     def test_contract_vectors_exist(self):
