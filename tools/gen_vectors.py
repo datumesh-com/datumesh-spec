@@ -655,9 +655,11 @@ r_undeclared = signed(receipt(convert_cell | {"fn_hash": canon.function_hash(und
 add_receipt("invalid/receipt-input-undeclared", "Every input receipt must be a cell of a declared input function.",
             r_undeclared, "calc-2020", "E_INPUT_UNDECLARED",
             recompute={"descriptor": undeclared, "inputs": {H_FX: text(R_FX)}, "value": N("108.92")})
-r_tx = signed(receipt(convert_cell, "number", "108.92", "tx is not the latest input tx.", "calc-2020", inputs=[H_FX],
-                      tx="2024-03-16T08:00:00.000000Z"), "calc-2020")
-add_receipt("invalid/receipt-computed-tx", "A computed cell's tx is the latest tx among its inputs.", r_tx, "calc-2020",
+# spec-0.7.0 (step 7.5 bounds tx below by the latest input's): rewritten with tx earlier than the input's; the later-tx
+# receipt this vector had is receipt/computed-tx-after-latest-input (tools/gen_vectors_round_0_7.py).
+r_tx = signed(receipt(convert_cell, "number", "108.92", "tx is earlier than the latest input tx.", "calc-2020",
+                      inputs=[H_FX], tx="2024-03-15T15:00:00.000000Z"), "calc-2020")
+add_receipt("invalid/receipt-computed-tx", "spec-0.7.0: A computed cell's tx is not earlier than the latest tx among its inputs: here 2024-03-15T15:00 against the input's 2024-03-15T16:00 (E_TIME_ORDER). Rewritten in spec-0.7.0: it had tx later than the input's, which is now valid (receipt/computed-tx-after-latest-input); the result is unchanged.", r_tx, "calc-2020",
             "E_TIME_ORDER", recompute={"descriptor": CONVERT, "inputs": {H_FX: text(R_FX)}, "value": N("108.92")})
 wrong_args = {**CONVERT, "signature": {**CONVERT["signature"], "args": {**CONVERT["signature"]["args"], "amount": {"type": "string", "valid": False}}}}
 r_argtype = signed(receipt(convert_cell | {"fn_hash": canon.function_hash(wrong_args)}, "number", "108.92",

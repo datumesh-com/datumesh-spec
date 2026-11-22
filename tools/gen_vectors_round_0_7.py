@@ -385,13 +385,14 @@ def computed_receipt_vector(id_, why, r, key, recompute, level="recomputed", err
 
 
 CONVERT_RECOMPUTE = {"descriptor": gv.CONVERT, "inputs": {gv.H_FX: text(gv.R_FX)}, "value": N("108.92")}
-# gv.r_tx: tx 2024-03-16T08:00 is after its one input's tx (2024-03-15T16:00) and before its asof (03-16T09:00).
+# R_TX_LATE: tx 2024-03-16T08:00 is after its one input's tx (2024-03-15T16:00) and before its asof (03-16T09:00).
+R_TX_LATE = gv.signed(gv.receipt(gv.convert_cell, "number", "108.92", "tx is not the latest input tx.", "calc-2020",
+                                 inputs=[gv.H_FX], tx="2024-03-16T08:00:00.000000Z"), "calc-2020")
 computed_receipt_vector("receipt/computed-tx-after-latest-input", "A computed receipt whose tx (2024-03-16T08:00) is "
                         "later than its latest input's tx (2024-03-15T16:00) and not after its asof: valid. A "
                         "withdrawal the verifier cannot see may have raised tx (8.2), so 7.5 bounds tx below by the "
-                        "latest input's, it does not equate them.", gv.r_tx, "calc-2020", CONVERT_RECOMPUTE)
-R_TX_EARLY = gv.signed(gv.receipt(gv.convert_cell, "number", "108.92", "tx is earlier than the latest input tx.",
-                                  "calc-2020", inputs=[gv.H_FX], tx="2024-03-15T15:00:00.000000Z"), "calc-2020")
+                        "latest input's, it does not equate them.", R_TX_LATE, "calc-2020", CONVERT_RECOMPUTE)
+R_TX_EARLY = gv.r_tx  # tools/gen_vectors.py: tx 2024-03-15T15:00, earlier than the input's
 computed_receipt_vector("invalid/receipt-computed-tx", "A computed cell's tx is not earlier than the latest tx among "
                         "its inputs: here 2024-03-15T15:00 against the input's 2024-03-15T16:00 (E_TIME_ORDER). "
                         "Rewritten in spec-0.7.0: it had tx later than the input's, which is now valid "
