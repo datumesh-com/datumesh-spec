@@ -110,10 +110,11 @@ class ReferenceTools(unittest.TestCase):
 
 class AsofCandidate(unittest.TestCase):
     """8.2 (coordinator decision): a withdrawal that left a member out of a slice read is among the reading cell's asof
-    candidates, so the computed receipt's asof is at or after the withdrawal's; tx stays the latest member's (D17)."""
+    candidates and its tx counts for the receipt's tx, as an input's does: the computed receipt's asof and tx are at or
+    after the withdrawal's."""
 
     LATEST_MEMBER = "2026-03-10T18:00:00.000000Z"
-    EXPECT = {  # vector: receipt_asof
+    EXPECT = {  # vector: receipt_asof (= tx: a withdrawal is recorded at its asof in these vectors)
         "formula-eval/withdrawn-slice-count": "2026-03-20T18:00:00.000000Z",
         "formula-eval/withdrawn-slice-sum": "2026-03-20T18:00:00.000000Z",
         "formula-eval/withdrawn-at-otherwise": "2026-03-20T18:00:00.000000Z",
@@ -127,11 +128,13 @@ class AsofCandidate(unittest.TestCase):
         for vid, asof in self.EXPECT.items():
             with self.subTest(vid):
                 self.assertEqual(NEW[vid]["receipt_asof"], asof)
+                self.assertEqual(NEW[vid]["tx"], asof)
                 self.assertGreaterEqual(NEW[vid]["receipt_asof"], NEW[vid]["tx"])
 
     def test_the_rule(self):
         """For every valid withdrawn slice vector but the control: receipt_asof is the latest of the members' tx and the
-        asof of every withdrawal in the world that is at or before the evaluation asof and of a cell of the slice."""
+        asof of every withdrawal in the world that is at or before the evaluation asof and of a cell of the slice; tx likewise
+        over their tx."""
         for vid, vec in NEW.items():
             if vec["kind"] != "formula-eval" or not vec["valid"] or "slice" not in vid or "before-asof" in vid:
                 continue
@@ -140,7 +143,9 @@ class AsofCandidate(unittest.TestCase):
                        if "withdrawn" in r and r["asof"] <= vec["asof"] and r["cell"]["fn"] == "daily"]
                 self.assertTrue(wds)
                 self.assertEqual(vec["receipt_asof"], max(self.LATEST_MEMBER, *wds))
-                self.assertEqual(vec["tx"], self.LATEST_MEMBER)
+                self.assertEqual(vec["tx"], max(self.LATEST_MEMBER, *[r["tx"] for r in vec["world"]["receipts"]
+                                                                       if "withdrawn" in r and r["asof"] <= vec["asof"]
+                                                                       and r["cell"]["fn"] == "daily"]))
 
     def test_a_withdrawal_after_the_asof_is_no_candidate(self):
         self.assertEqual(NEW["formula-eval/withdrawn-slice-before-asof"]["receipt_asof"], self.LATEST_MEMBER)

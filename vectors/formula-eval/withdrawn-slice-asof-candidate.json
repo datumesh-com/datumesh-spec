@@ -1,7 +1,7 @@
 {
   "id": "formula-eval/withdrawn-slice-asof-candidate",
   "kind": "formula-eval",
-  "description": "spec-0.7.0: R1, 8.2: a withdrawal that left a member out of a slice read is among the reading cell's asof candidates, like an input's asof: the reading of 7 March is withdrawn at 2026-04-10T12:00, after every member's asof (the latest is 2026-03-10), so the computed receipt's asof is 2026-04-10T12:00, not 2026-03-10. Without it a verifier re-evaluating as of the receipt's asof would see 10 members, not 9 (E_INPUT_SUPERSEDED). tx stays the latest member's.",
+  "description": "spec-0.7.0: R1, 8.2: a withdrawal that left a member out of a slice read counts like an input for time, its asof among the reading cell's asof candidates and its tx in the receipt's tx: the reading of 7 March is withdrawn at 2026-04-10T12:00, after every member's asof (the latest is 2026-03-10), so the computed receipt's asof is 2026-04-10T12:00, not 2026-03-10. Without it a verifier re-evaluating as of the receipt's asof would see 10 members, not 9 (E_INPUT_SUPERSEDED). tx is the withdrawal's too.",
   "valid": true,
   "world": {
     "functions": {
@@ -399,7 +399,7 @@
     "fn": "calc.example.net/e"
   },
   "asof": "2026-06-01T00:00:00.000000Z",
-  "receipt_hash": "5f5eb6ba9edfb26ee77868b2b7dcdd44d63643680ff549b40b5fb76a1075113d",
+  "receipt_hash": "49cff886535f4d8781c78f6a477e69c5b0f4577656c5fdf29d2c71ce3bda439a",
   "value": {
     "type": "number",
     "value": "9"
@@ -407,7 +407,7 @@
   "lineage": [
     "slice:a45784ce2a47fcaa2bdc589af888cd5acc3eeb63206f8083292f4a12e0249719:dbd22235c036cc1d68e740565aae6e47aedb3c5a7f3f248ec44e1946df455411"
   ],
-  "tx": "2026-03-10T18:00:00.000000Z",
+  "tx": "2026-04-10T12:00:00.000000Z",
   "receipt_asof": "2026-04-10T12:00:00.000000Z",
   "fuel_used": 21
 }
