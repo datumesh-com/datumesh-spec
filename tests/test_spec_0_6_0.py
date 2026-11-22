@@ -117,6 +117,8 @@ class Receipts(unittest.TestCase):
         for vec in canon.load_vectors():
             if vec["kind"] == "receipt" and vec["id"] not in NEW and vec["valid"] and "dns-segment" not in vec["id"]:
                 # (spec-0.6.1's relayed receipt under a DNS segment, receipt/dns-segment-relay, has one)
+                if "withdrawn" in json.loads(vec["input"]):
+                    continue  # spec-0.7.0 R1: a withdrawal may carry source (receipt/withdrawn-relayed)
                 self.assertNotIn("source", json.loads(vec["input"]), vec["id"])
 
 

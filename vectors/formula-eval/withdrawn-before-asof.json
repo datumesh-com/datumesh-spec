@@ -209,5 +209,6 @@
     "ef91287e83b714ea7fd1de7fecef88d0ece8cbde6f31aceb4030da4fa5d0c748"
   ],
   "tx": "2026-04-01T09:00:00.000000Z",
-  "receipt_asof": "2026-04-01T09:00:00.000000Z"
+  "receipt_asof": "2026-04-01T09:00:00.000000Z",
+  "fuel_used": 3
 }

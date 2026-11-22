@@ -179,6 +179,9 @@ class Coverage(unittest.TestCase):
         import gen_vectors_classes_round  # the classes round: tools/gen_vectors_classes_round.py (K5 rewrites two ids)
 
         produced.update({v["id"]: v for v in gen_vectors_classes_round.VECTORS})
+        import gen_vectors_round_0_7  # the 0.7 round: tools/gen_vectors_round_0_7.py
+
+        produced.update({v["id"]: v for v in gen_vectors_round_0_7.VECTORS})
         on_disk = {v["id"]: {k: x for k, x in v.items() if k != "_file"} for v in VECTORS}
         self.assertEqual(produced, on_disk)
 

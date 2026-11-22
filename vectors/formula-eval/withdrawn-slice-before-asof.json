@@ -408,5 +408,6 @@
     "slice:a45784ce2a47fcaa2bdc589af888cd5acc3eeb63206f8083292f4a12e0249719:082cbb352d36ed2b726c86557f62da96459a1c113e93cbb2b83b2752daadfe33"
   ],
   "tx": "2026-03-10T18:00:00.000000Z",
-  "receipt_asof": "2026-03-10T18:00:00.000000Z"
+  "receipt_asof": "2026-03-10T18:00:00.000000Z",
+  "fuel_used": 23
 }

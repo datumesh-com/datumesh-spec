@@ -299,6 +299,10 @@ def eval_vector(vid, why, source, returns, args, extra, asof, error=None, hand=N
         got = F.run_vector(base)
         assert "error" not in got, (vid, got)
         out = {k: got[k] for k in ("receipt_hash", "value", "lineage", "tx", "receipt_asof")}
+        # fuel_used is the evaluator's: taken from the reference run over the world with the withdrawals in it.
+        real = F.run_vector(vec)
+        assert "error" not in real and all(real[k] == out[k] for k in out), (vid, real, out)
+        out["fuel_used"] = real["fuel_used"]
         if hand:
             assert got["value"]["value"] == hand, (vid, got["value"], hand)
         add(vid, "formula-eval", why, None, None, world=world, cell=cell, asof=asof, **out)
