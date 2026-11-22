@@ -2710,7 +2710,9 @@ def verify_receipt(data, keyenv, recompute=None, blob=None):
     except (nacl.exceptions.BadSignatureError, ValueError):
         fail("E_SIGNATURE", "Ed25519 verification failed", "$.sig")
     result = {"hash": receipt_hash(r), "key": r["computed_by"], "level": "signed"}
-    if recompute is not None:  # step 7
+    # Step 7 applies to computed receipts only: a withdrawal has no inputs and stops after step 6
+    # (since spec-0.7.0, D123), so no descriptor, input or value is needed or compared.
+    if recompute is not None and "withdrawn" not in r:  # step 7
         outcome = _recompute(r, recompute, keyenv)
         if outcome == "superseded":  # step 7.6: an input was superseded; not a failure
             result["code"] = "E_INPUT_SUPERSEDED"
@@ -2747,7 +2749,7 @@ def _recompute(r, recompute, keyenv):
             fail("E_ARG_TYPE", f"{name} is declared {declared[name]['type']}", f"$.cell.args.{name}")
     if set(r["valid"]) != {n for n, d in declared.items() if d["valid"]}:
         fail("E_VALID_MISMATCH", "valid must echo exactly the declared valid-time arguments", "$.valid")
-    if "withdrawn" not in r and r["type"] != returns_type(desc):
+    if r["type"] != returns_type(desc):
         fail("E_RETURN_TYPE", f"function returns {returns_type(desc)}", "$.type")
     supplied = recompute.get("inputs", {})
     input_tx = []
@@ -2771,8 +2773,6 @@ def _recompute(r, recompute, keyenv):
         input_tx.append(ir["tx"])
     if input_tx and r["tx"] < max(input_tx):  # since spec-0.7.0 (D125): at or after, a withdrawal may raise it
         fail("E_TIME_ORDER", "a computed cell's tx is earlier than the latest tx of its inputs", "$.tx")
-    if "withdrawn" in r:  # spec-0.7.0: a withdrawal states no value to compare
-        return True
     if "value" not in recompute:  # step 7.6: the function cannot be evaluated
         return False
     if recompute["value"] != {"type": r["type"], "value": r["value"]}:
