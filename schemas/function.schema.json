@@ -103,8 +103,9 @@
                 }
               },
               "default": {
-                "description": "Optional (spec-0.5.0): the evaluation asof, on a date or instant valid-time argument (SPEC.md 7, 16.7).",
-                "const": "asof"
+                "description": "Optional. \"asof\" (spec-0.5.0): the evaluation asof, on a date or instant valid-time argument (SPEC.md 7, 16.7). Since the classes round (K13): a literal default, a lexical value of the argument's type, checked by the type rules below.",
+                "type": "string",
+                "minLength": 1
               },
               "key_normalisation": {
                 "description": "Optional (spec-0.5.0): on a string argument without classes, the rule of 16.4 its values are canonical under; absent means none, so none is never written (SPEC.md 7, 16.4).",
@@ -113,7 +114,8 @@
                   "nfc_strict",
                   "arabic_skeleton",
                   "hebrew_consonantal",
-                  "greek_unaccented"
+                  "greek_unaccented",
+                  "label_fold"
                 ]
               }
             },
@@ -264,6 +266,11 @@
               },
               {
                 "if": {
+                  "properties": {
+                    "default": {
+                      "const": "asof"
+                    }
+                  },
                   "required": [
                     "default"
                   ]
@@ -278,6 +285,95 @@
                     },
                     "valid": {
                       "const": true
+                    }
+                  }
+                }
+              },
+              {
+                "if": {
+                  "properties": {
+                    "type": {
+                      "const": "number"
+                    }
+                  },
+                  "required": [
+                    "default"
+                  ]
+                },
+                "then": {
+                  "properties": {
+                    "default": {
+                      "pattern": "^-?(0|[1-9][0-9]*)(\\.[0-9]*[1-9])?$"
+                    }
+                  }
+                }
+              },
+              {
+                "if": {
+                  "properties": {
+                    "type": {
+                      "const": "boolean"
+                    }
+                  },
+                  "required": [
+                    "default"
+                  ]
+                },
+                "then": {
+                  "properties": {
+                    "default": {
+                      "enum": [
+                        "true",
+                        "false"
+                      ]
+                    }
+                  }
+                }
+              },
+              {
+                "if": {
+                  "properties": {
+                    "type": {
+                      "const": "date"
+                    },
+                    "default": {
+                      "not": {
+                        "const": "asof"
+                      }
+                    }
+                  },
+                  "required": [
+                    "default"
+                  ]
+                },
+                "then": {
+                  "properties": {
+                    "default": {
+                      "pattern": "^[0-9]{4}-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])$"
+                    }
+                  }
+                }
+              },
+              {
+                "if": {
+                  "properties": {
+                    "type": {
+                      "const": "instant"
+                    },
+                    "default": {
+                      "not": {
+                        "const": "asof"
+                      }
+                    }
+                  },
+                  "required": [
+                    "default"
+                  ]
+                },
+                "then": {
+                  "properties": {
+                    "default": {
+                      "pattern": "^[0-9]{4}-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])T([01][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9]\\.[0-9]{6}Z$"
                     }
                   }
                 }

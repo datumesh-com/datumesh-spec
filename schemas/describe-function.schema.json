@@ -52,6 +52,10 @@
     },
     "source": {
       "$ref": "describe-class.schema.json#/$defs/source"
+    },
+    "facets": {
+      "$ref": "defs.schema.json#/$defs/facets",
+      "description": "Since the classes round (C2, 16.8): the catalogue entry's facets, when it has them."
     }
   }
 }

@@ -697,6 +697,24 @@ def shape_function(desc, path="$"):
     shape_signature(desc["signature"], f"{path}.signature")
 
 
+def _literal_default(decl, path):
+    """A literal default (7, K13): a lexical value of the argument's type, a JSON string (a boolean's is "true" or
+    "false"); not a value of the type is E_SCHEMA. A type that is not one of TYPES is checked by check_function."""
+    value = decl["default"]
+    if not isinstance(value, str):
+        fail("E_SCHEMA", 'a literal default is a lexical value, a JSON string (or "asof")', f"{path}.default")
+    if decl["type"] == "boolean":  # a lexical value: "true" or "false"
+        if value not in ("true", "false"):
+            fail("E_SCHEMA", f"{value!r} is not a boolean (7)", f"{path}.default")
+        return
+    if decl["type"] not in TYPES or decl["type"] == "blob":
+        return
+    try:
+        check_lexical(decl["type"], value, path)
+    except DatumeshError:
+        fail("E_SCHEMA", f"{value!r} is not a valid {decl['type']} (7)", f"{path}.default")
+
+
 def shape_signature(sig, path):
     _shape_object(sig, ("args", "returns"), ("order",), path)
     if not isinstance(sig["args"], dict):
@@ -712,8 +730,8 @@ def shape_signature(sig, path):
         if "classes" in decl and (not isinstance(decl["classes"], list)
                                   or not all(isinstance(c, str) for c in decl["classes"])):
             fail("E_SCHEMA", "classes is an array of class names", f"{p}.classes")
-        if "default" in decl and decl["default"] != "asof":  # spec-0.5.0: the only default
-            fail("E_SCHEMA", 'the only default is "asof"', f"{p}.default")
+        if "default" in decl and decl["default"] != "asof":  # K13 (since the classes round): a literal default
+            _literal_default(decl, p)
         if "unit" in decl:
             shape_unit(decl["unit"], f"{p}.unit")
         if not isinstance(decl["valid"], bool):
@@ -894,7 +912,7 @@ def check_function(desc, path="$"):
             if decl["type"] != "string":
                 fail("E_CANON_TYPE", "only a string argument holds an object key", f"{p}.classes")
             _check_class_names(decl["classes"], f"{p}.classes")
-        if "default" in decl and not (decl["valid"] and decl["type"] in ("date", "instant")):
+        if decl.get("default") == "asof" and not (decl["valid"] and decl["type"] in ("date", "instant")):
             fail("E_CANON_TYPE", "the asof default is for a date or instant valid-time argument", f"{p}.default")
         if "key_normalisation" in decl and (decl["type"] != "string" or "classes" in decl):
             fail("E_CANON_TYPE", "key_normalisation is for a string argument without classes", f"{p}.key_normalisation")
@@ -1683,7 +1701,7 @@ def input_licences(receipt, receipts, manifests, keyenv=None):
 # normalisation, object keys and ids.
 
 KEY_NORMALISATIONS = ("none", "upper_ascii", "nfc_strict", "arabic_skeleton", "hebrew_consonantal",
-                      "greek_unaccented")
+                      "greek_unaccented", "label_fold")  # label_fold: since the classes round (K8), labels only
 _HEBREW_KEPT = {0x05BE, 0x05C0, 0x05C3, 0x05C6}  # maqaf, paseq, sof pasuq, nun hafukha
 _ARABIC_MARKS = [(0x0610, 0x061A), (0x064B, 0x065F), (0x0670, 0x0670), (0x06D6, 0x06DC), (0x06DF, 0x06E8),
                  (0x06EA, 0x06ED), (0x0640, 0x0640)]
@@ -1693,6 +1711,16 @@ _ARABIC_MARKS = [(0x0610, 0x061A), (0x064B, 0x065F), (0x0670, 0x0670), (0x06D6, 
 # (U+0009-U+000D, U+0085), which 3.5 already refuses.
 _WHITE_SPACE = frozenset("\u00a0\u1680\u2000\u2001\u2002\u2003\u2004\u2005\u2006\u2007\u2008\u2009\u200a"
                          "\u2028\u2029\u202f\u205f\u3000")
+
+
+# label_fold (16.4, K8): the folding of a label: Unicode default case folding, then NFC, each run of White_Space one
+# U+0020, leading and trailing spaces removed. A request's label is folded by the mesh (16.7); a value is canonical
+# when it equals its own folding.
+_WHITE_RUN = re.compile("[\t\n\x0b\x0c\r \x85\xa0  -     　]+")
+
+
+def fold_label(value):
+    return _WHITE_RUN.sub(" ", unicodedata.normalize("NFC", value.casefold())).strip(" ")
 
 
 def check_key_value(rule, value, path="$"):
@@ -1725,6 +1753,9 @@ def check_key_value(rule, value, path="$"):
     elif rule == "arabic_skeleton":
         if any(lo <= ord(c) <= hi for c in value for lo, hi in _ARABIC_MARKS):
             bad("Arabic marks or tatweel")
+    elif rule == "label_fold":
+        if fold_label(value) != value:
+            bad("not its case folding, in NFC with single spaces and no leading or trailing space")
 
 
 CLASS_REQUIRED = ("keys", "methods", "order", "steward")
@@ -1798,7 +1829,8 @@ def check_class(d, path="$"):
         if decl["type"] == "string":
             if "key_normalisation" not in decl:
                 fail("E_CLASS_MEMBER", "a string key declares its key_normalisation", p)
-            if decl["key_normalisation"] not in KEY_NORMALISATIONS:
+            if decl["key_normalisation"] not in KEY_NORMALISATIONS or decl["key_normalisation"] == "label_fold":
+                # label_fold is the rule of a label (K8): a class key is never folded, so it is not a class key's rule
                 fail("E_CLASS_MEMBER", f"unknown key normalisation {decl['key_normalisation']!r}", p)
         elif "key_normalisation" in decl:
             fail("E_CLASS_MEMBER", "only string keys have a key_normalisation", p)
@@ -2151,15 +2183,19 @@ def check_describe(doc, classes=None, functions=None):
     (flattened descriptors, by name; the name is not compared), 5 against it, 6 against the held method
     functions (`functions`, descriptors), when given. Every failure is E_DESCRIBE."""
     # 2. Shape.
-    if not isinstance(doc, dict) or doc.get("kind") not in ("class", "object", "function"):
-        fail("E_DESCRIBE", "a describe answer is of kind class, object or function")
+    if not isinstance(doc, dict) or doc.get("kind") not in ("class", "object", "function", "catalog"):
+        fail("E_DESCRIBE", "a describe answer is of kind class, object, function or catalog")
     if doc["kind"] == "function":  # spec-0.6.0 (C7): a function answer, for {id} a function name (2.3)
         return _check_describe_function(doc, functions)
+    if doc["kind"] == "catalog":  # C7 (since the classes round): the catalogue root, in one call
+        return _check_describe_catalog(doc)
     if doc["kind"] == "class":
-        _shape_object(doc, ("class", "class_hash", "descriptor", "kind", "methods"), ("publisher",), "$")
+        _shape_object(doc, ("class", "class_hash", "descriptor", "kind", "methods"), ("facets", "publisher"), "$")
         _shape_text(doc["class"], "$.class")
         check_function_name(doc["class"], "$.class")
         _check_publisher(doc, doc["class"])
+        if "facets" in doc:  # C2 (since the classes round)
+            check_facets(doc["facets"], "$.facets")
         _shape_text(doc["class_hash"], "$.class_hash")
         check_hex(doc["class_hash"], 64, "$.class_hash")
         shape_class(doc["descriptor"], "$.descriptor")
@@ -2189,8 +2225,12 @@ def check_describe(doc, classes=None, functions=None):
             fail("E_DESCRIBE", "methods lists exactly the descriptor's methods", "$.methods")
         for m in keys_in_order(methods):
             e = methods[m]
-            if e["fn"] != f"{doc['class']}/{m}" or e["fn_hash"] != doc["descriptor"]["methods"][m]:
-                fail("E_DESCRIBE", f"method {m} is {doc['class']}/{m} with the descriptor's hash", f"$.methods.{m}")
+            # 16.3 (K5, since the classes round): an inherited method's function is its defining class's, D/m; the
+            # defining class is not checked here (the parents are not held), only the method and the hash
+            named = e["fn"] == f"{doc['class']}/{m}" or (e["fn"].endswith(f"/{m}") and "/" in e["fn"])
+            if not named or e["fn_hash"] != doc["descriptor"]["methods"][m]:
+                fail("E_DESCRIBE", f"method {m} is {doc['class']}/{m}, or its defining class's, with the descriptor's hash",
+                     f"$.methods.{m}")
         # 4. The held class.
         held = {class_hash(d): d for d in (classes or {}).values()}.get(doc["class_hash"])
         if held is None:
@@ -2211,7 +2251,8 @@ def check_describe(doc, classes=None, functions=None):
                 fail("E_DESCRIBE", f"method {m}: args and returns are its function's, after the keys",
                      f"$.methods.{m}")
         return doc
-    _shape_object(doc, ("call", "kind", "methods", "object", "object_id", "short_id"), ("same_as",), "$")
+    _shape_object(doc, ("call", "kind", "methods", "object", "object_id", "short_id"),
+                  ("extensions", "resolved", "same_as"), "$")
     obj = doc["object"]
     _shape_object(obj, ("class", "class_hash", "keys"), (), "$.object")
     _shape_text(obj["class"], "$.object.class")
@@ -2246,6 +2287,10 @@ def check_describe(doc, classes=None, functions=None):
         fail("E_DESCRIBE", "short_id is the first 12 hex digits of the object id", "$.short_id")
     if doc["call"] != _object_call(obj["class"], obj["keys"]):
         fail("E_DESCRIBE", "call is the object's canonical call", "$.call")
+    if "extensions" in doc:  # K9 (since the classes round)
+        _check_extensions(doc["extensions"], "$.extensions")
+    if "resolved" in doc:  # K8 (since the classes round): the lookup that named the object (N[label])
+        _check_resolved(doc["resolved"], doc, "$.resolved")
     # 4. The held class.
     held = {class_hash(d): d for d in (classes or {}).values()}.get(obj["class_hash"])
     if held is None:
@@ -2292,7 +2337,10 @@ def _check_publisher(doc, name):
 def _check_describe_function(doc, functions):
     """A function answer (16.8, spec-0.6.0): its shape; the descriptor's args and returns when it is held, all of its
     arguments, as a method entry's are after its keys."""
-    _shape_object(doc, ("args", "fn", "fn_hash", "kind", "returns"), ("description", "publisher", "source", "tests"), "$")
+    _shape_object(doc, ("args", "fn", "fn_hash", "kind", "returns"),
+                  ("description", "facets", "publisher", "source", "tests"), "$")
+    if "facets" in doc:  # C2 (since the classes round)
+        check_facets(doc["facets"], "$.facets")
     _shape_text(doc["fn"], "$.fn")
     check_function_name(doc["fn"], "$.fn")
     _check_publisher(doc, doc["fn"])
@@ -2312,6 +2360,130 @@ def _check_describe_function(doc, functions):
     held = {function_hash(f): f for f in (functions or [])}.get(doc["fn_hash"])
     if held is not None and (doc["args"] != held["signature"]["args"] or doc["returns"] != held["signature"]["returns"]):
         fail("E_DESCRIBE", "args and returns are the held descriptor's", "$")
+    return doc
+
+
+FACETS = ("domain", "frequency", "measure", "region", "thing")  # C2: the five facet keys (16.8)
+
+
+def check_facets(facets, path="$"):
+    """facets (16.8, C2, since the classes round): an object of at most the five facet keys, each a list of 1 to 8
+    names (2.2) of at most 32 bytes, ascending and unique. Not empty."""
+    if not isinstance(facets, dict) or not facets:
+        fail("E_DESCRIBE", "facets is a non-empty object", path)
+    for key in keys_in_order(facets):
+        p = f"{path}.{key}"
+        if key not in FACETS:
+            fail("E_DESCRIBE", f"facet {key!r} is not one of {FACETS}", p)
+        values = facets[key]
+        if not isinstance(values, list) or not 1 <= len(values) <= 8:
+            fail("E_DESCRIBE", "a facet is a list of 1 to 8 names", p)
+        for v in values:
+            if not isinstance(v, str):
+                fail("E_DESCRIBE", "a facet value is a string", p)
+            check_name(v, p)
+            if len(v.encode("utf-8")) > 32:
+                fail("E_DESCRIBE", "a facet value is at most 32 bytes", p)
+        if values != sorted(values) or len(set(values)) != len(values):
+            fail("E_DESCRIBE", "a facet's values are ascending and unique", p)
+
+
+def _check_extensions(ext, path):
+    """extensions (16.8, K9, since the classes round): the functions that extend the object's class, ascending by fn
+    and unique; each names its function, its hash and its publisher (the host of fn, 2.3)."""
+    if not isinstance(ext, list) or not ext:
+        fail("E_DESCRIBE", "extensions is a non-empty array of extensions", path)
+    for i, e in enumerate(ext):
+        p = f"{path}[{i}]"
+        _shape_object(e, ("fn", "fn_hash", "publisher"), (), p)
+        _shape_text(e["fn"], f"{p}.fn")
+        check_function_name(e["fn"], f"{p}.fn")
+        _shape_text(e["fn_hash"], f"{p}.fn_hash")
+        check_hex(e["fn_hash"], 64, f"{p}.fn_hash")
+        _check_publisher(e, e["fn"])
+    names = [e["fn"] for e in ext]
+    if names != sorted(names) or len(set(names)) != len(names):
+        fail("E_DESCRIBE", "extensions is ascending by fn, and unique", path)
+
+
+def _check_resolved(r, doc, path):
+    """resolved of an object answer (16.8, K8, since the classes round): the call of the object, and the one resolution,
+    a lookup (N[label]) whose key encoding is the object's, with the instant the lookup was read as of."""
+    _shape_object(r, ("call", "resolutions"), (), path)
+    _shape_text(r["call"], f"{path}.call")
+    if r["call"] != doc["call"]:
+        fail("E_DESCRIBE", "resolved.call is the object's call", f"{path}.call")
+    res = r["resolutions"]
+    if not isinstance(res, list) or len(res) != 1:
+        fail("E_DESCRIBE", "resolutions holds the lookup resolution only", f"{path}.resolutions")
+    x, p = res[0], f"{path}.resolutions[0]"
+    _shape_object(x, ("asof", "from", "kind", "to"), (), p)
+    for k in ("from", "kind", "to"):
+        _shape_text(x[k], f"{p}.{k}")
+    if x["kind"] != "lookup":
+        fail("E_DESCRIBE", "the resolution is a lookup", f"{p}.kind")
+    if not isinstance(x["asof"], str) or not _is_instant(x["asof"]):
+        fail("E_DESCRIBE", "asof is an instant", f"{p}.asof")
+    d, obj = decode_key(x["to"]), doc["object"]
+    same = d["class"] == obj["class"] and set(d["keys"]) == set(obj["keys"]) and all(
+        encode_decoded(d["keys"][k]) == obj["keys"][k]["value"] if "class" in d["keys"][k]
+        else d["keys"][k] == obj["keys"][k] for k in d["keys"])
+    if not same:
+        fail("E_DESCRIBE", "the lookup's to is the key encoding of the object", f"{p}.to")
+
+
+@_as_error("E_DESCRIBE")
+def _check_describe_catalog(doc):
+    """describe of the catalogue root (16.8, C7, since the classes round): the host, the rule's url, and the domains
+    by number of subjects (descending), then by name; each domain has its label, its counts and 1 to 5 top subjects,
+    each a key encoding, a label and a full name."""
+    _shape_object(doc, ("domains", "host", "kind", "rule"), (), "$")
+    _shape_text(doc["host"], "$.host")
+    check_dns_name(doc["host"], "$.host")
+    if not isinstance(doc["rule"], str) or doc["rule"] != f"https://{doc['host']}/catalog/rule":
+        fail("E_DESCRIBE", "rule is the https url of /catalog/rule on this host", "$.rule")
+    if not isinstance(doc["domains"], list):
+        fail("E_DESCRIBE", "domains is an array", "$.domains")
+    last = None
+    for i, d in enumerate(doc["domains"]):
+        p = f"$.domains[{i}]"
+        _shape_object(d, ("domain", "label", "names", "subjects", "top"), (), p)
+        _shape_text(d["domain"], f"{p}.domain")
+        check_name(d["domain"], f"{p}.domain")
+        _shape_text(d["label"], f"{p}.label")
+        for name in ("names", "subjects"):
+            if not _seconds(d[name]):
+                fail("E_DESCRIBE", f"{name} is a non-negative integer", f"{p}.{name}")
+        if not isinstance(d["top"], list) or not 1 <= len(d["top"]) <= 5:
+            fail("E_DESCRIBE", "top is a list of 1 to 5 subjects", f"{p}.top")
+        for j, t in enumerate(d["top"]):
+            tp = f"{p}.top[{j}]"
+            _shape_object(t, ("label", "source", "subject"), (), tp)
+            _shape_text(t["label"], f"{tp}.label")
+            _shape_text(t["subject"], f"{tp}.subject")
+            decode_key(t["subject"])
+            _shape_text(t["source"], f"{tp}.source")
+            check_function_name(t["source"], f"{tp}.source")
+        key = (-int(d["subjects"].text), d["domain"])
+        if last is not None and key <= last:
+            fail("E_DESCRIBE", "domains by subjects, descending, then by name", p)
+        last = key
+
+
+@_as_error("E_DESCRIBE")
+def check_find_result(doc):
+    """A find result (9.6, C2, since the classes round): its members are the mesh's; publisher, source and facets are
+    checked as the describe answers check them."""
+    if not isinstance(doc, dict):
+        fail("E_DESCRIBE", "a find result is an object", "$")
+    if "facets" in doc:
+        check_facets(doc["facets"], "$.facets")
+    if "publisher" in doc:
+        if not isinstance(doc.get("fn"), str):
+            fail("E_DESCRIBE", "a publisher needs its fn", "$.publisher")
+        _check_publisher(doc, doc["fn"])
+    if "source" in doc:
+        _check_describe_source(doc["source"], "$.source")
     return doc
 
 
@@ -2699,7 +2871,8 @@ URI_CODES = (
 # spec-0.6.0 (5.9): the faults a whatif answer may carry beyond the formula faults (E_WHATIF_NO_SOLUTION, with solve)
 WHATIF_FAULT = "E_WHATIF_NO_SOLUTION"
 # Codes a mesh reports about a request, never as an error (spec-0.4.1, spec-0.4.2).
-RESOLUTION_KINDS = ("alias", "default", "lookup", "method")  # spec-0.5.0 (16.7); lookup (Q10 a) carries asof
+RESOLUTION_KINDS = ("alias", "chain", "default", "lookup", "method")  # spec-0.5.0 (16.7); lookup (Q10 a) carries asof;
+# chain (K10, since the classes round) carries asof too
 # spec-0.4.3: what an E_FOREIGN_UNAVAILABLE envelope's detail says failed (5.5).
 FOREIGN_DETAILS = ("offline", "network", "dns", "tls", "timeout", "refused")
 # spec-0.5.0: E_SHORT_ID_AMBIGUOUS (16.8), and a call's key codes (5.8, 16.4, 16.5): bad_request, never error.
@@ -2807,12 +2980,13 @@ def _check_envelope_members(env, members=None):
             fail("E_ENVELOPE", "resolved is {call, resolutions, aliases_tx?}", "$.resolved")
         for x in r["resolutions"]:
             # a lookup resolution also has asof, the instant its lookup cell was read as of (Q10 a)
-            members = {"from", "kind", "to"} | ({"asof"} if isinstance(x, dict) and x.get("kind") == "lookup" else set())
+            timed = isinstance(x, dict) and x.get("kind") in ("lookup", "chain")
+            members = {"from", "kind", "to"} | ({"asof"} if timed else set())
             if not isinstance(x, dict) or set(x) != members \
                     or not all(isinstance(x[k], str) for k in x) or x["kind"] not in RESOLUTION_KINDS \
                     or ("asof" in x and not _is_instant(x["asof"])):
-                fail("E_ENVELOPE", "a resolution is {from, kind, to}, kind alias, method, default or lookup; a "
-                     "lookup's also has asof, an instant", "$.resolved.resolutions")
+                fail("E_ENVELOPE", "a resolution is {from, kind, to}, kind alias, chain, default, lookup or method; a "
+                     "lookup's and a chain's also have asof, an instant", "$.resolved.resolutions")
         if "aliases_tx" in r and (not isinstance(r["aliases_tx"], str) or not _is_instant(r["aliases_tx"])):
             fail("E_ENVELOPE", "aliases_tx is an instant", "$.resolved.aliases_tx")
     if "shadows" in env:  # spec-0.5.0 (16.9)
@@ -3259,6 +3433,21 @@ _CALL_LEXER_CODES = {"E_FORMULA_NUMBER": "E_CANON_NUMBER", "E_FORMULA_STRING": "
                      "E_FORMULA_DATE": "E_CANON_DATE", "E_FORMULA_INSTANT": "E_CANON_INSTANT"}
 
 
+class CallFault(Exception):
+    """A chained call's link holds a value that is not a key of the classes its method returns (K10, 16.6): the formula
+    fault E_FORMULA_DISPATCH_KEY (15.12), which a request answers as not_covered with that fault. It is not one of the
+    ERROR_CODES, so it has its own exception; the reference returns it as the call's error."""
+
+    def __init__(self, code, detail):
+        super().__init__(f"{code}: {detail}")
+        self.code, self.detail = code, detail
+
+
+class NotCovered(Exception):
+    """A link of a chained call (K10) whose cell has no value as of the call's asof: the mesh answers that cell's outcome,
+    not_covered (5.5). A call vector cannot express it, so the reference raises it rather than give an error code."""
+
+
 def parse_call(text, env):
     """A call (5.8) -> {"uri": its cell URI, "resolved": what the call resolved (5.5, 16.7)}.
 
@@ -3267,10 +3456,16 @@ def parse_call(text, env):
     "classes": {class name: flattened class descriptor}, "aliases_tx": the instant of the alias
     snapshot, "now": the mesh's now, for a default or a lookup when the call has no asof, "lookups":
     {class name: {label: key encoding}}, the cells of each class's lookup method as of the call's
-    asof (Q10 a)}.
+    asof (Q10 a; since the classes round, a folded label maps to "" when withdrawn, K8), "cells":
+    {canonical call without asof: key encoding}, the cells of the methods that return a key, as of the
+    call's asof (K10)}.
 
     Since spec-0.5.0 (Q1) a request has no variables: every argument is read by the declared type of
-    its position (_call_read), and an unquoted value is a single token of the dialect."""
+    its position (_call_read), and an unquoted value is a single token of the dialect.
+
+    Since the classes round: an inherited method reads the cell of the class that defines it (K5, 16.3); a
+    chain N(k).m(a).n(b) calls each method on the key the one before returns (K10, 16.6); an argument may
+    have a literal default (K13, 7); a label is folded (K8, 16.4)."""
     import formula
     if not isinstance(text, str):
         fail("E_PARSE_URI", "a call is text")
@@ -3280,7 +3475,7 @@ def parse_call(text, env):
         tokens = formula.tokenize(text[:q], request=True)  # spec-0.6.0: the request lexer (5.8, C3)
     except formula.FormulaError as e:
         fail(_CALL_LEXER_CODES.get(e.code, "E_PARSE_URI"), f"not a call: {e}")
-    callee, args, method, label = _call_tree(tokens)
+    callee, args, methods, label = _call_tree(tokens)
     asof = None
     if rest:
         if not rest.startswith("?asof=") or "&" in rest:
@@ -3295,46 +3490,46 @@ def parse_call(text, env):
     pin = callee.pin
     if label is not None and (fq not in classes or pin is not None):
         fail("E_PARSE_URI", "a label [..] names an object of a class (16.7)")
-    if fq in classes and pin is None:  # spec-0.5.0: an object, then its method (16.3)
-        if method is None:
+    defaults = []
+    if fq in classes and pin is None:  # spec-0.5.0: an object, then its method (16.3); K10: then its chain
+        if not methods:
             fail("E_PARSE_URI", f"{fq} is a class: a call of it names a method")
-        desc = classes[fq]
         if label is not None:  # spec-0.5.0 (Q10 a): the object a label names, through the class's lookup
-            keys = _call_lookup(fq, desc, label, asof, env, resolutions)
+            keys = _call_lookup(fq, classes[fq], label, asof, env, resolutions)
         else:
-            keys = _call_keys(fq, desc, args, env)
-        mname, mtok, margs = method
-        if mtok.kind == "QNAME":
-            mfq = mtok.value
-            if mfq not in functions:
-                fail("E_NAME_UNBOUND", f"{mfq} is not bound")
-            descriptor = functions[mfq]
-            sig = descriptor["signature"]
-            if sig.get("order", [])[:len(desc["order"])] != desc["order"] or not all(
-                    _key_matches(desc["keys"][k], sig["args"][k]) for k in desc["order"]):
-                fail("E_ARG_UNKNOWN", f"{mfq} does not take the keys of {fq} first")
-            key_names = list(desc["order"])
-        else:
-            if mname not in desc["methods"]:
-                fail("E_NAME_UNBOUND", f"{fq} has no method {mname}")
-            if mname == desc.get("lookup"):  # spec-0.5.0 (H7): as a method the class does not have
-                fail("E_NAME_UNBOUND", f"{mname} is {fq}'s lookup: it takes a label, not an object")
-            mfq = f"{fq}/{mname}"
-            if mfq not in functions or function_hash(functions[mfq]) != desc["methods"][mname]:
-                fail("E_NAME_UNBOUND", f"{mfq} is not bound to the method {mname} of {fq}")
-            descriptor = functions[mfq]
-            key_names = []
-            for k in desc["order"]:
-                if k not in descriptor["signature"]["args"]:
-                    break
-                key_names.append(k)
-        resolutions.append({"from": f"{fq}(...).{mname}", "kind": "method", "to": mfq})
-        bound = {k: ("typed", keys[k]) for k in key_names}
+            keys = _call_keys(fq, classes[fq], args, env)
+        cname, cdesc, ckeys = fq, classes[fq], keys
+        for mname, mtok, margs in methods[:-1]:
+            mfq, descriptor, key_names = _call_method(cname, cdesc, mname, mtok, env)
+            bound = {k: ("typed", ckeys[k]) for k in key_names}
+            order = [n for n in descriptor["signature"].get("order", []) if n not in key_names]
+            bound.update(_call_bind(mfq, descriptor, order, margs, set(key_names)))
+            # K10: a link. Its cell is read as of the call's asof, and the key it holds is the next method's object.
+            ref_args = _call_args(mfq, descriptor, bound, asof, env, defaults)
+            ret = descriptor["signature"]["returns"]
+            if not (isinstance(ret, dict) and "classes" in ret):
+                fail("E_PARSE_URI", f"{mfq} returns no key, so no method can follow it in a chain (K10)")
+            at = asof or env.get("now")
+            if at is None:
+                fail("E_ARG_MISSING", "a chained call is read as of the call's asof, or the mesh's now")
+            written = _canonical_call(mfq, None, ref_args, None)
+            cells = env.get("cells") or {}
+            if written not in cells:
+                raise NotCovered(f"{written} has no value as of {at}")
+            value = cells[written]
+            ckeys, cname = _chain_key(value, ret["classes"], classes, mfq)
+            cdesc = classes[cname]
+            resolutions.append({"asof": at, "from": mname, "kind": "chain", "to": value})
+        # the last method: the cell the call reads
+        mname, mtok, margs = methods[-1]
+        mfq, descriptor, key_names = _call_method(cname, cdesc, mname, mtok, env)
+        bound = {k: ("typed", ckeys[k]) for k in key_names}
         order = [n for n in descriptor["signature"].get("order", []) if n not in key_names]
         bound.update(_call_bind(mfq, descriptor, order, margs, set(key_names)))
+        resolutions.append({"from": f"{cname}(...).{mname}", "kind": "method", "to": mfq})
         fq, pin = mfq, None
     else:
-        if method is not None:
+        if methods:
             fail("E_PARSE_URI", "a method is called on an object: a class read")
         if pin is not None:
             found = [d for d in list(env.get("descriptors") or []) + list(functions.values())
@@ -3347,29 +3542,8 @@ def parse_call(text, env):
                 fail("E_NAME_UNBOUND", f"{fq} is not bound")
             descriptor = functions[fq]
         bound = _call_bind(fq, descriptor, descriptor["signature"].get("order"), args, set())
-    declared = descriptor["signature"]["args"]
-    for name in keys_in_order(declared):
-        if name in bound:
-            continue
-        if declared[name].get("default") == "asof":  # spec-0.5.0 (16.7)
-            at = asof or env.get("now")
-            if at is None:
-                fail("E_ARG_MISSING", f"{fq} needs {name}: its asof default needs an asof")
-            value = at if declared[name]["type"] == "instant" else at[:10]
-            bound[name] = ("typed", {"type": declared[name]["type"], "value": value})
-            resolutions.append({"from": name, "kind": "default", "to": value})
-            continue
-        fail("E_ARG_MISSING", f"{fq} needs {name} (an open argument is written *)")
-    ref_args = {}
-    for name in keys_in_order(bound):
-        p = f"call.{name}"
-        kind, value = bound[name]
-        if kind == "typed":
-            ref_args[name] = value
-            if value["type"] == "string" and declared[name].get("key_normalisation"):  # Q6 b
-                check_key_value(declared[name]["key_normalisation"], value["value"], p)
-            continue
-        ref_args[name] = _call_read(bound[name], declared[name], p, env)
+    ref_args = _call_args(fq, descriptor, bound, asof, env, defaults)
+    resolutions.extend(defaults)
     ns, fn = fq.rsplit("/", 1)
     ref = {"args": ref_args, "fn": fn, "ns": ns}
     if pin is not None:
@@ -3383,6 +3557,130 @@ def parse_call(text, env):
             resolved["aliases_tx"] = env["aliases_tx"]
         out["resolved"] = resolved
     return out
+
+
+def method_definer(classes, desc, m):
+    """The class that defines the method m an object of desc reads (K5, 16.3), or None when desc writes m itself.
+
+    m is inherited when desc's parent carries m with the same function hash. The defining class is then the top of
+    the run of ancestors that carry m with that hash: the class that first gave m that hash, found through the
+    parent hashes, each named by the class name bound to it (the first in ascending order, as 16.3's super).
+    LookupError carries a parent hash that no class name is bound to."""
+    h = desc["methods"][m]
+    cur, definer = desc, None
+    while cur.get("parent") is not None:
+        pname = next((n for n in keys_in_order(classes) if class_hash(classes[n]) == cur["parent"]), None)
+        if pname is None:
+            raise LookupError(cur["parent"])
+        pdesc = classes[pname]
+        if pdesc["methods"].get(m) != h:
+            break
+        definer, cur = pname, pdesc
+    return definer
+
+
+def _method_fq(classes, fq, desc, m):
+    """The function N/m a method of the object of class fq reads (16.3, K5): D/m when inherited, else fq/m."""
+    try:
+        definer = method_definer(classes, desc, m)
+    except LookupError as e:
+        fail("E_NAME_UNBOUND", f"no class name is bound to the parent hash {e} of {fq}: its method {m} is not known")
+    return f"{fq if definer is None else definer}/{m}"
+
+
+def _call_method(fq, desc, mname, mtok, env):
+    """The function a method call of an object of class fq reads: its full name, its descriptor and the key names it
+    takes first (16.3, K5)."""
+    functions = env.get("functions") or {}
+    if mtok.kind == "QNAME":  # an extension method (16.3): a function that takes the class keys first
+        mfq = mtok.value
+        if mfq not in functions:
+            fail("E_NAME_UNBOUND", f"{mfq} is not bound")
+        descriptor = functions[mfq]
+        sig = descriptor["signature"]
+        if sig.get("order", [])[:len(desc["order"])] != desc["order"] or not all(
+                _key_matches(desc["keys"][k], sig["args"][k]) for k in desc["order"]):
+            fail("E_ARG_UNKNOWN", f"{mfq} does not take the keys of {fq} first")
+        return mfq, descriptor, list(desc["order"])
+    if mname not in desc["methods"]:
+        fail("E_NAME_UNBOUND", f"{fq} has no method {mname}")
+    if mname == desc.get("lookup"):  # spec-0.5.0 (H7): as a method the class does not have
+        fail("E_NAME_UNBOUND", f"{mname} is {fq}'s lookup: it takes a label, not an object")
+    mfq = _method_fq(env.get("classes") or {}, fq, desc, mname)
+    if mfq not in functions or function_hash(functions[mfq]) != desc["methods"][mname]:
+        fail("E_NAME_UNBOUND", f"{mfq} is not bound to the method {mname} of {fq}")
+    descriptor = functions[mfq]
+    key_names = []
+    for k in desc["order"]:
+        if k not in descriptor["signature"]["args"]:
+            break
+        key_names.append(k)
+    return mfq, descriptor, key_names
+
+
+def _chain_key(value, declared, classes, mfq):
+    """The key a chain's cell holds (K10): a key encoding of one of the declared classes, whose key names and types
+    are the class's (16.6), else E_FORMULA_DISPATCH_KEY. Returns (its typed keys, its class name)."""
+    try:
+        decoded = decode_key(value)
+    except DatumeshError as e:
+        raise CallFault("E_FORMULA_DISPATCH_KEY", f"{mfq} holds {value!r}, not an object key (16.5): {e.detail}")
+    c = decoded["class"]
+    if c not in declared:
+        raise CallFault("E_FORMULA_DISPATCH_KEY", f"{mfq} holds a key of {c}, where {declared} is declared (16.6)")
+    if c not in classes:
+        fail("E_NAME_UNBOUND", f"{c} is not a class of this mesh")
+    decl = classes[c]["keys"]
+    for k, v in decoded["keys"].items():
+        if k not in decl or ("class" in v) != ("class" in decl[k]) or ("class" not in v and v["type"] != decl[k]["type"]):
+            raise CallFault("E_FORMULA_DISPATCH_KEY", f"{mfq} holds a key of {c} whose keys are not its class's (16.6)")
+    if set(decoded["keys"]) != set(decl):
+        raise CallFault("E_FORMULA_DISPATCH_KEY", f"{mfq} holds a key of {c} whose keys are not its class's (16.6)")
+    keys = {k: {"type": "string", "value": encode_decoded(v)} if "class" in v else v
+            for k, v in decoded["keys"].items()}
+    return keys, c
+
+
+def _literal_value(type_, text):
+    """A literal default's typed scalar (7, K13): its lexical value, read by its type."""
+    if type_ == "boolean":
+        return {"type": "boolean", "value": text == "true"}
+    return {"type": type_, "value": text}
+
+
+def _call_args(fq, descriptor, bound, asof, env, defaults):
+    """The arguments of a call's cell (5.8, 16.7, 7): each unbound argument takes its default, the asof default or a
+    literal one (K13), recorded in defaults; each bound one is read by its declared position. Returns the ref args."""
+    declared = descriptor["signature"]["args"]
+    for name in keys_in_order(declared):
+        if name in bound:
+            continue
+        decl = declared[name]
+        if decl.get("default") == "asof":  # spec-0.5.0 (16.7)
+            at = asof or env.get("now")
+            if at is None:
+                fail("E_ARG_MISSING", f"{fq} needs {name}: its asof default needs an asof")
+            value = at if decl["type"] == "instant" else at[:10]
+            bound[name] = ("typed", {"type": decl["type"], "value": value})
+            defaults.append({"from": name, "kind": "default", "to": value})
+            continue
+        if "default" in decl:  # K13 (since the classes round): a literal default (7)
+            bound[name] = ("typed", _literal_value(decl["type"], decl["default"]))
+            defaults.append({"from": name, "kind": "default", "to": decl["default"]})
+            continue
+        fail("E_ARG_MISSING", f"{fq} needs {name} (an open argument is written *)")
+    ref_args = {}
+    for name in keys_in_order(bound):
+        p = f"call.{name}"
+        kind, value = bound[name]
+        if kind == "typed":
+            ref_args[name] = value
+            if value["type"] == "string" and declared[name].get("key_normalisation") \
+                    and declared[name]["key_normalisation"] != "label_fold":  # Q6 b
+                check_key_value(declared[name]["key_normalisation"], value["value"], p)
+            continue
+        ref_args[name] = _call_read(bound[name], declared[name], p, env)
+    return ref_args
 
 
 def _call_query_start(text):
@@ -3449,6 +3747,9 @@ def _call_read(raw, decl, path, env):
     if kind == "open":
         return SLICE
     type_ = decl["type"]
+    if kind == "token" and value[0] == "digit-run" and type_ not in ("string", "blob") \
+            and not decl.get("classes"):  # K11: where a digit run is no string, today's code for it
+        fail(_digit_run_code(value[1]), f"{value[1]!r} is not a {type_} (5.8)", path)
     classes = decl.get("classes")
     if classes:
         if kind == "object":
@@ -3480,9 +3781,22 @@ def _call_read(raw, decl, path, env):
         written = "a quoted string" if kind == "quoted" else f"the token {value[1]!r}"
         fail("E_CANON_TYPE", f"{written} for a {type_} argument", path)
     check_lexical(type_, text, path)
+    if type_ == "string" and decl.get("key_normalisation") == "label_fold":  # K8: a label is folded, never refused
+        return {"type": "string", "value": fold_label(text)}
     if type_ == "string" and decl.get("key_normalisation"):  # a key's rule, or a function's (Q6 b)
         check_key_value(decl["key_normalisation"], text, path)
     return {"type": type_, "value": text}
+
+
+def _digit_run_code(text):
+    """The code today's request lexer gives a digit run that is no string here (K11): the number lexer's, or E_PARSE_URI
+    when the run is no single token (1-1)."""
+    import formula
+    try:
+        formula.tokenize(text, request=True, runs=False)
+    except formula.FormulaError as e:
+        return _CALL_LEXER_CODES.get(e.code, "E_PARSE_URI")
+    return "E_PARSE_URI"
 
 
 def _call_keys(fq, desc, args, env):
@@ -3531,7 +3845,9 @@ def _call_lookup(fq, desc, label, asof, env, resolutions):
     lfq = f"{fq}/{m}"
     if lfq not in functions or function_hash(functions[lfq]) != desc["methods"][m]:
         fail("E_NAME_UNBOUND", f"{lfq} is not bound to the lookup method of {fq}")
-    text = _call_read(label, functions[lfq]["signature"]["args"]["label"], "call.label", env)["value"]
+    decl = functions[lfq]["signature"]["args"]["label"]
+    raw = _call_read(label, dict(decl, key_normalisation="none"), "call.label", env)["value"]  # 3.5 first
+    text = fold_label(raw) if decl.get("key_normalisation") == "label_fold" else raw  # K8: folded before the lookup
     at = asof or env.get("now")
     if at is None:
         fail("E_ARG_MISSING", "a lookup is read as of the call's asof, or the mesh's now")
@@ -3539,10 +3855,12 @@ def _call_lookup(fq, desc, label, asof, env, resolutions):
     if text not in table:
         fail("E_NAME_UNBOUND", f"{fq}'s lookup has no value for the label {text!r} as of {at}")
     key = table[text]
+    if key == "":  # K8: a withdrawn label, which is unknown as far as a call is concerned
+        fail("E_NAME_UNBOUND", f"the label {text!r} of {fq} was withdrawn as of {at}")
     decoded = decode_key(key)
     if decoded["class"] != fq or set(decoded["keys"]) != set(desc["keys"]):
         fail("E_KEY_ENCODING", f"the lookup's value is not a key of {fq}")
-    resolutions.append({"asof": at, "from": text, "kind": "lookup", "to": key})
+    resolutions.append({"asof": at, "from": raw, "kind": "lookup", "to": key})
     return {k: {"type": "string", "value": encode_decoded(v)} if "class" in v else v
             for k, v in decoded["keys"].items()}
 
@@ -3628,6 +3946,8 @@ def _call_tree(tokens):
             v = ("token", ("period", tok.value))
         elif tok.kind == "DWORD":  # spec-0.6.0 (C3): a value only in a string position (_call_read)
             v = ("token", ("digit-word", tok.value))
+        elif tok.kind == "DRUN":  # K11 (since the classes round): a run of digits and hyphens, a string where one is
+            v = ("token", ("digit-run", tok.value))
         elif tok.kind == "WORD" and not punct("(", 1):  # a value, never an alias (Q1)
             v = ("token", ("word", tok.text))
         elif tok.kind == "PUNCT" and tok.text == "*" and objects:
@@ -3656,19 +3976,19 @@ def _call_tree(tokens):
         args = None
     else:
         args = arg_list()
-    method = None
-    if at().kind == "DOT":
+    methods = []  # K10: a chain N(k).m(a).n(b); each method after the first is called on the key the one before returns
+    while at().kind == "DOT":
         pos[0] += 1
         t = at()
         if t.kind not in ("WORD", "QNAME") or not punct("(", 1):
             bad("a method is .name(...) or .<qualified name>(...)")
         pos[0] += 1
-        method = (t.text if t.kind == "WORD" else t.value, t, arg_list())
+        methods.append((t.text if t.kind == "WORD" else t.value, t, arg_list()))
     if at().kind != "EOF":
         bad("nothing follows a call but ?asof=")
-    if label is not None and method is None:
+    if label is not None and not methods:
         bad("a label names an object: call one of its methods")
-    return callee, args, method, label
+    return callee, args, methods, label
 
 
 # ---------------------------------------------------------------------------
@@ -3727,6 +4047,9 @@ def run_vector(vec):
             check_describe(parse_json(vector_input(vec), keep_integer_text=True), vec.get("classes"),
                            vec.get("functions"))
             return {}
+        if kind == "find-result":  # since the classes round (C2, 9.6): one result of a find
+            check_find_result(parse_json(vector_input(vec), keep_integer_text=True))
+            return {}
         if kind == "key":  # spec-0.5.0 (16.5)
             out = {"decoded": decode_key(vec["input"])}
             if "class_hash" in vec:  # the object and its id (16.5), given the class hash
@@ -3756,7 +4079,10 @@ def run_vector(vec):
         if kind == "batch":
             return check_batch(vec["status"], vector_input(vec), vec["keys"], vec["requests"])
         if kind == "call":
-            return parse_call(vec["input"], vec["env"])
+            try:
+                return parse_call(vec["input"], vec["env"])
+            except CallFault as e:
+                return {"error": e.code, "detail": e.detail}
         if kind == "mesh":
             got = resolve_mesh(vec["host"], vec["env"])
             return {"bindings": got["bindings"], "endpoints": got["endpoints"]}

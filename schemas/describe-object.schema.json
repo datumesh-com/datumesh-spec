@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://datumesh.com/schemas/1/describe-object.schema.json",
   "title": "Datumesh describe answer: an object",
-  "description": "SPEC.md 16.8, spec-0.5.0. Unsigned, the mesh's statement. object_id, short_id and call follow from object: checked by the procedure (E_DESCRIBE), not here.",
+  "description": "SPEC.md 16.8, spec-0.5.0. Unsigned, the mesh's statement. object_id, short_id and call follow from object: checked by the procedure (E_DESCRIBE), not here. Since the classes round: extensions (K9, 16.8) and resolved (K8, 16.8): the lookup that named the object by its label, N[label].",
   "type": "object",
   "required": [
     "call",
@@ -61,6 +61,76 @@
       "uniqueItems": true,
       "items": {
         "type": "string"
+      }
+    },
+    "extensions": {
+      "description": "Since the classes round (K9, 16.8): the functions that extend the object's class, ascending by fn (checked by the procedure), at least one; each with its hash and the publisher of fn.",
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "type": "object",
+        "required": [
+          "fn",
+          "fn_hash",
+          "publisher"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "fn": {
+            "$ref": "defs.schema.json#/$defs/functionName"
+          },
+          "fn_hash": {
+            "$ref": "defs.schema.json#/$defs/hex64"
+          },
+          "publisher": {
+            "$ref": "defs.schema.json#/$defs/dnsName"
+          }
+        }
+      }
+    },
+    "resolved": {
+      "description": "Since the classes round (K8, 16.8): present when the object was named by a label (N[label]): the object's call, and the one resolution, a lookup whose to is the object's key encoding (checked by the procedure).",
+      "type": "object",
+      "required": [
+        "call",
+        "resolutions"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "call": {
+          "type": "string",
+          "minLength": 1
+        },
+        "resolutions": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 1,
+          "items": {
+            "type": "object",
+            "required": [
+              "asof",
+              "from",
+              "kind",
+              "to"
+            ],
+            "additionalProperties": false,
+            "properties": {
+              "asof": {
+                "$ref": "defs.schema.json#/$defs/instant"
+              },
+              "from": {
+                "type": "string"
+              },
+              "kind": {
+                "const": "lookup"
+              },
+              "to": {
+                "type": "string"
+              }
+            }
+          }
+        }
       }
     }
   }

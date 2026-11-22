@@ -1,0 +1,87 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://datumesh.com/schemas/1/describe-catalog.schema.json",
+  "title": "Datumesh describe answer: the catalogue root",
+  "description": "SPEC.md 16.8, since the classes round (C7): describe of <host>/catalog in one call. The domains are by number of subjects, descending, then by name, and the rule url is https://<host>/catalog/rule: checked by the procedure (E_DESCRIBE), not here. Unsigned, the mesh's statement.",
+  "type": "object",
+  "required": [
+    "domains",
+    "host",
+    "kind",
+    "rule"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "kind": {
+      "const": "catalog"
+    },
+    "host": {
+      "$ref": "defs.schema.json#/$defs/dnsName"
+    },
+    "rule": {
+      "type": "string",
+      "pattern": "^https://[!-~]+/catalog/rule$",
+      "maxLength": 512
+    },
+    "domains": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "domain",
+          "label",
+          "names",
+          "subjects",
+          "top"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "domain": {
+            "$ref": "defs.schema.json#/$defs/name"
+          },
+          "label": {
+            "type": "string",
+            "minLength": 1
+          },
+          "names": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "subjects": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "top": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 5,
+            "items": {
+              "type": "object",
+              "required": [
+                "label",
+                "source",
+                "subject"
+              ],
+              "additionalProperties": false,
+              "properties": {
+                "subject": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "label": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "source": {
+                  "$ref": "defs.schema.json#/$defs/functionName"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

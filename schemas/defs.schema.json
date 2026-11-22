@@ -817,6 +817,73 @@
           }
         }
       }
+    },
+    "facets": {
+      "description": "Since the classes round (C2, SPEC 16.8, 9.6): the facets of a catalogue entry: an object of at most the five keys, each a list of 1 to 8 names (2.2) of at most 32 bytes, ascending and unique (ascending and uniqueness are checked by the procedure, E_DESCRIBE).",
+      "type": "object",
+      "minProperties": 1,
+      "additionalProperties": false,
+      "propertyNames": {
+        "enum": [
+          "domain",
+          "frequency",
+          "measure",
+          "region",
+          "thing"
+        ]
+      },
+      "properties": {
+        "domain": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 8,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/name",
+            "maxLength": 32
+          }
+        },
+        "frequency": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 8,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/name",
+            "maxLength": 32
+          }
+        },
+        "measure": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 8,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/name",
+            "maxLength": 32
+          }
+        },
+        "region": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 8,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/name",
+            "maxLength": 32
+          }
+        },
+        "thing": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 8,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/name",
+            "maxLength": 32
+          }
+        }
+      }
     }
   }
 }

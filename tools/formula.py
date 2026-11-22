@@ -249,6 +249,7 @@ _WORD = re.compile(r"[A-Za-z][A-Za-z0-9_]*")
 # spec-0.6.0 (C3, 5.8): a request's digit-led word is a run of digits, letters, digits or "_" that begins with a digit,
 # when the number, date, instant and period lexers do not accept the whole run; a period is 1*DIGIT ("D"/"M"/"Y").
 _DIGIT_RUN = re.compile(r"[0-9][A-Za-z0-9_]*")
+_DIGIT_HYPHEN_RUN = re.compile(r"[0-9][0-9-]*")  # since the classes round (K11): a request's digit and hyphen run
 _PERIOD_TOKEN = re.compile(r"[0-9]+[DMY]")
 _NAME = re.compile(r"[a-z][a-z0-9]*(?:_[a-z0-9]+)*")
 PUNCT2 = ("..", "->", "<>", "<=", ">=")
@@ -278,10 +279,12 @@ def _pin(source, i, token):
     return i
 
 
-def tokenize(source, request=False):
+def tokenize(source, request=False, runs=True):
     """The tokens of a body (15.2), or of a request's call (5.8) when request is true. The request lexer differs in
     two places (spec-0.6.0): a date followed by a letter, digit or "_" is E_PARSE_URI (the run is no token of the
-    dialect, 5.8), and a digit-led word is a token DWORD."""
+    dialect, 5.8), and a digit-led word is a token DWORD. Since the classes round (K11) a run of digits and hyphens
+    that no number lexer takes whole is a token DRUN, a string in a string position; runs=False gives the lexer
+    without it (today's codes for the run in another position)."""
     if not isinstance(source, str):
         fail("E_FORMULA_SYNTAX", "a body is text")
     if len(source.encode("utf-8")) > LIMIT_SOURCE:
@@ -380,6 +383,14 @@ def tokenize(source, request=False):
             if any(ch.isascii() and ch.isalpha() for ch in run) and not _PERIOD_TOKEN.fullmatch(run):
                 tokens.append(Token("DWORD", run, i, run))
                 i += len(run)
+                continue
+        if request and runs and c.isdigit():  # K11 (since the classes round): a digit run, unless a number
+            m = _DIGIT_HYPHEN_RUN.match(rest)
+            end_i = i + len(m.group())
+            if (end_i >= n or source[end_i] in " \t\n,)]") and not _CANONICAL_NUMBER.fullmatch(m.group()) \
+                    and not (i > 0 and source[i - 1] == "-"):  # a run after a minus is a number's, as before
+                tokens.append(Token("DRUN", m.group(), i, m.group()))
+                i = end_i
                 continue
         if c.isdigit() or (c == "." and i + 1 < n and source[i + 1].isdigit()):
             if c == ".":
@@ -909,6 +920,25 @@ def _classes(env):
     return (env or {}).get("classes") or {}
 
 
+def _method_name(classes, cname, desc, m):
+    """The function N/m a method m of an object of class cname reads (16.3, K5, since the classes round): D/m, where D is
+    the class that defines an inherited m, else cname/m. An unbound parent hash is E_FORMULA_UNRESOLVED (a body)."""
+    try:
+        definer = canon.method_definer(classes, desc, m)
+    except LookupError as e:
+        fail("E_FORMULA_UNRESOLVED", f"no class name is bound to the parent hash {e} of {cname}: its method {m} is "
+             "not known (16.3)")
+    return f"{cname if definer is None else definer}/{m}"
+
+
+def _dispatch_fq(classes, cname, m):
+    """The function a dispatch over class cname calls for m (16.6, K5)."""
+    desc = classes.get(cname)
+    if desc is None:
+        fail("E_FORMULA_UNRESOLVED", f"{cname} has no binding")
+    return _method_name(classes, cname, desc, m)
+
+
 def _class_of(env, fq):
     """The class descriptor a name is bound to, or None (16.1)."""
     return _classes(env).get(fq)
@@ -1054,8 +1084,24 @@ def _resolve_arg(tree, decl, env, normalisation=None):
     return node
 
 
+def _literal_node(decl):
+    """A literal default (7, K13) as the node the literal written in the body is: the canonical AST holds it (16.7)."""
+    t, v = decl["type"], decl["default"]
+    if t == "string":
+        return {"node": "str", "value": v}
+    if t == "boolean":
+        return {"node": "bool", "value": v == "true"}
+    if t in ("date", "instant"):
+        return {"node": t, "value": v}
+    neg = v.startswith("-")
+    node = {"node": "num", "value": v[1:] if neg else v}
+    if isinstance(decl.get("unit"), str) and decl["unit"] != "1":
+        node["unit"] = decl["unit"]
+    return {"node": "op", "op": "neg", "args": [node]} if neg else node
+
+
 def _fill_defaults(fq, callee, bound, skip=()):
-    """Unbound arguments: the asof default (16.7, 7), then E_FORMULA_ARG_MISSING."""
+    """Unbound arguments: the asof default (16.7, 7), a literal default (K13), then E_FORMULA_ARG_MISSING."""
     for name in canon.keys_in_order(callee["signature"]["args"]):
         if name in bound or name in skip:
             continue
@@ -1064,6 +1110,9 @@ def _fill_defaults(fq, callee, bound, skip=()):
             asof = {"node": "call", "fn": "asof", "args": [], "named": {}}
             bound[name] = asof if decl["type"] == "instant" else {"node": "call", "fn": "date_of", "args": [asof],
                                                                   "named": {}}
+            continue
+        if "default" in decl:
+            bound[name] = _literal_node(decl)
             continue
         fail("E_FORMULA_ARG_MISSING", f"{fq} needs {name} (an open argument is written *)")
 
@@ -1210,7 +1259,7 @@ def _resolve_method(tree, env):
             fail("E_FORMULA_METHOD", f"{cname} has no method {m}")
         if m == desc.get("lookup"):  # spec-0.5.0 (Q10 a): it takes a label, not an object's keys
             fail("E_FORMULA_METHOD", f"{m} is {cname}'s lookup: read it by its plain name, {cname}/{m}(label)")
-        fq = f"{cname}/{m}"
+        fq = _method_name(_classes(env), cname, desc, m)  # K5: the defining class's name, pinned or not (super too)
         if pinned:
             callee = _pinned(env, desc["methods"][m])
             if callee is None:
@@ -1264,7 +1313,7 @@ def _static_classes(node, env):
         ret = callee["signature"]["returns"] if callee else None
         return ret.get("classes") if isinstance(ret, dict) else None
     if node["node"] == "dispatch":
-        callee = _callee(env, f"{node['classes'][0]}/{node['method']}")
+        callee = _callee(env, _dispatch_fq(_classes(env), node["classes"][0], node["method"]))
         ret = callee["signature"]["returns"] if callee else None
         return ret.get("classes") if isinstance(ret, dict) else None
     if node["node"] == "str":
@@ -1290,7 +1339,7 @@ def _resolve_dispatch(tree, env):
             fail("E_FORMULA_UNRESOLVED", f"{c} has no binding")
         if m not in desc["methods"] or m == desc.get("lookup"):
             fail("E_FORMULA_METHOD", f"{c} has no method {m} to dispatch to")
-        fq = f"{c}/{m}"
+        fq = _method_name(_classes(env), c, desc, m)  # K5: D/m for an inherited method
         callee = _callee(env, fq)
         if callee is None:
             fail("E_FORMULA_UNRESOLVED", f"{fq} has no binding")
@@ -1702,7 +1751,7 @@ class Checker:
             fail("E_FORMULA_TYPE", "a method is called on an object key, a string")
         first = None
         for c in node["classes"]:
-            fq = f"{c}/{node['method']}"
+            fq = _dispatch_fq(_classes(self.env), c, node["method"])  # K5
             callee = _callee(self.env, fq)
             if callee is None:
                 fail("E_FORMULA_UNRESOLVED", f"{fq} has no binding")
@@ -3069,7 +3118,7 @@ class Context:
             fail("E_FORMULA_DISPATCH_KEY", f"the value is not the key of an object of {c}: its keys differ")
         # A key of the class not canonical under its rules is still its key (H2): the method's
         # argument rule faults with E_FORMULA_KEY at the read (check_keys).
-        fq = f"{c}/{node['method']}"
+        fq = _dispatch_fq(self.world.classes_at(self.A), c, node["method"])  # K5: D/m, as the define reads it
         binding = self.world.binding(fq, self.A)  # E_FORMULA_UNRESOLVED when not bound (H1)
         if desc["methods"].get(node["method"]) != binding[1]:
             # H1: a binding changed since define; the mesh's failure, in place of 15.8's E_FORMULA_METHOD

@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://datumesh.com/schemas/1/find-result.schema.json",
+  "title": "Datumesh find result (one entry of a find)",
+  "description": "SPEC.md 9.6 and 16.8, since the classes round (C2). One result of a mesh's find: its members are the mesh's, and only publisher, source and facets are checked here (publisher is the host of fn, checked by the procedure, E_DESCRIBE). Other members are the mesh's and are not constrained.",
+  "type": "object",
+  "properties": {
+    "fn": {
+      "$ref": "defs.schema.json#/$defs/functionName"
+    },
+    "publisher": {
+      "$ref": "defs.schema.json#/$defs/dnsName"
+    },
+    "source": {
+      "description": "A relayed function's source, as describe gives it (16.8).",
+      "type": "object"
+    },
+    "facets": {
+      "$ref": "defs.schema.json#/$defs/facets"
+    }
+  }
+}

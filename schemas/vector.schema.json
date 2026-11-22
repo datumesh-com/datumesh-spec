@@ -42,7 +42,8 @@
         "class",
         "normalisation",
         "key",
-        "describe"
+        "describe",
+        "find-result"
       ]
     },
     "description": {

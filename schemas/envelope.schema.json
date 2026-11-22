@@ -234,7 +234,7 @@
       ]
     },
     "resolved": {
-      "description": "spec-0.5.0 (16.7): what a short call resolved: the full canonical call, each resolution, the alias snapshot's instant.",
+      "description": "spec-0.5.0 (16.7): what a short call resolved: the full canonical call, each resolution, the alias snapshot's instant. Since the classes round: a chain resolution (K10); a literal default's to is its lexical value (K13).",
       "type": "object",
       "required": [
         "call",
@@ -269,20 +269,24 @@
               "kind": {
                 "enum": [
                   "alias",
+                  "chain",
                   "default",
                   "lookup",
                   "method"
                 ]
               },
               "asof": {
-                "description": "spec-0.5.0 (Q10 a): for a lookup only, the instant its lookup cell was read as of.",
+                "description": "spec-0.5.0 (Q10 a): for a lookup, the instant its lookup cell was read as of. Since the classes round (K10) a chain resolution has it too.",
                 "$ref": "defs.schema.json#/$defs/instant"
               }
             },
             "if": {
               "properties": {
                 "kind": {
-                  "const": "lookup"
+                  "enum": [
+                    "lookup",
+                    "chain"
+                  ]
                 }
               }
             },
