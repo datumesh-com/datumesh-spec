@@ -372,6 +372,45 @@ eval_vector("formula-eval/withdrawn-outside-range-not-candidate", "R1, 8.2: a wi
             f"count({DAILY}([2026-03-01..2026-03-03]))", "count", {}, [WD_DAY7], gf.LATER, hand="3")
 
 # ---------------------------------------------------------------------------
+# 10.1 step 7.5 (coordinator decision): with at least one input receipt, tx is at or after the latest input tx (a
+# withdrawal that left a slice member out counts for tx, 8.2, so tx may be later), and at or before the receipt's asof;
+# earlier than the latest input tx is E_TIME_ORDER.
+
+def computed_receipt_vector(id_, why, r, key, recompute, level="recomputed", error=None):
+    extra = {"keypair": gv.keypair_fields(key), "keys": gv.KEYENV, "recompute": recompute}
+    if error is None:
+        payload = canon.receipt_payload(r)
+        extra.update(canonical=payload.decode(), sha256=canon.sha256_hex(payload), sig=r["sig"], level=level)
+    add(id_, "receipt", why, text(r), error, **extra)
+
+
+CONVERT_RECOMPUTE = {"descriptor": gv.CONVERT, "inputs": {gv.H_FX: text(gv.R_FX)}, "value": N("108.92")}
+# gv.r_tx: tx 2024-03-16T08:00 is after its one input's tx (2024-03-15T16:00) and before its asof (03-16T09:00).
+computed_receipt_vector("receipt/computed-tx-after-latest-input", "A computed receipt whose tx (2024-03-16T08:00) is "
+                        "later than its latest input's tx (2024-03-15T16:00) and not after its asof: valid. A "
+                        "withdrawal the verifier cannot see may have raised tx (8.2), so 7.5 bounds tx below by the "
+                        "latest input's, it does not equate them.", gv.r_tx, "calc-2020", CONVERT_RECOMPUTE)
+R_TX_EARLY = gv.signed(gv.receipt(gv.convert_cell, "number", "108.92", "tx is earlier than the latest input tx.",
+                                  "calc-2020", inputs=[gv.H_FX], tx="2024-03-15T15:00:00.000000Z"), "calc-2020")
+computed_receipt_vector("invalid/receipt-computed-tx", "A computed cell's tx is not earlier than the latest tx among "
+                        "its inputs: here 2024-03-15T15:00 against the input's 2024-03-15T16:00 (E_TIME_ORDER). "
+                        "Rewritten in spec-0.7.0: it had tx later than the input's, which is now valid "
+                        "(receipt/computed-tx-after-latest-input); the result is unchanged.", R_TX_EARLY, "calc-2020",
+                        CONVERT_RECOMPUTE, error="E_TIME_ORDER")
+# A slice read: receipt/slice-range with a later tx (and asof), the engine's key. invalid/receipt-slice-tx (tx earlier
+# than a member's) stays as it is.
+_SR = json.loads((OUT / "receipt/slice-range.json").read_text())
+_r = {k: v for k, v in json.loads(_SR["input"]).items() if k != "sig"}
+_r["asof"] = _r["issued"] = _r["tx"] = "2026-03-20T18:00:00.000000Z"
+R_SLICE_LATE = canon.sign_receipt(_r, F.host_seed(F.ENGINE_HOST))
+add("receipt/slice-range-tx-after-members", "receipt", "A computed receipt over the bounded slice of receipt/slice-range "
+    "whose tx and asof (2026-03-20T18:00) are after every member's tx (the latest is 2026-03-05T18:00): valid, as when a "
+    "withdrawal that left a member out raised them (8.2). invalid/receipt-slice-tx is the other direction.",
+    text(R_SLICE_LATE), canonical=canon.receipt_payload(R_SLICE_LATE).decode(),
+    sha256=canon.receipt_hash(R_SLICE_LATE), sig=R_SLICE_LATE["sig"], level="recomputed",
+    keypair=_SR["keypair"], keys=_SR["keys"], recompute=_SR["recompute"])
+
+# ---------------------------------------------------------------------------
 # R3: whatif (5.9). A slice override `members` replaces the slice's whole member set, which may be empty.
 
 CONVERT_CELL = g60.CONVERT_CELL

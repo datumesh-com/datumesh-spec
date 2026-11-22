@@ -59,7 +59,7 @@ import unittest
 import jsonschema
 import referencing
 
-from helpers import ROOT, canon
+from helpers import ROOT, canon, ROUND_0_7_CHANGED
 
 sys.path.insert(0, str(ROOT / "tools"))
 import gen_vectors_0_6_2  # noqa: E402  (builds the vectors in memory)
@@ -207,6 +207,8 @@ class Migration062(unittest.TestCase):
     def test_every_file_is_byte_identical_and_still_passes(self):
         self.assertEqual(sum(p.startswith("vectors/") for p in self.old), 1711)
         for path, data in self.old.items():
+            if path in ROUND_0_7_CHANGED:  # spec-0.7.0: rewritten (step 7.5 bounds tx by the latest input's)
+                continue
             if path in K5_REWRITTEN:  # classes round (K5, breaking): rewritten on the classes-round branch
                 continue
             with self.subTest(path):

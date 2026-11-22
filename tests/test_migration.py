@@ -11,7 +11,7 @@ import hashlib
 import json
 import unittest
 
-from helpers import ROOT, canon
+from helpers import ROOT, ROUND_0_7_CHANGED_IDS, canon
 
 import gen_vectors  # noqa: E402  (tools/ is on the path through helpers)
 
@@ -37,9 +37,12 @@ class Migration(unittest.TestCase):
                 self.assertEqual(NEW[id_].get("error"), old.get("error"))
 
     def test_changed_vectors_are_exactly_the_noted_ones(self):
-        changed = {id_ for id_, old in OLD.items() if content(NEW[id_]) != old["content"]}
-        self.assertEqual(changed, set(gen_vectors.CHANGED_IDS))
+        # spec-0.7.0 rewrites invalid/receipt-computed-tx (same result): the one change after spec-0.2.0's
+        changed = {id_ for id_, old in OLD.items() if content(NEW[id_]) != old["content"]} - ROUND_0_7_CHANGED_IDS
+        self.assertEqual(changed, set(gen_vectors.CHANGED_IDS) - ROUND_0_7_CHANGED_IDS)
         for id_ in OLD:
+            if id_ in ROUND_0_7_CHANGED_IDS:
+                continue
             with self.subTest(id_):
                 self.assertEqual(NOTE in NEW[id_]["description"], id_ in changed)
         self.assertEqual(sum(NOTE in v["description"] for v in NEW.values()), len(changed))

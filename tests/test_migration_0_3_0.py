@@ -18,7 +18,7 @@ import shutil
 import subprocess
 import unittest
 
-from helpers import ROOT, canon
+from helpers import ROOT, canon, ROUND_0_7_CHANGED
 
 OLD_COMMIT = "710dabb"  # tagged spec-0.2.1
 
@@ -84,6 +84,8 @@ class Migration030(unittest.TestCase):
 
     def test_every_file_remains_byte_identical_unless_changed(self):
         for path, data in self.old.items():
+            if path in ROUND_0_7_CHANGED:  # spec-0.7.0: rewritten (step 7.5 bounds tx by the latest input's)
+                continue
             with self.subTest(path):
                 new = ROOT / path
                 self.assertTrue(new.exists(), "a spec-0.2.1 file was removed or moved")
@@ -113,6 +115,8 @@ class Migration030(unittest.TestCase):
     def test_no_receipt_hash_changed(self):
         compared = 0
         for path, data in self.old.items():
+            if path in ROUND_0_7_CHANGED:  # spec-0.7.0: rewritten (step 7.5 bounds tx by the latest input's)
+                continue
             if not path.startswith("vectors/"):
                 continue
             old_vec = json.loads(data)
@@ -127,7 +131,8 @@ class Migration030(unittest.TestCase):
                     self.assertEqual(new_vec["sha256"], old_vec["sha256"])
                 if "receipt_hash" in old_vec:
                     self.assertEqual(new_vec["receipt_hash"], old_vec["receipt_hash"])
-        self.assertEqual(compared, 88)  # receipts in the 339 spec-0.2.1 vectors that parse as objects
+        self.assertEqual(compared, 88 - 2)  # receipts in the 339 spec-0.2.1 vectors that parse as objects, but the 2 of
+        # invalid/receipt-computed-tx, rewritten in spec-0.7.0
 
 
 if __name__ == "__main__":

@@ -14,7 +14,7 @@ import shutil
 import subprocess
 import unittest
 
-from helpers import ROOT, canon
+from helpers import ROOT, canon, ROUND_0_7_CHANGED
 
 OLD_COMMIT = "fc870ab"  # tagged spec-0.4.2
 
@@ -39,6 +39,8 @@ class Migration043(unittest.TestCase):
 
     def test_every_file_is_byte_identical_and_still_passes(self):
         for path, data in self.old.items():
+            if path in ROUND_0_7_CHANGED:  # spec-0.7.0: rewritten (step 7.5 bounds tx by the latest input's)
+                continue
             with self.subTest(path):
                 new = ROOT / path
                 self.assertTrue(new.exists(), "a spec-0.4.2 file was removed or moved")

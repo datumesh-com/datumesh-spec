@@ -2,7 +2,8 @@
 """The 0.7 round (CONTRACT-round-0.7.md R1, R2, R3), the spec side, tests first.
 
 (a) every new vector is on disk as tools/gen_vectors_round_0_7.py builds it; the only existing vector files that
-    changed since the classes-round draft (fa98b69) are the two K8 vectors R1 replaces;
+    changed since the classes-round draft (fa98b69) are the two K8 vectors R1 replaces and invalid/receipt-computed-tx
+    (10.1 step 7.5 bounds tx below by the latest input's: its tx-later form is now receipt/computed-tx-after-latest-input);
 (b) the reference tools (tools/canon.py, tools/formula.py) reproduce every new vector (these fail until they are
     written; some "invalid" vectors already pass for the wrong reason, `E_SCHEMA` on the member the old tools do not
     know, and must keep passing for the right one);
@@ -44,7 +45,7 @@ import subprocess
 import sys
 import unittest
 
-from helpers import ROOT, canon
+from helpers import ROOT, ROUND_0_7_CHANGED, canon
 
 sys.path.insert(0, str(ROOT / "tools"))
 import gen_vectors_round_0_7 as G  # noqa: E402  (builds the vectors in memory)
@@ -55,6 +56,7 @@ NEW = {v["id"]: v for v in G.VECTORS}
 ALL = {v["id"]: v for v in canon.load_vectors()}
 BASE = "fa98b69"  # the classes-round draft: where the 0.7 round starts
 REPLACED = {"vectors/invalid/call-class-lookup-withdrawn.json", "vectors/invalid/call-class-lookup-withdrawn-cased.json"}
+CHANGED = REPLACED | ROUND_0_7_CHANGED  # + invalid/receipt-computed-tx (step 7.5: tx may be later than the inputs')
 
 
 def git(*args):
@@ -70,7 +72,7 @@ def run(vec):
 
 class VectorFiles(unittest.TestCase):
     def test_every_new_vector_is_on_disk_unchanged(self):
-        self.assertEqual(len(NEW), 76)
+        self.assertEqual(len(NEW), 79)
         for id_, vec in NEW.items():
             with self.subTest(id_):
                 self.assertIn(id_, ALL)
@@ -80,14 +82,14 @@ class VectorFiles(unittest.TestCase):
 
     @unittest.skipUnless(subprocess.run(["git", "-C", str(ROOT), "cat-file", "-e", BASE + "^{commit}"],
                                         capture_output=True).returncode == 0, "the base commit is not in this clone")
-    def test_only_the_two_k8_vectors_changed(self):
+    def test_only_these_existing_vectors_changed(self):
         names = git("ls-tree", "-r", "--name-only", BASE, "--", "vectors").decode().split("\n")
         changed = set()
         for n in (x for x in names if x.endswith(".json")):
             self.assertTrue((ROOT / n).exists(), f"{n} was removed or moved")
             if (ROOT / n).read_bytes() != git("show", f"{BASE}:{n}"):
                 changed.add(n)
-        self.assertEqual(changed, REPLACED)
+        self.assertEqual(changed, CHANGED)
 
     def test_the_k8_pair_now_expects_the_key_error(self):
         for n in REPLACED:
@@ -149,6 +151,23 @@ class AsofCandidate(unittest.TestCase):
 
     def test_a_withdrawal_after_the_asof_is_no_candidate(self):
         self.assertEqual(NEW["formula-eval/withdrawn-slice-before-asof"]["receipt_asof"], self.LATEST_MEMBER)
+
+
+class TxBound(unittest.TestCase):
+    """10.1 step 7.5 (coordinator decision): with an input receipt, tx is at or after the latest input's tx; earlier is
+    E_TIME_ORDER."""
+
+    def test_later_is_valid_earlier_is_not(self):
+        later = NEW["receipt/computed-tx-after-latest-input"]
+        r, h = json.loads(later["input"]), json.loads(later["recompute"]["inputs"][next(iter(later["recompute"]["inputs"]))])
+        self.assertGreater(r["tx"], h["tx"])
+        self.assertLessEqual(r["tx"], r["asof"])
+        self.assertTrue(later["valid"])
+        early = NEW["invalid/receipt-computed-tx"]
+        self.assertLess(json.loads(early["input"])["tx"], h["tx"])
+        self.assertEqual(early["error"], "E_TIME_ORDER")
+        self.assertTrue(NEW["receipt/slice-range-tx-after-members"]["valid"])
+        self.assertEqual(ALL["invalid/receipt-slice-tx"]["error"], "E_TIME_ORDER")  # unchanged: a member's tx is later
 
 
 class CaseHashes(unittest.TestCase):

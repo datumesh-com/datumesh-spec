@@ -12,7 +12,7 @@ import hashlib
 import json
 import unittest
 
-from helpers import ROOT
+from helpers import ROOT, ROUND_0_7_CHANGED
 from test_migration_0_3_0 import CHANGED as CHANGED_0_3_0
 
 # Outdated descriptions corrected in spec-0.2.1: the only bytes that changed.
@@ -27,7 +27,7 @@ class TextOnlyRevision(unittest.TestCase):
     def test_every_spec_0_2_0_vector_is_byte_identical(self):
         self.assertEqual(len(OLD), 319)
         for path, digest in OLD.items():
-            if path in DESCRIPTION_FIXED or path in CHANGED_0_3_0:
+            if path in DESCRIPTION_FIXED or path in CHANGED_0_3_0 or path in ROUND_0_7_CHANGED:
                 continue
             with self.subTest(path):
                 self.assertEqual(hashlib.sha256((ROOT / path).read_bytes()).hexdigest(), digest)

@@ -25,7 +25,7 @@ import sys
 import tempfile
 import unittest
 
-from helpers import ROOT, canon
+from helpers import ROOT, canon, ROUND_0_7_CHANGED
 from test_migration_0_3_0 import receipts_in
 
 OLD_COMMIT = "3bac3d4"  # tagged spec-0.3.0
@@ -103,6 +103,8 @@ class Migration040(unittest.TestCase):
 
     def test_every_file_is_byte_identical_and_still_passes(self):
         for path, data in self.old.items():
+            if path in ROUND_0_7_CHANGED:  # spec-0.7.0: rewritten (step 7.5 bounds tx by the latest input's)
+                continue
             with self.subTest(path):
                 new = ROOT / path
                 self.assertTrue(new.exists(), "a spec-0.3.0 file was removed or moved")
@@ -113,6 +115,8 @@ class Migration040(unittest.TestCase):
     def test_no_receipt_hash_changed(self):
         compared = 0
         for path, data in self.old.items():
+            if path in ROUND_0_7_CHANGED:  # spec-0.7.0: rewritten (step 7.5 bounds tx by the latest input's)
+                continue
             if not path.startswith("vectors/"):
                 continue
             vec = json.loads(data)

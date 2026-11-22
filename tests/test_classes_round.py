@@ -93,7 +93,7 @@ import unittest
 import jsonschema
 import referencing
 
-from helpers import ROOT, canon
+from helpers import ROOT, ROUND_0_7_CHANGED, canon
 
 sys.path.insert(0, str(ROOT / "tools"))
 import class_world as W  # noqa: E402
@@ -106,7 +106,7 @@ NEW = {v["id"]: v for v in G.VECTORS}
 ALL = {v["id"]: v for v in canon.load_vectors()}
 ON_DISK = {i: {k: x for k, x in ALL[i].items() if k != "_file"} for i in NEW if i in ALL}
 BASE = "39d6849"  # spec-0.6.2, untagged: where the classes-round branch starts
-REWRITTEN = {"vectors/formula/class-inherited.json", "vectors/formula/class-inherited-plain.json"}
+REWRITTEN = {"vectors/formula/class-inherited.json", "vectors/formula/class-inherited-plain.json"} | ROUND_0_7_CHANGED  # (the latter: spec-0.7.0, step 7.5)
 
 
 def git(*args):
