@@ -1,0 +1,51 @@
+{
+  "id": "call/default-literal-string",
+  "kind": "call",
+  "description": "classes-round: K13: a string default: currency is EUR when left out.",
+  "valid": true,
+  "input": "calc.example.net/price_in(\"tea\")",
+  "env": {
+    "aliases": {},
+    "functions": {
+      "calc.example.net/price_in": {
+        "code": {
+          "body": "",
+          "lang": "stored"
+        },
+        "inputs": [],
+        "signature": {
+          "args": {
+            "currency": {
+              "type": "string",
+              "valid": false,
+              "default": "EUR"
+            },
+            "item": {
+              "type": "string",
+              "valid": false
+            }
+          },
+          "order": [
+            "item",
+            "currency"
+          ],
+          "returns": {
+            "type": "number",
+            "unit": "1"
+          }
+        }
+      }
+    }
+  },
+  "uri": "cell://calc.example.net/price_in?currency=EUR&item=tea",
+  "resolved": {
+    "call": "calc.example.net/price_in(currency: \"EUR\", item: \"tea\")",
+    "resolutions": [
+      {
+        "from": "currency",
+        "kind": "default",
+        "to": "EUR"
+      }
+    ]
+  }
+}

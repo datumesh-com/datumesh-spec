@@ -1,0 +1,55 @@
+{
+  "id": "formula/default-literal-written",
+  "kind": "formula",
+  "description": "classes-round: K13: calc.example.net/subject_source(\"fx\", 1)  (rank written: the same AST as formula/default-literal-left-out)",
+  "valid": true,
+  "input": "calc.example.net/subject_source(\"fx\", 1)",
+  "env": {
+    "aliases": {},
+    "classes": {},
+    "functions": {
+      "calc.example.net/subject_source": {
+        "code": {
+          "body": "",
+          "lang": "stored"
+        },
+        "inputs": [],
+        "signature": {
+          "args": {
+            "rank": {
+              "type": "number",
+              "unit": "1",
+              "valid": false,
+              "default": "1"
+            },
+            "subject": {
+              "type": "string",
+              "valid": false
+            }
+          },
+          "order": [
+            "subject",
+            "rank"
+          ],
+          "returns": "string"
+        }
+      }
+    },
+    "name": "calc.example.net/e",
+    "signature": {
+      "args": {},
+      "order": [],
+      "returns": "string"
+    }
+  },
+  "ast": "{\"args\":{\"rank\":{\"node\":\"num\",\"value\":\"1\"},\"subject\":{\"node\":\"str\",\"value\":\"fx\"}},\"fn\":\"calc.example.net/subject_source\",\"node\":\"read\"}",
+  "ast_sha256": "4e56728f9010c05673cc59ed1b8636a65d2ac10c8ffcff354d1364db232d2754",
+  "body": "calc.example.net/subject_source(rank: 1, subject: \"fx\")\n",
+  "inputs": [
+    "calc.example.net/subject_source"
+  ],
+  "returns": {
+    "type": "string"
+  },
+  "asof_dependent": false
+}

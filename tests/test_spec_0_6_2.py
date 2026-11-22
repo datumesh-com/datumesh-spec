@@ -71,6 +71,7 @@ UNITS_FLAT = re.sub(r"\s+", " ", UNITS)
 NEW = {v["id"]: v for v in gen_vectors_0_6_2.VECTORS}
 ON_DISK = {v["id"]: {k: x for k, x in v.items() if k != "_file"} for v in canon.load_vectors() if v["id"] in NEW}
 OLD_COMMIT = "42979b5"  # tagged spec-0.6.1
+K5_REWRITTEN = {"vectors/formula/class-inherited.json", "vectors/formula/class-inherited-plain.json"}
 
 
 def git(*args):
@@ -206,6 +207,8 @@ class Migration062(unittest.TestCase):
     def test_every_file_is_byte_identical_and_still_passes(self):
         self.assertEqual(sum(p.startswith("vectors/") for p in self.old), 1711)
         for path, data in self.old.items():
+            if path in K5_REWRITTEN:  # classes round (K5, breaking): rewritten on the classes-round branch
+                continue
             with self.subTest(path):
                 new = ROOT / path
                 self.assertTrue(new.exists(), "a spec-0.6.1 file was removed or moved")
@@ -216,7 +219,8 @@ class Migration062(unittest.TestCase):
     def test_the_new_files_are_all_the_generator_wrote(self):
         now = {str(p.relative_to(ROOT)) for p in (ROOT / "vectors").rglob("*.json")}
         added = now - set(self.old)
-        self.assertEqual(added, {f"vectors/{i}.json" for i in NEW})
+        # (the classes round and later revisions add files of their own: only that these are all there)
+        self.assertLessEqual({f"vectors/{i}.json" for i in NEW}, added)
 
 
 class ReferenceTools(unittest.TestCase):

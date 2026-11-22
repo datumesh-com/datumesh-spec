@@ -1,0 +1,9 @@
+{
+  "id": "function/default-literal-string",
+  "kind": "function",
+  "description": "classes-round: K13: a string argument with \"default\": \"main\"; the default is part of the descriptor, so it is hashed (7).",
+  "valid": true,
+  "input": "{\n  \"signature\": {\n    \"returns\": \"string\",\n    \"order\": [\n      \"subject\",\n      \"kind\"\n    ],\n    \"args\": {\n      \"subject\": {\n        \"valid\": false,\n        \"type\": \"string\"\n      },\n      \"kind\": {\n        \"default\": \"main\",\n        \"valid\": false,\n        \"type\": \"string\"\n      }\n    }\n  },\n  \"inputs\": [],\n  \"code\": {\n    \"lang\": \"stored\",\n    \"body\": \"\"\n  }\n}",
+  "canonical": "{\"code\":{\"body\":\"\",\"lang\":\"stored\"},\"inputs\":[],\"signature\":{\"args\":{\"kind\":{\"default\":\"main\",\"type\":\"string\",\"valid\":false},\"subject\":{\"type\":\"string\",\"valid\":false}},\"order\":[\"subject\",\"kind\"],\"returns\":\"string\"}}",
+  "sha256": "77575d6379c49481ec759d06fbd200b5642858edf4a1d3ee76593671409beb2a"
+}

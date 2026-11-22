@@ -31,6 +31,7 @@ FLAT = re.sub(r"\s+", " ", SPEC)
 NEW = {v["id"]: v for v in generate_061.VECTORS}
 ON_DISK = {v["id"]: {k: x for k, x in v.items() if k != "_file"} for v in canon.load_vectors() if v["id"] in NEW}
 OLD_COMMIT = "941d9b5"  # tagged spec-0.6.0
+K5_REWRITTEN = {"vectors/formula/class-inherited.json", "vectors/formula/class-inherited-plain.json"}
 
 
 def git(*args):
@@ -91,6 +92,8 @@ class Migration061(unittest.TestCase):
     def test_every_file_is_byte_identical_and_still_passes(self):
         self.assertEqual(sum(p.startswith("vectors/") for p in self.old), 1569)
         for path, data in self.old.items():
+            if path in K5_REWRITTEN:  # classes round (K5, breaking): rewritten on the classes-round branch
+                continue
             with self.subTest(path):
                 new = ROOT / path
                 self.assertTrue(new.exists(), "a spec-0.6.0 file was removed or moved")

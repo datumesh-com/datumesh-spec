@@ -1,0 +1,9 @@
+{
+  "id": "invalid/normalisation-label-fold-sharp-s",
+  "kind": "normalisation",
+  "description": "classes-round: label_fold: default case folding turns ß into ss, so the value is not its folding (16.4, K8).",
+  "valid": false,
+  "rule": "label_fold",
+  "text": "straße",
+  "error": "E_KEY_NORMALISATION"
+}

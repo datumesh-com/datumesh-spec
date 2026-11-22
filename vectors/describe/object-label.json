@@ -1,0 +1,30 @@
+{
+  "id": "describe/object-label",
+  "kind": "describe",
+  "description": "classes-round: K8: describe of N[label] (here shop.example.org/product[Apple], folded to apple): the answer is the object's own, with resolved saying the lookup was made (16.8, 16.7).",
+  "valid": true,
+  "input": "{\n  \"resolved\": {\n    \"resolutions\": [\n      {\n        \"to\": \"shop.example.org/product(sku:\\\"A1\\\")\",\n        \"kind\": \"lookup\",\n        \"from\": \"Apple\",\n        \"asof\": \"2026-06-01T00:00:00.000000Z\"\n      }\n    ],\n    \"call\": \"shop.example.org/product(sku: \\\"A1\\\")\"\n  },\n  \"short_id\": \"447b6484ff12\",\n  \"object_id\": \"447b6484ff127a1d702fa733f84efbf31ded8d699ff7b8d05a4d816c9bc49af8\",\n  \"object\": {\n    \"keys\": {\n      \"sku\": {\n        \"value\": \"A1\",\n        \"type\": \"string\"\n      }\n    },\n    \"class_hash\": \"0fd5e5bddc47030202ff57a4977e96aacbe5864f11a5843dabfce5b2072eece6\",\n    \"class\": \"shop.example.org/product\"\n  },\n  \"methods\": [\n    \"from_label\",\n    \"price\",\n    \"successor\"\n  ],\n  \"kind\": \"object\",\n  \"call\": \"shop.example.org/product(sku: \\\"A1\\\")\"\n}",
+  "classes": {
+    "shop.example.org/product": {
+      "keys": {
+        "sku": {
+          "key_normalisation": "upper_ascii",
+          "type": "string"
+        }
+      },
+      "lookup": "from_label",
+      "methods": {
+        "from_label": "4118e7413b457a190fa22de7eb3c1b6f03df802da4318341a20ebbd4c31d77e3",
+        "price": "598d7809541663ed82a1cebc3ca4d9b8043bd8adfb3c21b1f6332c15f989f522",
+        "successor": "31f98633d16267022cd124c977eadc559da16697e9c626f9d4046e51167144e5"
+      },
+      "order": [
+        "sku"
+      ],
+      "steward": {
+        "namespace": "shop.example.org",
+        "process": "https://shop.example.org/classes/change"
+      }
+    }
+  }
+}

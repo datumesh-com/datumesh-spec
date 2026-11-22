@@ -1,0 +1,66 @@
+{
+  "id": "formula/default-literal-own-argument",
+  "kind": "formula",
+  "description": "classes-round: K13: a body of a function whose argument has a literal default defines: the default is the signature's, the body reads rank as any argument.",
+  "valid": true,
+  "input": "rank + 1",
+  "env": {
+    "aliases": {},
+    "classes": {},
+    "functions": {
+      "calc.example.net/subject_source": {
+        "code": {
+          "body": "",
+          "lang": "stored"
+        },
+        "inputs": [],
+        "signature": {
+          "args": {
+            "rank": {
+              "type": "number",
+              "unit": "1",
+              "valid": false,
+              "default": "1"
+            },
+            "subject": {
+              "type": "string",
+              "valid": false
+            }
+          },
+          "order": [
+            "subject",
+            "rank"
+          ],
+          "returns": "string"
+        }
+      }
+    },
+    "name": "calc.example.net/e",
+    "signature": {
+      "args": {
+        "rank": {
+          "type": "number",
+          "unit": "1",
+          "valid": false,
+          "default": "1"
+        }
+      },
+      "order": [
+        "rank"
+      ],
+      "returns": {
+        "type": "number",
+        "unit": "1"
+      }
+    }
+  },
+  "ast": "{\"args\":[{\"name\":\"rank\",\"node\":\"var\"},{\"node\":\"num\",\"value\":\"1\"}],\"node\":\"op\",\"op\":\"+\"}",
+  "ast_sha256": "27ac38fa1cad98ca2173df47182ad30176d4281f8fba42d2c10da65eae3fdc85",
+  "body": "rank + 1\n",
+  "inputs": [],
+  "returns": {
+    "type": "number",
+    "unit": "1"
+  },
+  "asof_dependent": false
+}

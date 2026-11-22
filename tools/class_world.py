@@ -247,8 +247,9 @@ EQUIVALENT = [
     ("class-typed-keys", f'{CCY_PAIR}({CURRENCY}(EUR), {CURRENCY}(USD)).rate(2026-03-16)',
      f'{CCY_PAIR}/rate(base: "{CURRENCY}(code:""EUR"")", quote: "{CURRENCY}(code:""USD"")", date: 2026-03-16)',
      {"type": "number", "unit": "1"}, {}),
-    ("inherited", f'{NDF}(EUR, USD, "F1").cross("GBP", 2026-03-16)',
-     f'{NDF}/cross(base: "EUR", quote: "USD", via: "GBP", date: 2026-03-16)', RATE_RET, {}),
+    # ("inherited", ...) is not here since the classes round (K5): an inherited method reads the cell of the class that
+    # defines it, so the call form and the plain read under the subclass's name are no longer the same read (see
+    # tools/gen_vectors_classes_round.py: formula/class-inherited and formula/class-inherited-plain).
     ("extension", f'{FX}(EUR, USD).calc.example.net/fx_extra/carry(2026-03-16)',
      'calc.example.net/fx_extra/carry(base: "EUR", quote: "USD", date: 2026-03-16)', {"type": "number", "unit": "1"}, {}),
     ("default-asof", 'rates.example.org/fx_rate(EUR, GBP)',

@@ -1,0 +1,61 @@
+{
+  "id": "formula/default-literal-string",
+  "kind": "formula",
+  "description": "classes-round: K13: calc.example.net/price_in(\"tea\")  (a string default: the literal \"EUR\" is in the AST)",
+  "valid": true,
+  "input": "calc.example.net/price_in(\"tea\")",
+  "env": {
+    "aliases": {},
+    "classes": {},
+    "functions": {
+      "calc.example.net/price_in": {
+        "code": {
+          "body": "",
+          "lang": "stored"
+        },
+        "inputs": [],
+        "signature": {
+          "args": {
+            "currency": {
+              "type": "string",
+              "valid": false,
+              "default": "EUR"
+            },
+            "item": {
+              "type": "string",
+              "valid": false
+            }
+          },
+          "order": [
+            "item",
+            "currency"
+          ],
+          "returns": {
+            "type": "number",
+            "unit": "1"
+          }
+        }
+      }
+    },
+    "name": "calc.example.net/e",
+    "signature": {
+      "args": {},
+      "order": [],
+      "returns": {
+        "type": "number",
+        "unit": "1"
+      }
+    }
+  },
+  "ast": "{\"args\":{\"currency\":{\"node\":\"str\",\"value\":\"EUR\"},\"item\":{\"node\":\"str\",\"value\":\"tea\"}},\"fn\":\"calc.example.net/price_in\",\"node\":\"read\"}",
+  "ast_sha256": "b680c95df5979b9e4a180fcc97dd25a70ab243fe5929c904e3626a7be5889088",
+  "body": "calc.example.net/price_in(currency: \"EUR\", item: \"tea\")\n",
+  "inputs": [
+    "calc.example.net/price_in"
+  ],
+  "returns": {
+    "type": "number",
+    "unit": "1"
+  },
+  "asof_dependent": false
+}

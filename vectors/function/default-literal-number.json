@@ -1,0 +1,9 @@
+{
+  "id": "function/default-literal-number",
+  "kind": "function",
+  "description": "classes-round: K13: a number argument with unit 1 and \"default\": \"1\"; the default is part of the descriptor, so it is hashed (7).",
+  "valid": true,
+  "input": "{\n  \"signature\": {\n    \"returns\": \"string\",\n    \"order\": [\n      \"subject\",\n      \"rank\"\n    ],\n    \"args\": {\n      \"subject\": {\n        \"valid\": false,\n        \"type\": \"string\"\n      },\n      \"rank\": {\n        \"default\": \"1\",\n        \"valid\": false,\n        \"unit\": \"1\",\n        \"type\": \"number\"\n      }\n    }\n  },\n  \"inputs\": [],\n  \"code\": {\n    \"lang\": \"stored\",\n    \"body\": \"\"\n  }\n}",
+  "canonical": "{\"code\":{\"body\":\"\",\"lang\":\"stored\"},\"inputs\":[],\"signature\":{\"args\":{\"rank\":{\"default\":\"1\",\"type\":\"number\",\"unit\":\"1\",\"valid\":false},\"subject\":{\"type\":\"string\",\"valid\":false}},\"order\":[\"subject\",\"rank\"],\"returns\":\"string\"}}",
+  "sha256": "7bb53003da435380bc435d6c8bbdded6f94c69172f5bd8ebff4d3cf8b00f9a8f"
+}

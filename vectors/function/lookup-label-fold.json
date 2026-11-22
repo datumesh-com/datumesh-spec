@@ -1,0 +1,9 @@
+{
+  "id": "function/lookup-label-fold",
+  "kind": "function",
+  "description": "classes-round: A lookup method's label argument carries key_normalisation label_fold (7, 16.1, 16.4): a rule of 16.4 like the others, for the label of a lookup.",
+  "valid": true,
+  "input": "{\n  \"signature\": {\n    \"returns\": {\n      \"classes\": [\n        \"shop.example.org/product\"\n      ],\n      \"type\": \"string\"\n    },\n    \"order\": [\n      \"label\"\n    ],\n    \"args\": {\n      \"label\": {\n        \"key_normalisation\": \"label_fold\",\n        \"valid\": false,\n        \"type\": \"string\"\n      }\n    }\n  },\n  \"inputs\": [],\n  \"code\": {\n    \"lang\": \"stored\",\n    \"body\": \"\"\n  }\n}",
+  "canonical": "{\"code\":{\"body\":\"\",\"lang\":\"stored\"},\"inputs\":[],\"signature\":{\"args\":{\"label\":{\"key_normalisation\":\"label_fold\",\"type\":\"string\",\"valid\":false}},\"order\":[\"label\"],\"returns\":{\"classes\":[\"shop.example.org/product\"],\"type\":\"string\"}}}",
+  "sha256": "4118e7413b457a190fa22de7eb3c1b6f03df802da4318341a20ebbd4c31d77e3"
+}

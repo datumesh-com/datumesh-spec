@@ -1,0 +1,8 @@
+{
+  "id": "invalid/describe-catalog-duplicate-domain",
+  "kind": "describe",
+  "description": "classes-round: C7: a domain once (16.8).",
+  "valid": false,
+  "input": "{\n  \"rule\": \"https://mesh.example.org/catalog/rule\",\n  \"kind\": \"catalog\",\n  \"host\": \"mesh.example.org\",\n  \"domains\": [\n    {\n      \"top\": [\n        {\n          \"subject\": \"mesh.example.org/catalog/subject(domain:\\\"earth\\\",measure:\\\"rainfall\\\",region:\\\"world\\\",thing:\\\"region\\\")\",\n          \"source\": \"mesh.example.org/earth/monthly_rainfall\",\n          \"label\": \"rainfall region world\"\n        }\n      ],\n      \"subjects\": 1,\n      \"names\": 1,\n      \"label\": \"Earth\",\n      \"domain\": \"earth\"\n    },\n    {\n      \"top\": [\n        {\n          \"subject\": \"mesh.example.org/catalog/subject(domain:\\\"earth\\\",measure:\\\"rainfall\\\",region:\\\"world\\\",thing:\\\"region\\\")\",\n          \"source\": \"mesh.example.org/earth/monthly_rainfall\",\n          \"label\": \"rainfall region world\"\n        }\n      ],\n      \"subjects\": 1,\n      \"names\": 1,\n      \"label\": \"Earth\",\n      \"domain\": \"earth\"\n    }\n  ]\n}",
+  "error": "E_DESCRIBE"
+}

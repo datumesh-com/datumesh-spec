@@ -1,0 +1,7 @@
+{
+  "id": "describe/catalog-no-domains",
+  "kind": "describe",
+  "description": "classes-round: C7: a mesh with no catalogue entries yet: no domains (16.8).",
+  "valid": true,
+  "input": "{\n  \"rule\": \"https://mesh.example.org/catalog/rule\",\n  \"kind\": \"catalog\",\n  \"host\": \"mesh.example.org\",\n  \"domains\": []\n}"
+}

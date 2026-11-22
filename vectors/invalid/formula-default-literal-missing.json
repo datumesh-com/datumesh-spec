@@ -1,0 +1,46 @@
+{
+  "id": "invalid/formula-default-literal-missing",
+  "kind": "formula",
+  "description": "classes-round: K13: an argument with no default left out is still E_FORMULA_ARG_MISSING (here subject).",
+  "valid": false,
+  "input": "calc.example.net/subject_source(rank: 2)",
+  "env": {
+    "aliases": {},
+    "classes": {},
+    "functions": {
+      "calc.example.net/subject_source": {
+        "code": {
+          "body": "",
+          "lang": "stored"
+        },
+        "inputs": [],
+        "signature": {
+          "args": {
+            "rank": {
+              "type": "number",
+              "unit": "1",
+              "valid": false,
+              "default": "1"
+            },
+            "subject": {
+              "type": "string",
+              "valid": false
+            }
+          },
+          "order": [
+            "subject",
+            "rank"
+          ],
+          "returns": "string"
+        }
+      }
+    },
+    "name": "calc.example.net/e",
+    "signature": {
+      "args": {},
+      "order": [],
+      "returns": "string"
+    }
+  },
+  "error": "E_FORMULA_ARG_MISSING"
+}

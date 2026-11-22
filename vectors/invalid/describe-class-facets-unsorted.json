@@ -1,0 +1,94 @@
+{
+  "id": "invalid/describe-class-facets-unsorted",
+  "kind": "describe",
+  "description": "classes-round: C2: a list is ascending, in a class answer (16.8, 9.6).",
+  "valid": false,
+  "input": "{\n  \"facets\": {\n    \"region\": [\n      \"gb\",\n      \"ea\"\n    ]\n  },\n  \"methods\": {\n    \"spot\": {\n      \"returns\": {\n        \"unit\": {\n          \"per\": {\n            \"arg\": \"base\"\n          },\n          \"of\": {\n            \"arg\": \"quote\"\n          }\n        },\n        \"type\": \"number\"\n      },\n      \"fn_hash\": \"caf5b15becf80d7869d292e1d93a106f337d864742f570a3cfe1ca9c7f446b15\",\n      \"fn\": \"rates.example.org/fx_pair/spot\",\n      \"args\": {\n        \"date\": {\n          \"valid\": true,\n          \"type\": \"date\"\n        }\n      }\n    },\n    \"rate\": {\n      \"description\": \"The reference rate: units of quote per unit of base.\",\n      \"returns\": {\n        \"unit\": {\n          \"per\": {\n            \"arg\": \"base\"\n          },\n          \"of\": {\n            \"arg\": \"quote\"\n          }\n        },\n        \"type\": \"number\"\n      },\n      \"fn_hash\": \"530bf86365ff4afb5a70196542d45f293fad5909026e015eddcfd866290f85b8\",\n      \"fn\": \"rates.example.org/fx_pair/rate\",\n      \"args\": {\n        \"date\": {\n          \"valid\": true,\n          \"type\": \"date\"\n        }\n      }\n    },\n    \"named\": {\n      \"returns\": {\n        \"classes\": [\n          \"rates.example.org/fx_pair\"\n        ],\n        \"type\": \"string\"\n      },\n      \"fn_hash\": \"6dc1e80f305027d110b5160cf1090e2643c519f0a95840dbebc7fe910453a9ff\",\n      \"fn\": \"rates.example.org/fx_pair/named\",\n      \"args\": {\n        \"label\": {\n          \"valid\": false,\n          \"type\": \"string\"\n        }\n      }\n    },\n    \"forward\": {\n      \"returns\": {\n        \"unit\": {\n          \"per\": {\n            \"arg\": \"base\"\n          },\n          \"of\": {\n            \"arg\": \"quote\"\n          }\n        },\n        \"type\": \"number\"\n      },\n      \"fn_hash\": \"ec8b8bc5fa0e8df03b469926444fecb83648357a2f8d671b97be1d127d871562\",\n      \"fn\": \"rates.example.org/fx_pair/forward\",\n      \"args\": {\n        \"tenor\": {\n          \"valid\": false,\n          \"type\": \"string\"\n        },\n        \"date\": {\n          \"valid\": true,\n          \"type\": \"date\"\n        }\n      }\n    },\n    \"cross\": {\n      \"returns\": {\n        \"unit\": {\n          \"per\": {\n            \"arg\": \"base\"\n          },\n          \"of\": {\n            \"arg\": \"quote\"\n          }\n        },\n        \"type\": \"number\"\n      },\n      \"fn_hash\": \"9979eda4fbd1644dae480ae76d5514bb3c96e7645e887400adf1cc182bb0c911\",\n      \"fn\": \"rates.example.org/fx_pair/cross\",\n      \"args\": {\n        \"via\": {\n          \"valid\": false,\n          \"type\": \"string\"\n        },\n        \"date\": {\n          \"valid\": true,\n          \"type\": \"date\"\n        }\n      }\n    }\n  },\n  \"kind\": \"class\",\n  \"descriptor\": {\n    \"lookup\": \"named\",\n    \"steward\": {\n      \"process\": \"https://rates.example.org/classes/change\",\n      \"namespace\": \"rates.example.org\"\n    },\n    \"order\": [\n      \"base\",\n      \"quote\"\n    ],\n    \"methods\": {\n      \"spot\": \"caf5b15becf80d7869d292e1d93a106f337d864742f570a3cfe1ca9c7f446b15\",\n      \"rate\": \"530bf86365ff4afb5a70196542d45f293fad5909026e015eddcfd866290f85b8\",\n      \"named\": \"6dc1e80f305027d110b5160cf1090e2643c519f0a95840dbebc7fe910453a9ff\",\n      \"forward\": \"ec8b8bc5fa0e8df03b469926444fecb83648357a2f8d671b97be1d127d871562\",\n      \"cross\": \"9979eda4fbd1644dae480ae76d5514bb3c96e7645e887400adf1cc182bb0c911\"\n    },\n    \"keys\": {\n      \"quote\": {\n        \"type\": \"string\",\n        \"key_normalisation\": \"upper_ascii\"\n      },\n      \"base\": {\n        \"type\": \"string\",\n        \"key_normalisation\": \"upper_ascii\"\n      }\n    }\n  },\n  \"class_hash\": \"eadf96ccaeedb0a0c7fd5d1e287f526d00928956f4b69354ae69c46352bbfa86\",\n  \"class\": \"rates.example.org/fx_pair\"\n}",
+  "classes": {
+    "rates.example.org/fx_pair": {
+      "keys": {
+        "base": {
+          "key_normalisation": "upper_ascii",
+          "type": "string"
+        },
+        "quote": {
+          "key_normalisation": "upper_ascii",
+          "type": "string"
+        }
+      },
+      "methods": {
+        "cross": "9979eda4fbd1644dae480ae76d5514bb3c96e7645e887400adf1cc182bb0c911",
+        "forward": "ec8b8bc5fa0e8df03b469926444fecb83648357a2f8d671b97be1d127d871562",
+        "named": "6dc1e80f305027d110b5160cf1090e2643c519f0a95840dbebc7fe910453a9ff",
+        "rate": "530bf86365ff4afb5a70196542d45f293fad5909026e015eddcfd866290f85b8",
+        "spot": "caf5b15becf80d7869d292e1d93a106f337d864742f570a3cfe1ca9c7f446b15"
+      },
+      "order": [
+        "base",
+        "quote"
+      ],
+      "steward": {
+        "namespace": "rates.example.org",
+        "process": "https://rates.example.org/classes/change"
+      },
+      "lookup": "named"
+    },
+    "scripture.example.org/verse": {
+      "keys": {
+        "book": {
+          "key_normalisation": "none",
+          "type": "string"
+        },
+        "chapter": {
+          "type": "number",
+          "unit": "1"
+        },
+        "corpus": {
+          "key_normalisation": "none",
+          "type": "string"
+        },
+        "verse": {
+          "type": "number",
+          "unit": "1"
+        }
+      },
+      "methods": {
+        "next": "b1ac6b5277d7f60634d52ffe86e028881fb58867563a5aeabc4db14eb7ddb277",
+        "text": "69deb6c63ff08317dad3c81fcc4b1081225a0c884ae0112b0b919c371f9b5801",
+        "consonantal": "e282ef070dd110da1146e5ce83264596b424c67c069c1239c651b3d280a1bc4e"
+      },
+      "order": [
+        "corpus",
+        "book",
+        "chapter",
+        "verse"
+      ],
+      "steward": {
+        "namespace": "scripture.example.org",
+        "process": "https://scripture.example.org/classes/change"
+      }
+    },
+    "rates.example.org/ccy_pair": {
+      "keys": {
+        "base": {
+          "class": "iso.example.org/currency"
+        },
+        "quote": {
+          "class": "iso.example.org/currency"
+        }
+      },
+      "methods": {
+        "rate": "b17e3073c533d9f1adc77cd89a580e4db5f5a0fe8290821812893b17adab7061"
+      },
+      "order": [
+        "base",
+        "quote"
+      ],
+      "steward": {
+        "namespace": "rates.example.org",
+        "process": "https://rates.example.org/classes/change"
+      }
+    }
+  },
+  "error": "E_DESCRIBE"
+}

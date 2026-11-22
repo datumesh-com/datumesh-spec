@@ -1,0 +1,38 @@
+{
+  "id": "invalid/describe-object-extensions-publisher",
+  "kind": "describe",
+  "description": "classes-round: K9: publisher is the host of fn, as everywhere (D108) (16.8).",
+  "valid": false,
+  "input": "{\n  \"extensions\": [\n    {\n      \"publisher\": \"rates.example.org\",\n      \"fn_hash\": \"7399c8806ecec1293663d9c319c1b5eff93bbea9d552442eb1ffb07731bf5b28\",\n      \"fn\": \"calc.example.net/fx_extra/carry\"\n    }\n  ],\n  \"short_id\": \"7fadb42e8e85\",\n  \"object_id\": \"7fadb42e8e857b780de50b4f401a234a23ee20c37417a556ab1786eea6ca5d64\",\n  \"object\": {\n    \"keys\": {\n      \"quote\": {\n        \"value\": \"USD\",\n        \"type\": \"string\"\n      },\n      \"base\": {\n        \"value\": \"EUR\",\n        \"type\": \"string\"\n      }\n    },\n    \"class_hash\": \"eadf96ccaeedb0a0c7fd5d1e287f526d00928956f4b69354ae69c46352bbfa86\",\n    \"class\": \"rates.example.org/fx_pair\"\n  },\n  \"methods\": [\n    \"cross\",\n    \"forward\",\n    \"named\",\n    \"rate\",\n    \"spot\"\n  ],\n  \"kind\": \"object\",\n  \"call\": \"rates.example.org/fx_pair(base: \\\"EUR\\\", quote: \\\"USD\\\")\"\n}",
+  "classes": {
+    "rates.example.org/fx_pair": {
+      "keys": {
+        "base": {
+          "key_normalisation": "upper_ascii",
+          "type": "string"
+        },
+        "quote": {
+          "key_normalisation": "upper_ascii",
+          "type": "string"
+        }
+      },
+      "methods": {
+        "cross": "9979eda4fbd1644dae480ae76d5514bb3c96e7645e887400adf1cc182bb0c911",
+        "forward": "ec8b8bc5fa0e8df03b469926444fecb83648357a2f8d671b97be1d127d871562",
+        "named": "6dc1e80f305027d110b5160cf1090e2643c519f0a95840dbebc7fe910453a9ff",
+        "rate": "530bf86365ff4afb5a70196542d45f293fad5909026e015eddcfd866290f85b8",
+        "spot": "caf5b15becf80d7869d292e1d93a106f337d864742f570a3cfe1ca9c7f446b15"
+      },
+      "order": [
+        "base",
+        "quote"
+      ],
+      "steward": {
+        "namespace": "rates.example.org",
+        "process": "https://rates.example.org/classes/change"
+      },
+      "lookup": "named"
+    }
+  },
+  "error": "E_DESCRIBE"
+}

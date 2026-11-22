@@ -1,0 +1,9 @@
+{
+  "id": "function/default-literal-number-unit",
+  "kind": "function",
+  "description": "classes-round: K13: a number with a currency unit and \"default\": \"-1.5\": a lexical value of the number type (3.1); the default is part of the descriptor, so it is hashed (7).",
+  "valid": true,
+  "input": "{\n  \"signature\": {\n    \"returns\": \"string\",\n    \"order\": [\n      \"subject\",\n      \"amount\"\n    ],\n    \"args\": {\n      \"subject\": {\n        \"valid\": false,\n        \"type\": \"string\"\n      },\n      \"amount\": {\n        \"default\": \"-1.5\",\n        \"valid\": false,\n        \"unit\": \"USD\",\n        \"type\": \"number\"\n      }\n    }\n  },\n  \"inputs\": [],\n  \"code\": {\n    \"lang\": \"stored\",\n    \"body\": \"\"\n  }\n}",
+  "canonical": "{\"code\":{\"body\":\"\",\"lang\":\"stored\"},\"inputs\":[],\"signature\":{\"args\":{\"amount\":{\"default\":\"-1.5\",\"type\":\"number\",\"unit\":\"USD\",\"valid\":false},\"subject\":{\"type\":\"string\",\"valid\":false}},\"order\":[\"subject\",\"amount\"],\"returns\":\"string\"}}",
+  "sha256": "004a1535e582d301a6ba82f32ae1bbd1145b322e08bbaa09fe9f0a051a71b35b"
+}

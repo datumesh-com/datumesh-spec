@@ -1,7 +1,7 @@
 {
   "id": "formula/class-inherited",
   "kind": "formula",
-  "description": "spec-0.5.0: calc.example.net/fx_ndf(EUR, USD, \"F1\").cross(\"GBP\", 2026-03-16)  (a method call: the same AST as the plain read formula/class-inherited-plain)",
+  "description": "classes-round: spec-0.5.0, rewritten for the classes round (K5): calc.example.net/fx_ndf(EUR, USD, \"F1\").cross(\"GBP\", 2026-03-16)  (a method call of an inherited computed method: it reads rates.example.org/fx_pair/cross, the cell of the class that defines cross; under spec-0.6.2 it read calc.example.net/fx_ndf/cross)",
   "valid": true,
   "input": "calc.example.net/fx_ndf(EUR, USD, \"F1\").cross(\"GBP\", 2026-03-16)",
   "env": {
@@ -171,6 +171,101 @@
           "fixing"
         ],
         "parent": "eadf96ccaeedb0a0c7fd5d1e287f526d00928956f4b69354ae69c46352bbfa86",
+        "steward": {
+          "namespace": "calc.example.net",
+          "process": "https://calc.example.net/classes/change"
+        }
+      },
+      "calc.example.net/fx_cash": {
+        "keys": {
+          "base": {
+            "key_normalisation": "upper_ascii",
+            "type": "string"
+          },
+          "quote": {
+            "key_normalisation": "upper_ascii",
+            "type": "string"
+          },
+          "venue": {
+            "key_normalisation": "none",
+            "type": "string"
+          }
+        },
+        "methods": {
+          "cross": "9979eda4fbd1644dae480ae76d5514bb3c96e7645e887400adf1cc182bb0c911",
+          "forward": "ec8b8bc5fa0e8df03b469926444fecb83648357a2f8d671b97be1d127d871562",
+          "named": "6dc1e80f305027d110b5160cf1090e2643c519f0a95840dbebc7fe910453a9ff",
+          "rate": "530bf86365ff4afb5a70196542d45f293fad5909026e015eddcfd866290f85b8",
+          "spot": "caf5b15becf80d7869d292e1d93a106f337d864742f570a3cfe1ca9c7f446b15"
+        },
+        "order": [
+          "base",
+          "quote",
+          "venue"
+        ],
+        "parent": "eadf96ccaeedb0a0c7fd5d1e287f526d00928956f4b69354ae69c46352bbfa86",
+        "steward": {
+          "namespace": "calc.example.net",
+          "process": "https://calc.example.net/classes/change"
+        }
+      },
+      "calc.example.net/fx_ndf_term": {
+        "keys": {
+          "base": {
+            "key_normalisation": "upper_ascii",
+            "type": "string"
+          },
+          "quote": {
+            "key_normalisation": "upper_ascii",
+            "type": "string"
+          },
+          "fixing": {
+            "key_normalisation": "none",
+            "type": "string"
+          },
+          "tenor": {
+            "key_normalisation": "none",
+            "type": "string"
+          }
+        },
+        "methods": {
+          "cross": "9979eda4fbd1644dae480ae76d5514bb3c96e7645e887400adf1cc182bb0c911",
+          "forward": "ec8b8bc5fa0e8df03b469926444fecb83648357a2f8d671b97be1d127d871562",
+          "named": "6dc1e80f305027d110b5160cf1090e2643c519f0a95840dbebc7fe910453a9ff",
+          "rate": "149f905063660748b8395f4c79e303e552114bd0fa31af5507140473ba3a5764",
+          "spot": "caf5b15becf80d7869d292e1d93a106f337d864742f570a3cfe1ca9c7f446b15"
+        },
+        "order": [
+          "base",
+          "quote",
+          "fixing",
+          "tenor"
+        ],
+        "parent": "9157c9d621296955e55f83009b1beeec6a448a1f0b470b608c20469b272906dd",
+        "steward": {
+          "namespace": "calc.example.net",
+          "process": "https://calc.example.net/classes/change"
+        }
+      },
+      "calc.example.net/green_bond": {
+        "keys": {
+          "isin": {
+            "key_normalisation": "upper_ascii",
+            "type": "string"
+          },
+          "grade": {
+            "key_normalisation": "none",
+            "type": "string"
+          }
+        },
+        "methods": {
+          "price": "cfd19943545bfdf719d1fa68047939522793afac49f4be05b476d3aefb8f7e4c"
+        },
+        "order": [
+          "isin",
+          "grade"
+        ],
+        "parent": "3c8c8d7e777099df35a021921f2c197ee35c65e657f1289f7e5affb7682e216b",
         "steward": {
           "namespace": "calc.example.net",
           "process": "https://calc.example.net/classes/change"
@@ -783,171 +878,6 @@
             }
           }
         }
-      },
-      "calc.example.net/fx_ndf/cross": {
-        "code": {
-          "body": "rates.example.org/fx_pair/rate(base: base, date: date, quote: via) * rates.example.org/fx_pair/rate(base: via, date: date, quote: quote)\n",
-          "lang": "formula"
-        },
-        "inputs": [
-          "rates.example.org/fx_pair/rate"
-        ],
-        "signature": {
-          "args": {
-            "base": {
-              "type": "string",
-              "valid": false,
-              "key_normalisation": "upper_ascii"
-            },
-            "date": {
-              "type": "date",
-              "valid": true
-            },
-            "quote": {
-              "type": "string",
-              "valid": false,
-              "key_normalisation": "upper_ascii"
-            },
-            "via": {
-              "type": "string",
-              "valid": false
-            }
-          },
-          "order": [
-            "base",
-            "quote",
-            "via",
-            "date"
-          ],
-          "returns": {
-            "type": "number",
-            "unit": {
-              "of": {
-                "arg": "quote"
-              },
-              "per": {
-                "arg": "base"
-              }
-            }
-          }
-        }
-      },
-      "calc.example.net/fx_ndf/forward": {
-        "code": {
-          "body": "(rates.example.org/fx_pair/spot(base: base, date: date, quote: quote) + rates.example.org/fx_pair/rate(base: base, date: date, quote: quote)) / 2 * (1 + rates.example.org/deposit(currency: quote, date: date, tenor: tenor)) / (1 + rates.example.org/deposit(currency: base, date: date, tenor: tenor))\n",
-          "lang": "formula"
-        },
-        "inputs": [
-          "rates.example.org/deposit",
-          "rates.example.org/fx_pair/rate",
-          "rates.example.org/fx_pair/spot"
-        ],
-        "signature": {
-          "args": {
-            "base": {
-              "type": "string",
-              "valid": false,
-              "key_normalisation": "upper_ascii"
-            },
-            "date": {
-              "type": "date",
-              "valid": true
-            },
-            "quote": {
-              "type": "string",
-              "valid": false,
-              "key_normalisation": "upper_ascii"
-            },
-            "tenor": {
-              "type": "string",
-              "valid": false
-            }
-          },
-          "order": [
-            "base",
-            "quote",
-            "tenor",
-            "date"
-          ],
-          "returns": {
-            "type": "number",
-            "unit": {
-              "of": {
-                "arg": "quote"
-              },
-              "per": {
-                "arg": "base"
-              }
-            }
-          }
-        }
-      },
-      "calc.example.net/fx_ndf/named": {
-        "code": {
-          "body": "",
-          "lang": "stored"
-        },
-        "inputs": [],
-        "signature": {
-          "args": {
-            "label": {
-              "type": "string",
-              "valid": false
-            }
-          },
-          "order": [
-            "label"
-          ],
-          "returns": {
-            "type": "string",
-            "classes": [
-              "rates.example.org/fx_pair"
-            ]
-          }
-        }
-      },
-      "calc.example.net/fx_ndf/spot": {
-        "code": {
-          "body": "rates.example.org/fx_pair/rate(base: base, date: date, quote: quote)\n",
-          "lang": "formula"
-        },
-        "inputs": [
-          "rates.example.org/fx_pair/rate"
-        ],
-        "signature": {
-          "args": {
-            "base": {
-              "type": "string",
-              "valid": false,
-              "key_normalisation": "upper_ascii"
-            },
-            "date": {
-              "type": "date",
-              "valid": true
-            },
-            "quote": {
-              "type": "string",
-              "valid": false,
-              "key_normalisation": "upper_ascii"
-            }
-          },
-          "order": [
-            "base",
-            "quote",
-            "date"
-          ],
-          "returns": {
-            "type": "number",
-            "unit": {
-              "of": {
-                "arg": "quote"
-              },
-              "per": {
-                "arg": "base"
-              }
-            }
-          }
-        }
       }
     },
     "name": "calc.example.net/e",
@@ -963,11 +893,11 @@
       }
     }
   },
-  "ast": "{\"args\":{\"base\":{\"node\":\"str\",\"value\":\"EUR\"},\"date\":{\"node\":\"date\",\"value\":\"2026-03-16\"},\"quote\":{\"node\":\"str\",\"value\":\"USD\"},\"via\":{\"node\":\"str\",\"value\":\"GBP\"}},\"fn\":\"calc.example.net/fx_ndf/cross\",\"node\":\"read\"}",
-  "ast_sha256": "7731f7a1ec695f06a944cbc48ca27eb6da0df5ddf642a412a575d008ee72de92",
-  "body": "calc.example.net/fx_ndf/cross(base: \"EUR\", date: 2026-03-16, quote: \"USD\", via: \"GBP\")\n",
+  "ast": "{\"args\":{\"base\":{\"node\":\"str\",\"value\":\"EUR\"},\"date\":{\"node\":\"date\",\"value\":\"2026-03-16\"},\"quote\":{\"node\":\"str\",\"value\":\"USD\"},\"via\":{\"node\":\"str\",\"value\":\"GBP\"}},\"fn\":\"rates.example.org/fx_pair/cross\",\"node\":\"read\"}",
+  "ast_sha256": "4feaa9b0f860ee3410cfc785da6d914604a5597080d1172d002716fecfc29df2",
+  "body": "rates.example.org/fx_pair/cross(base: \"EUR\", date: 2026-03-16, quote: \"USD\", via: \"GBP\")\n",
   "inputs": [
-    "calc.example.net/fx_ndf/cross"
+    "rates.example.org/fx_pair/cross"
   ],
   "returns": {
     "type": "number",

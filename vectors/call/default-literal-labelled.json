@@ -1,0 +1,49 @@
+{
+  "id": "call/default-literal-labelled",
+  "kind": "call",
+  "description": "classes-round: K13: the same by label: subject given, rank left out.",
+  "valid": true,
+  "input": "calc.example.net/subject_source(subject: \"fx\")",
+  "env": {
+    "aliases": {},
+    "functions": {
+      "calc.example.net/subject_source": {
+        "code": {
+          "body": "",
+          "lang": "stored"
+        },
+        "inputs": [],
+        "signature": {
+          "args": {
+            "rank": {
+              "type": "number",
+              "unit": "1",
+              "valid": false,
+              "default": "1"
+            },
+            "subject": {
+              "type": "string",
+              "valid": false
+            }
+          },
+          "order": [
+            "subject",
+            "rank"
+          ],
+          "returns": "string"
+        }
+      }
+    }
+  },
+  "uri": "cell://calc.example.net/subject_source?rank=1&subject=fx",
+  "resolved": {
+    "call": "calc.example.net/subject_source(rank: 1, subject: \"fx\")",
+    "resolutions": [
+      {
+        "from": "rank",
+        "kind": "default",
+        "to": "1"
+      }
+    ]
+  }
+}

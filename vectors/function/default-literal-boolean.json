@@ -1,0 +1,9 @@
+{
+  "id": "function/default-literal-boolean",
+  "kind": "function",
+  "description": "classes-round: K13: a boolean argument with \"default\": \"true\"; the default is part of the descriptor, so it is hashed (7).",
+  "valid": true,
+  "input": "{\n  \"signature\": {\n    \"returns\": \"string\",\n    \"order\": [\n      \"subject\",\n      \"flag\"\n    ],\n    \"args\": {\n      \"subject\": {\n        \"valid\": false,\n        \"type\": \"string\"\n      },\n      \"flag\": {\n        \"default\": \"true\",\n        \"valid\": false,\n        \"type\": \"boolean\"\n      }\n    }\n  },\n  \"inputs\": [],\n  \"code\": {\n    \"lang\": \"stored\",\n    \"body\": \"\"\n  }\n}",
+  "canonical": "{\"code\":{\"body\":\"\",\"lang\":\"stored\"},\"inputs\":[],\"signature\":{\"args\":{\"flag\":{\"default\":\"true\",\"type\":\"boolean\",\"valid\":false},\"subject\":{\"type\":\"string\",\"valid\":false}},\"order\":[\"subject\",\"flag\"],\"returns\":\"string\"}}",
+  "sha256": "6bf5264f585735119b8faaac34d241ed15575c94eb504d9a6287f761194f2fb7"
+}

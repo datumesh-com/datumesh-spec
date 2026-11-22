@@ -1,0 +1,8 @@
+{
+  "id": "normalisation/label-fold-non-ascii",
+  "kind": "normalisation",
+  "description": "classes-round: label_fold: folded and NFC: a lower-case non-ASCII label equals its folding (16.4, K8).",
+  "valid": true,
+  "rule": "label_fold",
+  "text": "zürich"
+}

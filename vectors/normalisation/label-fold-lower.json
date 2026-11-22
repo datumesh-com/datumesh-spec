@@ -1,0 +1,8 @@
+{
+  "id": "normalisation/label-fold-lower",
+  "kind": "normalisation",
+  "description": "classes-round: label_fold: a lower-case word equals its folding (16.4, K8).",
+  "valid": true,
+  "rule": "label_fold",
+  "text": "apple"
+}

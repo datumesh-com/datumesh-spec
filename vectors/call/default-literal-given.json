@@ -1,0 +1,39 @@
+{
+  "id": "call/default-literal-given",
+  "kind": "call",
+  "description": "classes-round: K13: an argument that is given is not defaulted: no resolution.",
+  "valid": true,
+  "input": "calc.example.net/subject_source(\"fx\", 2)",
+  "env": {
+    "aliases": {},
+    "functions": {
+      "calc.example.net/subject_source": {
+        "code": {
+          "body": "",
+          "lang": "stored"
+        },
+        "inputs": [],
+        "signature": {
+          "args": {
+            "rank": {
+              "type": "number",
+              "unit": "1",
+              "valid": false,
+              "default": "1"
+            },
+            "subject": {
+              "type": "string",
+              "valid": false
+            }
+          },
+          "order": [
+            "subject",
+            "rank"
+          ],
+          "returns": "string"
+        }
+      }
+    }
+  },
+  "uri": "cell://calc.example.net/subject_source?rank=2&subject=fx"
+}

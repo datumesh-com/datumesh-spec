@@ -1,0 +1,39 @@
+{
+  "id": "call/default-literal-given-equal",
+  "kind": "call",
+  "description": "classes-round: K13: the default written out is the same cell as the default left out, and has no default resolution.",
+  "valid": true,
+  "input": "calc.example.net/subject_source(\"fx\", 1)",
+  "env": {
+    "aliases": {},
+    "functions": {
+      "calc.example.net/subject_source": {
+        "code": {
+          "body": "",
+          "lang": "stored"
+        },
+        "inputs": [],
+        "signature": {
+          "args": {
+            "rank": {
+              "type": "number",
+              "unit": "1",
+              "valid": false,
+              "default": "1"
+            },
+            "subject": {
+              "type": "string",
+              "valid": false
+            }
+          },
+          "order": [
+            "subject",
+            "rank"
+          ],
+          "returns": "string"
+        }
+      }
+    }
+  },
+  "uri": "cell://calc.example.net/subject_source?rank=1&subject=fx"
+}

@@ -1,0 +1,9 @@
+{
+  "id": "invalid/normalisation-label-fold-ideographic-space",
+  "kind": "normalisation",
+  "description": "classes-round: label_fold: U+3000 is White_Space: it becomes U+0020 (16.4, K8).",
+  "valid": false,
+  "rule": "label_fold",
+  "text": "green　apple",
+  "error": "E_KEY_NORMALISATION"
+}

@@ -1,0 +1,8 @@
+{
+  "id": "invalid/describe-catalog-tie-order",
+  "kind": "describe",
+  "description": "classes-round: C7: equal subjects: ascending by domain name, earth before tools (16.8).",
+  "valid": false,
+  "input": "{\n  \"rule\": \"https://mesh.example.org/catalog/rule\",\n  \"kind\": \"catalog\",\n  \"host\": \"mesh.example.org\",\n  \"domains\": [\n    {\n      \"top\": [\n        {\n          \"subject\": \"mesh.example.org/catalog/subject(domain:\\\"tools\\\",measure:\\\"ratio\\\",region:\\\"none\\\",thing:\\\"none\\\")\",\n          \"source\": \"mesh.example.org/ratio/percent\",\n          \"label\": \"ratio\"\n        }\n      ],\n      \"subjects\": 1,\n      \"names\": 4,\n      \"label\": \"Tools\",\n      \"domain\": \"tools\"\n    },\n    {\n      \"top\": [\n        {\n          \"subject\": \"mesh.example.org/catalog/subject(domain:\\\"earth\\\",measure:\\\"rainfall\\\",region:\\\"world\\\",thing:\\\"region\\\")\",\n          \"source\": \"mesh.example.org/earth/monthly_rainfall\",\n          \"label\": \"rainfall region world\"\n        }\n      ],\n      \"subjects\": 1,\n      \"names\": 1,\n      \"label\": \"Earth\",\n      \"domain\": \"earth\"\n    }\n  ]\n}",
+  "error": "E_DESCRIBE"
+}

@@ -1,0 +1,8 @@
+{
+  "id": "invalid/function-default-not-a-string",
+  "kind": "function",
+  "description": "classes-round: K13: a default is a lexical value: a JSON string, not the number 1: E_SCHEMA at define (7).",
+  "valid": false,
+  "input": "{\n  \"signature\": {\n    \"returns\": \"string\",\n    \"order\": [\n      \"subject\",\n      \"rank\"\n    ],\n    \"args\": {\n      \"subject\": {\n        \"valid\": false,\n        \"type\": \"string\"\n      },\n      \"rank\": {\n        \"default\": 1,\n        \"valid\": false,\n        \"unit\": \"1\",\n        \"type\": \"number\"\n      }\n    }\n  },\n  \"inputs\": [],\n  \"code\": {\n    \"lang\": \"stored\",\n    \"body\": \"\"\n  }\n}",
+  "error": "E_SCHEMA"
+}

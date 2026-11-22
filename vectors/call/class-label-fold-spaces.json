@@ -1,0 +1,142 @@
+{
+  "id": "call/class-label-fold-spaces",
+  "kind": "call",
+  "description": "classes-round: K8: leading and trailing spaces inside the brackets: folded away; resolved records the label as written, the key and the instant of the lookup read.",
+  "valid": true,
+  "input": "shop.example.org/product[  Apple   ].price(2026-03-16)?asof=2026-06-01T00:00:00.000000Z",
+  "env": {
+    "aliases": {},
+    "classes": {
+      "shop.example.org/product": {
+        "keys": {
+          "sku": {
+            "key_normalisation": "upper_ascii",
+            "type": "string"
+          }
+        },
+        "lookup": "from_label",
+        "methods": {
+          "from_label": "4118e7413b457a190fa22de7eb3c1b6f03df802da4318341a20ebbd4c31d77e3",
+          "price": "598d7809541663ed82a1cebc3ca4d9b8043bd8adfb3c21b1f6332c15f989f522",
+          "successor": "31f98633d16267022cd124c977eadc559da16697e9c626f9d4046e51167144e5"
+        },
+        "order": [
+          "sku"
+        ],
+        "steward": {
+          "namespace": "shop.example.org",
+          "process": "https://shop.example.org/classes/change"
+        }
+      }
+    },
+    "functions": {
+      "shop.example.org/product/from_label": {
+        "code": {
+          "body": "",
+          "lang": "stored"
+        },
+        "inputs": [],
+        "signature": {
+          "args": {
+            "label": {
+              "type": "string",
+              "valid": false,
+              "key_normalisation": "label_fold"
+            }
+          },
+          "order": [
+            "label"
+          ],
+          "returns": {
+            "type": "string",
+            "classes": [
+              "shop.example.org/product"
+            ]
+          }
+        }
+      },
+      "shop.example.org/product/price": {
+        "code": {
+          "body": "",
+          "lang": "stored"
+        },
+        "inputs": [],
+        "signature": {
+          "args": {
+            "date": {
+              "type": "date",
+              "valid": true
+            },
+            "sku": {
+              "type": "string",
+              "valid": false,
+              "key_normalisation": "upper_ascii"
+            }
+          },
+          "order": [
+            "sku",
+            "date"
+          ],
+          "returns": {
+            "type": "number",
+            "unit": "1"
+          }
+        }
+      },
+      "shop.example.org/product/successor": {
+        "code": {
+          "body": "",
+          "lang": "stored"
+        },
+        "inputs": [],
+        "signature": {
+          "args": {
+            "sku": {
+              "type": "string",
+              "valid": false,
+              "key_normalisation": "upper_ascii"
+            }
+          },
+          "order": [
+            "sku"
+          ],
+          "returns": {
+            "type": "string",
+            "classes": [
+              "shop.example.org/product"
+            ]
+          }
+        }
+      }
+    },
+    "lookups": {
+      "shop.example.org/product": {
+        "apple": "shop.example.org/product(sku:\"A1\")",
+        "green apple": "shop.example.org/product(sku:\"A2\")",
+        "zürich": "shop.example.org/product(sku:\"A3\")",
+        "banana": ""
+      }
+    },
+    "cells": {
+      "shop.example.org/product/successor(sku: \"A1\")": "shop.example.org/product(sku:\"A2\")",
+      "shop.example.org/product/successor(sku: \"A2\")": "shop.example.org/product(sku:\"A3\")"
+    }
+  },
+  "resolved": {
+    "call": "shop.example.org/product/price(date: 2026-03-16, sku: \"A1\")?asof=2026-06-01T00:00:00.000000Z",
+    "resolutions": [
+      {
+        "asof": "2026-06-01T00:00:00.000000Z",
+        "from": "Apple",
+        "kind": "lookup",
+        "to": "shop.example.org/product(sku:\"A1\")"
+      },
+      {
+        "from": "shop.example.org/product(...).price",
+        "kind": "method",
+        "to": "shop.example.org/product/price"
+      }
+    ]
+  },
+  "uri": "cell://shop.example.org/product/price?date=2026-03-16&sku=A1&asof=2026-06-01T00:00:00.000000Z"
+}

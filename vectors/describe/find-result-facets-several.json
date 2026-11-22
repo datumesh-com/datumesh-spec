@@ -1,0 +1,7 @@
+{
+  "id": "describe/find-result-facets-several",
+  "kind": "find-result",
+  "description": "classes-round: C2: several values, ascending, some keys omitted, in a find result (16.8, 9.6).",
+  "valid": true,
+  "input": "{\n  \"facets\": {\n    \"region\": [\n      \"ea\",\n      \"gb\",\n      \"us\",\n      \"world\"\n    ],\n    \"domain\": [\n      \"finance\",\n      \"tools\"\n    ]\n  },\n  \"publisher\": \"rates.example.org\",\n  \"fn\": \"rates.example.org/fx_rate\",\n  \"description\": \"The reference rate: units of quote per unit of base.\"\n}"
+}

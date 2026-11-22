@@ -1,0 +1,7 @@
+{
+  "id": "describe/find-result-facets-absent",
+  "kind": "find-result",
+  "description": "classes-round: C2: without facets, a find result is as valid as before: the member is additive.",
+  "valid": true,
+  "input": "{\n  \"publisher\": \"rates.example.org\",\n  \"fn\": \"rates.example.org/fx_rate\",\n  \"description\": \"The reference rate: units of quote per unit of base.\"\n}"
+}

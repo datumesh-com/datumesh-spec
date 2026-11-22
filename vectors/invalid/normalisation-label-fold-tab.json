@@ -1,0 +1,9 @@
+{
+  "id": "invalid/normalisation-label-fold-tab",
+  "kind": "normalisation",
+  "description": "classes-round: label_fold: a tab is a control character, refused by 3.5 under every rule (16.4, K8).",
+  "valid": false,
+  "rule": "label_fold",
+  "text": "green\tapple",
+  "error": "E_CANON_STRING"
+}

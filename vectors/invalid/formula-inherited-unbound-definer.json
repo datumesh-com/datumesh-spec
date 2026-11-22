@@ -1,0 +1,1242 @@
+{
+  "id": "invalid/formula-inherited-unbound-definer",
+  "kind": "formula",
+  "description": "classes-round: K5: calc.example.net/fx_ndf(EUR, USD, \"F1\").cross(\"GBP\", 2026-03-16)  (no class name is bound to the hash of fx_pair, the class that defines cross: the parent hashes name no D; even a function name calc.example.net/fx_ndf/cross bound by an older library does not help)",
+  "valid": false,
+  "input": "calc.example.net/fx_ndf(EUR, USD, \"F1\").cross(\"GBP\", 2026-03-16)",
+  "env": {
+    "aliases": {},
+    "classes": {
+      "scripture.example.org/verse": {
+        "keys": {
+          "book": {
+            "key_normalisation": "none",
+            "type": "string"
+          },
+          "chapter": {
+            "type": "number",
+            "unit": "1"
+          },
+          "corpus": {
+            "key_normalisation": "none",
+            "type": "string"
+          },
+          "verse": {
+            "type": "number",
+            "unit": "1"
+          }
+        },
+        "methods": {
+          "next": "b1ac6b5277d7f60634d52ffe86e028881fb58867563a5aeabc4db14eb7ddb277",
+          "text": "69deb6c63ff08317dad3c81fcc4b1081225a0c884ae0112b0b919c371f9b5801",
+          "consonantal": "e282ef070dd110da1146e5ce83264596b424c67c069c1239c651b3d280a1bc4e"
+        },
+        "order": [
+          "corpus",
+          "book",
+          "chapter",
+          "verse"
+        ],
+        "steward": {
+          "namespace": "scripture.example.org",
+          "process": "https://scripture.example.org/classes/change"
+        }
+      },
+      "iso.example.org/currency": {
+        "keys": {
+          "code": {
+            "key_normalisation": "upper_ascii",
+            "type": "string"
+          }
+        },
+        "methods": {},
+        "order": [
+          "code"
+        ],
+        "steward": {
+          "namespace": "iso.example.org",
+          "process": "https://iso.example.org/classes/change"
+        }
+      },
+      "rates.example.org/ccy_pair": {
+        "keys": {
+          "base": {
+            "class": "iso.example.org/currency"
+          },
+          "quote": {
+            "class": "iso.example.org/currency"
+          }
+        },
+        "methods": {
+          "rate": "b17e3073c533d9f1adc77cd89a580e4db5f5a0fe8290821812893b17adab7061"
+        },
+        "order": [
+          "base",
+          "quote"
+        ],
+        "steward": {
+          "namespace": "rates.example.org",
+          "process": "https://rates.example.org/classes/change"
+        }
+      },
+      "calc.example.net/bond": {
+        "keys": {
+          "isin": {
+            "key_normalisation": "upper_ascii",
+            "type": "string"
+          }
+        },
+        "methods": {
+          "price": "cfd19943545bfdf719d1fa68047939522793afac49f4be05b476d3aefb8f7e4c"
+        },
+        "order": [
+          "isin"
+        ],
+        "steward": {
+          "namespace": "calc.example.net",
+          "process": "https://calc.example.net/classes/change"
+        }
+      },
+      "calc.example.net/swap": {
+        "keys": {
+          "isin": {
+            "key_normalisation": "upper_ascii",
+            "type": "string"
+          }
+        },
+        "methods": {
+          "price": "c76d38e2913a7a95f5db202f03b674384007684a6b3d936102d578470c12daa6"
+        },
+        "order": [
+          "isin"
+        ],
+        "steward": {
+          "namespace": "calc.example.net",
+          "process": "https://calc.example.net/classes/change"
+        }
+      },
+      "calc.example.net/fx_ndf": {
+        "keys": {
+          "base": {
+            "key_normalisation": "upper_ascii",
+            "type": "string"
+          },
+          "quote": {
+            "key_normalisation": "upper_ascii",
+            "type": "string"
+          },
+          "fixing": {
+            "key_normalisation": "none",
+            "type": "string"
+          }
+        },
+        "methods": {
+          "cross": "9979eda4fbd1644dae480ae76d5514bb3c96e7645e887400adf1cc182bb0c911",
+          "forward": "ec8b8bc5fa0e8df03b469926444fecb83648357a2f8d671b97be1d127d871562",
+          "named": "6dc1e80f305027d110b5160cf1090e2643c519f0a95840dbebc7fe910453a9ff",
+          "rate": "149f905063660748b8395f4c79e303e552114bd0fa31af5507140473ba3a5764",
+          "spot": "caf5b15becf80d7869d292e1d93a106f337d864742f570a3cfe1ca9c7f446b15"
+        },
+        "order": [
+          "base",
+          "quote",
+          "fixing"
+        ],
+        "parent": "eadf96ccaeedb0a0c7fd5d1e287f526d00928956f4b69354ae69c46352bbfa86",
+        "steward": {
+          "namespace": "calc.example.net",
+          "process": "https://calc.example.net/classes/change"
+        }
+      },
+      "calc.example.net/fx_cash": {
+        "keys": {
+          "base": {
+            "key_normalisation": "upper_ascii",
+            "type": "string"
+          },
+          "quote": {
+            "key_normalisation": "upper_ascii",
+            "type": "string"
+          },
+          "venue": {
+            "key_normalisation": "none",
+            "type": "string"
+          }
+        },
+        "methods": {
+          "cross": "9979eda4fbd1644dae480ae76d5514bb3c96e7645e887400adf1cc182bb0c911",
+          "forward": "ec8b8bc5fa0e8df03b469926444fecb83648357a2f8d671b97be1d127d871562",
+          "named": "6dc1e80f305027d110b5160cf1090e2643c519f0a95840dbebc7fe910453a9ff",
+          "rate": "530bf86365ff4afb5a70196542d45f293fad5909026e015eddcfd866290f85b8",
+          "spot": "caf5b15becf80d7869d292e1d93a106f337d864742f570a3cfe1ca9c7f446b15"
+        },
+        "order": [
+          "base",
+          "quote",
+          "venue"
+        ],
+        "parent": "eadf96ccaeedb0a0c7fd5d1e287f526d00928956f4b69354ae69c46352bbfa86",
+        "steward": {
+          "namespace": "calc.example.net",
+          "process": "https://calc.example.net/classes/change"
+        }
+      },
+      "calc.example.net/fx_ndf_term": {
+        "keys": {
+          "base": {
+            "key_normalisation": "upper_ascii",
+            "type": "string"
+          },
+          "quote": {
+            "key_normalisation": "upper_ascii",
+            "type": "string"
+          },
+          "fixing": {
+            "key_normalisation": "none",
+            "type": "string"
+          },
+          "tenor": {
+            "key_normalisation": "none",
+            "type": "string"
+          }
+        },
+        "methods": {
+          "cross": "9979eda4fbd1644dae480ae76d5514bb3c96e7645e887400adf1cc182bb0c911",
+          "forward": "ec8b8bc5fa0e8df03b469926444fecb83648357a2f8d671b97be1d127d871562",
+          "named": "6dc1e80f305027d110b5160cf1090e2643c519f0a95840dbebc7fe910453a9ff",
+          "rate": "149f905063660748b8395f4c79e303e552114bd0fa31af5507140473ba3a5764",
+          "spot": "caf5b15becf80d7869d292e1d93a106f337d864742f570a3cfe1ca9c7f446b15"
+        },
+        "order": [
+          "base",
+          "quote",
+          "fixing",
+          "tenor"
+        ],
+        "parent": "9157c9d621296955e55f83009b1beeec6a448a1f0b470b608c20469b272906dd",
+        "steward": {
+          "namespace": "calc.example.net",
+          "process": "https://calc.example.net/classes/change"
+        }
+      },
+      "calc.example.net/green_bond": {
+        "keys": {
+          "isin": {
+            "key_normalisation": "upper_ascii",
+            "type": "string"
+          },
+          "grade": {
+            "key_normalisation": "none",
+            "type": "string"
+          }
+        },
+        "methods": {
+          "price": "cfd19943545bfdf719d1fa68047939522793afac49f4be05b476d3aefb8f7e4c"
+        },
+        "order": [
+          "isin",
+          "grade"
+        ],
+        "parent": "3c8c8d7e777099df35a021921f2c197ee35c65e657f1289f7e5affb7682e216b",
+        "steward": {
+          "namespace": "calc.example.net",
+          "process": "https://calc.example.net/classes/change"
+        }
+      }
+    },
+    "functions": {
+      "rates.example.org/fx_pair/rate": {
+        "code": {
+          "body": "",
+          "lang": "stored"
+        },
+        "inputs": [],
+        "signature": {
+          "args": {
+            "base": {
+              "type": "string",
+              "valid": false,
+              "key_normalisation": "upper_ascii"
+            },
+            "date": {
+              "type": "date",
+              "valid": true
+            },
+            "quote": {
+              "type": "string",
+              "valid": false,
+              "key_normalisation": "upper_ascii"
+            }
+          },
+          "order": [
+            "base",
+            "quote",
+            "date"
+          ],
+          "returns": {
+            "type": "number",
+            "unit": {
+              "of": {
+                "arg": "quote"
+              },
+              "per": {
+                "arg": "base"
+              }
+            }
+          }
+        }
+      },
+      "rates.example.org/fx_pair/named": {
+        "code": {
+          "body": "",
+          "lang": "stored"
+        },
+        "inputs": [],
+        "signature": {
+          "args": {
+            "label": {
+              "type": "string",
+              "valid": false
+            }
+          },
+          "order": [
+            "label"
+          ],
+          "returns": {
+            "type": "string",
+            "classes": [
+              "rates.example.org/fx_pair"
+            ]
+          }
+        }
+      },
+      "rates.example.org/deposit": {
+        "code": {
+          "body": "",
+          "lang": "stored"
+        },
+        "inputs": [],
+        "signature": {
+          "args": {
+            "currency": {
+              "type": "string",
+              "valid": false
+            },
+            "date": {
+              "type": "date",
+              "valid": true
+            },
+            "tenor": {
+              "type": "string",
+              "valid": false
+            }
+          },
+          "order": [
+            "currency",
+            "tenor",
+            "date"
+          ],
+          "returns": {
+            "type": "number",
+            "unit": "1"
+          }
+        }
+      },
+      "rates.example.org/fx_rate": {
+        "code": {
+          "body": "",
+          "lang": "stored"
+        },
+        "inputs": [],
+        "signature": {
+          "args": {
+            "base": {
+              "type": "string",
+              "valid": false
+            },
+            "date": {
+              "type": "date",
+              "valid": true,
+              "default": "asof"
+            },
+            "quote": {
+              "type": "string",
+              "valid": false
+            }
+          },
+          "order": [
+            "base",
+            "quote",
+            "date"
+          ],
+          "returns": {
+            "type": "number",
+            "unit": {
+              "of": {
+                "arg": "quote"
+              },
+              "per": {
+                "arg": "base"
+              }
+            }
+          }
+        }
+      },
+      "scripture.example.org/verse/text": {
+        "code": {
+          "body": "",
+          "lang": "stored"
+        },
+        "inputs": [],
+        "signature": {
+          "args": {
+            "book": {
+              "type": "string",
+              "valid": false
+            },
+            "chapter": {
+              "type": "number",
+              "unit": "1",
+              "valid": false
+            },
+            "corpus": {
+              "type": "string",
+              "valid": false
+            },
+            "edition": {
+              "type": "string",
+              "valid": false
+            },
+            "verse": {
+              "type": "number",
+              "unit": "1",
+              "valid": false
+            }
+          },
+          "order": [
+            "corpus",
+            "book",
+            "chapter",
+            "verse",
+            "edition"
+          ],
+          "returns": "blob"
+        }
+      },
+      "scripture.example.org/verse/next": {
+        "code": {
+          "body": "",
+          "lang": "stored"
+        },
+        "inputs": [],
+        "signature": {
+          "args": {
+            "book": {
+              "type": "string",
+              "valid": false
+            },
+            "chapter": {
+              "type": "number",
+              "unit": "1",
+              "valid": false
+            },
+            "corpus": {
+              "type": "string",
+              "valid": false
+            },
+            "verse": {
+              "type": "number",
+              "unit": "1",
+              "valid": false
+            }
+          },
+          "order": [
+            "corpus",
+            "book",
+            "chapter",
+            "verse"
+          ],
+          "returns": {
+            "type": "string",
+            "classes": [
+              "scripture.example.org/verse"
+            ]
+          }
+        }
+      },
+      "rates.example.org/ccy_pair/rate": {
+        "code": {
+          "body": "",
+          "lang": "stored"
+        },
+        "inputs": [],
+        "signature": {
+          "args": {
+            "base": {
+              "type": "string",
+              "classes": [
+                "iso.example.org/currency"
+              ],
+              "valid": false
+            },
+            "date": {
+              "type": "date",
+              "valid": true
+            },
+            "quote": {
+              "type": "string",
+              "classes": [
+                "iso.example.org/currency"
+              ],
+              "valid": false
+            }
+          },
+          "order": [
+            "base",
+            "quote",
+            "date"
+          ],
+          "returns": {
+            "type": "number",
+            "unit": "1"
+          }
+        }
+      },
+      "calc.example.net/bond/price": {
+        "code": {
+          "body": "",
+          "lang": "stored"
+        },
+        "inputs": [],
+        "signature": {
+          "args": {
+            "date": {
+              "type": "date",
+              "valid": true
+            },
+            "isin": {
+              "type": "string",
+              "valid": false,
+              "key_normalisation": "upper_ascii"
+            }
+          },
+          "order": [
+            "isin",
+            "date"
+          ],
+          "returns": {
+            "type": "number",
+            "unit": "1"
+          }
+        }
+      },
+      "calc.example.net/swap/price": {
+        "code": {
+          "body": "swap prices\n",
+          "lang": "stored"
+        },
+        "inputs": [],
+        "signature": {
+          "args": {
+            "date": {
+              "type": "date",
+              "valid": true
+            },
+            "isin": {
+              "type": "string",
+              "valid": false,
+              "key_normalisation": "upper_ascii"
+            }
+          },
+          "order": [
+            "isin",
+            "date"
+          ],
+          "returns": {
+            "type": "number",
+            "unit": "1"
+          }
+        }
+      },
+      "calc.example.net/fx_extra/carry": {
+        "code": {
+          "body": "",
+          "lang": "stored"
+        },
+        "inputs": [],
+        "signature": {
+          "args": {
+            "base": {
+              "type": "string",
+              "valid": false
+            },
+            "date": {
+              "type": "date",
+              "valid": true
+            },
+            "quote": {
+              "type": "string",
+              "valid": false
+            }
+          },
+          "order": [
+            "base",
+            "quote",
+            "date"
+          ],
+          "returns": {
+            "type": "number",
+            "unit": "1"
+          }
+        }
+      },
+      "rates.example.org/fx_pair/spot": {
+        "code": {
+          "body": "rates.example.org/fx_pair/rate(base: base, date: date, quote: quote)\n",
+          "lang": "formula"
+        },
+        "inputs": [
+          "rates.example.org/fx_pair/rate"
+        ],
+        "signature": {
+          "args": {
+            "base": {
+              "type": "string",
+              "valid": false,
+              "key_normalisation": "upper_ascii"
+            },
+            "date": {
+              "type": "date",
+              "valid": true
+            },
+            "quote": {
+              "type": "string",
+              "valid": false,
+              "key_normalisation": "upper_ascii"
+            }
+          },
+          "order": [
+            "base",
+            "quote",
+            "date"
+          ],
+          "returns": {
+            "type": "number",
+            "unit": {
+              "of": {
+                "arg": "quote"
+              },
+              "per": {
+                "arg": "base"
+              }
+            }
+          }
+        }
+      },
+      "rates.example.org/fx_pair/cross": {
+        "code": {
+          "body": "rates.example.org/fx_pair/rate(base: base, date: date, quote: via) * rates.example.org/fx_pair/rate(base: via, date: date, quote: quote)\n",
+          "lang": "formula"
+        },
+        "inputs": [
+          "rates.example.org/fx_pair/rate"
+        ],
+        "signature": {
+          "args": {
+            "base": {
+              "type": "string",
+              "valid": false,
+              "key_normalisation": "upper_ascii"
+            },
+            "date": {
+              "type": "date",
+              "valid": true
+            },
+            "quote": {
+              "type": "string",
+              "valid": false,
+              "key_normalisation": "upper_ascii"
+            },
+            "via": {
+              "type": "string",
+              "valid": false
+            }
+          },
+          "order": [
+            "base",
+            "quote",
+            "via",
+            "date"
+          ],
+          "returns": {
+            "type": "number",
+            "unit": {
+              "of": {
+                "arg": "quote"
+              },
+              "per": {
+                "arg": "base"
+              }
+            }
+          }
+        }
+      },
+      "rates.example.org/fx_pair/forward": {
+        "code": {
+          "body": "(rates.example.org/fx_pair/spot(base: base, date: date, quote: quote) + rates.example.org/fx_pair/rate(base: base, date: date, quote: quote)) / 2 * (1 + rates.example.org/deposit(currency: quote, date: date, tenor: tenor)) / (1 + rates.example.org/deposit(currency: base, date: date, tenor: tenor))\n",
+          "lang": "formula"
+        },
+        "inputs": [
+          "rates.example.org/deposit",
+          "rates.example.org/fx_pair/rate",
+          "rates.example.org/fx_pair/spot"
+        ],
+        "signature": {
+          "args": {
+            "base": {
+              "type": "string",
+              "valid": false,
+              "key_normalisation": "upper_ascii"
+            },
+            "date": {
+              "type": "date",
+              "valid": true
+            },
+            "quote": {
+              "type": "string",
+              "valid": false,
+              "key_normalisation": "upper_ascii"
+            },
+            "tenor": {
+              "type": "string",
+              "valid": false
+            }
+          },
+          "order": [
+            "base",
+            "quote",
+            "tenor",
+            "date"
+          ],
+          "returns": {
+            "type": "number",
+            "unit": {
+              "of": {
+                "arg": "quote"
+              },
+              "per": {
+                "arg": "base"
+              }
+            }
+          }
+        }
+      },
+      "scripture.example.org/verse/consonantal": {
+        "code": {
+          "body": "remove_chars(text_of(scripture.example.org/verse/text(book: book, chapter: chapter, corpus: corpus, edition: edition, verse: verse)), \"ְֱֲֳִֵֶַָׇֹֺֻּֽֿׁׂ֑֖֛֢֣֤֥֦֧֪ׅ֚֭֮֒֓֔֕֗֘֙֜֝֞֟֠֡֨֩֫֬֯ׄ\")\n",
+          "lang": "formula"
+        },
+        "inputs": [
+          "scripture.example.org/verse/text"
+        ],
+        "signature": {
+          "args": {
+            "book": {
+              "type": "string",
+              "valid": false
+            },
+            "chapter": {
+              "type": "number",
+              "unit": "1",
+              "valid": false
+            },
+            "corpus": {
+              "type": "string",
+              "valid": false
+            },
+            "edition": {
+              "type": "string",
+              "valid": false
+            },
+            "verse": {
+              "type": "number",
+              "unit": "1",
+              "valid": false
+            }
+          },
+          "order": [
+            "corpus",
+            "book",
+            "chapter",
+            "verse",
+            "edition"
+          ],
+          "returns": "string"
+        }
+      },
+      "calc.example.net/price_of": {
+        "code": {
+          "body": "instrument.price(date: date)\n",
+          "lang": "formula"
+        },
+        "inputs": [
+          "calc.example.net/bond/price",
+          "calc.example.net/swap/price"
+        ],
+        "signature": {
+          "args": {
+            "date": {
+              "type": "date",
+              "valid": true
+            },
+            "instrument": {
+              "type": "string",
+              "classes": [
+                "calc.example.net/bond",
+                "calc.example.net/swap"
+              ],
+              "valid": false
+            }
+          },
+          "order": [
+            "instrument",
+            "date"
+          ],
+          "returns": {
+            "type": "number",
+            "unit": "1"
+          }
+        }
+      },
+      "calc.example.net/fx_ndf/rate": {
+        "code": {
+          "body": "rates.example.org/fx_pair/rate@530bf86365ff4afb5a70196542d45f293fad5909026e015eddcfd866290f85b8(base: base, date: date, quote: quote) * 1\n",
+          "lang": "formula"
+        },
+        "inputs": [
+          "rates.example.org/fx_pair/rate"
+        ],
+        "signature": {
+          "args": {
+            "base": {
+              "type": "string",
+              "valid": false,
+              "key_normalisation": "upper_ascii"
+            },
+            "date": {
+              "type": "date",
+              "valid": true
+            },
+            "quote": {
+              "type": "string",
+              "valid": false,
+              "key_normalisation": "upper_ascii"
+            }
+          },
+          "order": [
+            "base",
+            "quote",
+            "date"
+          ],
+          "returns": {
+            "type": "number",
+            "unit": {
+              "of": {
+                "arg": "quote"
+              },
+              "per": {
+                "arg": "base"
+              }
+            }
+          }
+        }
+      },
+      "calc.example.net/fx_ndf/cross": {
+        "code": {
+          "body": "rates.example.org/fx_pair/rate(base: base, date: date, quote: via) * rates.example.org/fx_pair/rate(base: via, date: date, quote: quote)\n",
+          "lang": "formula"
+        },
+        "inputs": [
+          "rates.example.org/fx_pair/rate"
+        ],
+        "signature": {
+          "args": {
+            "base": {
+              "type": "string",
+              "valid": false,
+              "key_normalisation": "upper_ascii"
+            },
+            "date": {
+              "type": "date",
+              "valid": true
+            },
+            "quote": {
+              "type": "string",
+              "valid": false,
+              "key_normalisation": "upper_ascii"
+            },
+            "via": {
+              "type": "string",
+              "valid": false
+            }
+          },
+          "order": [
+            "base",
+            "quote",
+            "via",
+            "date"
+          ],
+          "returns": {
+            "type": "number",
+            "unit": {
+              "of": {
+                "arg": "quote"
+              },
+              "per": {
+                "arg": "base"
+              }
+            }
+          }
+        }
+      },
+      "calc.example.net/fx_ndf/forward": {
+        "code": {
+          "body": "(rates.example.org/fx_pair/spot(base: base, date: date, quote: quote) + rates.example.org/fx_pair/rate(base: base, date: date, quote: quote)) / 2 * (1 + rates.example.org/deposit(currency: quote, date: date, tenor: tenor)) / (1 + rates.example.org/deposit(currency: base, date: date, tenor: tenor))\n",
+          "lang": "formula"
+        },
+        "inputs": [
+          "rates.example.org/deposit",
+          "rates.example.org/fx_pair/rate",
+          "rates.example.org/fx_pair/spot"
+        ],
+        "signature": {
+          "args": {
+            "base": {
+              "type": "string",
+              "valid": false,
+              "key_normalisation": "upper_ascii"
+            },
+            "date": {
+              "type": "date",
+              "valid": true
+            },
+            "quote": {
+              "type": "string",
+              "valid": false,
+              "key_normalisation": "upper_ascii"
+            },
+            "tenor": {
+              "type": "string",
+              "valid": false
+            }
+          },
+          "order": [
+            "base",
+            "quote",
+            "tenor",
+            "date"
+          ],
+          "returns": {
+            "type": "number",
+            "unit": {
+              "of": {
+                "arg": "quote"
+              },
+              "per": {
+                "arg": "base"
+              }
+            }
+          }
+        }
+      },
+      "calc.example.net/fx_ndf/named": {
+        "code": {
+          "body": "",
+          "lang": "stored"
+        },
+        "inputs": [],
+        "signature": {
+          "args": {
+            "label": {
+              "type": "string",
+              "valid": false
+            }
+          },
+          "order": [
+            "label"
+          ],
+          "returns": {
+            "type": "string",
+            "classes": [
+              "rates.example.org/fx_pair"
+            ]
+          }
+        }
+      },
+      "calc.example.net/fx_ndf/spot": {
+        "code": {
+          "body": "rates.example.org/fx_pair/rate(base: base, date: date, quote: quote)\n",
+          "lang": "formula"
+        },
+        "inputs": [
+          "rates.example.org/fx_pair/rate"
+        ],
+        "signature": {
+          "args": {
+            "base": {
+              "type": "string",
+              "valid": false,
+              "key_normalisation": "upper_ascii"
+            },
+            "date": {
+              "type": "date",
+              "valid": true
+            },
+            "quote": {
+              "type": "string",
+              "valid": false,
+              "key_normalisation": "upper_ascii"
+            }
+          },
+          "order": [
+            "base",
+            "quote",
+            "date"
+          ],
+          "returns": {
+            "type": "number",
+            "unit": {
+              "of": {
+                "arg": "quote"
+              },
+              "per": {
+                "arg": "base"
+              }
+            }
+          }
+        }
+      },
+      "calc.example.net/fx_cash/rate": {
+        "code": {
+          "body": "",
+          "lang": "stored"
+        },
+        "inputs": [],
+        "signature": {
+          "args": {
+            "base": {
+              "type": "string",
+              "valid": false,
+              "key_normalisation": "upper_ascii"
+            },
+            "date": {
+              "type": "date",
+              "valid": true
+            },
+            "quote": {
+              "type": "string",
+              "valid": false,
+              "key_normalisation": "upper_ascii"
+            }
+          },
+          "order": [
+            "base",
+            "quote",
+            "date"
+          ],
+          "returns": {
+            "type": "number",
+            "unit": {
+              "of": {
+                "arg": "quote"
+              },
+              "per": {
+                "arg": "base"
+              }
+            }
+          }
+        }
+      },
+      "calc.example.net/fx_cash/cross": {
+        "code": {
+          "body": "rates.example.org/fx_pair/rate(base: base, date: date, quote: via) * rates.example.org/fx_pair/rate(base: via, date: date, quote: quote)\n",
+          "lang": "formula"
+        },
+        "inputs": [
+          "rates.example.org/fx_pair/rate"
+        ],
+        "signature": {
+          "args": {
+            "base": {
+              "type": "string",
+              "valid": false,
+              "key_normalisation": "upper_ascii"
+            },
+            "date": {
+              "type": "date",
+              "valid": true
+            },
+            "quote": {
+              "type": "string",
+              "valid": false,
+              "key_normalisation": "upper_ascii"
+            },
+            "via": {
+              "type": "string",
+              "valid": false
+            }
+          },
+          "order": [
+            "base",
+            "quote",
+            "via",
+            "date"
+          ],
+          "returns": {
+            "type": "number",
+            "unit": {
+              "of": {
+                "arg": "quote"
+              },
+              "per": {
+                "arg": "base"
+              }
+            }
+          }
+        }
+      },
+      "calc.example.net/fx_ndf_term/cross": {
+        "code": {
+          "body": "rates.example.org/fx_pair/rate(base: base, date: date, quote: via) * rates.example.org/fx_pair/rate(base: via, date: date, quote: quote)\n",
+          "lang": "formula"
+        },
+        "inputs": [
+          "rates.example.org/fx_pair/rate"
+        ],
+        "signature": {
+          "args": {
+            "base": {
+              "type": "string",
+              "valid": false,
+              "key_normalisation": "upper_ascii"
+            },
+            "date": {
+              "type": "date",
+              "valid": true
+            },
+            "quote": {
+              "type": "string",
+              "valid": false,
+              "key_normalisation": "upper_ascii"
+            },
+            "via": {
+              "type": "string",
+              "valid": false
+            }
+          },
+          "order": [
+            "base",
+            "quote",
+            "via",
+            "date"
+          ],
+          "returns": {
+            "type": "number",
+            "unit": {
+              "of": {
+                "arg": "quote"
+              },
+              "per": {
+                "arg": "base"
+              }
+            }
+          }
+        }
+      },
+      "calc.example.net/fx_ndf_term/rate": {
+        "code": {
+          "body": "rates.example.org/fx_pair/rate@530bf86365ff4afb5a70196542d45f293fad5909026e015eddcfd866290f85b8(base: base, date: date, quote: quote) * 1\n",
+          "lang": "formula"
+        },
+        "inputs": [
+          "rates.example.org/fx_pair/rate"
+        ],
+        "signature": {
+          "args": {
+            "base": {
+              "type": "string",
+              "valid": false,
+              "key_normalisation": "upper_ascii"
+            },
+            "date": {
+              "type": "date",
+              "valid": true
+            },
+            "quote": {
+              "type": "string",
+              "valid": false,
+              "key_normalisation": "upper_ascii"
+            }
+          },
+          "order": [
+            "base",
+            "quote",
+            "date"
+          ],
+          "returns": {
+            "type": "number",
+            "unit": {
+              "of": {
+                "arg": "quote"
+              },
+              "per": {
+                "arg": "base"
+              }
+            }
+          }
+        }
+      },
+      "calc.example.net/green_bond/price": {
+        "code": {
+          "body": "",
+          "lang": "stored"
+        },
+        "inputs": [],
+        "signature": {
+          "args": {
+            "date": {
+              "type": "date",
+              "valid": true
+            },
+            "isin": {
+              "type": "string",
+              "valid": false,
+              "key_normalisation": "upper_ascii"
+            }
+          },
+          "order": [
+            "isin",
+            "date"
+          ],
+          "returns": {
+            "type": "number",
+            "unit": "1"
+          }
+        }
+      }
+    },
+    "name": "calc.example.net/e",
+    "signature": {
+      "args": {},
+      "order": [],
+      "returns": {
+        "type": "number",
+        "unit": {
+          "of": "USD",
+          "per": "EUR"
+        }
+      }
+    }
+  },
+  "error": "E_FORMULA_UNRESOLVED"
+}

@@ -1,0 +1,9 @@
+{
+  "id": "function/default-literal-hash-differs",
+  "kind": "function",
+  "description": "classes-round: K13: the same function without the default: another descriptor, another hash (the default is hashed).",
+  "valid": true,
+  "input": "{\n  \"signature\": {\n    \"returns\": \"string\",\n    \"order\": [\n      \"subject\",\n      \"rank\"\n    ],\n    \"args\": {\n      \"subject\": {\n        \"valid\": false,\n        \"type\": \"string\"\n      },\n      \"rank\": {\n        \"valid\": false,\n        \"unit\": \"1\",\n        \"type\": \"number\"\n      }\n    }\n  },\n  \"inputs\": [],\n  \"code\": {\n    \"lang\": \"stored\",\n    \"body\": \"\"\n  }\n}",
+  "canonical": "{\"code\":{\"body\":\"\",\"lang\":\"stored\"},\"inputs\":[],\"signature\":{\"args\":{\"rank\":{\"type\":\"number\",\"unit\":\"1\",\"valid\":false},\"subject\":{\"type\":\"string\",\"valid\":false}},\"order\":[\"subject\",\"rank\"],\"returns\":\"string\"}}",
+  "sha256": "9eb288dc922b5f19f7a8a85363b94eab68f6c5de435a2b8899cc638cfa0e0d47"
+}

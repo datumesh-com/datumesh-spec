@@ -1,0 +1,9 @@
+{
+  "id": "invalid/normalisation-label-fold-nbsp",
+  "kind": "normalisation",
+  "description": "classes-round: label_fold: U+00A0 is White_Space: a run of White_Space becomes one U+0020 (16.4, K8).",
+  "valid": false,
+  "rule": "label_fold",
+  "text": "green apple",
+  "error": "E_KEY_NORMALISATION"
+}

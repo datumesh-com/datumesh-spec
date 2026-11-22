@@ -1,0 +1,9 @@
+{
+  "id": "invalid/normalisation-label-fold-double-space",
+  "kind": "normalisation",
+  "description": "classes-round: label_fold: an inner run of two spaces is one space when folded (16.4, K8).",
+  "valid": false,
+  "rule": "label_fold",
+  "text": "green  apple",
+  "error": "E_KEY_NORMALISATION"
+}

@@ -1,0 +1,9 @@
+{
+  "id": "invalid/normalisation-label-fold-nfd",
+  "kind": "normalisation",
+  "description": "classes-round: label_fold: a string that is not NFC is refused by 3.5, as under none (16.4, K8).",
+  "valid": false,
+  "rule": "label_fold",
+  "text": "zürich",
+  "error": "E_CANON_STRING"
+}

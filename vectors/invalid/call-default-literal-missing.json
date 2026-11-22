@@ -1,0 +1,39 @@
+{
+  "id": "invalid/call-default-literal-missing",
+  "kind": "call",
+  "description": "classes-round: K13: an argument with no default stays E_ARG_MISSING when left out.",
+  "valid": false,
+  "input": "calc.example.net/subject_source(rank: 2)",
+  "env": {
+    "aliases": {},
+    "functions": {
+      "calc.example.net/subject_source": {
+        "code": {
+          "body": "",
+          "lang": "stored"
+        },
+        "inputs": [],
+        "signature": {
+          "args": {
+            "rank": {
+              "type": "number",
+              "unit": "1",
+              "valid": false,
+              "default": "1"
+            },
+            "subject": {
+              "type": "string",
+              "valid": false
+            }
+          },
+          "order": [
+            "subject",
+            "rank"
+          ],
+          "returns": "string"
+        }
+      }
+    }
+  },
+  "error": "E_ARG_MISSING"
+}

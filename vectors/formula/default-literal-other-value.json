@@ -1,0 +1,55 @@
+{
+  "id": "formula/default-literal-other-value",
+  "kind": "formula",
+  "description": "classes-round: K13: calc.example.net/subject_source(\"fx\", 2)  (a given value is not the default: its own literal)",
+  "valid": true,
+  "input": "calc.example.net/subject_source(\"fx\", 2)",
+  "env": {
+    "aliases": {},
+    "classes": {},
+    "functions": {
+      "calc.example.net/subject_source": {
+        "code": {
+          "body": "",
+          "lang": "stored"
+        },
+        "inputs": [],
+        "signature": {
+          "args": {
+            "rank": {
+              "type": "number",
+              "unit": "1",
+              "valid": false,
+              "default": "1"
+            },
+            "subject": {
+              "type": "string",
+              "valid": false
+            }
+          },
+          "order": [
+            "subject",
+            "rank"
+          ],
+          "returns": "string"
+        }
+      }
+    },
+    "name": "calc.example.net/e",
+    "signature": {
+      "args": {},
+      "order": [],
+      "returns": "string"
+    }
+  },
+  "ast": "{\"args\":{\"rank\":{\"node\":\"num\",\"value\":\"2\"},\"subject\":{\"node\":\"str\",\"value\":\"fx\"}},\"fn\":\"calc.example.net/subject_source\",\"node\":\"read\"}",
+  "ast_sha256": "ebef3edb188a29672e9c81b95b472e8e1a7adc8bd8d8c735bf94eaab61210887",
+  "body": "calc.example.net/subject_source(rank: 2, subject: \"fx\")\n",
+  "inputs": [
+    "calc.example.net/subject_source"
+  ],
+  "returns": {
+    "type": "string"
+  },
+  "asof_dependent": false
+}

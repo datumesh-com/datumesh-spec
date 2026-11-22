@@ -1,0 +1,7 @@
+{
+  "id": "describe/find-result-facets-thirty-two",
+  "kind": "find-result",
+  "description": "classes-round: C2: a value of 32 bytes, the longest, in a find result (16.8, 9.6).",
+  "valid": true,
+  "input": "{\n  \"facets\": {\n    \"thing\": [\n      \"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\"\n    ]\n  },\n  \"publisher\": \"rates.example.org\",\n  \"fn\": \"rates.example.org/fx_rate\",\n  \"description\": \"The reference rate: units of quote per unit of base.\"\n}"
+}

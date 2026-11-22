@@ -1,0 +1,44 @@
+{
+  "id": "invalid/describe-function-facets-empty",
+  "kind": "describe",
+  "description": "classes-round: C2: facets, when present, holds at least one key, in a function answer (16.8, 9.6).",
+  "valid": false,
+  "input": "{\n  \"facets\": {},\n  \"returns\": {\n    \"unit\": {\n      \"per\": {\n        \"arg\": \"base\"\n      },\n      \"of\": {\n        \"arg\": \"quote\"\n      }\n    },\n    \"type\": \"number\"\n  },\n  \"kind\": \"function\",\n  \"fn_hash\": \"7b58ecb8fd23b644c87951d0bd609790ff547cbb23fed27186c669ce2ce0aa80\",\n  \"fn\": \"rates.example.org/fx_rate\",\n  \"description\": \"The reference rate: units of quote per unit of base.\",\n  \"args\": {\n    \"quote\": {\n      \"valid\": false,\n      \"type\": \"string\"\n    },\n    \"date\": {\n      \"valid\": true,\n      \"type\": \"date\"\n    },\n    \"base\": {\n      \"valid\": false,\n      \"type\": \"string\"\n    }\n  }\n}",
+  "functions": [
+    {
+      "code": {
+        "body": "",
+        "lang": "stored"
+      },
+      "inputs": [],
+      "signature": {
+        "args": {
+          "base": {
+            "type": "string",
+            "valid": false
+          },
+          "date": {
+            "type": "date",
+            "valid": true
+          },
+          "quote": {
+            "type": "string",
+            "valid": false
+          }
+        },
+        "returns": {
+          "type": "number",
+          "unit": {
+            "of": {
+              "arg": "quote"
+            },
+            "per": {
+              "arg": "base"
+            }
+          }
+        }
+      }
+    }
+  ],
+  "error": "E_DESCRIBE"
+}

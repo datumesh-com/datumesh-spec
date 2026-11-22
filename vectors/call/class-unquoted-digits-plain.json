@@ -1,0 +1,86 @@
+{
+  "id": "call/class-unquoted-digits-plain",
+  "kind": "call",
+  "description": "classes-round: K11: the plain call, both unquoted; the same cell as the quoted spelling filings.example.org/company(\"0000320193\").filing(\"0000320193-24-000123\").",
+  "valid": true,
+  "input": "filings.example.org/company/filing(0000320193, 0000320193-24-000123)",
+  "env": {
+    "aliases": {},
+    "classes": {
+      "filings.example.org/company": {
+        "keys": {
+          "cik": {
+            "key_normalisation": "none",
+            "type": "string"
+          }
+        },
+        "methods": {
+          "count": "090d1c5b4da7bb7c93b892af314dd5d219c129234a96972ebb726d06d514268c",
+          "filing": "d620846e6c6a6e0221c53af2f6f8f0ca011a8c3c82afe2163c7955e703a4df75"
+        },
+        "order": [
+          "cik"
+        ],
+        "steward": {
+          "namespace": "filings.example.org",
+          "process": "https://filings.example.org/classes/change"
+        }
+      }
+    },
+    "functions": {
+      "filings.example.org/company/count": {
+        "code": {
+          "body": "",
+          "lang": "stored"
+        },
+        "inputs": [],
+        "signature": {
+          "args": {
+            "cik": {
+              "type": "string",
+              "valid": false
+            },
+            "n": {
+              "type": "number",
+              "unit": "1",
+              "valid": false
+            }
+          },
+          "order": [
+            "cik",
+            "n"
+          ],
+          "returns": {
+            "type": "number",
+            "unit": "1"
+          }
+        }
+      },
+      "filings.example.org/company/filing": {
+        "code": {
+          "body": "",
+          "lang": "stored"
+        },
+        "inputs": [],
+        "signature": {
+          "args": {
+            "accession": {
+              "type": "string",
+              "valid": false
+            },
+            "cik": {
+              "type": "string",
+              "valid": false
+            }
+          },
+          "order": [
+            "cik",
+            "accession"
+          ],
+          "returns": "string"
+        }
+      }
+    }
+  },
+  "uri": "cell://filings.example.org/company/filing?accession=0000320193-24-000123&cik=0000320193"
+}

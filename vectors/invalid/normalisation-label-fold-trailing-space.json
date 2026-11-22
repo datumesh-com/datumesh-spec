@@ -1,0 +1,9 @@
+{
+  "id": "invalid/normalisation-label-fold-trailing-space",
+  "kind": "normalisation",
+  "description": "classes-round: label_fold: a trailing space is removed when folded (16.4, K8).",
+  "valid": false,
+  "rule": "label_fold",
+  "text": "apple ",
+  "error": "E_KEY_NORMALISATION"
+}

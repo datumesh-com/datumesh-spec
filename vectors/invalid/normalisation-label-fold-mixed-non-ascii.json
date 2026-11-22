@@ -1,0 +1,9 @@
+{
+  "id": "invalid/normalisation-label-fold-mixed-non-ascii",
+  "kind": "normalisation",
+  "description": "classes-round: label_fold: a non-ASCII word with an upper-case initial (16.4, K8).",
+  "valid": false,
+  "rule": "label_fold",
+  "text": "Zürich",
+  "error": "E_KEY_NORMALISATION"
+}

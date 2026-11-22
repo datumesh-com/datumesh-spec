@@ -1,0 +1,8 @@
+{
+  "id": "normalisation/label-fold-case-folded-sharp-s",
+  "kind": "normalisation",
+  "description": "classes-round: label_fold: the full case folding of ß is ss: this is the folded form (16.4, K8).",
+  "valid": true,
+  "rule": "label_fold",
+  "text": "strasse"
+}

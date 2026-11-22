@@ -1,0 +1,9 @@
+{
+  "id": "invalid/normalisation-label-fold-upper-first",
+  "kind": "normalisation",
+  "description": "classes-round: label_fold: an upper-case letter: its folding is lower case (16.4, K8).",
+  "valid": false,
+  "rule": "label_fold",
+  "text": "Apple",
+  "error": "E_KEY_NORMALISATION"
+}
