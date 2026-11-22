@@ -105,8 +105,16 @@ valid_receipt("receipt/withdrawn-non-ascii", "The reason is a string under the s
 # 1024 UTF-8 bytes, the summary limit (4.5): the longest reason.
 valid_receipt("receipt/withdrawn-max-length", "The reason is at most 1024 UTF-8 bytes, the summary limit.",
               withdrawal(withdrawn="x" * 1024))
-invalid_receipt("invalid/receipt-withdrawn-too-long", "A reason of 1025 bytes is over the summary limit.",
-                withdrawal(withdrawn="x" * 1025), "E_SCHEMA")
+invalid_receipt("invalid/receipt-withdrawn-too-long", "A reason of 1025 bytes is over the summary limit: the code a "
+                "summary of that length gets.", withdrawal(withdrawn="x" * 1025), "E_CANON_LIMIT")
+invalid_receipt("invalid/receipt-withdrawn-not-nfc", "The reason follows the string rules (3.5): decomposed text is "
+                "not NFC, E_CANON_STRING as for a summary.", withdrawal(withdrawn="Le taux a e\u0301te\u0301 retire\u0301."),
+                "E_CANON_STRING")
+invalid_receipt("invalid/receipt-withdrawn-control", "A control character in the reason: E_CANON_STRING as for a "
+                "summary.", withdrawal(withdrawn="published\u0001in error"), "E_CANON_STRING")
+R_WD_NUM = dict(withdrawal(withdrawn="x"), withdrawn=5)
+invalid_receipt("invalid/receipt-withdrawn-not-string", "The reason is a string: a number is E_SCHEMA.", R_WD_NUM,
+                "E_SCHEMA", raw=json.dumps(R_WD_NUM, indent=2))
 invalid_receipt("invalid/receipt-withdrawn-empty", "The reason is non-empty: a withdrawal says why.",
                 withdrawal(withdrawn=""), "E_SCHEMA")
 R_WD_NULL = dict(withdrawal(withdrawn="x"), withdrawn=None)
@@ -148,25 +156,25 @@ def envelope(id_, why, env, status, error=None, request=None, **extra):
     add(id_, "envelope", why, text(env), error, status=status, keys=gv.ALL_KEYS, request=request, **extra)
 
 
-def withdrawn_envelope(receipt=R_WD, **over):
-    env = {"outcome": "not_covered", "reason": receipt.get("withdrawn", REASON), "receipt": receipt}
+def withdrawn_envelope(receipt=R_WD, trust="primary", **over):
+    env = {"outcome": "not_covered", "reason": receipt.get("withdrawn", REASON), "receipt": receipt, "trust": trust}
     env.update(over)
     return env
 
 
 envelope("envelope/not-covered-withdrawn", "A read whose latest version as of the asof is a withdrawal: not_covered "
          "with the withdrawal as `receipt` and its `withdrawn` text as `reason` (R1, 5.5).", withdrawn_envelope(), 404,
-         outcome="not_covered", receipt_hash=H_WD)
+         outcome="not_covered", trust="primary", receipt_hash=H_WD)
 envelope("envelope/not-covered-withdrawn-relayed", "A withdrawal that carries `source` is checked as any stored receipt "
-         "and answered the same way.", withdrawn_envelope(R_WD_RELAYED), 404, outcome="not_covered",
+         "and answered the same way.", withdrawn_envelope(R_WD_RELAYED, "relayed"), 404, outcome="not_covered", trust="relayed",
          receipt_hash=canon.receipt_hash(R_WD_RELAYED))
 envelope("envelope/not-covered-withdrawn-later-asof", "The withdrawal's asof is at or before the requested asof: it "
          "stands until the cell's next version.", withdrawn_envelope(), 404,
          request={"asof": "2024-03-18T09:00:00.000000Z", "cell_id": cell_id(FX_CELL)}, outcome="not_covered",
-         receipt_hash=H_WD)
+         trust="primary", receipt_hash=H_WD)
 envelope("envelope/not-covered-withdrawn-no-asof", "A request without asof asks for the mesh's now: any asof of the "
          "withdrawal is accepted.", withdrawn_envelope(), 404, request={"cell_id": cell_id(FX_CELL)},
-         outcome="not_covered", receipt_hash=H_WD)
+         outcome="not_covered", trust="primary", receipt_hash=H_WD)
 envelope("envelope/not-covered-reason-label", "The label case: a request through a label whose lookup cell is "
          "withdrawn resolved no cell, so not_covered has `reason` and no receipt (R1, 16.7).",
          {"outcome": "not_covered", "reason": "The label is no longer given."}, 404, outcome="not_covered")
@@ -174,13 +182,22 @@ envelope("envelope/not-covered-reason-label", "The label case: a request through
 for name, env, status, request, why in [
     ("not-covered-withdrawn-reason-mismatch", withdrawn_envelope(reason="Another reason."), 404, None,
      "`reason` must equal the receipt's `withdrawn`."),
-    ("not-covered-withdrawn-no-reason", {"outcome": "not_covered", "receipt": R_WD}, 404, None,
+    ("not-covered-withdrawn-no-reason", {"outcome": "not_covered", "receipt": R_WD, "trust": "primary"}, 404, None,
      "A withdrawal in not_covered is answered with its reason (the most conservative reading of R1): `reason` is "
      "required with the receipt."),
-    ("not-covered-receipt-not-withdrawal", {"outcome": "not_covered", "reason": "A reason.", "receipt": gv.R_FX}, 404,
+    ("not-covered-receipt-not-withdrawal", {"outcome": "not_covered", "reason": "A reason.", "receipt": gv.R_FX, "trust": "primary"}, 404,
      None, "not_covered with a receipt that is not a withdrawal."),
     ("not-covered-reason-empty", {"outcome": "not_covered", "reason": ""}, 404, None,
      "`reason` is a non-empty string (3.5): empty is E_ENVELOPE."),
+    ("not-covered-withdrawn-no-trust", {k: v for k, v in withdrawn_envelope().items() if k != "trust"}, 404, None,
+     "A not_covered with a withdrawal requires `trust`, as ok does (coordinator decision 1)."),
+    ("not-covered-withdrawn-wrong-trust", withdrawn_envelope(R_WD_RELAYED, "primary"), 404, None,
+     "`trust` is checked against the receipt as for ok: a withdrawal with `source` is relayed, not primary."),
+    ("not-covered-withdrawn-wrong-trust-relayed", withdrawn_envelope(R_WD, "relayed"), 404, None,
+     "relayed needs `source`: a plain withdrawal is primary."),
+    ("not-covered-trust-without-receipt", {"outcome": "not_covered", "reason": "The label is no longer given.",
+                                           "trust": "primary"}, 404, None,
+     "`trust` stays forbidden on not_covered without a receipt."),
     ("ok-withdrawal", {"outcome": "ok", "receipt": R_WD, "trust": "primary"}, 200, None,
      "ok carries a value: a withdrawal is never an ok receipt."),
     ("stale-withdrawal", {"age_seconds": 60, "outcome": "stale", "receipt": R_WD, "trust": "primary"}, 200, None,
@@ -207,7 +224,7 @@ add_page = [("slice-member-withdrawn", gv.slice_page([gv.M(R_WD_CHF), gv.M(gv.R_
              "A member is an ok or stale envelope: a withdrawn cell is not a member, and a withdrawal in an ok "
              "member is E_ENVELOPE."),
             ("slice-member-not-covered-withdrawn", gv.slice_page([{"outcome": "not_covered", "reason": REASON,
-                                                                    "receipt": R_WD_CHF}, gv.M(gv.R_FX)]),
+                                                                    "receipt": R_WD_CHF, "trust": "primary"}, gv.M(gv.R_FX)]),
              "A member that is a not_covered answer with the withdrawal is not a member either: a slice leaves the "
              "withdrawn cell out.")]
 for name, env, why in add_page:
@@ -295,9 +312,9 @@ eval_vector("formula-eval/withdrawn-before-asof", "R1: bolt's price is withdrawn
             "2026-04-15 the withdrawal is not yet its latest version: the value stands, 2.75 (15.12).",
             f"{PRICE}(s)", "EUR", PRICE_READ, [WD_BOLT], "2026-04-15T00:00:00.000000Z", hand="2.75")
 eval_vector("invalid/formula-eval-withdrawn-read-alone", "R1: bolt's price is withdrawn at 2026-05-01: read alone as of "
-            "2026-06-01 its latest version is a withdrawal, so the cell is absent (E_FORMULA_ABSENT, as for a cell with "
-            "no receipt; the contract's code).", f"{PRICE}(s)", "EUR", PRICE_READ, [WD_BOLT], gf.LATER,
-            error="E_FORMULA_ABSENT")
+            "2026-06-01 its latest version is a withdrawal, so the cell has no value (as a cell with "
+            "no receipt: E_FORMULA_NOT_COVERED, 15.11).", f"{PRICE}(s)", "EUR", PRICE_READ, [WD_BOLT], gf.LATER,
+            error="E_FORMULA_NOT_COVERED")
 eval_vector("formula-eval/withdrawn-ended", "R1: a later version with a value ends the withdrawal: bolt's price is "
             "withdrawn at 2026-05-01 and 3 again from 2026-05-20, so the read as of 2026-06-01 is 3.",
             f"{PRICE}(s)", "EUR", PRICE_READ, [WD_BOLT, BOLT_BACK], gf.LATER, hand="3",

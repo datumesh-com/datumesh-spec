@@ -1,7 +1,7 @@
 {
   "id": "invalid/formula-eval-withdrawn-read-alone",
   "kind": "formula-eval",
-  "description": "spec-0.7.0: R1: bolt's price is withdrawn at 2026-05-01: read alone as of 2026-06-01 its latest version is a withdrawal, so the cell is absent (E_FORMULA_ABSENT, as for a cell with no receipt; the contract's code).",
+  "description": "spec-0.7.0: R1: bolt's price is withdrawn at 2026-05-01: read alone as of 2026-06-01 its latest version is a withdrawal, so the cell has no value (as a cell with no receipt: E_FORMULA_NOT_COVERED, 15.11).",
   "valid": false,
   "world": {
     "functions": {
@@ -200,5 +200,5 @@
     "fn": "calc.example.net/e"
   },
   "asof": "2026-06-01T00:00:00.000000Z",
-  "error": "E_FORMULA_ABSENT"
+  "error": "E_FORMULA_NOT_COVERED"
 }

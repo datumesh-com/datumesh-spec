@@ -13,17 +13,15 @@ Choices the contract leaves open, each the most conservative reading (listed in 
 R1
 * A withdrawal keeps `summary` (and `valid`, `issued`, ...): `withdrawn` takes the place of `type` and `value` only.
   `withdrawn` beside `type` (without `value`) is E_SCHEMA as well.
-* `withdrawn` empty, over 1024 bytes, or null is E_SCHEMA (the coordinator's brief), not the E_CANON_STRING /
-  E_CANON_LIMIT a summary of that shape gets. A reason that is not NFC is not tested (E_CANON_STRING by 3.5 is the
-  likely code; the contract does not say).
-* The `not_covered` envelope with a withdrawal carries `receipt` and `reason`, and no `trust` (the contract names
-  neither a required nor an optional `trust` for it). The valid vectors give `outcome` and `receipt_hash`. `reason` is
+* `withdrawn`: non-NFC or control characters E_CANON_STRING, over 1024 bytes E_CANON_LIMIT (the codes a summary gets);
+  empty, null and non-string E_SCHEMA (coordinator decision 3).
+* The `not_covered` envelope with a withdrawal carries `receipt`, `reason` and a required `trust`, checked against the
+  receipt as for ok; `trust` stays forbidden without a receipt (coordinator decision 1). `reason` is
   required with the receipt (absent: E_ENVELOPE) and `fault` beside the receipt is E_ENVELOPE.
 * `reason` without a receipt (the label case) is valid; the client cannot tell the label case from another, so only the
   empty reason is refused.
-* A withdrawn cell read alone is E_FORMULA_ABSENT (the contract and the brief), although 15.11 gives E_FORMULA_NOT_COVERED
-  for a single-cell read with no value: invalid/formula-eval-withdrawn-read-alone is the one vector to change if the
-  coordinator decides NOT_COVERED.
+* A withdrawn cell read alone is E_FORMULA_NOT_COVERED (15.11, coordinator decision 2). at(slice, d) of a withdrawn
+  member stays E_FORMULA_ABSENT: it is a lookup on a slice, not a single-cell read.
 * The `call` kind cannot express not_covered, so a withdrawn label has an envelope vector only; the two K8 call vectors
   (a lookup cell holding "") now expect E_KEY_NORMALISATION.
 * A slice page's member that is a withdrawal (an ok envelope, or a not_covered with the receipt) is E_ENVELOPE.
@@ -72,7 +70,7 @@ def run(vec):
 
 class VectorFiles(unittest.TestCase):
     def test_every_new_vector_is_on_disk_unchanged(self):
-        self.assertEqual(len(NEW), 67)
+        self.assertEqual(len(NEW), 74)
         for id_, vec in NEW.items():
             with self.subTest(id_):
                 self.assertIn(id_, ALL)
