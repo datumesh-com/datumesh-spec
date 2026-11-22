@@ -35,6 +35,26 @@ formula/spatial-filter-now invalid/formula-spatial-example
 """.split()
 
 
+def derived_inputs(vec):
+    """The inputs of a body: the function of each read node, and (16.6, K5) the function D/m each dispatch
+    node calls, for each class it dispatches over."""
+    names = set(re.findall(r'"fn":"([a-z0-9.\-]+(?:/[a-z0-9_.\-]+)+)"', vec["ast"]))
+
+    def walk(node):
+        if isinstance(node, dict):
+            if node.get("node") == "dispatch":
+                for c in node["classes"]:
+                    names.add(formula._dispatch_fq(formula._classes(vec["env"]), c, node["method"]))
+            for x in node.values():
+                walk(x)
+        elif isinstance(node, list):
+            for x in node:
+                walk(x)
+
+    walk(json.loads(vec["ast"]))
+    return names
+
+
 class GrammarVectors(unittest.TestCase):
     def test_every_vector_passes(self):
         for vec in VECTORS:
@@ -80,7 +100,7 @@ class GrammarVectors(unittest.TestCase):
             with self.subTest(vec["id"]):
                 c = formula.compile(vec["input"], vec["env"])
                 self.assertEqual(c.inputs, vec["inputs"])
-                self.assertEqual(set(c.inputs), set(re.findall(r'"fn":"([a-z0-9.\-]+(?:/[a-z0-9_.\-]+)+)"', vec["ast"])))
+                self.assertEqual(set(c.inputs), derived_inputs(vec))
 
     def test_body_is_a_fixed_point(self):
         for vec in VALID:
@@ -88,7 +108,9 @@ class GrammarVectors(unittest.TestCase):
                 again = formula.compile(vec["body"], vec["env"])
                 self.assertEqual(again.ast_sha256, vec["ast_sha256"])
                 self.assertEqual(again.body, vec["body"])
-                self.assertEqual(formula.canonical_ast(vec["body"]), json.loads(vec["ast"]))
+                # a dispatch resolves its classes (16.6), so it needs the vector's env; the rest need none
+                env = vec["env"] if '"node":"dispatch"' in vec["ast"] else None
+                self.assertEqual(formula.canonical_ast(vec["body"], env), json.loads(vec["ast"]))
 
     def test_dynamic_names_fail_at_parse(self):
         """Brief test 3: a body with a dynamically constructed name fails at parse, before any
