@@ -3458,7 +3458,8 @@ def parse_call(text, env):
     {class name: {label: key encoding}}, the cells of each class's lookup method as of the call's
     asof (Q10 a; since the classes round, a folded label maps to "" when withdrawn, K8), "cells":
     {canonical call without asof: key encoding}, the cells of the methods that return a key, as of the
-    call's asof (K10)}.
+    call's asof (K10), "class_descriptors": [flattened class descriptors held by hash only, with no class name bound
+    to them (K5): a parent an override is compared with, found by hash}.
 
     Since spec-0.5.0 (Q1) a request has no variables: every argument is read by the declared type of
     its position (_call_read), and an unquoted value is a single token of the dialect.
@@ -3559,30 +3560,47 @@ def parse_call(text, env):
     return out
 
 
-def method_definer(classes, desc, m):
-    """The class that defines the method m an object of desc reads (K5, 16.3), or None when desc writes m itself.
+def _flat_by_hash(classes, held, h):
+    """The flattened class descriptor whose hash is h: a class name bound to it (classes), else one held by hash only
+    (held: the env member class_descriptors, K5), or None."""
+    for n in keys_in_order(classes):
+        if class_hash(classes[n]) == h:
+            return classes[n]
+    for d in held:
+        if class_hash(d) == h:
+            return d
+    return None
 
-    m is inherited when desc's parent carries m with the same function hash. The defining class is then the top of
-    the run of ancestors that carry m with that hash: the class that first gave m that hash, found through the
-    parent hashes, each named by the class name bound to it (the first in ascending order, as 16.3's super).
-    LookupError carries a parent hash that no class name is bound to."""
+
+def method_definer(classes, desc, m, held=()):
+    """The class name that defines the method m an object of desc reads (K5, 16.3), or None when desc writes m itself.
+
+    An override is desc's own: deciding that needs only the parent's flattened descriptor, found by hash (in classes,
+    or held by hash only in held). m is inherited when the parent carries m with the same function hash; the defining
+    class is then the top of the run of ancestors that carry m with that hash, and its name is the class name bound to
+    its hash (the first in ascending order, as 16.3's super). LookupError carries a hash that cannot be resolved: a
+    parent whose descriptor is not held at all, or the defining class's hash, which no class name is bound to."""
     h = desc["methods"][m]
     cur, definer = desc, None
     while cur.get("parent") is not None:
-        pname = next((n for n in keys_in_order(classes) if class_hash(classes[n]) == cur["parent"]), None)
-        if pname is None:
+        pdesc = _flat_by_hash(classes, held, cur["parent"])
+        if pdesc is None:
             raise LookupError(cur["parent"])
-        pdesc = classes[pname]
         if pdesc["methods"].get(m) != h:
             break
-        definer, cur = pname, pdesc
-    return definer
+        definer, cur = cur["parent"], pdesc
+    if definer is None:
+        return None
+    name = next((n for n in keys_in_order(classes) if class_hash(classes[n]) == definer), None)
+    if name is None:
+        raise LookupError(definer)
+    return name
 
 
-def _method_fq(classes, fq, desc, m):
+def _method_fq(classes, fq, desc, m, held=()):
     """The function N/m a method of the object of class fq reads (16.3, K5): D/m when inherited, else fq/m."""
     try:
-        definer = method_definer(classes, desc, m)
+        definer = method_definer(classes, desc, m, held)
     except LookupError as e:
         fail("E_NAME_UNBOUND", f"no class name is bound to the parent hash {e} of {fq}: its method {m} is not known")
     return f"{fq if definer is None else definer}/{m}"
@@ -3606,7 +3624,7 @@ def _call_method(fq, desc, mname, mtok, env):
         fail("E_NAME_UNBOUND", f"{fq} has no method {mname}")
     if mname == desc.get("lookup"):  # spec-0.5.0 (H7): as a method the class does not have
         fail("E_NAME_UNBOUND", f"{mname} is {fq}'s lookup: it takes a label, not an object")
-    mfq = _method_fq(env.get("classes") or {}, fq, desc, mname)
+    mfq = _method_fq(env.get("classes") or {}, fq, desc, mname, env.get("class_descriptors") or [])
     if mfq not in functions or function_hash(functions[mfq]) != desc["methods"][mname]:
         fail("E_NAME_UNBOUND", f"{mfq} is not bound to the method {mname} of {fq}")
     descriptor = functions[mfq]

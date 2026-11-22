@@ -920,23 +920,28 @@ def _classes(env):
     return (env or {}).get("classes") or {}
 
 
-def _method_name(classes, cname, desc, m):
+def _held(env):
+    """The flattened class descriptors held by hash only (K5, the env member class_descriptors)."""
+    return (env or {}).get("class_descriptors") or []
+
+
+def _method_name(classes, cname, desc, m, held=()):
     """The function N/m a method m of an object of class cname reads (16.3, K5, since the classes round): D/m, where D is
     the class that defines an inherited m, else cname/m. An unbound parent hash is E_FORMULA_UNRESOLVED (a body)."""
     try:
-        definer = canon.method_definer(classes, desc, m)
+        definer = canon.method_definer(classes, desc, m, held)
     except LookupError as e:
         fail("E_FORMULA_UNRESOLVED", f"no class name is bound to the parent hash {e} of {cname}: its method {m} is "
              "not known (16.3)")
     return f"{cname if definer is None else definer}/{m}"
 
 
-def _dispatch_fq(classes, cname, m):
+def _dispatch_fq(classes, cname, m, held=()):
     """The function a dispatch over class cname calls for m (16.6, K5)."""
     desc = classes.get(cname)
     if desc is None:
         fail("E_FORMULA_UNRESOLVED", f"{cname} has no binding")
-    return _method_name(classes, cname, desc, m)
+    return _method_name(classes, cname, desc, m, held)
 
 
 def _class_of(env, fq):
@@ -1259,7 +1264,7 @@ def _resolve_method(tree, env):
             fail("E_FORMULA_METHOD", f"{cname} has no method {m}")
         if m == desc.get("lookup"):  # spec-0.5.0 (Q10 a): it takes a label, not an object's keys
             fail("E_FORMULA_METHOD", f"{m} is {cname}'s lookup: read it by its plain name, {cname}/{m}(label)")
-        fq = _method_name(_classes(env), cname, desc, m)  # K5: the defining class's name, pinned or not (super too)
+        fq = _method_name(_classes(env), cname, desc, m, _held(env))  # K5: the defining class's name, pinned or not (super too)
         if pinned:
             callee = _pinned(env, desc["methods"][m])
             if callee is None:
@@ -1313,7 +1318,7 @@ def _static_classes(node, env):
         ret = callee["signature"]["returns"] if callee else None
         return ret.get("classes") if isinstance(ret, dict) else None
     if node["node"] == "dispatch":
-        callee = _callee(env, _dispatch_fq(_classes(env), node["classes"][0], node["method"]))
+        callee = _callee(env, _dispatch_fq(_classes(env), node["classes"][0], node["method"], _held(env)))
         ret = callee["signature"]["returns"] if callee else None
         return ret.get("classes") if isinstance(ret, dict) else None
     if node["node"] == "str":
@@ -1339,7 +1344,7 @@ def _resolve_dispatch(tree, env):
             fail("E_FORMULA_UNRESOLVED", f"{c} has no binding")
         if m not in desc["methods"] or m == desc.get("lookup"):
             fail("E_FORMULA_METHOD", f"{c} has no method {m} to dispatch to")
-        fq = _method_name(_classes(env), c, desc, m)  # K5: D/m for an inherited method
+        fq = _method_name(_classes(env), c, desc, m, _held(env))  # K5: D/m for an inherited method
         callee = _callee(env, fq)
         if callee is None:
             fail("E_FORMULA_UNRESOLVED", f"{fq} has no binding")
@@ -1751,7 +1756,7 @@ class Checker:
             fail("E_FORMULA_TYPE", "a method is called on an object key, a string")
         first = None
         for c in node["classes"]:
-            fq = _dispatch_fq(_classes(self.env), c, node["method"])  # K5
+            fq = _dispatch_fq(_classes(self.env), c, node["method"], _held(self.env))  # K5
             callee = _callee(self.env, fq)
             if callee is None:
                 fail("E_FORMULA_UNRESOLVED", f"{fq} has no binding")

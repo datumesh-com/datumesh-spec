@@ -109,7 +109,14 @@
     },
     "env": {
       "type": "object",
-      "description": "A key environment (keys vectors); for mesh vectors (spec-0.4.1) {keys, mesh}, each the HTTPS result for one document; or a formula vector's environment: name, signature, functions, aliases. For call vectors (spec-0.4.2): {functions, aliases, descriptors}, and since spec-0.5.0 classes, aliases_tx, now and lookups (class name to {label: key encoding})."
+      "description": "A key environment (keys vectors); for mesh vectors (spec-0.4.1) {keys, mesh}, each the HTTPS result for one document; or a formula vector's environment: name, signature, functions, aliases. For call vectors (spec-0.4.2): {functions, aliases, descriptors}, and since spec-0.5.0 classes, aliases_tx, now and lookups (class name to {label: key encoding}). Since the classes round (K5), class_descriptors: a list of flattened class descriptors held by hash only, with no class name bound to them (the parents an override is compared with by hash, 16.3).",
+      "properties": {
+        "class_descriptors": {
+          "type": "array",
+          "description": "Flattened class descriptors (16.2) held by hash only: no class name is bound to them (since the classes round, K5).",
+          "items": {"type": "object"}
+        }
+      }
     },
     "keypair": {
       "type": "object",
