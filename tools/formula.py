@@ -3263,7 +3263,13 @@ class Context:
                 if not _matches(cell_args, pattern):
                     continue
                 a = world.stored_answer(fn_hash, cid, self.A)
-                if a is None or a.withdrawn:  # spec-0.7.0 (R1): a withdrawn cell is not a member
+                if a is not None and a.withdrawn:
+                    # spec-0.7.0 (R1): a withdrawn cell is not a member. 8.2 (coordinator decision): the withdrawal
+                    # left a member out of this read, so it counts for time as an input does: its tx and asof
+                    # enter the receipt's, and it is no input (no entry, no receipt in the lineage).
+                    self.times.append((a.tx, a.asof))
+                    continue
+                if a is None:
                     continue
                 world.receipts[a.hash] = a.text
                 members.append((tuple(untyped(cell_args[n])[1] for n in keys), a))
