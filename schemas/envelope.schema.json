@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://datumesh.com/schemas/1/envelope.schema.json",
   "title": "Datumesh response envelope",
-  "description": "The JSON body a mesh returns at https://<mesh>/cell/<rest> (SPEC.md 5.5). Not hashed, not signed: the mesh's statement. Only the embedded receipt is verifiable. The HTTP status must match outcome; that, and trust: primary against the receipt, are checked by the procedure in 5.5. The receipt must also answer the request (step 5), which the body does not contain; a pending envelope (spec-0.4.1) echoes the request, and the envelope served at its poll URL is checked against that original request. Since spec-0.4.2: trust computed, the fn_hash echo, not_covered with E_NAME_UNBOUND, and the slice endpoint's page (5.6): an ok envelope with slice, members (ok or stale envelopes) and next. Since spec-0.4.3: E_FOREIGN_UNAVAILABLE (error, 502) with detail. Since spec-0.5.0: resolved and shadows (16.7, 16.9), E_SHORT_ID_AMBIGUOUS, E_KEY_NORMALISATION and E_KEY_ENCODING for bad_request. Since spec-0.6.0: the outcome scenario (the answer to a whatif request with overrides, 5.9), cycle (an E_EVAL_UNAVAILABLE error's path and fixes, 5.5), the trust value relayed (5.5), the faults E_WHATIF_NO_SOLUTION (with solve) and the codes E_WHATIF_UNSUPPORTED (bad_request).",
+  "description": "The JSON body a mesh returns at https://<mesh>/cell/<rest> (SPEC.md 5.5). Not hashed, not signed: the mesh's statement. Only the embedded receipt is verifiable. The HTTP status must match outcome; that, and trust: primary against the receipt, are checked by the procedure in 5.5. The receipt must also answer the request (step 5), which the body does not contain; a pending envelope (spec-0.4.1) echoes the request, and the envelope served at its poll URL is checked against that original request. Since spec-0.4.2: trust computed, the fn_hash echo, not_covered with E_NAME_UNBOUND, and the slice endpoint's page (5.6): an ok envelope with slice, members (ok or stale envelopes) and next. Since spec-0.4.3: E_FOREIGN_UNAVAILABLE (error, 502) with detail. Since spec-0.5.0: resolved and shadows (16.7, 16.9), E_SHORT_ID_AMBIGUOUS, E_KEY_NORMALISATION and E_KEY_ENCODING for bad_request. Since spec-0.6.0: the outcome scenario (the answer to a whatif request with overrides, 5.9), cycle (an E_EVAL_UNAVAILABLE error's path and fixes, 5.5), the trust value relayed (5.5), the faults E_WHATIF_NO_SOLUTION (with solve) and the codes E_WHATIF_UNSUPPORTED (bad_request). Since spec-0.7.0: not_covered with receipt (a withdrawal), reason and trust, checked by the procedure; not_covered with reason and no receipt is the label case (16.7); E_SLICE_MEMBER answers a bad_request with or without overrides.",
   "type": "object",
   "required": [
     "outcome"
@@ -42,7 +42,8 @@
     },
     "reason": {
       "$ref": "defs.schema.json#/$defs/string",
-      "minLength": 1
+      "minLength": 1,
+      "description": "spec-0.7.0: a not_covered reason is the withdrawal's text (with its receipt) or the label's (16.7, with none); superseded_by's reason otherwise."
     },
     "quote": {
       "type": "object",
@@ -409,7 +410,7 @@
           "items": {
             "type": "object"
           },
-          "description": "The request's overrides, canonical: value overrides {cell, value} and slice overrides {slice, add, remove}, sorted by id."
+          "description": "The request's overrides, canonical: value overrides {cell, value}, slice overrides {slice, add, remove} and, since spec-0.7.0 (R3), slice overrides {slice, members}, sorted by id."
         },
         "solved": {
           "type": "object",
@@ -431,11 +432,6 @@
         }
       }
     }
-  },
-  "dependentRequired": {
-    "reason": [
-      "superseded_by"
-    ]
   },
   "oneOf": [
     {
@@ -517,6 +513,11 @@
             "E_NAME_UNBOUND",
             "E_NAMESPACE_SUSPENDED"
           ]
+        },
+        "receipt": {
+          "required": [
+            "withdrawn"
+          ]
         }
       },
       "propertyNames": {
@@ -525,8 +526,11 @@
           "error",
           "fault",
           "fn_hash",
+          "reason",
+          "receipt",
           "resolved",
-          "shadows"
+          "shadows",
+          "trust"
         ]
       },
       "not": {
@@ -534,7 +538,47 @@
           "error",
           "fault"
         ]
-      }
+      },
+      "allOf": [
+        {
+          "if": {
+            "required": [
+              "receipt"
+            ]
+          },
+          "then": {
+            "required": [
+              "reason",
+              "trust"
+            ],
+            "not": {
+              "anyOf": [
+                {
+                  "required": [
+                    "error"
+                  ]
+                },
+                {
+                  "required": [
+                    "fault"
+                  ]
+                }
+              ]
+            }
+          },
+          "else": {
+            "not": {
+              "anyOf": [
+                {
+                  "required": [
+                    "trust"
+                  ]
+                }
+              ]
+            }
+          }
+        }
+      ]
     },
     {
       "properties": {
@@ -753,5 +797,30 @@
       "maximum": 9007199254740991,
       "description": "Written 0|[1-9][0-9]* (SPEC.md 5.5). JSON Schema cannot see that 30.0 is not written that way; the procedure in 5.5 checks it."
     }
-  }
+  },
+  "allOf": [
+    {
+      "if": {
+        "required": [
+          "reason"
+        ]
+      },
+      "then": {
+        "anyOf": [
+          {
+            "required": [
+              "superseded_by"
+            ]
+          },
+          {
+            "properties": {
+              "outcome": {
+                "const": "not_covered"
+              }
+            }
+          }
+        ]
+      }
+    }
+  ]
 }

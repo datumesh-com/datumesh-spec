@@ -2742,12 +2742,14 @@ def _from_dim(kind, f, up):
 
 
 class Answer:
-    __slots__ = ("receipt", "hash", "value", "tx", "asof", "text")
+    """A stored receipt as an answer. A withdrawal (spec-0.7.0, 8.1: the null version) has no value."""
+    __slots__ = ("receipt", "hash", "value", "tx", "asof", "text", "withdrawn")
 
     def __init__(self, receipt):
         self.receipt = receipt
         self.hash = canon.receipt_hash(receipt)
-        self.value = untyped({"type": receipt["type"], "value": receipt["value"]})
+        self.withdrawn = "withdrawn" in receipt
+        self.value = None if self.withdrawn else untyped({"type": receipt["type"], "value": receipt["value"]})
         self.tx, self.asof = receipt["tx"], receipt["asof"]
         self.text = json.dumps(receipt, ensure_ascii=False)
 
@@ -2933,7 +2935,7 @@ class World:
         lang = descriptor["code"]["lang"]
         if lang == "stored":
             a = self.stored_answer(fn_hash, cid, asof)
-            if a is None:
+            if a is None or a.withdrawn:  # spec-0.7.0 (R1): a withdrawn cell has no value, read alone
                 fail("E_FORMULA_NOT_COVERED", f"{fq} has no value as of {asof}")
             self.receipts[a.hash] = a.text
             return a
@@ -3261,7 +3263,7 @@ class Context:
                 if not _matches(cell_args, pattern):
                     continue
                 a = world.stored_answer(fn_hash, cid, self.A)
-                if a is None:
+                if a is None or a.withdrawn:  # spec-0.7.0 (R1): a withdrawn cell is not a member
                     continue
                 world.receipts[a.hash] = a.text
                 members.append((tuple(untyped(cell_args[n])[1] for n in keys), a))
@@ -3631,7 +3633,8 @@ class Context:
             self.times.append((a.tx, a.asof))
             self.world.receipts[a.hash] = a.text
         self.world.manifests[entry] = json.dumps(manifest(obj, hashes), ensure_ascii=False)
-        return Mat(["tx"], ["instant"], [((a.tx,), a.value) for a in versions], self.ty(node).elem)
+        return Mat(["tx"], ["instant"], [((a.tx,), a.value) for a in versions if not a.withdrawn],
+                   self.ty(node).elem)
 
     def f_aggregate(self, node, scope):
         name = node["fn"]

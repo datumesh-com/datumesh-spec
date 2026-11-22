@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://datumesh.com/schemas/1/receipt.schema.json",
   "title": "Datumesh receipt",
-  "description": "A signed answer for one cell (SPEC.md section 8). The receipt hash is SHA-256 over the JCS of the receipt without sig; sig is Ed25519 over the same bytes.",
+  "description": "A signed answer for one cell (SPEC.md section 8). The receipt hash is SHA-256 over the JCS of the receipt without sig; sig is Ed25519 over the same bytes. Since spec-0.7.0: a withdrawal (the null version) is a receipt with withdrawn in place of type and value.",
   "type": "object",
   "required": [
     "asof",
@@ -16,9 +16,7 @@
     "sig",
     "summary",
     "tx",
-    "type",
-    "valid",
-    "value"
+    "valid"
   ],
   "additionalProperties": false,
   "properties": {
@@ -149,9 +147,14 @@
           "description": "Where the source can take over publishing these cells."
         }
       }
+    },
+    "withdrawn": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 1024,
+      "description": "spec-0.7.0 (R1, 8.1): a withdrawal, the null version: the reason, which takes the place of type and value. Its inputs are empty; string rules as summary (3.5, E_CANON_STRING, E_CANON_LIMIT)."
     }
   },
-  "$ref": "defs.schema.json#/$defs/typedValue",
   "allOf": [
     {
       "if": {
@@ -164,6 +167,44 @@
           "inputs": {
             "maxItems": 0
           }
+        }
+      }
+    }
+  ],
+  "oneOf": [
+    {
+      "required": [
+        "type",
+        "value"
+      ],
+      "not": {
+        "required": [
+          "withdrawn"
+        ]
+      },
+      "$ref": "defs.schema.json#/$defs/typedValue"
+    },
+    {
+      "required": [
+        "withdrawn"
+      ],
+      "not": {
+        "anyOf": [
+          {
+            "required": [
+              "type"
+            ]
+          },
+          {
+            "required": [
+              "value"
+            ]
+          }
+        ]
+      },
+      "properties": {
+        "inputs": {
+          "maxItems": 0
         }
       }
     }

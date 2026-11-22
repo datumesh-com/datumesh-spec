@@ -781,6 +781,8 @@ RECEIPT_MEMBERS = (
     "asof", "cell", "computed_by", "inputs", "issued", "licence", "proto",
     "publisher", "sig", "summary", "tx", "type", "valid", "value",
 )
+# spec-0.7.0 (R1, 8.1): a withdrawal is the null version; `withdrawn` takes the place of type and value.
+WITHDRAWAL_MEMBERS = tuple(m for m in RECEIPT_MEMBERS if m not in ("type", "value")) + ("withdrawn",)
 
 
 # spec-0.6.0 (C2, 8.1): a stored receipt may carry its source, a relayed value's provenance.
@@ -819,9 +821,16 @@ def check_source(src, host, path):
 
 
 def shape_receipt(r, path="$"):
-    _shape_object(r, RECEIPT_MEMBERS, ("source",), path)
+    if isinstance(r, dict) and "withdrawn" in r:  # spec-0.7.0: a withdrawal, the null version
+        _shape_object(r, WITHDRAWAL_MEMBERS, ("source",), path)
+        if not isinstance(r["withdrawn"], str) or r["withdrawn"] == "":
+            fail("E_SCHEMA", "withdrawn is a non-empty string: the reason", f"{path}.withdrawn")
+        if isinstance(r.get("inputs"), list) and r["inputs"]:
+            fail("E_SCHEMA", "a withdrawal is a stored cell's: inputs is empty", f"{path}.inputs")
+    else:
+        _shape_object(r, RECEIPT_MEMBERS, ("source",), path)
     for key in ("asof", "computed_by", "issued", "licence", "proto", "publisher",
-                "sig", "summary", "tx", "type"):
+                "sig", "summary", "tx") + (() if "withdrawn" in r else ("type",)):
         _shape_str(r, key, path)
     if r["proto"] != PROTO:
         fail("E_SCHEMA", f"proto must be {PROTO!r}", f"{path}.proto")
@@ -833,7 +842,7 @@ def shape_receipt(r, path="$"):
             fail("E_SCHEMA", "source is allowed only when inputs is empty (a stored receipt)", f"{path}.source")
         shape_source(r["source"], f"{path}.source")
     shape_args(r["valid"], f"{path}.valid")
-    if not isinstance(r["value"], (str, bool)):
+    if "withdrawn" not in r and not isinstance(r["value"], (str, bool)):
         fail("E_SCHEMA", "value must be a string or a boolean", f"{path}.value")
 
 
@@ -1091,9 +1100,13 @@ def check_receipt_form(r, path="$"):
         fail("E_CANON_STRING", "summary must not be empty", f"{path}.summary")
     check_text(r["summary"], f"{path}.summary", "summary")
     check_instant(r["tx"], f"{path}.tx")
-    check_type_name(r["type"], f"{path}.type")
+    if "withdrawn" in r:  # spec-0.7.0 (R1): the reason follows the string rules, with the summary limit
+        check_text(r["withdrawn"], f"{path}.withdrawn", "summary")
+    else:
+        check_type_name(r["type"], f"{path}.type")
     check_args(r["valid"], f"{path}.valid")
-    check_lexical(r["type"], r["value"], f"{path}.value")
+    if "withdrawn" not in r:
+        check_lexical(r["type"], r["value"], f"{path}.value")
     # Step 4: consistency.
     args = r["cell"]["args"]
     for name in keys_in_order(args):
@@ -2706,7 +2719,7 @@ def verify_receipt(data, keyenv, recompute=None, blob=None):
         else:  # step 7.6 could not run: not a failure
             result["code"] = "E_EVAL_UNAVAILABLE"
     if blob is not None:  # step 7.7
-        if r["type"] != "blob":
+        if "withdrawn" in r or r["type"] != "blob":
             fail("E_SCHEMA", "content was supplied for a value that is not a blob", "$.type")
         check_blob_content(r["value"], blob)
         result["blob_checked"] = True
@@ -2734,7 +2747,7 @@ def _recompute(r, recompute, keyenv):
             fail("E_ARG_TYPE", f"{name} is declared {declared[name]['type']}", f"$.cell.args.{name}")
     if set(r["valid"]) != {n for n, d in declared.items() if d["valid"]}:
         fail("E_VALID_MISMATCH", "valid must echo exactly the declared valid-time arguments", "$.valid")
-    if r["type"] != returns_type(desc):
+    if "withdrawn" not in r and r["type"] != returns_type(desc):
         fail("E_RETURN_TYPE", f"function returns {returns_type(desc)}", "$.type")
     supplied = recompute.get("inputs", {})
     input_tx = []
@@ -2758,6 +2771,8 @@ def _recompute(r, recompute, keyenv):
         input_tx.append(ir["tx"])
     if input_tx and r["tx"] != max(input_tx):
         fail("E_TIME_ORDER", "a computed cell's tx is the latest tx of its inputs", "$.tx")
+    if "withdrawn" in r:  # spec-0.7.0: a withdrawal states no value to compare
+        return True
     if "value" not in recompute:  # step 7.6: the function cannot be evaluated
         return False
     if recompute["value"] != {"type": r["type"], "value": r["value"]}:
@@ -2841,7 +2856,7 @@ ENVELOPE_MEMBERS = {  # outcome -> (required, optional)
     "ok": (("outcome", "receipt", "trust"), ("fn_hash", "reason", "resolved", "shadows", "superseded_by")),
     "stale": (("age_seconds", "outcome", "receipt", "trust"), ("fn_hash", "reason", "resolved", "shadows",
                                                                "superseded_by")),
-    "not_covered": (("outcome",), ("error", "fault", "fn_hash", "resolved", "shadows")),
+    "not_covered": (("outcome",), ("error", "fault", "fn_hash", "reason", "receipt", "resolved", "shadows", "trust")),
     "unlicensed": (("outcome",), ("fn_hash", "resolved", "shadows")),
     "payment_required": (("outcome", "quote"), ("fn_hash", "resolved", "shadows")),
     "rate_limited": (("outcome", "retry_after_seconds"), ("fn_hash",)),
@@ -3020,8 +3035,20 @@ def _check_envelope_members(env, members=None):
         if env["reason"] == "":
             fail("E_ENVELOPE", "reason must not be empty", "$.reason")
         check_text(env["reason"], "$.reason", "summary")
-        if "superseded_by" not in env:
+        # spec-0.7.0: a not_covered reason is a withdrawal's (with its receipt) or the label case's (none)
+        if "superseded_by" not in env and env["outcome"] != "not_covered":
             fail("E_ENVELOPE", "reason is given only with superseded_by", "$.reason")
+    if env["outcome"] == "not_covered":  # spec-0.7.0 (R1): the withdrawal's answer, or none
+        if "receipt" in env:
+            if "reason" not in env or "trust" not in env or "error" in env or "fault" in env:
+                fail("E_ENVELOPE", "a withdrawal in not_covered carries reason and trust, and no error or fault",
+                     "$.receipt")
+            if not isinstance(env["receipt"], dict) or "withdrawn" not in env["receipt"]:
+                fail("E_ENVELOPE", "not_covered carries a withdrawal receipt, or none", "$.receipt")
+        elif "trust" in env:
+            fail("E_ENVELOPE", "trust is given with a receipt only", "$.trust")
+    elif "trust" in env and env["outcome"] not in ("ok", "stale"):
+        fail("E_ENVELOPE", "trust is given with a receipt only", "$.trust")
     if "receipt" in env and not isinstance(env["receipt"], dict):
         fail("E_ENVELOPE", "receipt is a receipt object", "$.receipt")
     if "estimate_seconds" in env and not _seconds(env["estimate_seconds"]):
@@ -3074,6 +3101,11 @@ def _check_receipt_answer(env, keyenv, request, cell_ok, path="$"):
     receipt_hash = verify_receipt(jcs(r), keyenv)["hash"]
     if not cell_ok(r):
         fail("E_ENVELOPE", "the receipt is for another cell than the one requested", f"{path}.receipt.cell")
+    if ("withdrawn" in r) != (env["outcome"] == "not_covered"):  # spec-0.7.0: ok and stale state a value
+        fail("E_ENVELOPE", "a withdrawal answers not_covered, and not_covered carries only a withdrawal",
+             f"{path}.receipt")
+    if "withdrawn" in r and env["reason"] != r["withdrawn"]:
+        fail("E_ENVELOPE", "reason is the withdrawal's reason", f"{path}.reason")
     # ok and stale alike: a receipt answers every asof from its own up to the cell's next
     # version, so its asof is at or before the one requested (D31). What ok adds, that the
     # receipt is the latest version known as of the requested asof, is the mesh's claim.
@@ -3210,6 +3242,21 @@ def _check_override(o):
         shape_scalar(o["value"], "$.value")
         check_scalar(o["value"], "$.value")
         return cell_id(o["cell"])
+    if isinstance(o, dict) and set(o) == {"members", "slice"}:  # spec-0.7.0 (R3, 5.9): the whole member set
+        shape_slice(o["slice"], "$.slice")
+        check_slice(o["slice"], "$.slice")
+        if not isinstance(o["members"], list):
+            fail("E_SCHEMA", "members is an array", "$.members")
+        for member in o["members"]:
+            _shape_object(member, ("cell", "value"), (), "$.members")
+            shape_cell(member["cell"], "$.members.cell")
+            check_cell(member["cell"], "$.members.cell")
+            shape_scalar(member["value"], "$.members.value")
+            check_scalar(member["value"], "$.members.value")
+        ids = [cell_id(m["cell"]) for m in o["members"]]
+        if ids != sorted(ids) or len(set(ids)) != len(ids):
+            fail("E_SCHEMA", "members is sorted by cell id, each cell once", "$.members")
+        return slice_id(o["slice"])
     if isinstance(o, dict) and set(o) == {"add", "remove", "slice"}:
         shape_slice(o["slice"], "$.slice")
         check_slice(o["slice"], "$.slice")
@@ -3312,8 +3359,6 @@ def check_envelope_object(status, env, keyenv, request, _request_checked=False):
     # spec-0.6.0 (5.5): the whatif codes of a bad_request answer a whatif request, and only that one
     if env["outcome"] == "bad_request" and env.get("error") == "E_WHATIF_UNSUPPORTED" and "solve" not in request:
         fail("E_ENVELOPE", "E_WHATIF_UNSUPPORTED answers a solve", "$.error")
-    if env["outcome"] == "bad_request" and env.get("error") == "E_SLICE_MEMBER" and not whatif:
-        fail("E_ENVELOPE", "E_SLICE_MEMBER answers a whatif request with overrides", "$.error")
     _check_pin_echo(env, request)
     if env["outcome"] == "pending":
         # Step 5 for pending (spec-0.4.1): the echoed request is the one made, and a pending
@@ -3873,8 +3918,9 @@ def _call_lookup(fq, desc, label, asof, env, resolutions):
     if text not in table:
         fail("E_NAME_UNBOUND", f"{fq}'s lookup has no value for the label {text!r} as of {at}")
     key = table[text]
-    if key == "":  # K8: a withdrawn label, which is unknown as far as a call is concerned
-        fail("E_NAME_UNBOUND", f"the label {text!r} of {fq} was withdrawn as of {at}")
+    if key == "":  # spec-0.7.0 (R1): the lookup returns a key, never the empty string (a withdrawn label is a
+        # withdrawn lookup cell, which a request through it answers not_covered; the call vectors refuse "")
+        fail("E_KEY_NORMALISATION", f"the lookup of {text!r} returns the empty string, not a key of {fq}")
     decoded = decode_key(key)
     if decoded["class"] != fq or set(decoded["keys"]) != set(desc["keys"]):
         fail("E_KEY_ENCODING", f"the lookup's value is not a key of {fq}")
