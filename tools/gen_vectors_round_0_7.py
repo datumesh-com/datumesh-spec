@@ -98,6 +98,12 @@ H_WD = canon.receipt_hash(R_WD)
 valid_receipt("receipt/withdrawn-primary", "A stored cell's withdrawal, signed by its publisher: `withdrawn` (the "
               "reason) takes the place of type and value; inputs is empty. It is hashed and verified as any stored "
               "receipt (R1, 8.1, 10.1).", R_WD)
+add("receipt/withdrawn-with-resolver", "receipt", "A withdrawal is a stored version with no inputs: verified with the "
+    "publisher's descriptor and a value on offer (a resolver), it is at level signed, with no code: there is "
+    "nothing to recompute, and a value offered is not compared (coordinator decision).", text(R_WD),
+    canonical=canon.receipt_payload(R_WD).decode(), sha256=H_WD, sig=R_WD["sig"], level="signed",
+    keypair=gv.keypair_fields("rates-2020"), keys=gv.KEYENV,
+    recompute={"descriptor": gv.FX, "inputs": {}, "value": N("1.0892")})
 valid_receipt("receipt/withdrawn-relayed", "A withdrawal with `source`: the publisher withdraws a value it had taken "
               "from another party, and the receipt verifies like any stored one.", R_WD_RELAYED)
 valid_receipt("receipt/withdrawn-non-ascii", "The reason is a string under the string rules (3.5): NFC text, any "

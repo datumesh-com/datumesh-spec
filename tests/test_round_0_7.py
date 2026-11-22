@@ -72,7 +72,7 @@ def run(vec):
 
 class VectorFiles(unittest.TestCase):
     def test_every_new_vector_is_on_disk_unchanged(self):
-        self.assertEqual(len(NEW), 79)
+        self.assertEqual(len(NEW), 80)
         for id_, vec in NEW.items():
             with self.subTest(id_):
                 self.assertIn(id_, ALL)
@@ -168,6 +168,27 @@ class TxBound(unittest.TestCase):
         self.assertEqual(early["error"], "E_TIME_ORDER")
         self.assertTrue(NEW["receipt/slice-range-tx-after-members"]["valid"])
         self.assertEqual(ALL["invalid/receipt-slice-tx"]["error"], "E_TIME_ORDER")  # unchanged: a member's tx is later
+
+
+class WithdrawalLevel(unittest.TestCase):
+    """A withdrawal is a stored version with no inputs: level signed, even with recompute data (a resolver)."""
+
+    def verify(self, **recompute):
+        vec = NEW["receipt/withdrawn-with-resolver"]
+        return canon.verify_receipt(vec["input"], vec["keys"], dict(vec["recompute"], **recompute))
+
+    def test_level_signed_with_a_resolver(self):
+        self.assertEqual(NEW["receipt/withdrawn-with-resolver"]["level"], "signed")
+        got = self.verify()
+        self.assertEqual(got["level"], "signed")
+        self.assertNotIn("code", got)
+
+    def test_a_value_on_offer_is_not_compared(self):
+        self.assertEqual(self.verify(value={"type": "number", "value": "9"})["level"], "signed")
+
+    def test_without_the_descriptor_too(self):
+        vec = NEW["receipt/withdrawn-with-resolver"]
+        self.assertEqual(canon.verify_receipt(vec["input"], vec["keys"], {"inputs": {}})["level"], "signed")
 
 
 class CaseHashes(unittest.TestCase):
