@@ -411,13 +411,13 @@
     "fn": "calc.example.net/e"
   },
   "asof": "2026-06-01T00:00:00.000000Z",
-  "receipt_hash": "77c9db85f00d2d08374191f3f17c56b1ea953dd05227996a9d44dc19166b6f3c",
+  "receipt_hash": "362d992e220aae1ee3c2618c0c0e61c0b42bbf362df145ec321369f15d5121c9",
   "value": {
     "type": "number",
     "value": "11"
   },
   "lineage": [
-    "slice:a45784ce2a47fcaa2bdc589af888cd5acc3eeb63206f8083292f4a12e0249719:082cbb352d36ed2b726c86557f62da96459a1c113e93cbb2b83b2752daadfe33"
+    "slice:a45784ce2a47fcaa2bdc589af888cd5acc3eeb63206f8083292f4a12e0249719:e189c4192e7dea28773840a08a3fcd9cbaacf4b8c02064af120be1d9a09daec7"
   ],
   "tx": "2026-03-10T18:00:00.000000Z",
   "receipt_asof": "2026-03-10T18:00:00.000000Z"

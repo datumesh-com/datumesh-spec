@@ -337,7 +337,8 @@ eval_vector("formula-eval/withdrawn-at-otherwise", "R1: the absence of a withdra
             hide=[(DAILY, DAY4)])
 eval_vector("formula-eval/withdrawn-slice-others-unchanged", "R1: a withdrawal of one reading leaves the others: at "
             "2026-03-05 the slice still answers 11.", f"at({DAILY}(*), d)", "EUR", {"d": (gf.DATEA, D("2026-03-05"))},
-            [WD_DAY4], gf.LATER, hand="11")
+            [WD_DAY4], gf.LATER, hand="11",
+            hide=[(DAILY, DAY4)])
 
 # ---------------------------------------------------------------------------
 # R3: whatif (5.9). A slice override `members` replaces the slice's whole member set, which may be empty.
