@@ -2769,8 +2769,8 @@ def _recompute(r, recompute, keyenv):
         if not ir["asof"] <= r["asof"]:
             fail("E_TIME_ORDER", "an input receipt's asof is after the receipt's asof", "$.inputs")
         input_tx.append(ir["tx"])
-    if input_tx and r["tx"] != max(input_tx):
-        fail("E_TIME_ORDER", "a computed cell's tx is the latest tx of its inputs", "$.tx")
+    if input_tx and r["tx"] < max(input_tx):  # since spec-0.7.0 (D125): at or after, a withdrawal may raise it
+        fail("E_TIME_ORDER", "a computed cell's tx is earlier than the latest tx of its inputs", "$.tx")
     if "withdrawn" in r:  # spec-0.7.0: a withdrawal states no value to compare
         return True
     if "value" not in recompute:  # step 7.6: the function cannot be evaluated
