@@ -290,18 +290,27 @@ WD_DAY4 = stored_withdrawal(DAILY, DAY4, "The reading of 4 March was withdrawn a
 BOLT_BACK = stored_value(PRICE, BOLT, N("3"), "2026-05-20T09:00:00.000000Z")
 
 
-def eval_vector(vid, why, source, returns, args, extra, asof, error=None, hand=None, hide=()):
+def eval_vector(vid, why, source, returns, args, extra, asof, error=None, hand=None, hide=(), candidates=()):
     world, equivalent = wd_world(source, returns, args, extra, hide)
     cell = {"args": {n: v for n, (_, v) in args.items()}, "fn": gf.E}
     vec = {"kind": "formula-eval", "world": world, "cell": cell, "asof": asof}
     if error is None:
         base = dict(vec, world=equivalent)
-        got = F.run_vector(base)
+        # A withdrawal that left a member out of a slice read is among the reading cell's asof candidates (8.2,
+        # coordinator decision): the 0.6.2 reference does not know it, so it is added to the candidates here.
+        orig = F.Context.known
+        if candidates:
+            F.Context.known = lambda self: max([c for c in [orig(self), *candidates] if c is not None])
+        try:
+            got = F.run_vector(base)
+        finally:
+            F.Context.known = orig
         assert "error" not in got, (vid, got)
         out = {k: got[k] for k in ("receipt_hash", "value", "lineage", "tx", "receipt_asof")}
-        # fuel_used is the evaluator's: taken from the reference run over the world with the withdrawals in it.
+        # fuel_used is the evaluator's: taken from the reference run over the world with the withdrawals in it
+        # (value, lineage and tx agree with the equivalent world; asof and hash differ by the candidate).
         real = F.run_vector(vec)
-        assert "error" not in real and all(real[k] == out[k] for k in out), (vid, real, out)
+        assert "error" not in real and all(real[k] == out[k] for k in ("value", "lineage", "tx")), (vid, real, out)
         out["fuel_used"] = real["fuel_used"]
         if hand:
             assert got["value"]["value"] == hand, (vid, got["value"], hand)
@@ -325,10 +334,10 @@ eval_vector("formula-eval/withdrawn-ended", "R1: a later version with a value en
             hide=[(PRICE, BOLT)])
 eval_vector("formula-eval/withdrawn-slice-count", "R1: the reading of 4 March is withdrawn: in the slice read by count "
             "it is not a member, 9 of the 10.", f"count({DAILY}(*))", "count", {}, [WD_DAY4], gf.LATER, hand="9",
-            hide=[(DAILY, DAY4)])
+            hide=[(DAILY, DAY4)], candidates=[WD_DAY4["asof"]])
 eval_vector("formula-eval/withdrawn-slice-sum", "R1: the same slice summed: 118 - 15 = 103; the withdrawn reading is "
             "not a member and is not in the slice's lineage.", f"sum({DAILY}(*))", "EUR", {}, [WD_DAY4], gf.LATER,
-            hand="103", hide=[(DAILY, DAY4)])
+            hand="103", hide=[(DAILY, DAY4)], candidates=[WD_DAY4["asof"]])
 eval_vector("formula-eval/withdrawn-slice-before-asof", "R1: as of 2026-03-10 the withdrawal (2026-03-20) is not yet "
             "the reading's latest version: all 10 are members.", f"count({DAILY}(*))", "count", {}, [WD_DAY4],
             "2026-03-10T18:00:00.000000Z", hand="10")
@@ -338,11 +347,26 @@ eval_vector("invalid/formula-eval-withdrawn-at", "R1: at(slice, d) of a withdraw
 eval_vector("formula-eval/withdrawn-at-otherwise", "R1: the absence of a withdrawn member is catchable: "
             "otherwise(at(slice, d), -1) is -1.", f"otherwise(at({DAILY}(*), d), -1)", "EUR",
             {"d": (gf.DATEA, D("2026-03-04"))}, [WD_DAY4], gf.LATER, hand="-1",
-            hide=[(DAILY, DAY4)])
+            hide=[(DAILY, DAY4)], candidates=[WD_DAY4["asof"]])
 eval_vector("formula-eval/withdrawn-slice-others-unchanged", "R1: a withdrawal of one reading leaves the others: at "
             "2026-03-05 the slice still answers 11.", f"at({DAILY}(*), d)", "EUR", {"d": (gf.DATEA, D("2026-03-05"))},
             [WD_DAY4], gf.LATER, hand="11",
-            hide=[(DAILY, DAY4)])
+            hide=[(DAILY, DAY4)], candidates=[WD_DAY4["asof"]])
+
+DAY7 = {"date": D("2026-03-07")}
+WD_DAY7 = stored_withdrawal(DAILY, DAY7, "The reading of 7 March was withdrawn as a sensor fault.",
+                            "2026-04-10T12:00:00.000000Z")
+eval_vector("formula-eval/withdrawn-slice-asof-candidate", "R1, 8.2: a withdrawal that left a member out of a slice "
+            "read is among the reading cell's asof candidates, like an input's asof: the reading of 7 March is "
+            "withdrawn at 2026-04-10T12:00, after every member's asof (the latest is 2026-03-10), so the computed "
+            "receipt's asof is 2026-04-10T12:00, not 2026-03-10. Without it a verifier re-evaluating as of the "
+            "receipt's asof would see 10 members, not 9 (E_INPUT_SUPERSEDED). tx stays the latest member's.",
+            f"count({DAILY}(*))", "count", {}, [WD_DAY7], gf.LATER, hand="9", hide=[(DAILY, DAY7)],
+            candidates=[WD_DAY7["asof"]])
+eval_vector("formula-eval/withdrawn-outside-range-not-candidate", "R1, 8.2: a withdrawal of a reading the slice read "
+            "did not include (7 March, outside [2026-03-01..2026-03-03]) left no member out: it is not an asof "
+            "candidate, and the receipt's asof is the latest member's, 2026-03-03T18:00.",
+            f"count({DAILY}([2026-03-01..2026-03-03]))", "count", {}, [WD_DAY7], gf.LATER, hand="3")
 
 # ---------------------------------------------------------------------------
 # R3: whatif (5.9). A slice override `members` replaces the slice's whole member set, which may be empty.

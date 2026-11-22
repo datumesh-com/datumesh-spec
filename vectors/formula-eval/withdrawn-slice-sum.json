@@ -399,7 +399,7 @@
     "fn": "calc.example.net/e"
   },
   "asof": "2026-06-01T00:00:00.000000Z",
-  "receipt_hash": "459edc25aada96558123846bf85687ed6b368d888fd576635267f6c7df3be41f",
+  "receipt_hash": "a356ecf7501d1fdb353624b84d2b57a642f733aff31ce40ca56c99e5acec658b",
   "value": {
     "type": "number",
     "value": "103"
@@ -408,6 +408,6 @@
     "slice:a45784ce2a47fcaa2bdc589af888cd5acc3eeb63206f8083292f4a12e0249719:e189c4192e7dea28773840a08a3fcd9cbaacf4b8c02064af120be1d9a09daec7"
   ],
   "tx": "2026-03-10T18:00:00.000000Z",
-  "receipt_asof": "2026-03-10T18:00:00.000000Z",
+  "receipt_asof": "2026-03-20T18:00:00.000000Z",
   "fuel_used": 21
 }

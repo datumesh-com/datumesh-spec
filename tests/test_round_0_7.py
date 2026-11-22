@@ -70,7 +70,7 @@ def run(vec):
 
 class VectorFiles(unittest.TestCase):
     def test_every_new_vector_is_on_disk_unchanged(self):
-        self.assertEqual(len(NEW), 74)
+        self.assertEqual(len(NEW), 76)
         for id_, vec in NEW.items():
             with self.subTest(id_):
                 self.assertIn(id_, ALL)
@@ -106,6 +106,44 @@ class ReferenceTools(unittest.TestCase):
         for n in REPLACED:
             with self.subTest(n):
                 self.assertEqual(run(json.loads((ROOT / n).read_text())), [])
+
+
+class AsofCandidate(unittest.TestCase):
+    """8.2 (coordinator decision): a withdrawal that left a member out of a slice read is among the reading cell's asof
+    candidates, so the computed receipt's asof is at or after the withdrawal's; tx stays the latest member's (D17)."""
+
+    LATEST_MEMBER = "2026-03-10T18:00:00.000000Z"
+    EXPECT = {  # vector: receipt_asof
+        "formula-eval/withdrawn-slice-count": "2026-03-20T18:00:00.000000Z",
+        "formula-eval/withdrawn-slice-sum": "2026-03-20T18:00:00.000000Z",
+        "formula-eval/withdrawn-at-otherwise": "2026-03-20T18:00:00.000000Z",
+        "formula-eval/withdrawn-slice-others-unchanged": "2026-03-20T18:00:00.000000Z",
+        "formula-eval/withdrawn-slice-asof-candidate": "2026-04-10T12:00:00.000000Z",
+        # no member was left out: the withdrawal is not a candidate
+        "formula-eval/withdrawn-outside-range-not-candidate": "2026-03-03T18:00:00.000000Z",
+    }
+
+    def test_receipt_asof(self):
+        for vid, asof in self.EXPECT.items():
+            with self.subTest(vid):
+                self.assertEqual(NEW[vid]["receipt_asof"], asof)
+                self.assertGreaterEqual(NEW[vid]["receipt_asof"], NEW[vid]["tx"])
+
+    def test_the_rule(self):
+        """For every valid withdrawn slice vector but the control: receipt_asof is the latest of the members' tx and the
+        asof of every withdrawal in the world that is at or before the evaluation asof and of a cell of the slice."""
+        for vid, vec in NEW.items():
+            if vec["kind"] != "formula-eval" or not vec["valid"] or "slice" not in vid or "before-asof" in vid:
+                continue
+            with self.subTest(vid):
+                wds = [r["asof"] for r in vec["world"]["receipts"]
+                       if "withdrawn" in r and r["asof"] <= vec["asof"] and r["cell"]["fn"] == "daily"]
+                self.assertTrue(wds)
+                self.assertEqual(vec["receipt_asof"], max(self.LATEST_MEMBER, *wds))
+                self.assertEqual(vec["tx"], self.LATEST_MEMBER)
+
+    def test_a_withdrawal_after_the_asof_is_no_candidate(self):
+        self.assertEqual(NEW["formula-eval/withdrawn-slice-before-asof"]["receipt_asof"], self.LATEST_MEMBER)
 
 
 class CaseHashes(unittest.TestCase):
