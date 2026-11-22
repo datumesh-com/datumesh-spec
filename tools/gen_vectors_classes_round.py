@@ -801,6 +801,12 @@ for vid, doc, error, why in [
     add(vid, "describe", f"C7: {why} (16.8).", text(doc), error)
 
 
+add("invalid/class-key-label-fold", "class", "K8: label_fold is the rule of a label, never of a class key: keys stay strict, "
+    "so a key declaring key_normalisation label_fold is E_CLASS_MEMBER, as an unknown rule is (16.1, 16.4).",
+    text(dict(gv.C_FX_PAIR, keys={"base": dict(gv.C_UPPER, key_normalisation="label_fold"), "quote": gv.C_UPPER})),
+    "E_CLASS_MEMBER", name=gv.FX_N, env=gv.C_ENV)
+
+
 def main():
     ids = [v["id"] for v in VECTORS]
     assert len(ids) == len(set(ids)), "duplicate ids"

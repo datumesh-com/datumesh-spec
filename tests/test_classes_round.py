@@ -148,12 +148,12 @@ class VectorFiles(unittest.TestCase):
                     self.assertEqual(vec["valid"], not id_.startswith("invalid/"))
 
     def test_counts(self):
-        self.assertEqual(len(NEW), 189)
+        self.assertEqual(len(NEW), 190)
         self.assertEqual({k: (count(k, True), count(k, False)) for k in
                           ("call", "describe", "find-result", "formula", "function", "normalisation", "class",
                            "envelope")},
                          {"call": (25, 16), "describe": (22, 56), "find-result": (6, 10), "formula": (16, 4),
-                          "function": (6, 7), "normalisation": (5, 12), "class": (1, 0), "envelope": (2, 1)})
+                          "function": (6, 7), "normalisation": (5, 12), "class": (1, 1), "envelope": (2, 1)})
 
     def test_contract_vectors_exist(self):
         want = {
@@ -301,6 +301,13 @@ class ReferenceTools(unittest.TestCase):
             with self.subTest(value):
                 self.assertEqual(code(canon.check_key_value, "label_fold", value), expected)
         self.assertIn("label_fold", canon.KEY_NORMALISATIONS)
+
+    def test_label_fold_is_refused_as_a_class_key_rule(self):
+        """K8: keys stay strict. label_fold is a label's rule, so a class key declaring it is E_CLASS_MEMBER."""
+        vec = next(v for v in G.VECTORS if v["id"] == "invalid/class-key-label-fold")
+        self.assertEqual(vec["error"], "E_CLASS_MEMBER")
+        self.assertIn("label_fold", vec["input"])
+        self.assertEqual(canon.check_vector(vec), [])
 
     def test_inherited_method_compiles_to_the_defining_class(self):
         """K5 directly: the call form of an inherited method is the plain read of D/m; S/m is not bound."""
