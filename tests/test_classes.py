@@ -193,7 +193,7 @@ class Normalisation(unittest.TestCase):
 
     def test_rules(self):
         self.assertEqual(canon.KEY_NORMALISATIONS, ("none", "upper_ascii", "nfc_strict", "arabic_skeleton",
-                                                     "hebrew_consonantal", "greek_unaccented"))
+                                                     "hebrew_consonantal", "greek_unaccented", "label_fold"))
         for rule, (good, bad) in self.CASES.items():
             for v in good:
                 with self.subTest(rule=rule, value=v):
