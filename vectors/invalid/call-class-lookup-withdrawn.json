@@ -1,7 +1,7 @@
 {
   "id": "invalid/call-class-lookup-withdrawn",
   "kind": "call",
-  "description": "classes-round: K8: banana's lookup cell is the empty string at the asof: the label was withdrawn, and a withdrawn label is E_NAME_UNBOUND as an unknown one is.",
+  "description": "classes-round: K8, replaced by spec-0.7.0 R1: banana's lookup cell is the empty string at the asof. K8 made that a withdrawn label (E_NAME_UNBOUND); the lookup's return type no longer allows \"\", so an empty string there is refused as for any key: E_KEY_NORMALISATION.",
   "valid": false,
   "input": "shop.example.org/product[banana].price(2026-03-16)?asof=2026-06-01T00:00:00.000000Z",
   "env": {
@@ -122,5 +122,5 @@
       "shop.example.org/product/successor(sku: \"A2\")": "shop.example.org/product(sku:\"A3\")"
     }
   },
-  "error": "E_NAME_UNBOUND"
+  "error": "E_KEY_NORMALISATION"
 }

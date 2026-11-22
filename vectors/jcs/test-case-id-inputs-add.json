@@ -1,0 +1,9 @@
+{
+  "id": "jcs/test-case-id-inputs-add",
+  "kind": "jcs",
+  "description": "spec-0.7.0: R3: The case of a test_case cell (7.3) is the first 16 hex digits of the SHA-256 of the test's JCS: here 58cdc967590158bd. The same two cells as `add`: a different case from the members form.",
+  "valid": true,
+  "input": "{\n  \"inputs\": {\n    \"rates.example.org/fx_rate(base: \\\"EUR\\\", date: *, quote: \\\"USD\\\")\": {\n      \"add\": {\n        \"rates.example.org/fx_rate(base: \\\"EUR\\\", date: 2024-03-18, quote: \\\"USD\\\")\": {\n          \"value\": \"1.2\",\n          \"type\": \"number\"\n        },\n        \"rates.example.org/fx_rate(base: \\\"EUR\\\", date: 2024-03-15, quote: \\\"USD\\\")\": {\n          \"value\": \"1.1\",\n          \"type\": \"number\"\n        }\n      }\n    }\n  },\n  \"expect\": {\n    \"value\": \"1.15\",\n    \"type\": \"number\"\n  },\n  \"call\": \"calc.example.net/fx_mean(base: \\\"EUR\\\", quote: \\\"USD\\\")\",\n  \"asof\": \"2024-03-16T09:00:00.000000Z\"\n}",
+  "canonical": "{\"asof\":\"2024-03-16T09:00:00.000000Z\",\"call\":\"calc.example.net/fx_mean(base: \\\"EUR\\\", quote: \\\"USD\\\")\",\"expect\":{\"type\":\"number\",\"value\":\"1.15\"},\"inputs\":{\"rates.example.org/fx_rate(base: \\\"EUR\\\", date: *, quote: \\\"USD\\\")\":{\"add\":{\"rates.example.org/fx_rate(base: \\\"EUR\\\", date: 2024-03-15, quote: \\\"USD\\\")\":{\"type\":\"number\",\"value\":\"1.1\"},\"rates.example.org/fx_rate(base: \\\"EUR\\\", date: 2024-03-18, quote: \\\"USD\\\")\":{\"type\":\"number\",\"value\":\"1.2\"}}}}}",
+  "sha256": "58cdc967590158bd95e5241fa1ff9f7ab60a0df8a96467b337c161478ba1d4dd"
+}

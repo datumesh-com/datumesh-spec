@@ -1,0 +1,9 @@
+{
+  "id": "jcs/test-case-id-inputs-remove",
+  "kind": "jcs",
+  "description": "spec-0.7.0: R3: The case of a test_case cell (7.3) is the first 16 hex digits of the SHA-256 of the test's JCS: here 53ff98af88515671. `remove` of one cell: a different case again.",
+  "valid": true,
+  "input": "{\n  \"inputs\": {\n    \"rates.example.org/fx_rate(base: \\\"EUR\\\", date: *, quote: \\\"USD\\\")\": {\n      \"remove\": [\n        \"rates.example.org/fx_rate(base: \\\"EUR\\\", date: 2024-03-15, quote: \\\"USD\\\")\"\n      ]\n    }\n  },\n  \"expect\": {\n    \"value\": \"1.15\",\n    \"type\": \"number\"\n  },\n  \"call\": \"calc.example.net/fx_mean(base: \\\"EUR\\\", quote: \\\"USD\\\")\",\n  \"asof\": \"2024-03-16T09:00:00.000000Z\"\n}",
+  "canonical": "{\"asof\":\"2024-03-16T09:00:00.000000Z\",\"call\":\"calc.example.net/fx_mean(base: \\\"EUR\\\", quote: \\\"USD\\\")\",\"expect\":{\"type\":\"number\",\"value\":\"1.15\"},\"inputs\":{\"rates.example.org/fx_rate(base: \\\"EUR\\\", date: *, quote: \\\"USD\\\")\":{\"remove\":[\"rates.example.org/fx_rate(base: \\\"EUR\\\", date: 2024-03-15, quote: \\\"USD\\\")\"]}}}",
+  "sha256": "53ff98af88515671e75bea52a64993523b0c93334abcb5fb47a63a41021ac5e0"
+}

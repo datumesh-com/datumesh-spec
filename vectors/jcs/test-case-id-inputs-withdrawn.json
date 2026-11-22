@@ -1,0 +1,9 @@
+{
+  "id": "jcs/test-case-id-inputs-withdrawn",
+  "kind": "jcs",
+  "description": "spec-0.7.0: R3: The case of a test_case cell (7.3) is the first 16 hex digits of the SHA-256 of the test's JCS: here 14b6a00bf3509a7f. A cell given as withdrawn, `{\"withdrawn\": \"<reason>\"}` in place of a typed scalar (R1).",
+  "valid": true,
+  "input": "{\n  \"inputs\": {\n    \"rates.example.org/fx_rate(base: \\\"EUR\\\", date: 2024-03-15, quote: \\\"USD\\\")\": {\n      \"withdrawn\": \"published in error\"\n    }\n  },\n  \"expect\": {\n    \"value\": \"1.15\",\n    \"type\": \"number\"\n  },\n  \"call\": \"calc.example.net/fx_mean(base: \\\"EUR\\\", quote: \\\"USD\\\")\",\n  \"asof\": \"2024-03-16T09:00:00.000000Z\"\n}",
+  "canonical": "{\"asof\":\"2024-03-16T09:00:00.000000Z\",\"call\":\"calc.example.net/fx_mean(base: \\\"EUR\\\", quote: \\\"USD\\\")\",\"expect\":{\"type\":\"number\",\"value\":\"1.15\"},\"inputs\":{\"rates.example.org/fx_rate(base: \\\"EUR\\\", date: 2024-03-15, quote: \\\"USD\\\")\":{\"withdrawn\":\"published in error\"}}}",
+  "sha256": "14b6a00bf3509a7fbd01eff0d4ebd4acf9013117ea88170df16b04ed90eb83db"
+}

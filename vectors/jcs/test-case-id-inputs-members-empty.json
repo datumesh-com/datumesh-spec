@@ -1,0 +1,9 @@
+{
+  "id": "jcs/test-case-id-inputs-members-empty",
+  "kind": "jcs",
+  "description": "spec-0.7.0: R3: The case of a test_case cell (7.3) is the first 16 hex digits of the SHA-256 of the test's JCS: here 8998448c463e1425. inputs replaces the member set with the empty one.",
+  "valid": true,
+  "input": "{\n  \"inputs\": {\n    \"rates.example.org/fx_rate(base: \\\"EUR\\\", date: *, quote: \\\"USD\\\")\": {\n      \"members\": {}\n    }\n  },\n  \"expect\": {\n    \"value\": \"1.15\",\n    \"type\": \"number\"\n  },\n  \"call\": \"calc.example.net/fx_mean(base: \\\"EUR\\\", quote: \\\"USD\\\")\",\n  \"asof\": \"2024-03-16T09:00:00.000000Z\"\n}",
+  "canonical": "{\"asof\":\"2024-03-16T09:00:00.000000Z\",\"call\":\"calc.example.net/fx_mean(base: \\\"EUR\\\", quote: \\\"USD\\\")\",\"expect\":{\"type\":\"number\",\"value\":\"1.15\"},\"inputs\":{\"rates.example.org/fx_rate(base: \\\"EUR\\\", date: *, quote: \\\"USD\\\")\":{\"members\":{}}}}",
+  "sha256": "8998448c463e1425b0a9a079aa4d38ece90b551d334fdd163b893c90b01aebc3"
+}

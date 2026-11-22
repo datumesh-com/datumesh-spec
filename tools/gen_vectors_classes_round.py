@@ -291,7 +291,8 @@ def pkey(sku):
 
 
 SHOP_FUNCTIONS = {f"{PRODUCT}/from_label": LOOKUP_FN, f"{PRODUCT}/price": PRICE_FN, f"{PRODUCT}/successor": SUCCESSOR_FN}
-# The cells of the lookup as of the asof: labels are stored folded (K8); banana was withdrawn ("").
+# The cells of the lookup as of the asof: labels are stored folded (K8). banana's cell holds "": under CONTRACT-round-0.7
+# R1 the lookup's return type no longer allows it (a withdrawn label is a withdrawal of the cell, an envelope: not a call).
 SHOP_LOOKUPS = {PRODUCT: {"apple": pkey("A1"), "green apple": pkey("A2"), "zürich": pkey("A3"), "banana": ""}}
 # The cells of successor (K10): the key the cell holds, by the canonical call of the cell.
 SHOP_CELLS = {f'{PRODUCT}/successor(sku: "A1")': pkey("A2"), f'{PRODUCT}/successor(sku: "A2")': pkey("A3")}
@@ -371,12 +372,13 @@ for slug, label, folded, why in [
     add(f"call/class-label-fold-{slug}", "call", f"K8: {why}; resolved records the label as written, the key and the instant "
         "of the lookup read.", call_text, env=shop_env(), resolved=resolved, uri=uri)
 
-add("invalid/call-class-lookup-withdrawn", "call", "K8: banana's lookup cell is the empty string at the asof: the label was "
-    "withdrawn, and a withdrawn label is E_NAME_UNBOUND as an unknown one is.",
-    f"{PRODUCT}[banana].price({DAY})?asof={ASOF}", "E_NAME_UNBOUND", env=shop_env())
-add("invalid/call-class-lookup-withdrawn-cased", "call", "K8: the label is folded before the lookup is read, so a cased "
-    "spelling of a withdrawn label is withdrawn too.", f"{PRODUCT}[BANANA].price({DAY})?asof={ASOF}", "E_NAME_UNBOUND",
-    env=shop_env())
+add("invalid/call-class-lookup-withdrawn", "call", "K8, replaced by spec-0.7.0 R1: banana's lookup cell is the empty "
+    "string at the asof. K8 made that a withdrawn label (E_NAME_UNBOUND); the lookup's return type no longer allows "
+    "\"\", so an empty string there is refused as for any key: E_KEY_NORMALISATION.",
+    f"{PRODUCT}[banana].price({DAY})?asof={ASOF}", "E_KEY_NORMALISATION", env=shop_env())
+add("invalid/call-class-lookup-withdrawn-cased", "call", "K8, replaced by spec-0.7.0 R1: the label is folded before the "
+    "lookup is read, so a cased spelling reads the same empty string: E_KEY_NORMALISATION.",
+    f"{PRODUCT}[BANANA].price({DAY})?asof={ASOF}", "E_KEY_NORMALISATION", env=shop_env())
 add("invalid/call-class-lookup-folded-unknown", "call", "K8: a label that is no label of the lookup even folded: "
     "E_NAME_UNBOUND.", f"{PRODUCT}[PEAR].price({DAY})?asof={ASOF}", "E_NAME_UNBOUND", env=shop_env())
 add("invalid/call-class-label-fold-keys-strict", "call", "K8: keys stay strict: a key with a lower-case letter is "

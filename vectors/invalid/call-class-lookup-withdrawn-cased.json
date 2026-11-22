@@ -1,7 +1,7 @@
 {
   "id": "invalid/call-class-lookup-withdrawn-cased",
   "kind": "call",
-  "description": "classes-round: K8: the label is folded before the lookup is read, so a cased spelling of a withdrawn label is withdrawn too.",
+  "description": "classes-round: K8, replaced by spec-0.7.0 R1: the label is folded before the lookup is read, so a cased spelling reads the same empty string: E_KEY_NORMALISATION.",
   "valid": false,
   "input": "shop.example.org/product[BANANA].price(2026-03-16)?asof=2026-06-01T00:00:00.000000Z",
   "env": {
@@ -122,5 +122,5 @@
       "shop.example.org/product/successor(sku: \"A2\")": "shop.example.org/product(sku:\"A3\")"
     }
   },
-  "error": "E_NAME_UNBOUND"
+  "error": "E_KEY_NORMALISATION"
 }

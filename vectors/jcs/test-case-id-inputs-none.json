@@ -1,0 +1,9 @@
+{
+  "id": "jcs/test-case-id-inputs-none",
+  "kind": "jcs",
+  "description": "spec-0.7.0: R3: The case of a test_case cell (7.3) is the first 16 hex digits of the SHA-256 of the test's JCS: here 433d1a9d70649f0a. The test has no inputs (the control: it differs from every one below).",
+  "valid": true,
+  "input": "{\n  \"expect\": {\n    \"value\": \"1.15\",\n    \"type\": \"number\"\n  },\n  \"call\": \"calc.example.net/fx_mean(base: \\\"EUR\\\", quote: \\\"USD\\\")\",\n  \"asof\": \"2024-03-16T09:00:00.000000Z\"\n}",
+  "canonical": "{\"asof\":\"2024-03-16T09:00:00.000000Z\",\"call\":\"calc.example.net/fx_mean(base: \\\"EUR\\\", quote: \\\"USD\\\")\",\"expect\":{\"type\":\"number\",\"value\":\"1.15\"}}",
+  "sha256": "433d1a9d70649f0a3721006926133b4ae31b08f50d8d3331bedefcda7d4464e6"
+}

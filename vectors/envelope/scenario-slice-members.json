@@ -1,0 +1,105 @@
+{
+  "id": "envelope/scenario-slice-members",
+  "kind": "envelope",
+  "description": "spec-0.7.0: R3: a scenario with a slice override `members`: the whole member set is replaced by two cells, echoed as {slice, members}, the members sorted by cell id.",
+  "valid": true,
+  "input": "{\n  \"scenario\": {\n    \"value\": \"1.2\",\n    \"type\": \"number\",\n    \"overrides\": [\n      {\n        \"slice\": {\n          \"ns\": \"rates.example.org\",\n          \"fn_hash\": \"7b58ecb8fd23b644c87951d0bd609790ff547cbb23fed27186c669ce2ce0aa80\",\n          \"fn\": \"fx_rate\",\n          \"args\": {\n            \"quote\": {\n              \"value\": \"USD\",\n              \"type\": \"string\"\n            },\n            \"date\": \"*\",\n            \"base\": {\n              \"value\": \"EUR\",\n              \"type\": \"string\"\n            }\n          }\n        },\n        \"members\": [\n          {\n            \"value\": {\n              \"value\": \"1.2\",\n              \"type\": \"number\"\n            },\n            \"cell\": {\n              \"ns\": \"rates.example.org\",\n              \"fn_hash\": \"7b58ecb8fd23b644c87951d0bd609790ff547cbb23fed27186c669ce2ce0aa80\",\n              \"fn\": \"fx_rate\",\n              \"args\": {\n                \"quote\": {\n                  \"value\": \"USD\",\n                  \"type\": \"string\"\n                },\n                \"date\": {\n                  \"value\": \"2024-03-18\",\n                  \"type\": \"date\"\n                },\n                \"base\": {\n                  \"value\": \"EUR\",\n                  \"type\": \"string\"\n                }\n              }\n            }\n          },\n          {\n            \"value\": {\n              \"value\": \"1.1\",\n              \"type\": \"number\"\n            },\n            \"cell\": {\n              \"ns\": \"rates.example.org\",\n              \"fn_hash\": \"7b58ecb8fd23b644c87951d0bd609790ff547cbb23fed27186c669ce2ce0aa80\",\n              \"fn\": \"fx_rate\",\n              \"args\": {\n                \"quote\": {\n                  \"value\": \"USD\",\n                  \"type\": \"string\"\n                },\n                \"date\": {\n                  \"value\": \"2024-03-15\",\n                  \"type\": \"date\"\n                },\n                \"base\": {\n                  \"value\": \"EUR\",\n                  \"type\": \"string\"\n                }\n              }\n            }\n          }\n        ]\n      }\n    ],\n    \"cell\": {\n      \"ns\": \"rates.example.org\",\n      \"fn_hash\": \"7b58ecb8fd23b644c87951d0bd609790ff547cbb23fed27186c669ce2ce0aa80\",\n      \"fn\": \"fx_rate\",\n      \"args\": {\n        \"quote\": {\n          \"value\": \"USD\",\n          \"type\": \"string\"\n        },\n        \"date\": {\n          \"value\": \"2024-03-18\",\n          \"type\": \"date\"\n        },\n        \"base\": {\n          \"value\": \"EUR\",\n          \"type\": \"string\"\n        }\n      }\n    },\n    \"asof\": \"2024-03-16T09:00:00.000000Z\"\n  },\n  \"outcome\": \"scenario\"\n}",
+  "status": 200,
+  "keys": {
+    "rates.example.org": {
+      "https": {
+        "status": 200,
+        "body": "{\n  \"host\": \"rates.example.org\",\n  \"keys\": [\n    {\n      \"alg\": \"ed25519\",\n      \"id\": \"d712b32a2cc5cb7c\",\n      \"public\": \"843baeb22bfd0364fb1b7262b367fb3202e7886c69a070fecf8e343fedb1eabf\",\n      \"valid_from\": \"2020-01-01T00:00:00.000000Z\",\n      \"valid_to\": \"2024-06-01T00:00:00.000000Z\"\n    },\n    {\n      \"alg\": \"ed25519\",\n      \"id\": \"d9a2df65559c4444\",\n      \"public\": \"3ecf7b3ff834cb6782f5405dfcb213b5e78c0f30188068c25568adc25a739b52\",\n      \"valid_from\": \"2024-06-01T00:00:00.000000Z\"\n    }\n  ],\n  \"proto\": \"datumesh/1\"\n}"
+      }
+    },
+    "calc.example.net": {
+      "https": {
+        "status": 200,
+        "body": "{\n  \"host\": \"calc.example.net\",\n  \"keys\": [\n    {\n      \"alg\": \"ed25519\",\n      \"id\": \"f7ec60a92abf4774\",\n      \"public\": \"ccd4faa3a0b8338bc796d3bfc30bda2f6e87d336a576b70dc9d47cbfe0e8830f\",\n      \"valid_from\": \"2020-01-01T00:00:00.000000Z\"\n    }\n  ],\n  \"proto\": \"datumesh/1\"\n}"
+      }
+    },
+    "calendars.example.org": {
+      "https": {
+        "status": 200,
+        "body": "{\n  \"host\": \"calendars.example.org\",\n  \"keys\": [\n    {\n      \"alg\": \"ed25519\",\n      \"id\": \"b4434e3bcb74eb2a\",\n      \"public\": \"425a3fdc53d1fb7b11b50f890c71af15ef9de300faad35f9fe53e650da55fbdb\",\n      \"valid_from\": \"2020-01-01T00:00:00.000000Z\"\n    }\n  ],\n  \"proto\": \"datumesh/1\"\n}"
+      }
+    }
+  },
+  "request": {
+    "asof": "2024-03-16T09:00:00.000000Z",
+    "cell_id": "7ff6d8f4a82f29e848d46a629dc89c9fcdb9971cc676edb45e1c2c28f02c5eca",
+    "overrides": [
+      {
+        "members": [
+          {
+            "cell": {
+              "args": {
+                "base": {
+                  "type": "string",
+                  "value": "EUR"
+                },
+                "date": {
+                  "type": "date",
+                  "value": "2024-03-18"
+                },
+                "quote": {
+                  "type": "string",
+                  "value": "USD"
+                }
+              },
+              "fn": "fx_rate",
+              "fn_hash": "7b58ecb8fd23b644c87951d0bd609790ff547cbb23fed27186c669ce2ce0aa80",
+              "ns": "rates.example.org"
+            },
+            "value": {
+              "type": "number",
+              "value": "1.2"
+            }
+          },
+          {
+            "cell": {
+              "args": {
+                "base": {
+                  "type": "string",
+                  "value": "EUR"
+                },
+                "date": {
+                  "type": "date",
+                  "value": "2024-03-15"
+                },
+                "quote": {
+                  "type": "string",
+                  "value": "USD"
+                }
+              },
+              "fn": "fx_rate",
+              "fn_hash": "7b58ecb8fd23b644c87951d0bd609790ff547cbb23fed27186c669ce2ce0aa80",
+              "ns": "rates.example.org"
+            },
+            "value": {
+              "type": "number",
+              "value": "1.1"
+            }
+          }
+        ],
+        "slice": {
+          "args": {
+            "base": {
+              "type": "string",
+              "value": "EUR"
+            },
+            "date": "*",
+            "quote": {
+              "type": "string",
+              "value": "USD"
+            }
+          },
+          "fn": "fx_rate",
+          "fn_hash": "7b58ecb8fd23b644c87951d0bd609790ff547cbb23fed27186c669ce2ce0aa80",
+          "ns": "rates.example.org"
+        }
+      }
+    ]
+  },
+  "outcome": "scenario"
+}
