@@ -52,7 +52,7 @@ class Migration050(unittest.TestCase):
         spec = (ROOT / "SPEC.md").read_text(encoding="utf-8")
         self.assertRegex(spec, r"(?m)^### spec-0\.5\.0\b")
         self.assertRegex((ROOT / "units.md").read_text(encoding="utf-8"), r"`spec-0\.6\.[02]`")  # coordinator, round 2; spec-0.6.2 bumps it
-        self.assertRegex((ROOT / "README.md").read_text(encoding="utf-8"), r"revision `spec-0\.6\.[012]`")  # coordinator, round 2; spec-0.6.1 and 0.6.2 bump it
+        self.assertRegex((ROOT / "README.md").read_text(encoding="utf-8"), r"revision `spec-0\.(6\.[012]|7\.0)`")  # coordinator, round 2; spec-0.6.1 and 0.6.2 bump it
 
 
 if __name__ == "__main__":

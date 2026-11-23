@@ -265,9 +265,9 @@ class ReferenceTools(unittest.TestCase):
 
 class SpecText(unittest.TestCase):
     def test_status_line_names_this_revision(self):
-        self.assertRegex(SPEC, r"(?m)^Status: draft, revision `spec-0\.6\.2`")
+        self.assertRegex(SPEC, r"(?m)^Status: draft, revision `spec-0\.(6\.2|7\.0)`")  # spec-0.7.0 supersedes
         self.assertRegex(SPEC, r"(?m)^### spec-0\.6\.2\s*$")
-        self.assertIn("revision `spec-0.6.2`", (ROOT / "README.md").read_text(encoding="utf-8"))
+        self.assertIn("revision `spec-0.7.0`", (ROOT / "README.md").read_text(encoding="utf-8"))  # superseded by spec-0.7.0, one release for both rounds
         self.assertRegex(UNITS, r"(?m)^Status: [^\n]*`spec-0\.6\.2`")
 
     def test_p1_units_section_7_1(self):

@@ -121,9 +121,9 @@ class ReferenceTools(unittest.TestCase):
 
 class SpecText(unittest.TestCase):
     def test_status_line_names_this_revision(self):
-        self.assertRegex(SPEC, r"(?m)^Status: draft, revision `spec-0\.6\.[12]`")  # spec-0.6.2 bumps the revision
+        self.assertRegex(SPEC, r"(?m)^Status: draft, revision `spec-0\.(6\.[12]|7\.0)`")  # spec-0.6.2 bumps the revision
         self.assertRegex(SPEC, r"(?m)^### spec-0\.6\.1\s*$")
-        self.assertRegex((ROOT / "README.md").read_text(encoding="utf-8"), r"revision `spec-0\.6\.[12]`")
+        self.assertRegex((ROOT / "README.md").read_text(encoding="utf-8"), r"revision `spec-0\.(6\.[12]|7\.0)`")
 
     def test_s1_dns_segments(self):
         a = SPEC.index("### 2.3")
