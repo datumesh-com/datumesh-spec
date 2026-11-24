@@ -4,6 +4,22 @@
 
 Datumesh is an open protocol for addressable, verifiable data cells: a name, a resolver, a signed answer, and a lineage you can follow.
 
+## Try it
+
+A cell is a call. This one is the ECB's euro reference rate for the US dollar on 20 November 2026, on the live mesh at datumesh.com:
+
+```text
+datumesh.com/relay/ecb.europa.eu/fx_reference(USD, 2026-11-20)
+```
+
+Its answer is `1.099`, with a receipt signed by `datumesh.com#eddd0c12fedb022e` that anyone can verify. The web address of the same cell:
+
+```text
+https://datumesh.com/cell/datumesh.com/relay/ecb.europa.eu/fx_reference(USD,2026-11-20)
+```
+
+Get data in a browser, Excel, Google Sheets, pandas, curl or JavaScript, calculate with the `datumesh` command, or give the mesh to an agent: **[datumesh.com/docs](https://datumesh.com/docs/)**. The rest of this README is the specification itself.
+
 This repository is the protocol's specification ([SPEC.md](SPEC.md), revision `spec-0.7.0`, with [units.md](units.md)), its JSON Schemas ([schemas/](schemas/)), its test vectors ([vectors/](vectors/)), a reference canonicaliser used to generate and check them ([tools/canon.py](tools/canon.py)), and the reference implementation of the formula dialect, the default language of computed functions ([tools/formula.py](tools/formula.py), with [tools/fdecimal.py](tools/fdecimal.py) for its decimal arithmetic; SPEC.md section 15). They are test tools, not libraries. The design record of `spec-0.4.0` is [DESIGN-0.4.0.md](DESIGN-0.4.0.md).
 
 ## In ten lines
